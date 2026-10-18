@@ -1,0 +1,30 @@
+{
+  "family": "clean_modern",
+  "layout": "versus",
+  "label": "Clean modern",
+  "for": "e-commerce, launches, B2B, coaches",
+  "slots": [
+    "headline",
+    "label_a",
+    "label_b",
+    "image_a",
+    "image_b"
+  ],
+  "max_chars": {
+    "headline": 50
+  },
+  "defaults": {
+    "headline": "Before vs. after",
+    "label_a": "Before",
+    "label_b": "After",
+    "image_a": "../../_shared/placeholder/clean_modern.svg",
+    "image_b": "../../_shared/placeholder/clean_modern.svg"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+  ]
+}

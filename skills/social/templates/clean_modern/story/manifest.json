@@ -1,0 +1,26 @@
+{
+  "family": "clean_modern",
+  "layout": "story",
+  "label": "Clean modern",
+  "for": "e-commerce, launches, B2B, coaches",
+  "slots": [
+    "headline",
+    "sub",
+    "cta",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "sub": 90
+  },
+  "defaults": {
+    "headline": "Taco Tuesday is back",
+    "sub": "Every Tuesday, all day.",
+    "cta": "See the menu",
+    "image": "../../_shared/placeholder/clean_modern.svg"
+  },
+  "formats": [
+    "ig_story",
+    "tiktok_cover"
+  ]
+}

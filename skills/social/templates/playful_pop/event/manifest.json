@@ -1,0 +1,34 @@
+{
+  "family": "playful_pop",
+  "layout": "event",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "headline",
+    "date",
+    "location",
+    "cta",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "date": 26,
+    "location": 60,
+    "cta": 24
+  },
+  "defaults": {
+    "headline": "Grand opening party",
+    "date": "Sat Oct 24 · 11am",
+    "location": "123 Main St",
+    "cta": "Free scoops",
+    "image": "../../_shared/placeholder/playful_pop.svg"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+  ]
+}

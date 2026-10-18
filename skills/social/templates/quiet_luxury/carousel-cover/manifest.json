@@ -1,0 +1,26 @@
+{
+  "family": "quiet_luxury",
+  "layout": "carousel-cover",
+  "label": "Quiet luxury",
+  "for": "salons, weddings, premium products",
+  "slots": [
+    "headline",
+    "sub",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "sub": 90
+  },
+  "defaults": {
+    "headline": "5 things we learned",
+    "sub": "Swipe through →",
+    "image": "../../_shared/placeholder/quiet_luxury.svg"
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+  ]
+}

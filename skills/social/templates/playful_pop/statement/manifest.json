@@ -1,0 +1,26 @@
+{
+  "family": "playful_pop",
+  "layout": "statement",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "headline",
+    "sub"
+  ],
+  "max_chars": {
+    "headline": 70,
+    "sub": 130
+  },
+  "defaults": {
+    "headline": "Life's too short for boring snacks.",
+    "sub": "Real ingredients, silly shapes, zero fuss."
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "family": "warm_craft",
+  "layout": "story",
+  "label": "Warm craft",
+  "for": "bakeries, Etsy, makers, nonprofits",
+  "slots": [
+    "headline",
+    "sub",
+    "cta",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "sub": 90
+  },
+  "defaults": {
+    "headline": "Taco Tuesday is back",
+    "sub": "Every Tuesday, all day.",
+    "cta": "See the menu",
+    "image": "../../_shared/placeholder/warm_craft.svg"
+  },
+  "formats": [
+    "ig_story",
+    "tiktok_cover"
+  ]
+}

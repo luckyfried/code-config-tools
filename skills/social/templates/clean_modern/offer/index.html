@@ -1,0 +1,114 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family:'Inter'; src:url('../../../fonts/Inter/Inter[opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'JetBrains Mono'; src:url('../../../fonts/JetBrainsMono/JetBrainsMono[wght].ttf'); font-weight:100 800; }
+/* Clean modern: neutral ground, Inter set tight, JetBrains Mono for indices and labels,
+   1px hairlines on a 6cqmin margin grid, product photos on soft rounded cards,
+   one accent used for exactly one job per layout. */
+:root, .canvas {
+  --bg:#F4F4F1; --fg:#111215; --accent:#1F5BD8; --accent2:#E3E4DE;
+  --ink:#111215; --paper:#FFFFFF;
+  --font-display:'Inter'; --font-body:'Inter';
+  /*{brand_css}*/
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+body { container-type:size; container-name:page; }
+.canvas { position:relative; width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--fg);
+  font-family:var(--font-body), 'Inter', system-ui, sans-serif; -webkit-font-smoothing:antialiased;
+  font-feature-settings:"cv11" 1, "ss03" 1;
+  --M:6cqmin; --R:2.2cqmin;
+  --muted:color-mix(in srgb, var(--fg) 62%, var(--bg));
+  --hair:color-mix(in srgb, var(--fg) 16%, var(--bg));
+  --surface:color-mix(in srgb, var(--fg) 5%, var(--bg)); }
+.canvas[data-tone=dark] { --surface:color-mix(in srgb, var(--fg) 8%, var(--bg)); --hair:color-mix(in srgb, var(--fg) 22%, var(--bg)); }
+.display { font-family:var(--font-display), 'Inter', sans-serif; font-weight:620; font-variation-settings:"opsz" 32;
+  letter-spacing:-0.038em; line-height:1.0; text-wrap:balance; color:var(--fg); padding:0.04em 0 0.14em; }
+.body { font-size:2.7cqmin; line-height:1.45; color:var(--muted); letter-spacing:-0.006em; text-wrap:pretty; font-weight:450; }
+.mono { font-family:'JetBrains Mono', monospace; font-weight:500; font-size:1.9cqmin; letter-spacing:0; color:var(--muted);
+  font-variant-numeric:tabular-nums; }
+.nw { white-space:nowrap; }
+.box { min-height:0; min-width:0; overflow:hidden; }
+[data-autofit] { overflow:hidden; }
+.headline { flex-shrink:0; } /* never let flex squash the autofit target: its overflow would be hidden from the box measure */
+.photo { position:absolute; overflow:hidden; background:var(--surface); border-radius:var(--R); }
+.photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--focal, 50% 50%); display:block; }
+.hair { height:1px; background:var(--hair); flex:0 0 auto; }
+/* CTA = printed words, never a button: mono caps led by a short rule. No fill, no outline, no pill. */
+.cta { display:inline-flex; align-items:center; gap:1.8cqmin; font-family:'JetBrains Mono', monospace; font-weight:600; font-size:2.6cqmin;
+  letter-spacing:0.07em; text-transform:uppercase; line-height:1.2; color:var(--fg); white-space:nowrap; flex:0 0 auto; }
+.cta::before { content:""; flex:0 0 auto; width:5cqmin; height:max(2px, 0.22cqmin); background:currentColor; }
+.cta.accent { color:var(--accent-ink); }
+.cta:has(> [data-slot]:empty) { display:none; }
+.dot { display:inline-block; width:1.3cqmin; height:1.3cqmin; border-radius:50%; background:var(--accent); flex:0 0 auto; }
+/* swipe cue: a printed caption with a long hairline arrow, not a round next button */
+.next { position:absolute; right:var(--M); bottom:var(--M); display:flex; align-items:center; gap:1.8cqmin; height:8.4cqmin;
+  font-family:'JetBrains Mono', monospace; font-weight:500; font-size:2.1cqmin; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+.next .larr { width:10cqmin; height:2cqmin; overflow:visible; }
+.sub:empty, .body:empty { display:none; }
+
+.offer .page { position:absolute; inset:var(--M); display:flex; flex-direction:column; }
+.offer .top { flex:0 0 auto; display:flex; align-items:center; gap:2cqmin; }
+.offer .top .hair { flex:1; }
+.offer .tag { display:inline-flex; align-items:center; gap:2cqmin; font-family:'JetBrains Mono', monospace; font-size:2.2cqmin; font-weight:600;
+  letter-spacing:0.07em; text-transform:uppercase; color:var(--fg); white-space:nowrap; }
+.offer .tag > [data-slot]:empty { display:none; } /* (the old :has(> span:empty) also matched the empty .dot and hid every tag) */
+.offer .hbox { flex:0 1 auto; margin-top:5cqmin; max-height:34%; }
+.offer .headline { font-size:8.6cqmin; }
+.offer .pbox { flex:1 1 auto; display:flex; align-items:center; min-height:0; }
+.offer .price { font-weight:680; font-size:30cqmin; line-height:1.08; letter-spacing:-0.06em; color:var(--accent-ink);
+  white-space:nowrap; font-variant-numeric:tabular-nums lining-nums; font-feature-settings:"tnum" 1, "ss01" 1; padding:0 0 0.1em 1.2cqmin; margin-left:-2.4cqmin; }
+.offer .foot { flex:0 0 auto; display:flex; justify-content:space-between; align-items:flex-end; gap:5cqmin; border-top:1px solid var(--hair); padding-top:3cqmin; }
+.offer .terms { max-width:56%; }
+@container page (aspect-ratio > 0.9) {
+  .offer .headline { font-size:7.6cqmin; }
+  .offer .hbox { margin-top:3.6cqmin; }
+  .offer .price { font-size:24cqmin; }
+}
+@container page (aspect-ratio < 0.7) {
+  .offer .page { top:calc(250px + 1cqh); bottom:calc(320px + 1cqh); }
+  .offer .headline { font-size:10.4cqmin; }
+  .offer .price { font-size:34cqmin; margin-left:0; padding-left:0; }
+  .offer .foot { flex-direction:column; align-items:flex-start; gap:3.6cqmin; }
+  .offer .terms { max-width:100%; font-size:3.9cqmin; }
+  .offer .cta { font-size:3.3cqmin; }
+  .offer .tag { font-size:2.9cqmin; }
+}
+</style></head><body>
+<div class="canvas offer"><div class="page">
+<div class="top"><div class="tag" data-safe-check><span class="dot"></span><span data-slot="tag">{{tag}}</span></div><div class="hair"></div></div>
+<div class="hbox box"><div class="headline display " data-slot="headline" data-safe-check data-autofit data-autofit-min="0.45">{{headline}}</div></div>
+<div class="pbox box" data-autofit-box><div class="price" data-slot="price" data-safe-check data-autofit data-autofit-min="0.4" data-nowidow>{{price}}</div></div>
+<div class="foot"><div class="terms body" data-slot="terms" data-safe-check data-autofit data-autofit-min="0.8" data-autofit-clamp="3">{{terms}}</div><div class="cta accent" data-safe-check><span data-slot="cta">{{cta}}</span></div></div>
+</div></div>
+<script>
+(function(){
+  var cv=document.querySelector('.canvas'); if(!cv) return;
+  var cs=getComputedStyle(cv);
+  function g(k){return cs.getPropertyValue('--'+k).trim();}
+  var p=document.createElement('i'); p.style.display='none'; document.body.appendChild(p);
+  function rgb(c){p.style.color='';p.style.color=c;var m=getComputedStyle(p).color.match(/[\d.]+/g);return m?m.slice(0,3).map(Number):[128,128,128];}
+  function L(c){var a=rgb(c).map(function(x){x/=255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);});return .2126*a[0]+.7152*a[1]+.0722*a[2];}
+  function C(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+  var ink=g('ink'), paper=g('paper');
+  function best(c){return C(c,ink)>=C(c,paper)?ink:paper;}
+  var bg=g('bg'), fg=g('fg');
+  if(C(fg,bg)<4.5){ fg=best(bg); cv.style.setProperty('--fg',fg); }
+  ['accent','accent2'].forEach(function(k){ var c=g(k);
+    cv.style.setProperty('--on-'+k,best(c));
+    cv.style.setProperty('--'+k+'-ink', C(c,bg)>=3?c:fg); });
+  cv.setAttribute('data-tone', L(bg)<0.18?'dark':'light');
+  p.remove();
+})();
+</script>
+<script>
+document.querySelectorAll('[data-slot]').forEach(function(el){
+  if (el.tagName==='IMG' || el.children.length || el.hasAttribute('data-nowidow')) return;
+  var t=el.textContent; if(!t.trim()) { el.textContent=''; return; }
+  var esc=function(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  var h=esc(t.trim()).replace(/(\S+-\S+)/g,'<span class="nw">$1</span>');
+  var w=t.trim().split(/\s+/); if (w.length>3 && (w[w.length-1]+w[w.length-2]).length<=13) h=h.replace(/\s+(\S+)\s*$/,'&nbsp;$1');
+  el.innerHTML=h;
+});
+</script>
+</body></html>

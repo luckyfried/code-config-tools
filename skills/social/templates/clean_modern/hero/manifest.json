@@ -1,0 +1,33 @@
+{
+  "family": "clean_modern",
+  "layout": "hero",
+  "label": "Clean modern",
+  "for": "e-commerce, launches, B2B, coaches",
+  "slots": [
+    "headline",
+    "sub",
+    "cta",
+    "image",
+    "focal"
+  ],
+  "max_chars": {
+    "headline": 60,
+    "sub": 110
+  },
+  "defaults": {
+    "headline": "The taste of something real.",
+    "sub": "Made fresh, every single day.",
+    "cta": "Learn more",
+    "focal": "center",
+    "image": "../../_shared/placeholder/clean_modern.svg"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+  ]
+}

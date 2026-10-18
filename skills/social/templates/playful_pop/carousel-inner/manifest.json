@@ -1,0 +1,29 @@
+{
+  "family": "playful_pop",
+  "layout": "carousel-inner",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "step",
+    "headline",
+    "body"
+  ],
+  "max_chars": {
+    "step": 3,
+    "headline": 56,
+    "body": 180
+  },
+  "defaults": {
+    "step": "01",
+    "headline": "Lesson one",
+    "body": "Start with the fundamentals before anything else."
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+  ]
+}

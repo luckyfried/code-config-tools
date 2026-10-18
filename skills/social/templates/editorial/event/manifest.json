@@ -1,0 +1,32 @@
+{
+  "family": "editorial",
+  "layout": "event",
+  "label": "Editorial",
+  "for": "cafes, studios, real estate, photographers",
+  "slots": [
+    "headline",
+    "date",
+    "location",
+    "cta",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 60,
+    "location": 70
+  },
+  "defaults": {
+    "headline": "Grand opening",
+    "date": "Sat Oct 24 · 10am",
+    "location": "123 Main St",
+    "cta": "Save your spot",
+    "image": "../../_shared/placeholder/editorial.svg"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post"
+  ]
+}

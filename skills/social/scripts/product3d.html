@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Free, local 3D product render: three.js (MIT, loaded from jsDelivr) in headless Chromium.
+     Copy into build/, replace PROFILE/PARTS with the product's silhouette, then render:
+       chromium --headless --no-sandbox --use-angle=swiftshader --enable-unsafe-swiftshader \
+         --hide-scrollbars --window-size=W,H --virtual-time-budget=15000 \
+         [--default-background-color=00000000] --screenshot=build/product-lit.png \
+         "file://$PWD/build/product3d.html?w=W&h=H&state=lit&bg=transparent"
+     Query params: w, h, state=lit|unlit, bg=transparent|#hex, cam=x,y,z, zoom (fov, default 30). -->
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:transparent;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head><body><script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const q = new URLSearchParams(location.search);
+const W = +q.get('w') || 1080, H = +q.get('h') || 1080, LIT = (q.get('state') || 'lit') === 'lit';
+const BG = q.get('bg') || '#f3efe8';
+const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+r.setPixelRatio(1); r.setSize(W, H);
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+r.toneMapping = THREE.ACESFilmicToneMapping; r.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(r.domElement);
+const s = new THREE.Scene();
+if (BG !== 'transparent') s.background = new THREE.Color(BG);
+s.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture;
+const cam = new THREE.PerspectiveCamera(+q.get('zoom') || 30, W / H, 0.1, 100);
+cam.position.set(...(q.get('cam') || '3.2,2.4,4.2').split(',').map(Number)); cam.lookAt(0, 0.75, 0);
+
+// ---- PRODUCT: edit here. Lathe profiles are [radius, height] points, bottom to top. ----
+const lathe = (pts, seg = 128) => new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(...p)), seg);
+const MAT = {
+  body:  new THREE.MeshPhysicalMaterial({ color: '#1f3b33', roughness: 0.45, clearcoat: 0.6, side: THREE.DoubleSide }),
+  metal: new THREE.MeshPhysicalMaterial({ color: '#b8893b', metalness: 1, roughness: 0.28 }),
+  diffuser: new THREE.MeshPhysicalMaterial({ color: '#fff4e0', roughness: 0.6, transmission: LIT ? 0 : 0.2,
+    emissive: '#ffcf8a', emissiveIntensity: LIT ? 1.6 : 0, side: THREE.DoubleSide }),
+};
+const PARTS = [  // [geometry, material, y]
+  [lathe([[0, 0], [0.55, 0], [0.6, 0.04], [0.5, 0.12], [0.12, 0.16], [0, 0.16]], 96), MAT.body, 0],
+  [new THREE.CylinderGeometry(0.035, 0.035, 0.9, 32), MAT.metal, 0.6],
+  [lathe([[0.2, 0], [0.62, 0.02], [0.66, 0.05], [0.4, 0.42], [0.12, 0.5], [0, 0.52]]), MAT.body, 1.0],
+  [lathe([[0, 0], [0.6, 0], [0.6, 0.012], [0, 0.012]]), MAT.diffuser, 1.0],   // underside diffuser disc
+];
+// ---------------------------------------------------------------------------------------
+for (const [g, m, y] of PARTS) { const o = new THREE.Mesh(g, m); o.position.y = y; o.castShadow = o.receiveShadow = true; s.add(o); }
+if (LIT) { const glow = new THREE.PointLight('#ffcf8a', 6, 5, 1.4); glow.position.set(0, 0.85, 0); s.add(glow); }
+const key = new THREE.DirectionalLight('#ffffff', LIT ? 1.4 : 2.2); key.position.set(3, 6, 2);
+key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; s.add(key);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.22 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; s.add(floor);
+r.render(s, cam); document.title = 'rendered';
+</script></body></html>

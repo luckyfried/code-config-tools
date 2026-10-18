@@ -1,0 +1,28 @@
+{
+  "family": "quiet_luxury",
+  "layout": "story",
+  "label": "Quiet luxury",
+  "for": "salons, weddings, premium products",
+  "slots": [
+    "headline",
+    "sub",
+    "cta",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "sub": 90
+  },
+  "defaults": {
+    "headline": "Taco Tuesday is back",
+    "sub": "Every Tuesday, all day.",
+    "cta": "See the menu",
+    "image": "../../_shared/placeholder/quiet_luxury.svg"
+  },
+  "formats": [
+    "ig_story",
+    "tiktok_cover",
+    "ig_feed_portrait",
+    "ig_feed_square"
+  ]
+}

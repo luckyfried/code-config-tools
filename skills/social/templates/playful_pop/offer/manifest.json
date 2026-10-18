@@ -1,0 +1,35 @@
+{
+  "family": "playful_pop",
+  "layout": "offer",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "tag",
+    "headline",
+    "price",
+    "terms",
+    "cta"
+  ],
+  "max_chars": {
+    "tag": 24,
+    "headline": 44,
+    "price": 9,
+    "terms": 90,
+    "cta": 22
+  },
+  "defaults": {
+    "tag": "This week only",
+    "headline": "Double scoop deal",
+    "price": "$5",
+    "terms": "Any two flavours in a cup or cone. While it lasts.",
+    "cta": "Come say hi"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+  ]
+}

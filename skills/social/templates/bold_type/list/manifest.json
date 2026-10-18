@@ -1,0 +1,36 @@
+{
+  "family": "bold_type",
+  "layout": "list",
+  "label": "Bold type",
+  "for": "gyms, restaurants, promos, events",
+  "slots": [
+    "headline",
+    "tip1",
+    "tip2",
+    "tip3",
+    "tip4"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "tip1": 70,
+    "tip2": 70,
+    "tip3": 70,
+    "tip4": 70
+  },
+  "defaults": {
+    "headline": "4 tips to get started",
+    "tip1": "Start small.",
+    "tip2": "Stay consistent.",
+    "tip3": "Ask for feedback.",
+    "tip4": "Celebrate progress."
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+  ]
+}

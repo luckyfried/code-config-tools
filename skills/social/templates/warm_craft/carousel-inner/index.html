@@ -1,0 +1,133 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family:'Fraunces'; src:url('../../../fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Work Sans'; src:url('../../../fonts/WorkSans/WorkSans[wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Caveat'; src:url('../../../fonts/Caveat/Caveat[wght].ttf'); font-weight:400 700; }
+/* Warm craft: textured paper, soft Fraunces display, Work Sans text, Caveat for the handwritten
+   asides only. Photos are prints on the page (taped) or sit behind a torn-paper panel.
+   One hand-drawn accent per idea; nothing rotated more than 2.5deg. */
+:root, .canvas {
+  --bg:#F2E8D6; --fg:#3A2A1E; --accent:#B4532A; --accent2:#5F6B3A;
+  --ink:#33241A; --paper:#F7EFE1;
+  --font-display:'Fraunces'; --font-body:'Work Sans';
+  /*{brand_css}*/
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+body { container-type:size; container-name:page; }
+.canvas { position:relative; width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--fg);
+  font-family:var(--font-body), 'Work Sans', system-ui, sans-serif; -webkit-font-smoothing:antialiased;
+  --M:6.6cqmin;
+  --muted:color-mix(in srgb, var(--fg) 76%, var(--bg));
+  --rule:color-mix(in srgb, var(--fg) 34%, var(--bg));
+  --card:color-mix(in srgb, var(--fg) 6%, var(--bg));
+  --print:#FBF7EE;
+  --note:color-mix(in srgb, var(--bg) 45%, #FFFDF7);
+  --shadow:0 0.25cqmin 0.5cqmin rgba(46,28,12,.22), 0 1.6cqmin 3.2cqmin -0.6cqmin rgba(46,28,12,.30);
+  --stitch:color-mix(in srgb, var(--accent-ink, var(--accent)) 70%, var(--bg)); }
+.canvas[data-tone=dark] { --note:color-mix(in srgb, var(--fg) 9%, var(--bg)); --shadow:0 0.25cqmin 0.6cqmin rgba(0,0,0,.45), 0 1.8cqmin 3.6cqmin -0.4cqmin rgba(0,0,0,.55);
+  --card:color-mix(in srgb, var(--fg) 8%, var(--bg)); }
+/* paper texture: soft mottling + fine tooth, blended so it reads on light and dark grounds */
+.grain { position:absolute; inset:0; pointer-events:none; z-index:50; mix-blend-mode:multiply; opacity:.55;
+  background-image:
+   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='m'><feTurbulence type='fractalNoise' baseFrequency='0.005 0.009' numOctaves='4' seed='7'/><feColorMatrix values='0 0 0 0 .55  0 0 0 0 .45  0 0 0 0 .33  0 0 0 .5 -.05'/></filter><rect width='100%25' height='100%25' filter='url(%23m)'/></svg>"),
+   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch' seed='3'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .27  0 0 0 0 .18  0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size:600px 600px, 240px 240px; }
+.canvas[data-tone=dark] .grain { mix-blend-mode:screen; opacity:.22; }
+.display { font-family:var(--font-display), 'Fraunces', Georgia, serif; font-weight:600; line-height:1.03;
+  letter-spacing:-0.012em; font-variation-settings:"SOFT" 100, "WONK" 1; text-wrap:balance; color:var(--fg);
+  padding:0.04em 0 0.2em; }
+.body { font-family:var(--font-body), 'Work Sans', sans-serif; font-size:2.8cqmin; line-height:1.42; color:var(--muted);
+  text-wrap:pretty; }
+.hand { font-family:'Caveat', cursive; font-weight:600; color:var(--accent-ink); line-height:1.15; padding:0.05em 0.04em 0.12em 0; }
+.nw { white-space:nowrap; }
+.box { min-height:0; min-width:0; overflow:hidden; }
+[data-autofit] { overflow:hidden; }
+.headline { flex-shrink:0; } /* never let flex squash the autofit target: its overflow would be hidden from the box measure */
+.photo { position:absolute; overflow:hidden; background:var(--card); }
+.photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:var(--focal, 50% 50%); display:block; }
+/* torn paper panel */
+.paper { position:absolute; background:var(--bg); }
+.tear { position:absolute; left:0; width:100%; height:5.2cqmin; bottom:calc(100% - 1px); display:block;
+  filter:drop-shadow(0 -0.3cqmin 0.5cqmin rgba(40,24,10,.28)); }
+.tear .edge { fill:var(--bg); } .tear .fibre { fill:color-mix(in srgb, var(--bg) 45%, #fffaf0); }
+.tear.v { left:auto; top:0; bottom:auto; right:calc(100% - 1px); width:5.2cqmin; height:100%;
+  filter:drop-shadow(-0.3cqmin 0 0.5cqmin rgba(40,24,10,.28)); }
+.tear.v { display:none; }
+/* prints + tape */
+.print { position:absolute; background:var(--print); padding:1.5cqmin; box-shadow:var(--shadow); }
+.print .photo { position:relative; width:100%; height:100%; }
+.tape { position:absolute; width:15cqmin; height:4.4cqmin; z-index:3;
+  background:linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 40%), rgba(212,193,152,.84);
+  clip-path:polygon(0 8%,4% 0,8% 10%,13% 2%,100% 0,96% 14%,100% 30%,97% 48%,100% 66%,96% 84%,100% 100%,9% 100%,5% 90%,0 100%,3% 76%,0 58%,4% 40%,0 24%);
+  box-shadow:0 0 0 1px rgba(120,96,60,.08) inset; }
+.swash { display:block; width:30cqmin; height:2.3cqmin; color:var(--accent-ink); flex:0 0 auto; }
+.arrow { display:inline-block; width:6.6cqmin; height:2.5cqmin; color:var(--accent-ink); flex:0 0 auto; }
+.star { display:block; width:4.6cqmin; height:4.6cqmin; color:var(--accent-ink); flex:0 0 auto; }
+.ctarow { display:flex; align-items:center; gap:1.6cqmin; }
+.ctarow:has(> .cta:empty) { display:none; }
+.cta { font-size:4.6cqmin; white-space:nowrap; }
+.sub:empty, .body:empty { display:none; }
+.stitch { border:0; height:0.34cqmin; background:repeating-linear-gradient(90deg, var(--stitch) 0 1.6cqmin, transparent 1.6cqmin 2.6cqmin); }
+.stitchbox { position:absolute; inset:2.4cqmin; width:calc(100% - 4.8cqmin); height:calc(100% - 4.8cqmin); overflow:visible; pointer-events:none; color:var(--stitch); }
+
+.swipe { position:absolute; right:var(--M); bottom:calc(var(--M) - 1cqmin); display:flex; align-items:center; gap:1.4cqmin; z-index:5; }
+.swipe .hand { font-size:4.4cqmin; }
+@container page (aspect-ratio < 0.7) { .swipe { bottom:calc(320px + 1cqmin); } }
+
+.carousel-inner .page { position:absolute; left:var(--M); right:var(--M); top:var(--M); bottom:calc(var(--M) + 9cqmin); display:flex; flex-direction:column; }
+.carousel-inner .star { width:6cqmin; height:6cqmin; margin-bottom:4cqmin; }
+.carousel-inner .hbox { flex:0 1 auto; max-height:40%; }
+.carousel-inner .headline { font-size:9cqmin; }
+.carousel-inner .swash { margin:1.8cqmin 0 0 -0.4cqmin; }
+.carousel-inner .bbox { flex:1 1 auto; margin-top:5cqmin; }
+.carousel-inner .copy { font-family:var(--font-display), 'Fraunces', serif; font-weight:380; font-variation-settings:"SOFT" 100, "WONK" 0;
+  font-size:4.7cqmin; line-height:1.42; color:var(--fg); text-wrap:pretty; max-width:94%; }
+@container page (aspect-ratio > 0.9) {
+  .carousel-inner .headline { font-size:7.8cqmin; }
+  .carousel-inner .copy { font-size:4cqmin; }
+  .carousel-inner .star { margin-bottom:2.6cqmin; }
+  .carousel-inner .bbox { margin-top:3.6cqmin; }
+}
+@container page (aspect-ratio < 0.7) {
+  .carousel-inner .page { top:calc(250px + 1cqh); bottom:calc(320px + 10cqmin); }
+  .carousel-inner .headline { font-size:10.4cqmin; }
+  .carousel-inner .copy { font-size:5.2cqmin; }
+}
+</style></head><body>
+<div class="canvas carousel-inner"><div class="page">
+<svg class="star" viewBox="0 0 40 40" aria-hidden="true"><path d="M20.5,4 C20,13 19.6,25 20.2,36 M6,11.5 C15,16.5 25,23 34.5,28.5 M34,10.5 C25.5,16 15.5,23.5 5.5,29.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
+<div class="hbox box"><div class="headline display " data-slot="headline" data-safe-check data-autofit data-autofit-min="0.45">{{headline}}</div></div><svg class="swash" viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4,15.5 C46,9.5 98,6.2 162,6.4 C214,6.6 258,7.8 296,5.6 C298,6.9 297.5,8.4 295,9.2 C246,11.6 196,11.4 150,12.4 C102,13.4 52,16.6 8,21.4 C3.8,21.9 1.6,17.2 4,15.5 Z" fill="currentColor"/></svg>
+<div class="bbox box"><div class="copy" data-slot="body" data-safe-check data-autofit data-autofit-min="0.6">{{body}}</div></div>
+</div><div class="swipe"><span class="hand">swipe</span><svg class="arrow" viewBox="0 0 64 24" aria-hidden="true"><path d="M2.5,13.5 C17,11.2 34,12.6 57,10.8 M46.5,3.2 C50.5,6.4 54.5,8.6 58.5,10.6 C54.4,13.2 50.6,16.2 47.4,20.2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="grain"></div></div>
+<script>
+(function(){
+  var cv=document.querySelector('.canvas'); if(!cv) return;
+  var cs=getComputedStyle(cv);
+  function g(k){return cs.getPropertyValue('--'+k).trim();}
+  var p=document.createElement('i'); p.style.display='none'; document.body.appendChild(p);
+  function rgb(c){p.style.color='';p.style.color=c;var m=getComputedStyle(p).color.match(/[\d.]+/g);return m?m.slice(0,3).map(Number):[128,128,128];}
+  function L(c){var a=rgb(c).map(function(x){x/=255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);});return .2126*a[0]+.7152*a[1]+.0722*a[2];}
+  function C(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+  var ink=g('ink'), paper=g('paper');
+  function best(c){return C(c,ink)>=C(c,paper)?ink:paper;}
+  var bg=g('bg'), fg=g('fg');
+  if(C(fg,bg)<4.5){ fg=best(bg); cv.style.setProperty('--fg',fg); }
+  ['accent','accent2'].forEach(function(k){ var c=g(k);
+    cv.style.setProperty('--on-'+k,best(c));
+    cv.style.setProperty('--'+k+'-ink', C(c,bg)>=3?c:fg); });
+  cv.setAttribute('data-tone', L(bg)<0.18?'dark':'light');
+  p.remove();
+})();
+</script>
+<script>
+document.querySelectorAll('[data-slot]').forEach(function(el){
+  if (el.tagName==='IMG' || el.children.length || el.hasAttribute('data-nowidow')) return;
+  var t=el.textContent; if(!t.trim()) { el.textContent=''; return; }
+  var esc=function(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  var h=esc(t.trim()).replace(/(\S+-\S+)/g,'<span class="nw">$1</span>');
+  var w=t.trim().split(/\s+/); if (w.length>3 && (w[w.length-1]+w[w.length-2]).length<=13) h=h.replace(/\s+(\S+)\s*$/,'&nbsp;$1');
+  el.innerHTML=h;
+});
+</script>
+</body></html>

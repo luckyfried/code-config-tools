@@ -1,0 +1,2030 @@
+{
+ "about": "Reference library: examples of excellent posts to STUDY, never to fill in. Find the closest with scripts/library.py find <job>. Borrow the principle (why), not the layout (structure).",
+ "examples": [
+  {
+   "id": "editorial/hero",
+   "family": "editorial",
+   "layout": "hero",
+   "image": "library/editorial-hero.jpg",
+   "html": "templates/editorial/hero/index.html",
+   "job": [
+    "photo-led",
+    "product",
+    "announcement",
+    "new item",
+    "brand intro"
+   ],
+   "photo": "yes",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Large photo block over a headline, a one-line sub and a fact line.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "The picture does the selling; the headline is a short caption. Photo and text zones never overlap, so both stay legible.",
+    "A tight crop on the pour (hands, cup, stream) cuts off the face; the headline is two short lines under the photo with an accent dash above."
+   ]
+  },
+  {
+   "id": "editorial/statement",
+   "family": "editorial",
+   "layout": "statement",
+   "image": "library/editorial-statement.jpg",
+   "html": "templates/editorial/statement/index.html",
+   "job": [
+    "statement",
+    "type-only",
+    "brand voice",
+    "opinion",
+    "announcement"
+   ],
+   "photo": "no",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "x_post"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Headline-only post; a small footer line carries the facts.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "One sentence set big enough that the thumbnail is readable. The rest of the canvas is deliberately empty.",
+    "A long sentence broken into short lines so the rhythm itself is the design; the address note stays tiny."
+   ]
+  },
+  {
+   "id": "editorial/quote",
+   "family": "editorial",
+   "layout": "quote",
+   "image": "library/editorial-quote.jpg",
+   "html": "templates/editorial/quote/index.html",
+   "job": [
+    "quote",
+    "testimonial",
+    "review",
+    "social proof"
+   ],
+   "photo": "no",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Large quote text, a mark, a small attribution at the bottom.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "The quote is the hero; the attribution is one small line at the foot, so the words feel like the customer's, not an ad.",
+    "Italic serif quote with a small accent quote mark; attribution is a single plain sans line at the foot."
+   ]
+  },
+  {
+   "id": "editorial/offer",
+   "family": "editorial",
+   "layout": "offer",
+   "image": "library/editorial-offer.jpg",
+   "html": "templates/editorial/offer/index.html",
+   "job": [
+    "offer",
+    "price",
+    "deal",
+    "promo",
+    "discount",
+    "special"
+   ],
+   "photo": "no",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Kicker, short headline, one oversized price, fine print and a fact line.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "The number is the focal point at 3-6x everything else; the terms appear once, small. Readable as a thumbnail.",
+    "The price is set in the same serif as the headline, in the accent colour, at about four times the headline's size, with a lot of air around it."
+   ]
+  },
+  {
+   "id": "editorial/event",
+   "family": "editorial",
+   "layout": "event",
+   "image": "library/editorial-event.jpg",
+   "html": "templates/editorial/event/index.html",
+   "job": [
+    "event",
+    "date",
+    "workshop",
+    "open house",
+    "class",
+    "launch"
+   ],
+   "photo": "optional",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Photo, event name, then a labelled When / Where / Cost block.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "Information is grouped into scannable labelled rows; date is the second-strongest element after the name.",
+    "A landscape photo on top, then a quiet three-row facts table with tiny grey labels. The date row is darker than the rest."
+   ]
+  },
+  {
+   "id": "editorial/versus",
+   "family": "editorial",
+   "layout": "versus",
+   "image": "library/editorial-versus.jpg",
+   "html": "templates/editorial/versus/index.html",
+   "job": [
+    "versus",
+    "before and after",
+    "comparison",
+    "choice",
+    "poll"
+   ],
+   "photo": "yes",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Two equal images side by side with short labels and a question or title.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "Equal weight, matched crops and one shared baseline make the comparison fair and instantly readable.",
+    "Two portrait crops of the same room, matched heights, tiny italic captions (a, b) rather than big labels."
+   ]
+  },
+  {
+   "id": "editorial/list",
+   "family": "editorial",
+   "layout": "list",
+   "image": "library/editorial-list.jpg",
+   "html": "templates/editorial/list/index.html",
+   "job": [
+    "list",
+    "tips",
+    "steps",
+    "rules",
+    "how-to",
+    "menu",
+    "checklist"
+   ],
+   "photo": "no",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Headline over four numbered rows separated by rules.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "Numbers are the only decoration; rows share one rhythm and left edge so the eye can scan the list in two seconds.",
+    "Italic numerals in the accent colour, rules between rows, ample leading; four items fit without any card or box."
+   ]
+  },
+  {
+   "id": "editorial/carousel-cover",
+   "family": "editorial",
+   "layout": "carousel-cover",
+   "image": "library/editorial-carousel-cover.jpg",
+   "html": "templates/editorial/carousel-cover/index.html",
+   "job": [
+    "carousel",
+    "cover slide",
+    "how-to",
+    "story behind",
+    "series start"
+   ],
+   "photo": "yes",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Photo plus a title and a 'swipe' cue.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "The cover promises a payoff in one line and shows a real picture, so it earns the swipe.",
+    "The photo is a window onto the subject (a view through French doors) rather than a close-up of kit; title is sentence case, left-aligned, two lines."
+   ]
+  },
+  {
+   "id": "editorial/carousel-inner",
+   "family": "editorial",
+   "layout": "carousel-inner",
+   "image": "library/editorial-carousel-inner.jpg",
+   "html": "templates/editorial/carousel-inner/index.html",
+   "job": [
+    "carousel",
+    "inner slide",
+    "explainer",
+    "step"
+   ],
+   "photo": "no",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Step number or kicker, a headline, one short paragraph.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "One idea per slide with the same type scale as the cover, so the series reads as a single object.",
+    "A drop-cap opens the paragraph, so a text-only slide still has a focal point."
+   ]
+  },
+  {
+   "id": "editorial/carousel-cta",
+   "family": "editorial",
+   "layout": "carousel-cta",
+   "image": "library/editorial-carousel-cta.jpg",
+   "html": "templates/editorial/carousel-cta/index.html",
+   "job": [
+    "carousel",
+    "closing slide",
+    "booking",
+    "hours",
+    "call to action",
+    "visit us"
+   ],
+   "photo": "no",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "One large line, then handle and a plain fact line.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "The closing slide asks for one thing, in words, with no button-shaped decoration.",
+    "Almost nothing on the page: one line at optical centre, handle and a quiet fact in the footer. The emptiness signals confidence."
+   ]
+  },
+  {
+   "id": "editorial/story",
+   "family": "editorial",
+   "layout": "story",
+   "image": "library/editorial-story.jpg",
+   "html": "templates/editorial/story/index.html",
+   "job": [
+    "story",
+    "9:16",
+    "back in stock",
+    "announcement",
+    "reel cover"
+   ],
+   "photo": "yes",
+   "best_for": "caf\u00e9s, studios, real estate, photographers, weddings",
+   "formats": [
+    "ig_story",
+    "tiktok_cover",
+    "ig_feed_portrait",
+    "ig_feed_square"
+   ],
+   "look": "Playfair Display serif over Inter, one deep-green accent on warm off-white; photo-led, hairline rules.",
+   "structure": "Full-bleed photo with a small headline block in the safe band.",
+   "why": [
+    "One serif at two sizes plus a tiny sans for facts; the whitespace is the luxury. Text hangs on a single left edge and thin rules separate fact rows instead of boxes.",
+    "Type sits in the middle band clear of the Story UI; the photo fills the screen and the block is small enough to leave it breathing.",
+    "A panel of off-white sits over a photo, offsetting text from a busy subject; the panel is small and the photo bleeds."
+   ]
+  },
+  {
+   "id": "bold_type/hero",
+   "family": "bold_type",
+   "layout": "hero",
+   "image": "library/bold_type-hero.jpg",
+   "html": "templates/bold_type/hero/index.html",
+   "job": [
+    "photo-led",
+    "product",
+    "announcement",
+    "new item",
+    "brand intro"
+   ],
+   "photo": "yes",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Large photo block over a headline, a one-line sub and a fact line.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "The picture does the selling; the headline is a short caption. Photo and text zones never overlap, so both stay legible.",
+    "The photo is cropped tight on the food with the headline in a solid green block below; the yellow background of the plate gives a colour link."
+   ]
+  },
+  {
+   "id": "bold_type/statement",
+   "family": "bold_type",
+   "layout": "statement",
+   "image": "library/bold_type-statement.jpg",
+   "html": "templates/bold_type/statement/index.html",
+   "job": [
+    "statement",
+    "type-only",
+    "brand voice",
+    "opinion",
+    "announcement"
+   ],
+   "photo": "no",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Headline-only post; a small footer line carries the facts.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "One sentence set big enough that the thumbnail is readable. The rest of the canvas is deliberately empty.",
+    "Three short sentences stacked in all caps on black, one lime dash above; the paragraph underneath is deliberately small."
+   ]
+  },
+  {
+   "id": "bold_type/quote",
+   "family": "bold_type",
+   "layout": "quote",
+   "image": "library/bold_type-quote.jpg",
+   "html": "templates/bold_type/quote/index.html",
+   "job": [
+    "quote",
+    "testimonial",
+    "review",
+    "social proof"
+   ],
+   "photo": "no",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Large quote text, a mark, a small attribution at the bottom.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "The quote is the hero; the attribution is one small line at the foot, so the words feel like the customer's, not an ad.",
+    "The quote is set as a poster, with a yellow quote mark and attribution in tiny caps; four-to-six lines of heavy condensed type."
+   ]
+  },
+  {
+   "id": "bold_type/offer",
+   "family": "bold_type",
+   "layout": "offer",
+   "image": "library/bold_type-offer.jpg",
+   "html": "templates/bold_type/offer/index.html",
+   "job": [
+    "offer",
+    "price",
+    "deal",
+    "promo",
+    "discount",
+    "special"
+   ],
+   "photo": "no",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Kicker, short headline, one oversized price, fine print and a fact line.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "The number is the focal point at 3-6x everything else; the terms appear once, small. Readable as a thumbnail.",
+    "A $2 at roughly 90% of canvas width in orange on green; headline and terms are an afterthought in size terms, which is the point."
+   ]
+  },
+  {
+   "id": "bold_type/event",
+   "family": "bold_type",
+   "layout": "event",
+   "image": "library/bold_type-event.jpg",
+   "html": "templates/bold_type/event/index.html",
+   "job": [
+    "event",
+    "date",
+    "workshop",
+    "open house",
+    "class",
+    "launch"
+   ],
+   "photo": "optional",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Photo, event name, then a labelled When / Where / Cost block.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "Information is grouped into scannable labelled rows; date is the second-strongest element after the name.",
+    "Photo above a black base; the date lives in a neon-lime strip, the one use of that colour."
+   ]
+  },
+  {
+   "id": "bold_type/versus",
+   "family": "bold_type",
+   "layout": "versus",
+   "image": "library/bold_type-versus.jpg",
+   "html": "templates/bold_type/versus/index.html",
+   "job": [
+    "versus",
+    "before and after",
+    "comparison",
+    "choice",
+    "poll"
+   ],
+   "photo": "yes",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Two equal images side by side with short labels and a question or title.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "Equal weight, matched crops and one shared baseline make the comparison fair and instantly readable.",
+    "A red headline band over two photos split by a thin line and a circular 'vs'; each label is a colour tag on its photo."
+   ]
+  },
+  {
+   "id": "bold_type/list",
+   "family": "bold_type",
+   "layout": "list",
+   "image": "library/bold_type-list.jpg",
+   "html": "templates/bold_type/list/index.html",
+   "job": [
+    "list",
+    "tips",
+    "steps",
+    "rules",
+    "how-to",
+    "menu",
+    "checklist"
+   ],
+   "photo": "no",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Headline over four numbered rows separated by rules.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "Numbers are the only decoration; rows share one rhythm and left edge so the eye can scan the list in two seconds.",
+    "Neon-lime numerals against white text on black; headline starts with the count ('4 RULES') which makes the promise instantly clear."
+   ]
+  },
+  {
+   "id": "bold_type/carousel-cover",
+   "family": "bold_type",
+   "layout": "carousel-cover",
+   "image": "library/bold_type-carousel-cover.jpg",
+   "html": "templates/bold_type/carousel-cover/index.html",
+   "job": [
+    "carousel",
+    "cover slide",
+    "how-to",
+    "story behind",
+    "series start"
+   ],
+   "photo": "yes",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Photo plus a title and a 'swipe' cue.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "The cover promises a payoff in one line and shows a real picture, so it earns the swipe.",
+    "Headline sits in solid colour bars laid over the photo, so type stays legible on a busy burger without a gradient scrim."
+   ]
+  },
+  {
+   "id": "bold_type/carousel-inner",
+   "family": "bold_type",
+   "layout": "carousel-inner",
+   "image": "library/bold_type-carousel-inner.jpg",
+   "html": "templates/bold_type/carousel-inner/index.html",
+   "job": [
+    "carousel",
+    "inner slide",
+    "explainer",
+    "step"
+   ],
+   "photo": "no",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Step number or kicker, a headline, one short paragraph.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "One idea per slide with the same type scale as the cover, so the series reads as a single object.",
+    "A huge outlined step number in yellow on red is the focal point; the paragraph is small and quiet."
+   ]
+  },
+  {
+   "id": "bold_type/carousel-cta",
+   "family": "bold_type",
+   "layout": "carousel-cta",
+   "image": "library/bold_type-carousel-cta.jpg",
+   "html": "templates/bold_type/carousel-cta/index.html",
+   "job": [
+    "carousel",
+    "closing slide",
+    "booking",
+    "hours",
+    "call to action",
+    "visit us"
+   ],
+   "photo": "no",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "One large line, then handle and a plain fact line.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "The closing slide asks for one thing, in words, with no button-shaped decoration.",
+    "Type fills the canvas on a flat yellow; the red dash and the footer rule are the only other marks."
+   ]
+  },
+  {
+   "id": "bold_type/story",
+   "family": "bold_type",
+   "layout": "story",
+   "image": "library/bold_type-story.jpg",
+   "html": "templates/bold_type/story/index.html",
+   "job": [
+    "story",
+    "9:16",
+    "back in stock",
+    "announcement",
+    "reel cover"
+   ],
+   "photo": "yes",
+   "best_for": "restaurants, gyms, promos, events, sales",
+   "formats": [
+    "ig_story",
+    "ig_feed_portrait",
+    "ig_feed_square"
+   ],
+   "look": "Extra-condensed black caps (Archivo wdth 62) on flat red, yellow, green or black; neon-lime or yellow as the one highlight.",
+   "structure": "Full-bleed photo with a small headline block in the safe band.",
+   "why": [
+    "Scale contrast does all the work: a huge headline against tiny uppercase meta. Flat colour blocks, no gradients, and one highlight colour reserved for the number or date.",
+    "Type sits in the middle band clear of the Story UI; the photo fills the screen and the block is small enough to leave it breathing.",
+    "The headline in a bar block in the lower-middle of a full-bleed photo; the sub and fact line are small and clear of the Story UI."
+   ]
+  },
+  {
+   "id": "warm_craft/hero",
+   "family": "warm_craft",
+   "layout": "hero",
+   "image": "library/warm_craft-hero.jpg",
+   "html": "templates/warm_craft/hero/index.html",
+   "job": [
+    "photo-led",
+    "product",
+    "announcement",
+    "new item",
+    "brand intro"
+   ],
+   "photo": "yes",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Large photo block over a headline, a one-line sub and a fact line.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "The picture does the selling; the headline is a short caption. Photo and text zones never overlap, so both stay legible.",
+    "The loaf is cropped so the crumb fills the frame, with a torn edge between photo and paper; the headline is short and set in two lines."
+   ]
+  },
+  {
+   "id": "warm_craft/statement",
+   "family": "warm_craft",
+   "layout": "statement",
+   "image": "library/warm_craft-statement.jpg",
+   "html": "templates/warm_craft/statement/index.html",
+   "job": [
+    "statement",
+    "type-only",
+    "brand voice",
+    "opinion",
+    "announcement"
+   ],
+   "photo": "no",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Headline-only post; a small footer line carries the facts.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "One sentence set big enough that the thumbnail is readable. The rest of the canvas is deliberately empty.",
+    "A single bold serif sentence with a hand-drawn underline; small footnote at the bottom."
+   ]
+  },
+  {
+   "id": "warm_craft/quote",
+   "family": "warm_craft",
+   "layout": "quote",
+   "image": "library/warm_craft-quote.jpg",
+   "html": "templates/warm_craft/quote/index.html",
+   "job": [
+    "quote",
+    "testimonial",
+    "review",
+    "social proof"
+   ],
+   "photo": "no",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Large quote text, a mark, a small attribution at the bottom.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "The quote is the hero; the attribution is one small line at the foot, so the words feel like the customer's, not an ad.",
+    "The quote lives on a taped paper card with a dashed border, as though pinned to a board; the name is a handwritten signature."
+   ]
+  },
+  {
+   "id": "warm_craft/offer",
+   "family": "warm_craft",
+   "layout": "offer",
+   "image": "library/warm_craft-offer.jpg",
+   "html": "templates/warm_craft/offer/index.html",
+   "job": [
+    "offer",
+    "price",
+    "deal",
+    "promo",
+    "discount",
+    "special"
+   ],
+   "photo": "no",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Kicker, short headline, one oversized price, fine print and a fact line.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "The number is the focal point at 3-6x everything else; the terms appear once, small. Readable as a thumbnail.",
+    "The price sits inside a hand-drawn ellipse, the only ornament on the page; a script kicker reads like a note."
+   ]
+  },
+  {
+   "id": "warm_craft/event",
+   "family": "warm_craft",
+   "layout": "event",
+   "image": "library/warm_craft-event.jpg",
+   "html": "templates/warm_craft/event/index.html",
+   "job": [
+    "event",
+    "date",
+    "workshop",
+    "open house",
+    "class",
+    "launch"
+   ],
+   "photo": "optional",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Photo, event name, then a labelled When / Where / Cost block.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "Information is grouped into scannable labelled rows; date is the second-strongest element after the name.",
+    "A taped print holds the photo, a dashed rule divides the headline from facts, and the date is bold in the accent colour."
+   ]
+  },
+  {
+   "id": "warm_craft/versus",
+   "family": "warm_craft",
+   "layout": "versus",
+   "image": "library/warm_craft-versus.jpg",
+   "html": "templates/warm_craft/versus/index.html",
+   "job": [
+    "versus",
+    "before and after",
+    "comparison",
+    "choice",
+    "poll"
+   ],
+   "photo": "yes",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Two equal images side by side with short labels and a question or title.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "Equal weight, matched crops and one shared baseline make the comparison fair and instantly readable.",
+    "Two taped polaroid-style prints, slightly rotated, with handwritten captions ('Monday, on the wheel')."
+   ]
+  },
+  {
+   "id": "warm_craft/list",
+   "family": "warm_craft",
+   "layout": "list",
+   "image": "library/warm_craft-list.jpg",
+   "html": "templates/warm_craft/list/index.html",
+   "job": [
+    "list",
+    "tips",
+    "steps",
+    "rules",
+    "how-to",
+    "menu",
+    "checklist"
+   ],
+   "photo": "no",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Headline over four numbered rows separated by rules.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "Numbers are the only decoration; rows share one rhythm and left edge so the eye can scan the list in two seconds.",
+    "Hand-drawn circled numerals and dashed rules; four steps, each one line or two."
+   ]
+  },
+  {
+   "id": "warm_craft/carousel-cover",
+   "family": "warm_craft",
+   "layout": "carousel-cover",
+   "image": "library/warm_craft-carousel-cover.jpg",
+   "html": "templates/warm_craft/carousel-cover/index.html",
+   "job": [
+    "carousel",
+    "cover slide",
+    "how-to",
+    "story behind",
+    "series start"
+   ],
+   "photo": "yes",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Photo plus a title and a 'swipe' cue.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "The cover promises a payoff in one line and shows a real picture, so it earns the swipe.",
+    "The photo ends in a torn paper edge that the paper background continues; the hand-drawn underline appears under the headline only."
+   ]
+  },
+  {
+   "id": "warm_craft/carousel-inner",
+   "family": "warm_craft",
+   "layout": "carousel-inner",
+   "image": "library/warm_craft-carousel-inner.jpg",
+   "html": "templates/warm_craft/carousel-inner/index.html",
+   "job": [
+    "carousel",
+    "inner slide",
+    "explainer",
+    "step"
+   ],
+   "photo": "no",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Step number or kicker, a headline, one short paragraph.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "One idea per slide with the same type scale as the cover, so the series reads as a single object.",
+    "A short serif headline over an underline stroke and a left-aligned paragraph; same type scale as the cover."
+   ]
+  },
+  {
+   "id": "warm_craft/carousel-cta",
+   "family": "warm_craft",
+   "layout": "carousel-cta",
+   "image": "library/warm_craft-carousel-cta.jpg",
+   "html": "templates/warm_craft/carousel-cta/index.html",
+   "job": [
+    "carousel",
+    "closing slide",
+    "booking",
+    "hours",
+    "call to action",
+    "visit us"
+   ],
+   "photo": "no",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "One large line, then handle and a plain fact line.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "The closing slide asks for one thing, in words, with no button-shaped decoration.",
+    "Solid rust slide with a single serif question and a tiny asterisk; the fact line is plain text with an arrow, not a button."
+   ]
+  },
+  {
+   "id": "warm_craft/story",
+   "family": "warm_craft",
+   "layout": "story",
+   "image": "library/warm_craft-story.jpg",
+   "html": "templates/warm_craft/story/index.html",
+   "job": [
+    "story",
+    "9:16",
+    "back in stock",
+    "announcement",
+    "reel cover"
+   ],
+   "photo": "yes",
+   "best_for": "bakeries, Etsy shops, makers, nonprofits, markets",
+   "formats": [
+    "ig_story",
+    "tiktok_cover"
+   ],
+   "look": "Fraunces serif on a paper texture, rust accent, hand-drawn underline and asterisk, taped prints, torn photo edges, Caveat notes.",
+   "structure": "Full-bleed photo with a small headline block in the safe band.",
+   "why": [
+    "Handmade marks are rare and consistent (one underline style, one asterisk), so the warmth reads as a system, not decoration. Photos get a physical edge (tape, torn paper) instead of a frame.",
+    "Type sits in the middle band clear of the Story UI; the photo fills the screen and the block is small enough to leave it breathing.",
+    "Photo on the top half with a torn edge, text block on paper below; the layout leaves the bottom band empty for the Story UI."
+   ]
+  },
+  {
+   "id": "clean_modern/hero",
+   "family": "clean_modern",
+   "layout": "hero",
+   "image": "library/clean_modern-hero.jpg",
+   "html": "templates/clean_modern/hero/index.html",
+   "job": [
+    "photo-led",
+    "product",
+    "announcement",
+    "new item",
+    "brand intro"
+   ],
+   "photo": "yes",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Large photo block over a headline, a one-line sub and a fact line.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "The picture does the selling; the headline is a short caption. Photo and text zones never overlap, so both stay legible.",
+    "The product occupies a pale window, with the headline sentence-case, one line, a tiny fact line and a mono cta label (printed, not a button)."
+   ]
+  },
+  {
+   "id": "clean_modern/statement",
+   "family": "clean_modern",
+   "layout": "statement",
+   "image": "library/clean_modern-statement.jpg",
+   "html": "templates/clean_modern/statement/index.html",
+   "job": [
+    "statement",
+    "type-only",
+    "brand voice",
+    "opinion",
+    "announcement"
+   ],
+   "photo": "no",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Headline-only post; a small footer line carries the facts.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "One sentence set big enough that the thumbnail is readable. The rest of the canvas is deliberately empty.",
+    "A four-line opinion in heavy Inter at the top, a two-line support paragraph pushed to the right half on the grid."
+   ]
+  },
+  {
+   "id": "clean_modern/quote",
+   "family": "clean_modern",
+   "layout": "quote",
+   "image": "library/clean_modern-quote.jpg",
+   "html": "templates/clean_modern/quote/index.html",
+   "job": [
+    "quote",
+    "testimonial",
+    "review",
+    "social proof"
+   ],
+   "photo": "no",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Large quote text, a mark, a small attribution at the bottom.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "The quote is the hero; the attribution is one small line at the foot, so the words feel like the customer's, not an ad.",
+    "A result number inside the quote (18% to 31%) is the hook; a small avatar-initials mark and plain attribution."
+   ]
+  },
+  {
+   "id": "clean_modern/offer",
+   "family": "clean_modern",
+   "layout": "offer",
+   "image": "library/clean_modern-offer.jpg",
+   "html": "templates/clean_modern/offer/index.html",
+   "job": [
+    "offer",
+    "price",
+    "deal",
+    "promo",
+    "discount",
+    "special"
+   ],
+   "photo": "no",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Kicker, short headline, one oversized price, fine print and a fact line.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "The number is the focal point at 3-6x everything else; the terms appear once, small. Readable as a thumbnail.",
+    "A $129 in cobalt at huge scale, product name small above it, terms and mono label below."
+   ]
+  },
+  {
+   "id": "clean_modern/event",
+   "family": "clean_modern",
+   "layout": "event",
+   "image": "library/clean_modern-event.jpg",
+   "html": "templates/clean_modern/event/index.html",
+   "job": [
+    "event",
+    "date",
+    "workshop",
+    "open house",
+    "class",
+    "launch"
+   ],
+   "photo": "optional",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Photo, event name, then a labelled When / Where / Cost block.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "Information is grouped into scannable labelled rows; date is the second-strongest element after the name.",
+    "A rounded photo window followed by a label/value grid with mono labels; the title is the only large text."
+   ]
+  },
+  {
+   "id": "clean_modern/versus",
+   "family": "clean_modern",
+   "layout": "versus",
+   "image": "library/clean_modern-versus.jpg",
+   "html": "templates/clean_modern/versus/index.html",
+   "job": [
+    "versus",
+    "before and after",
+    "comparison",
+    "choice",
+    "poll"
+   ],
+   "photo": "yes",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Two equal images side by side with short labels and a question or title.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "Equal weight, matched crops and one shared baseline make the comparison fair and instantly readable.",
+    "Two photos with matched crops and mono spec labels (310 g, 245 g) - facts, not adjectives."
+   ]
+  },
+  {
+   "id": "clean_modern/list",
+   "family": "clean_modern",
+   "layout": "list",
+   "image": "library/clean_modern-list.jpg",
+   "html": "templates/clean_modern/list/index.html",
+   "job": [
+    "list",
+    "tips",
+    "steps",
+    "rules",
+    "how-to",
+    "menu",
+    "checklist"
+   ],
+   "photo": "no",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Headline over four numbered rows separated by rules.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "Numbers are the only decoration; rows share one rhythm and left edge so the eye can scan the list in two seconds.",
+    "Mono numerals in cobalt, hairline rules, a headline that states the benefit ('rules that close deals')."
+   ]
+  },
+  {
+   "id": "clean_modern/carousel-cover",
+   "family": "clean_modern",
+   "layout": "carousel-cover",
+   "image": "library/clean_modern-carousel-cover.jpg",
+   "html": "templates/clean_modern/carousel-cover/index.html",
+   "job": [
+    "carousel",
+    "cover slide",
+    "how-to",
+    "story behind",
+    "series start"
+   ],
+   "photo": "yes",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Photo plus a title and a 'swipe' cue.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "The cover promises a payoff in one line and shows a real picture, so it earns the swipe.",
+    "The product sits on a pale window with lots of air; the headline is two short lines and the 'swipe' hint is mono microtype."
+   ]
+  },
+  {
+   "id": "clean_modern/carousel-inner",
+   "family": "clean_modern",
+   "layout": "carousel-inner",
+   "image": "library/clean_modern-carousel-inner.jpg",
+   "html": "templates/clean_modern/carousel-inner/index.html",
+   "job": [
+    "carousel",
+    "inner slide",
+    "explainer",
+    "step"
+   ],
+   "photo": "no",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Step number or kicker, a headline, one short paragraph.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "One idea per slide with the same type scale as the cover, so the series reads as a single object.",
+    "A big number-first headline (40 hours) with one paragraph, left-aligned on the grid."
+   ]
+  },
+  {
+   "id": "clean_modern/carousel-cta",
+   "family": "clean_modern",
+   "layout": "carousel-cta",
+   "image": "library/clean_modern-carousel-cta.jpg",
+   "html": "templates/clean_modern/carousel-cta/index.html",
+   "job": [
+    "carousel",
+    "closing slide",
+    "booking",
+    "hours",
+    "call to action",
+    "visit us"
+   ],
+   "photo": "no",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "One large line, then handle and a plain fact line.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "The closing slide asks for one thing, in words, with no button-shaped decoration.",
+    "A full cobalt slide with white type: the colour change signals the end of the series."
+   ]
+  },
+  {
+   "id": "clean_modern/story",
+   "family": "clean_modern",
+   "layout": "story",
+   "image": "library/clean_modern-story.jpg",
+   "html": "templates/clean_modern/story/index.html",
+   "job": [
+    "story",
+    "9:16",
+    "back in stock",
+    "announcement",
+    "reel cover"
+   ],
+   "photo": "yes",
+   "best_for": "e-commerce, launches, B2B, coaches, apps",
+   "formats": [
+    "ig_story",
+    "tiktok_cover"
+   ],
+   "look": "Inter and JetBrains Mono on near-white with one cobalt accent; 1px rules and a visible grid; product shot in a rounded window.",
+   "structure": "Full-bleed photo with a small headline block in the safe band.",
+   "why": [
+    "A strict grid and a single accent colour used only for the number or the one thing to click. Mono micro-labels carry metadata, so the headline stays the only big thing.",
+    "Type sits in the middle band clear of the Story UI; the photo fills the screen and the block is small enough to leave it breathing.",
+    "A product photo in a rounded window with a short headline and a plain 'tap to shop' mono label; everything left-aligned."
+   ]
+  },
+  {
+   "id": "playful_pop/hero",
+   "family": "playful_pop",
+   "layout": "hero",
+   "image": "library/playful_pop-hero.jpg",
+   "html": "templates/playful_pop/hero/index.html",
+   "job": [
+    "photo-led",
+    "product",
+    "announcement",
+    "new item",
+    "brand intro"
+   ],
+   "photo": "yes",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Large photo block over a headline, a one-line sub and a fact line.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "The picture does the selling; the headline is a short caption. Photo and text zones never overlap, so both stay legible.",
+    "A photo card at a 2-degree tilt with one 'New!' starburst on the corner; headline is the playful line, the fact is on teal tape."
+   ]
+  },
+  {
+   "id": "playful_pop/statement",
+   "family": "playful_pop",
+   "layout": "statement",
+   "image": "library/playful_pop-statement.jpg",
+   "html": "templates/playful_pop/statement/index.html",
+   "job": [
+    "statement",
+    "type-only",
+    "brand voice",
+    "opinion",
+    "announcement"
+   ],
+   "photo": "no",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Headline-only post; a small footer line carries the facts.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "One sentence set big enough that the thumbnail is readable. The rest of the canvas is deliberately empty.",
+    "Big black headline with a coral half-circle bleeding off the corner and a cream card for the sub; one decorative shape only."
+   ]
+  },
+  {
+   "id": "playful_pop/quote",
+   "family": "playful_pop",
+   "layout": "quote",
+   "image": "library/playful_pop-quote.jpg",
+   "html": "templates/playful_pop/quote/index.html",
+   "job": [
+    "quote",
+    "testimonial",
+    "review",
+    "social proof"
+   ],
+   "photo": "no",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Large quote text, a mark, a small attribution at the bottom.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "The quote is the hero; the attribution is one small line at the foot, so the words feel like the customer's, not an ad.",
+    "A big cream card with an ink shadow and a coral quote mark; the attribution has a teal squiggle."
+   ]
+  },
+  {
+   "id": "playful_pop/offer",
+   "family": "playful_pop",
+   "layout": "offer",
+   "image": "library/playful_pop-offer.jpg",
+   "html": "templates/playful_pop/offer/index.html",
+   "job": [
+    "offer",
+    "price",
+    "deal",
+    "promo",
+    "discount",
+    "special"
+   ],
+   "photo": "no",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Kicker, short headline, one oversized price, fine print and a fact line.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "The number is the focal point at 3-6x everything else; the terms appear once, small. Readable as a thumbnail.",
+    "The price sits inside a single coral starburst, the only large shape on the post; the rest is quiet."
+   ]
+  },
+  {
+   "id": "playful_pop/event",
+   "family": "playful_pop",
+   "layout": "event",
+   "image": "library/playful_pop-event.jpg",
+   "html": "templates/playful_pop/event/index.html",
+   "job": [
+    "event",
+    "date",
+    "workshop",
+    "open house",
+    "class",
+    "launch"
+   ],
+   "photo": "optional",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Photo, event name, then a labelled When / Where / Cost block.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "Information is grouped into scannable labelled rows; date is the second-strongest element after the name.",
+    "A tilted photo card with a coral date tag overlapping its corner; the headline and teal 'Free entry' tape sit below."
+   ]
+  },
+  {
+   "id": "playful_pop/versus",
+   "family": "playful_pop",
+   "layout": "versus",
+   "image": "library/playful_pop-versus.jpg",
+   "html": "templates/playful_pop/versus/index.html",
+   "job": [
+    "versus",
+    "before and after",
+    "comparison",
+    "choice",
+    "poll"
+   ],
+   "photo": "yes",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Two equal images side by side with short labels and a question or title.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "Equal weight, matched crops and one shared baseline make the comparison fair and instantly readable.",
+    "Two tilted photo cards with a coral 'vs' starburst between them and bold captions under each."
+   ]
+  },
+  {
+   "id": "playful_pop/list",
+   "family": "playful_pop",
+   "layout": "list",
+   "image": "library/playful_pop-list.jpg",
+   "html": "templates/playful_pop/list/index.html",
+   "job": [
+    "list",
+    "tips",
+    "steps",
+    "rules",
+    "how-to",
+    "menu",
+    "checklist"
+   ],
+   "photo": "no",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Headline over four numbered rows separated by rules.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "Numbers are the only decoration; rows share one rhythm and left edge so the eye can scan the list in two seconds.",
+    "Four cream cards with ink outlines and hard shadows, each with a coloured numeral circle."
+   ]
+  },
+  {
+   "id": "playful_pop/carousel-cover",
+   "family": "playful_pop",
+   "layout": "carousel-cover",
+   "image": "library/playful_pop-carousel-cover.jpg",
+   "html": "templates/playful_pop/carousel-cover/index.html",
+   "job": [
+    "carousel",
+    "cover slide",
+    "how-to",
+    "story behind",
+    "series start"
+   ],
+   "photo": "yes",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Photo plus a title and a 'swipe' cue.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "The cover promises a payoff in one line and shows a real picture, so it earns the swipe.",
+    "The tilted photo card is outlined and shadowed like the text cards, and one coral starburst says 'Swipe!'."
+   ]
+  },
+  {
+   "id": "playful_pop/carousel-inner",
+   "family": "playful_pop",
+   "layout": "carousel-inner",
+   "image": "library/playful_pop-carousel-inner.jpg",
+   "html": "templates/playful_pop/carousel-inner/index.html",
+   "job": [
+    "carousel",
+    "inner slide",
+    "explainer",
+    "step"
+   ],
+   "photo": "no",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Step number or kicker, a headline, one short paragraph.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "One idea per slide with the same type scale as the cover, so the series reads as a single object.",
+    "A numbered coral circle, a squiggle and a cream outlined card hold the paragraph; every object has the same outline and shadow."
+   ]
+  },
+  {
+   "id": "playful_pop/carousel-cta",
+   "family": "playful_pop",
+   "layout": "carousel-cta",
+   "image": "library/playful_pop-carousel-cta.jpg",
+   "html": "templates/playful_pop/carousel-cta/index.html",
+   "job": [
+    "carousel",
+    "closing slide",
+    "booking",
+    "hours",
+    "call to action",
+    "visit us"
+   ],
+   "photo": "no",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "One large line, then handle and a plain fact line.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "The closing slide asks for one thing, in words, with no button-shaped decoration.",
+    "Big Fraunces Black line, a teal squiggle, a coral circle bleeding off the corner and a cream tape strip for the facts."
+   ]
+  },
+  {
+   "id": "playful_pop/story",
+   "family": "playful_pop",
+   "layout": "story",
+   "image": "library/playful_pop-story.jpg",
+   "html": "templates/playful_pop/story/index.html",
+   "job": [
+    "story",
+    "9:16",
+    "back in stock",
+    "announcement",
+    "reel cover"
+   ],
+   "photo": "yes",
+   "best_for": "food trucks, ice cream, kids, casual brands",
+   "formats": [
+    "ig_story",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "fb_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Black on sunflower yellow, ink-outlined cards with hard offset shadows, tilted photo cards, one coral starburst, teal tape.",
+   "structure": "Full-bleed photo with a small headline block in the safe band.",
+   "why": [
+    "The ink outline and hard shadow are applied to every object, which is what makes it feel designed rather than sticker-spammed. One sticker per post, tilts of a few degrees only.",
+    "Type sits in the middle band clear of the Story UI; the photo fills the screen and the block is small enough to leave it breathing.",
+    "A full-bleed photo with a cream label card and one starburst 'Free!'; the type block is rotated by a degree or two."
+   ]
+  },
+  {
+   "id": "quiet_luxury/hero",
+   "family": "quiet_luxury",
+   "layout": "hero",
+   "image": "library/quiet_luxury-hero.jpg",
+   "html": "templates/quiet_luxury/hero/index.html",
+   "job": [
+    "photo-led",
+    "product",
+    "announcement",
+    "new item",
+    "brand intro"
+   ],
+   "photo": "yes",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Large photo block over a headline, a one-line sub and a fact line.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "The picture does the selling; the headline is a short caption. Photo and text zones never overlap, so both stay legible.",
+    "An arch-cropped portrait, centred, with a one-line headline and a tracked caps fact line; everything else is air."
+   ]
+  },
+  {
+   "id": "quiet_luxury/statement",
+   "family": "quiet_luxury",
+   "layout": "statement",
+   "image": "library/quiet_luxury-statement.jpg",
+   "html": "templates/quiet_luxury/statement/index.html",
+   "job": [
+    "statement",
+    "type-only",
+    "brand voice",
+    "opinion",
+    "announcement"
+   ],
+   "photo": "no",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "x_post"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Headline-only post; a small footer line carries the facts.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "One sentence set big enough that the thumbnail is readable. The rest of the canvas is deliberately empty.",
+    "Two short lines, centred, with a tiny paragraph below; nothing else on the page."
+   ]
+  },
+  {
+   "id": "quiet_luxury/quote",
+   "family": "quiet_luxury",
+   "layout": "quote",
+   "image": "library/quiet_luxury-quote.jpg",
+   "html": "templates/quiet_luxury/quote/index.html",
+   "job": [
+    "quote",
+    "testimonial",
+    "review",
+    "social proof"
+   ],
+   "photo": "no",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Large quote text, a mark, a small attribution at the bottom.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "The quote is the hero; the attribution is one small line at the foot, so the words feel like the customer's, not an ad.",
+    "A short centred quote with a small accent mark and a tracked-caps attribution."
+   ]
+  },
+  {
+   "id": "quiet_luxury/offer",
+   "family": "quiet_luxury",
+   "layout": "offer",
+   "image": "library/quiet_luxury-offer.jpg",
+   "html": "templates/quiet_luxury/offer/index.html",
+   "job": [
+    "offer",
+    "price",
+    "deal",
+    "promo",
+    "discount",
+    "special"
+   ],
+   "photo": "no",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Kicker, short headline, one oversized price, fine print and a fact line.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "The number is the focal point at 3-6x everything else; the terms appear once, small. Readable as a thumbnail.",
+    "A $140 in light serif tan is the focal point inside a hairline frame; the description is three tiny lines."
+   ]
+  },
+  {
+   "id": "quiet_luxury/event",
+   "family": "quiet_luxury",
+   "layout": "event",
+   "image": "library/quiet_luxury-event.jpg",
+   "html": "templates/quiet_luxury/event/index.html",
+   "job": [
+    "event",
+    "date",
+    "workshop",
+    "open house",
+    "class",
+    "launch"
+   ],
+   "photo": "optional",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Photo, event name, then a labelled When / Where / Cost block.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "Information is grouped into scannable labelled rows; date is the second-strongest element after the name.",
+    "A wide photo at the top, then centred title, the date in a lighter weight and 'by appointment only' as tracked caps."
+   ]
+  },
+  {
+   "id": "quiet_luxury/versus",
+   "family": "quiet_luxury",
+   "layout": "versus",
+   "image": "library/quiet_luxury-versus.jpg",
+   "html": "templates/quiet_luxury/versus/index.html",
+   "job": [
+    "versus",
+    "before and after",
+    "comparison",
+    "choice",
+    "poll"
+   ],
+   "photo": "yes",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Two equal images side by side with short labels and a question or title.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "Equal weight, matched crops and one shared baseline make the comparison fair and instantly readable.",
+    "Two matched arch crops side by side with tiny tracked-caps labels."
+   ]
+  },
+  {
+   "id": "quiet_luxury/list",
+   "family": "quiet_luxury",
+   "layout": "list",
+   "image": "library/quiet_luxury-list.jpg",
+   "html": "templates/quiet_luxury/list/index.html",
+   "job": [
+    "list",
+    "tips",
+    "steps",
+    "rules",
+    "how-to",
+    "menu",
+    "checklist"
+   ],
+   "photo": "no",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Headline over four numbered rows separated by rules.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "Numbers are the only decoration; rows share one rhythm and left edge so the eye can scan the list in two seconds.",
+    "Roman numerals in the tan accent, centred steps with generous spacing, no boxes."
+   ]
+  },
+  {
+   "id": "quiet_luxury/carousel-cover",
+   "family": "quiet_luxury",
+   "layout": "carousel-cover",
+   "image": "library/quiet_luxury-carousel-cover.jpg",
+   "html": "templates/quiet_luxury/carousel-cover/index.html",
+   "job": [
+    "carousel",
+    "cover slide",
+    "how-to",
+    "story behind",
+    "series start"
+   ],
+   "photo": "yes",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Photo plus a title and a 'swipe' cue.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "The cover promises a payoff in one line and shows a real picture, so it earns the swipe.",
+    "An arch-cropped photo is the single graphic element; title is centred, light weight, with a tiny italic sub."
+   ]
+  },
+  {
+   "id": "quiet_luxury/carousel-inner",
+   "family": "quiet_luxury",
+   "layout": "carousel-inner",
+   "image": "library/quiet_luxury-carousel-inner.jpg",
+   "html": "templates/quiet_luxury/carousel-inner/index.html",
+   "job": [
+    "carousel",
+    "inner slide",
+    "explainer",
+    "step"
+   ],
+   "photo": "no",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Step number or kicker, a headline, one short paragraph.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "One idea per slide with the same type scale as the cover, so the series reads as a single object.",
+    "Centred title with a short rule and a centred paragraph; the frame stays on every slide so the series is one object."
+   ]
+  },
+  {
+   "id": "quiet_luxury/carousel-cta",
+   "family": "quiet_luxury",
+   "layout": "carousel-cta",
+   "image": "library/quiet_luxury-carousel-cta.jpg",
+   "html": "templates/quiet_luxury/carousel-cta/index.html",
+   "job": [
+    "carousel",
+    "closing slide",
+    "booking",
+    "hours",
+    "call to action",
+    "visit us"
+   ],
+   "photo": "no",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "One large line, then handle and a plain fact line.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "The closing slide asks for one thing, in words, with no button-shaped decoration.",
+    "One centred line and a tiny uppercase tracked line under it, inside a hairline frame."
+   ]
+  },
+  {
+   "id": "quiet_luxury/story",
+   "family": "quiet_luxury",
+   "layout": "story",
+   "image": "library/quiet_luxury-story.jpg",
+   "html": "templates/quiet_luxury/story/index.html",
+   "job": [
+    "story",
+    "9:16",
+    "back in stock",
+    "announcement",
+    "reel cover"
+   ],
+   "photo": "yes",
+   "best_for": "salons, spas, weddings, premium goods",
+   "formats": [
+    "ig_story",
+    "tiktok_cover",
+    "ig_feed_portrait",
+    "ig_feed_square"
+   ],
+   "look": "Fraunces Light and Manrope on cream, a hairline frame, centred small type, arch-cropped photos, tan accent.",
+   "structure": "Full-bleed photo with a small headline block in the safe band.",
+   "why": [
+    "Restraint: tiny type, huge margins, a hairline frame, thin weights, and one arch shape repeated. Nothing shouts, so the one price or line carries more.",
+    "Type sits in the middle band clear of the Story UI; the photo fills the screen and the block is small enough to leave it breathing.",
+    "A dark photographic Story with a small left-aligned text block in the lower third and a tracked-caps fact line."
+   ]
+  }
+ ]
+}

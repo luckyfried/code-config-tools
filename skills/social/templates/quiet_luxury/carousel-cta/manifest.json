@@ -1,0 +1,26 @@
+{
+  "family": "quiet_luxury",
+  "layout": "carousel-cta",
+  "label": "Quiet luxury",
+  "for": "salons, weddings, premium products",
+  "slots": [
+    "headline",
+    "cta",
+    "handle"
+  ],
+  "max_chars": {
+    "headline": 60,
+    "cta": 30
+  },
+  "defaults": {
+    "headline": "Ready to try it?",
+    "cta": "Visit us this week",
+    "handle": "@yourbrand"
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+  ]
+}

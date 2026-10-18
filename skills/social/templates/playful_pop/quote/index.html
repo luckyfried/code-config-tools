@@ -1,0 +1,106 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay[wght].ttf'); font-weight:400 900; }
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay-Italic[wght].ttf'); font-style:italic; font-weight:400 900; }
+@font-face { font-family:'Bitter'; src:url('../../../fonts/Bitter/Bitter[wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Archivo Black'; src:url('../../../fonts/ArchivoBlack/ArchivoBlack-Regular.ttf'); font-weight:400 900; }
+@font-face { font-family:'Archivo'; src:url('../../../fonts/Archivo/Archivo[wdth,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Fraunces'; src:url('../../../fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Caveat'; src:url('../../../fonts/Caveat/Caveat[wght].ttf'); font-weight:400 700; }
+@font-face { font-family:'Work Sans'; src:url('../../../fonts/WorkSans/WorkSans[wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Space Grotesk'; src:url('../../../fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf'); font-weight:300 700; }
+@font-face { font-family:'Manrope'; src:url('../../../fonts/Manrope/Manrope[wght].ttf'); font-weight:200 800; }
+@font-face { font-family:'Inter'; src:url('../../../fonts/Inter/Inter[opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'DM Serif Display'; src:url('../../../fonts/DMSerifDisplay/DMSerifDisplay-Regular.ttf'); font-weight:400; }
+@font-face { font-family:'DM Serif Display'; src:url('../../../fonts/DMSerifDisplay/DMSerifDisplay-Italic.ttf'); font-style:italic; font-weight:400; }
+@font-face { font-family:'JetBrains Mono'; src:url('../../../fonts/JetBrainsMono/JetBrainsMono[wght].ttf'); font-weight:100 800; }
+
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+body{container-type:size;container-name:page}
+:root,.canvas{
+  --bg:#FFCB3D; --fg:#1D1612; --accent:#FF5B3A; --accent2:#13A89A;
+  --ink:#1D1612; --paper:#FFF8EC;
+  --on-bg:var(--fg); --on-accent:var(--ink); --on-accent2:var(--ink); --hi:var(--accent);
+  --font-display:'Fraunces'; --font-body:'Manrope';
+  --pad:7cqw; --bw:.5cqw; --sh:1.4cqw; --edge:var(--ink); --r:2.6cqw;
+  /*{brand_css}*/
+}
+.canvas{position:relative;width:100cqw;height:100cqh;overflow:hidden;background:var(--bg);color:var(--fg);
+  font-family:var(--font-body),'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+[data-autofit]{overflow:hidden}
+.hl{font-family:var(--font-display),'Fraunces',serif;font-weight:800;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144;
+  line-height:.95;letter-spacing:-.022em;text-wrap:balance;padding:.05em 0 .14em;overflow-wrap:normal}
+.sub{font-family:var(--font-body),'Manrope',sans-serif;font-weight:600;font-size:3.35cqw;line-height:1.32;text-wrap:pretty}
+.sub:empty,.cta:empty,.sticker-t:empty{display:none}
+/* CTA = a strip of printed tape slapped on the page: torn zigzag ends, a tilt, no outline/shadow/arrow.
+   Organic posts get no fake buttons, so nothing here may look tappable. */
+.tape{display:inline-block;align-self:flex-start;background-color:var(--accent2);color:var(--on-accent2);
+  background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 42%,rgba(0,0,0,.06));
+  padding:.5em 1.15em .52em;font-family:var(--font-display),'Fraunces',serif;font-weight:800;font-variation-settings:"SOFT" 100,"opsz" 144;
+  font-size:3.4cqw;line-height:1.1;letter-spacing:-.005em;white-space:nowrap;transform:rotate(-2.5deg);
+  clip-path:polygon(0 0,100% 0,calc(100% - .3em) 14%,100% 28%,calc(100% - .3em) 42%,100% 57%,calc(100% - .3em) 71%,100% 85%,calc(100% - .3em) 100%,
+    0 100%,.3em 86%,0 72%,.3em 57%,0 43%,.3em 29%,0 15%)}
+.card{background:var(--paper);color:var(--ink);border:var(--bw) solid var(--edge);border-radius:var(--r);box-shadow:var(--sh) var(--sh) 0 var(--edge)}
+.photo{position:relative;background:var(--paper);padding:1.5cqw;border:var(--bw) solid var(--edge);border-radius:var(--r);
+  box-shadow:var(--sh) var(--sh) 0 var(--edge)}
+.ph{position:relative;width:100%;height:100%;overflow:hidden;border-radius:calc(var(--r) - 1.2cqw);
+  background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--accent2) 30%,var(--paper)) 0 2cqw,var(--paper) 2cqw 4cqw)}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focal,center)}
+.ph img[src=""]{display:none}
+.burst{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(.8cqw .8cqw 0 var(--edge))}
+.sticker{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--on-accent);z-index:5}
+.sticker-t{position:relative;font-family:var(--font-display),'Fraunces',serif;font-weight:900;font-variation-settings:"SOFT" 100,"opsz" 144;
+  line-height:.9;letter-spacing:-.01em;padding:.06em 0 .1em}
+.squiggle{display:block;width:30cqw;height:3.4cqw;overflow:visible}
+.spark{position:absolute;overflow:visible;z-index:5}
+.safe{padding:var(--pad)}
+@container page (aspect-ratio < 0.7){ .safe{padding:14cqh var(--pad) 18.5cqh} }
+
+/* ---- layout: quote ---- */
+
+.quote{display:flex;flex-direction:column;justify-content:center}
+.quote .qcard{position:relative;flex:1 1 0;min-height:0;max-height:100%;transform:rotate(-1.8deg);display:flex;flex-direction:column;
+  padding:15cqw 7.5cqw 7cqw;margin:4cqw 1.5cqw 1.5cqw}
+.quote .qmark{position:absolute;left:-3cqw;top:-6cqw;width:20cqw;height:20cqw;border-radius:50%;background:var(--accent);
+  border:var(--bw) solid var(--edge);color:var(--on-accent);transform:rotate(-8deg);display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:900;font-variation-settings:"SOFT" 100,"opsz" 144;font-size:17cqw;line-height:1;padding-top:7.4cqw;box-shadow:.8cqw .8cqw 0 var(--edge)}
+.quote .qbox{flex:1 1 0;min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.quote .hl{font-size:9.6cqw;font-weight:700;line-height:1.06;letter-spacing:-.015em}
+.quote .who{flex:0 0 auto;display:flex;align-items:center;gap:2.6cqw;margin-top:4.4cqw}
+.quote .who .squiggle{width:10cqw;height:2.6cqw;flex:0 0 auto}
+.quote .author{font-weight:800;font-size:3cqw;letter-spacing:.01em}
+.quote .spark{width:10cqw;height:10cqw;right:-3.5cqw;bottom:-4.5cqw;--spark:var(--accent2)}
+@container page (aspect-ratio > 0.9){ .quote .hl{font-size:8.6cqw} .quote .qcard{padding:12cqw 7cqw 6cqw} .quote .qmark{width:17cqw;height:17cqw;font-size:14cqw;padding-top:6.2cqw} }
+@container page (aspect-ratio >= 1.3){ .quote .hl{font-size:4.4cqw} .quote .author{font-size:2cqw} .quote .qcard{padding:7cqw 6cqw 4cqw;margin:3cqw 6cqw} .quote .qmark{width:11cqw;height:11cqw;font-size:9cqw;padding-top:4cqw} }
+@container page (aspect-ratio < 0.7){ .quote .qcard{padding:18cqw 7.5cqw 9cqw;margin:5cqw 1.5cqw 1.5cqw} .quote .hl{font-size:11cqw} .quote .author{font-size:3.6cqw} }
+
+</style></head><body>
+<div class="canvas quote safe">
+  <div class="card qcard">
+    <div class="qmark">&ldquo;</div>
+    <div class="qbox"><div class="hl" data-slot="quote" data-autofit data-autofit-min="0.45" data-safe-check>{{quote}}</div></div>
+    <div class="who"><svg class="squiggle" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><path d="M6 18 C 31 2, 56 2, 81 16 S 131 30, 156 16 S 206 2, 231 16 S 281 30, 294 14" style="fill:none;stroke:var(--sq,var(--accent2));stroke-width:9;stroke-linecap:round"/></svg><div class="author" data-slot="author" data-safe-check>{{author}}</div></div>
+    <svg class="spark" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 2 C 55 38, 62 45, 98 50 C 62 55, 55 62, 50 98 C 45 62, 38 55, 2 50 C 38 45, 45 38, 50 2 Z" style="fill:var(--spark,var(--accent2));stroke:var(--edge);stroke-width:4;stroke-linejoin:round"/></svg>
+  </div>
+</div>
+<script>
+(function(){
+  var cv=document.querySelector('.canvas'); if(!cv) return;
+  var probe=document.createElement('i'); probe.style.display='none'; document.body.appendChild(probe);
+  function g(k){return getComputedStyle(cv).getPropertyValue('--'+k).trim();}
+  function rgb(c){probe.style.color='';probe.style.color=c;var m=getComputedStyle(probe).color.match(/[\d.]+/g);return m?m.slice(0,3).map(Number):[128,128,128];}
+  function L(c){var a=rgb(c).map(function(x){x=x/255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);});return .2126*a[0]+.7152*a[1]+.0722*a[2];}
+  function C(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+  function best(c){return C(c,g('ink'))>=C(c,g('paper'))?g('ink'):g('paper');}
+  var bg=g('bg');
+  if(C(g('fg'),bg)<3){cv.style.setProperty('--fg',best(bg));}
+  ['bg','accent','accent2'].forEach(function(k){cv.style.setProperty('--on-'+k,best(g(k)));});
+  var hi=C(g('accent'),bg)>=2.3?g('accent'):(C(g('accent2'),bg)>=2.3?g('accent2'):g('fg'));
+  cv.style.setProperty('--hi',hi);
+  var a2=g('accent2'); cv.style.setProperty('--hi2',C(g('accent'),a2)>=2.3?g('accent'):best(a2));
+  probe.remove();
+})();
+</script>
+</body></html>

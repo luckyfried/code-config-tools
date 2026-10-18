@@ -1,0 +1,25 @@
+{
+  "family": "warm_craft",
+  "layout": "statement",
+  "label": "Warm craft",
+  "for": "bakeries, Etsy, makers, nonprofits",
+  "slots": [
+    "headline",
+    "sub"
+  ],
+  "max_chars": {
+    "headline": 80,
+    "sub": 140
+  },
+  "defaults": {
+    "headline": "Good food. No shortcuts.",
+    "sub": "A simple promise we keep every day."
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+  ]
+}

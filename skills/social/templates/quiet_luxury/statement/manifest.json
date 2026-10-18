@@ -1,0 +1,27 @@
+{
+  "family": "quiet_luxury",
+  "layout": "statement",
+  "label": "Quiet luxury",
+  "for": "salons, weddings, premium products",
+  "slots": [
+    "headline",
+    "sub"
+  ],
+  "max_chars": {
+    "headline": 80,
+    "sub": 140
+  },
+  "defaults": {
+    "headline": "Good food. No shortcuts.",
+    "sub": "A simple promise we keep every day."
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post",
+    "x_post"
+  ]
+}

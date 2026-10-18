@@ -1,0 +1,26 @@
+{
+  "family": "clean_modern",
+  "layout": "carousel-cover",
+  "label": "Clean modern",
+  "for": "e-commerce, launches, B2B, coaches",
+  "slots": [
+    "headline",
+    "sub",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "sub": 90
+  },
+  "defaults": {
+    "headline": "5 things we learned",
+    "sub": "Swipe through \u2192",
+    "image": "../../_shared/placeholder/clean_modern.svg"
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+  ]
+}

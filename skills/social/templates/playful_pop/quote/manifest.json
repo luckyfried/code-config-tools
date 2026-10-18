@@ -1,0 +1,26 @@
+{
+  "family": "playful_pop",
+  "layout": "quote",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "quote",
+    "author"
+  ],
+  "max_chars": {
+    "quote": 150,
+    "author": 40
+  },
+  "defaults": {
+    "quote": "Best tacos on wheels. We follow this truck all over town.",
+    "author": "Maya R. · Google review"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+  ]
+}

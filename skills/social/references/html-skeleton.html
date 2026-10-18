@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Fonts (every bundled family) and brand variables are injected by render.py. Nothing to link. -->
+<link rel="stylesheet" href="design-system.css"> <!-- relative to THIS file; delete if you are not using one -->
+<style>
+  /* Variables you can use: --bg --fg --accent --accent2  --font-display --font-body
+     --w --h (canvas px)  --safe-top --safe-bottom --safe-left --safe-right (keep text inside these) */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:var(--w);height:var(--h);overflow:hidden;background:var(--bg);color:var(--fg);
+            font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+  .canvas{position:relative;width:var(--w);height:var(--h);overflow:hidden}
+
+  /* Replace everything below with the design for THIS post. */
+  .photo{position:absolute;inset:0 0 40% 0;background:url("/abs/path/to/build/photos/p01.jpg") 50% 40%/cover}
+  .copy{position:absolute;left:max(72px,var(--safe-left));right:max(72px,var(--safe-right));
+        bottom:max(88px,var(--safe-bottom));top:62%;display:flex;flex-direction:column;justify-content:flex-end}
+  h1{font-family:var(--font-display);font-size:150px;line-height:.92;letter-spacing:-.01em;
+     height:100%;overflow:hidden}                      /* data-fit needs a box with a fixed height */
+  .fact{font-size:34px;margin-top:28px;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="photo"></div>
+  <div class="copy">
+    <h1 data-fit>The exact words from the plan</h1>
+    <div class="fact">Tuesdays · 11am to 9pm</div>
+  </div>
+</div>
+</body>
+</html>

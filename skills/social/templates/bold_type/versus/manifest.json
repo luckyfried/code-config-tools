@@ -1,0 +1,32 @@
+{
+  "family": "bold_type",
+  "layout": "versus",
+  "label": "Bold type",
+  "for": "gyms, restaurants, promos, events",
+  "slots": [
+    "headline",
+    "label_a",
+    "label_b",
+    "image_a",
+    "image_b"
+  ],
+  "max_chars": {
+    "headline": 50
+  },
+  "defaults": {
+    "headline": "Before vs. after",
+    "label_a": "Before",
+    "label_b": "After",
+    "image_a": "../../_shared/placeholder/bold_type.svg",
+    "image_b": "../../_shared/placeholder/bold_type.svg"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "link_card",
+    "x_post"
+  ]
+}

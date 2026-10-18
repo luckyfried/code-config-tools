@@ -1,0 +1,31 @@
+{
+  "family": "warm_craft",
+  "layout": "offer",
+  "label": "Warm craft",
+  "for": "bakeries, Etsy, makers, nonprofits",
+  "slots": [
+    "tag",
+    "headline",
+    "price",
+    "terms",
+    "cta"
+  ],
+  "max_chars": {
+    "headline": 50,
+    "terms": 90
+  },
+  "defaults": {
+    "tag": "Limited time",
+    "headline": "Weekend special",
+    "price": "$12",
+    "terms": "Fri\u2013Sun only. While supplies last.",
+    "cta": "Order now"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+  ]
+}

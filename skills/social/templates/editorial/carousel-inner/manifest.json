@@ -1,0 +1,24 @@
+{
+  "family": "editorial",
+  "layout": "carousel-inner",
+  "label": "Editorial",
+  "for": "cafes, studios, real estate, photographers",
+  "slots": [
+    "headline",
+    "body"
+  ],
+  "max_chars": {
+    "headline": 60,
+    "body": 180
+  },
+  "defaults": {
+    "headline": "Lesson one",
+    "body": "Start with the fundamentals before anything else."
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story"
+  ]
+}

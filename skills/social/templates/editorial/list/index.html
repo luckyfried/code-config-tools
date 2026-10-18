@@ -1,0 +1,112 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay[wght].ttf'); font-weight:400 900; }
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay-Italic[wght].ttf'); font-style:italic; font-weight:400 900; }
+@font-face { font-family:'Inter'; src:url('../../../fonts/Inter/Inter[opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Fraunces'; src:url('../../../fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Bitter'; src:url('../../../fonts/Bitter/Bitter[wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'DM Serif Display'; src:url('../../../fonts/DMSerifDisplay/DMSerifDisplay-Regular.ttf'); font-weight:400; }
+@font-face { font-family:'Manrope'; src:url('../../../fonts/Manrope/Manrope[wght].ttf'); font-weight:200 800; }
+@font-face { font-family:'Work Sans'; src:url('../../../fonts/WorkSans/WorkSans[wght].ttf'); font-weight:100 900; }
+
+/* Editorial: magazine page. Paper ground, Playfair display, Inter meta, hairline rules,
+   photos sit in the page grid with margins, never under text. */
+:root, .canvas {
+  --bg:#F3EEE5; --fg:#1E1A15; --accent:#A4532B; --accent2:#2F3B2E;
+  --font-display:'Playfair Display'; --font-body:'Inter';
+  /*{brand_css}*/
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+body { container-type:size; container-name:page; }
+.canvas { position:relative; width:100%; height:100%; background:var(--bg); color:var(--fg);
+  font-family:var(--font-body), 'Inter', system-ui, sans-serif; overflow:hidden;
+  --M:6.5cqmin;
+  --muted:color-mix(in srgb, var(--fg) 66%, var(--bg));
+  --rule:color-mix(in srgb, var(--fg) 30%, var(--bg));
+  -webkit-font-smoothing:antialiased; }
+.display { font-family:var(--font-display), 'Playfair Display', Georgia, serif; font-weight:500;
+  letter-spacing:-0.018em; line-height:1.04; text-wrap:balance; font-feature-settings:"lnum" 1, "kern" 1;
+  padding:0.06em 0 0.24em; }
+.nw { white-space:nowrap; }
+.ital { font-style:italic; font-weight:400; }
+.meta { font-family:var(--font-body), 'Inter', sans-serif; font-size:2.6cqmin; line-height:1.4; color:var(--muted);
+  font-feature-settings:"tnum" 0, "ss01" 1; text-wrap:pretty; }
+.cta { font-family:var(--font-body), 'Inter', sans-serif; font-size:2.5cqmin; font-weight:600; color:var(--fg);
+  letter-spacing:0.005em; white-space:nowrap; }
+.cta::before { content:""; display:inline-block; width:3.4cqmin; height:2px; background:var(--accent);
+  vertical-align:middle; margin-right:1.4cqmin; position:relative; top:-0.15em; }
+.cta:empty, .meta:empty, .sub:empty { display:none; }
+.kick { width:6cqmin; height:3px; background:var(--accent); }
+.box { min-height:0; min-width:0; overflow:hidden; }
+[data-autofit] { overflow:hidden; }
+.photo { position:absolute; overflow:hidden; background:color-mix(in srgb, var(--fg) 12%, var(--bg)); }
+.photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.clamp2 { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.clamp3 { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+.swipe { position:absolute; right:var(--M); bottom:var(--M); width:6.4cqmin; height:2.4cqmin; }
+.swipe i { position:absolute; left:0; right:0.15cqmin; top:50%; height:1.5px; margin-top:-0.75px; background:var(--fg); }
+.swipe::after { content:""; position:absolute; right:0.1cqmin; top:50%; width:1.7cqmin; height:1.7cqmin; border-top:1.5px solid var(--fg);
+  border-right:1.5px solid var(--fg); transform:translate(0,-50%) rotate(45deg); transform-origin:center; }
+
+.list .page { position:absolute; inset:var(--M); display:flex; flex-direction:column; }
+.list .hbox { flex:0 0 auto; height:27%; display:flex; flex-direction:column; justify-content:flex-start; }
+.list .hfit { flex:1 1 auto; min-height:0; overflow:hidden; }
+.list .kick { margin-bottom:3cqmin; flex:0 0 auto; }
+.list .headline { font-size:8.6cqmin; }
+.list .items { flex:1 1 auto; display:grid; grid-template-rows:repeat(4, minmax(0,1fr)); min-height:0; border-bottom:1px solid var(--rule); }
+.list .item { display:grid; grid-template-columns:9cqmin 1fr; align-items:center; border-top:1px solid var(--rule); min-height:0; }
+.list .item:first-child { border-top:1px solid var(--fg); }
+.list .n { font-family:var(--font-display), 'Playfair Display', serif; font-style:italic; font-size:5cqmin; line-height:1; color:var(--accent);
+  font-feature-settings:"lnum" 1; }
+.list .tbox { height:100%; display:flex; align-items:center; }
+.list .tip { font-family:var(--font-body), 'Inter', sans-serif; font-size:3.6cqmin; line-height:1.3; letter-spacing:-0.005em; text-wrap:pretty; }
+.list .item:has(.tip:empty) .n { opacity:0; }
+@container page (aspect-ratio > 0.9) {
+  .list .hbox { height:25%; }
+  .list .headline { font-size:7.4cqmin; }
+  .list .tip { font-size:3.1cqmin; }
+}
+@container page (aspect-ratio < 0.6) {
+  .list .page { top:calc(250px + 1.5cqh); bottom:calc(320px + 1.5cqh); }
+  .list .hbox { height:26%; }
+  .list .headline { font-size:10.6cqmin; }
+  .list .tip { font-size:4.4cqmin; }
+  .list .n { font-size:6.4cqmin; }
+  .list .item { grid-template-columns:11cqmin 1fr; }
+}
+
+/* Pinterest 2:3: the save button + profile row cover the bottom ~180px, so lift the page above it. */
+@container page (0.6 < aspect-ratio < 0.75) {
+  .canvas { height:calc(100% - 150px); }
+}
+@container page (aspect-ratio > 1.3) {
+  .meta { font-size:3.4cqmin; }
+  .cta { font-size:3.2cqmin; }
+  .offer .tag, .quote .author { font-size:3.2cqmin; }
+  .event .lab { font-size:2.8cqmin; }
+  .event .loc, .event .cta { font-size:3.4cqmin; }
+  .list .tip { font-size:4.4cqmin; }
+  .statement .sub { font-size:4.2cqmin; }
+  .versus .label { font-size:4.2cqmin; }
+}
+</style></head><body>
+<div class="canvas list"><div class="page">
+<div class="hbox box"><div class="kick"></div><div class="hfit"><div class="headline display" data-slot="headline" data-safe-check data-autofit data-autofit-min="0.45">{{headline}}</div></div></div>
+<div class="items">
+<div class="item"><div class="n">1</div><div class="tbox box"><div class="tip" data-slot="tip1" data-safe-check data-autofit data-autofit-min="0.6">{{tip1}}</div></div></div>
+<div class="item"><div class="n">2</div><div class="tbox box"><div class="tip" data-slot="tip2" data-safe-check data-autofit data-autofit-min="0.6">{{tip2}}</div></div></div>
+<div class="item"><div class="n">3</div><div class="tbox box"><div class="tip" data-slot="tip3" data-safe-check data-autofit data-autofit-min="0.6">{{tip3}}</div></div></div>
+<div class="item"><div class="n">4</div><div class="tbox box"><div class="tip" data-slot="tip4" data-safe-check data-autofit data-autofit-min="0.6">{{tip4}}</div></div></div>
+</div></div></div>
+<script>
+document.querySelectorAll('[data-slot]').forEach(el => {
+  if (el.tagName === 'IMG' || el.children.length) return;
+  const t = el.textContent; if (!t.trim()) return;
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let h = esc(t).replace(/(\S+-\S+)/g, '<span class="nw">$1</span>');
+  if (t.trim().split(/\s+/).length > 3) h = h.replace(/\s+(\S+)\s*$/, '&nbsp;$1');
+  el.innerHTML = h;
+});
+</script>
+</body></html>

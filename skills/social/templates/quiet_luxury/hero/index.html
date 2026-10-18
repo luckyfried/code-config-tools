@@ -1,0 +1,114 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family:'Fraunces'; src:url('../../../fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Manrope'; src:url('../../../fonts/Manrope/Manrope[wght].ttf'); font-weight:200 800; }
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay[wght].ttf'); font-weight:400 900; }
+@font-face { font-family:'DM Serif Display'; src:url('../../../fonts/DMSerifDisplay/DMSerifDisplay-Regular.ttf'); font-weight:400; }
+@font-face { font-family:'Inter'; src:url('../../../fonts/Inter/Inter[opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Work Sans'; src:url('../../../fonts/WorkSans/WorkSans[wght].ttf'); font-weight:100 900; }
+
+/* Quiet luxury: stationery, not a poster. Warm stone ground, Fraunces Light set centred with air,
+   a hairline frame, arch-topped photos, Manrope for the small print. */
+:root, .canvas {
+  --bg:#ECE7DF; --fg:#2C2824; --accent:#9A8064; --accent2:#CFC3B3;
+  --font-display:'Fraunces'; --font-body:'Manrope';
+  /*{brand_css}*/
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+body { container-type:size; container-name:page; }
+.canvas { position:relative; width:100%; height:100%; background:var(--bg); color:var(--fg);
+  font-family:var(--font-body), 'Manrope', system-ui, sans-serif; overflow:hidden;
+  --F:3.6cqmin;                     /* frame inset */
+  --P:calc(var(--F) + 6cqmin);      /* content inset */
+  --muted:color-mix(in srgb, var(--fg) 72%, var(--bg));
+  --line:color-mix(in srgb, var(--accent) 62%, var(--bg));
+  -webkit-font-smoothing:antialiased; }
+.frame { position:absolute; inset:var(--F); border:1px solid var(--line); pointer-events:none; }
+.display { font-family:var(--font-display), 'Fraunces', Georgia, serif; font-weight:300;
+  font-variation-settings:"opsz" 144, "SOFT" 50, "WONK" 0; letter-spacing:-0.012em; line-height:1.1;
+  text-wrap:balance; padding:0.06em 0 0.22em; font-feature-settings:"lnum" 1, "kern" 1; }
+.c { text-align:center; }
+.nw { white-space:nowrap; }
+.label { font-family:var(--font-body), 'Manrope', sans-serif; font-weight:600; font-size:1.9cqmin; line-height:1.5;
+  letter-spacing:0.22em; text-transform:uppercase; color:var(--fg); }
+.sub { font-family:var(--font-body), 'Manrope', sans-serif; font-weight:400; font-size:2.6cqmin; line-height:1.6;
+  color:var(--muted); text-wrap:balance; }
+.label:empty, .sub:empty { display:none; }
+.orn { flex:0 0 auto; width:7cqmin; height:1px; background:var(--accent); }
+.fit { flex:0 1 auto; min-height:0; overflow:hidden; width:100%; }
+[data-autofit] { overflow:hidden; }
+.photo { position:absolute; overflow:hidden; background:color-mix(in srgb, var(--accent2) 55%, var(--bg)); }
+.photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.arch { border-radius:9999px 9999px 0 0; }
+.clamp3 { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+.swipe { position:absolute; left:50%; bottom:calc(var(--F) + 3.6cqmin); width:8cqmin; height:2.4cqmin; transform:translateX(-50%); }
+.swipe i { position:absolute; left:0; right:0.2cqmin; top:50%; height:1px; background:var(--fg); }
+.swipe::after { content:""; position:absolute; right:0.15cqmin; top:50%; width:1.5cqmin; height:1.5cqmin;
+  border-top:1px solid var(--fg); border-right:1px solid var(--fg); transform:translate(0,-50%) rotate(45deg); }
+
+.hero .photo { left:50%; width:62%; transform:translateX(-50%); top:var(--P); height:55%; }
+.hero .text { position:absolute; left:var(--P); right:var(--P); top:calc(var(--P) + 55% + 4cqmin); bottom:var(--P);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.hero .headline { font-size:7.4cqmin; }
+.hero .sub { margin-top:1.6cqmin; max-width:80%; }
+.hero .label { margin-top:3cqmin; }
+@container page (aspect-ratio > 0.9) {
+  .hero .photo { left:var(--P); width:40%; transform:none; top:var(--P); height:auto; bottom:var(--P); }
+  .hero .text { left:calc(var(--P) + 40% + 5cqmin); top:var(--P); }
+  .hero .headline { font-size:7cqmin; }
+  .hero .sub { max-width:100%; font-size:2.4cqmin; -webkit-line-clamp:5; }
+}
+@container page (aspect-ratio < 0.6) {
+  .hero .photo { width:72%; top:calc(250px - 4cqmin); height:47%; }
+  .hero .text { top:calc(250px - 4cqmin + 47% + 5cqmin); bottom:calc(320px + 1cqh); }
+  .hero .headline { font-size:9cqmin; }
+  .hero .sub { font-size:3cqmin; max-width:86%; }
+  .hero .label { font-size:2.2cqmin; margin-top:3.6cqmin; }
+}
+
+/* Pinterest 2:3: the save button + profile row cover the bottom ~180px, so lift the page above it. */
+@container page (0.6 < aspect-ratio < 0.75) {
+  .canvas { height:calc(100% - 150px); }
+}
+@container page (aspect-ratio > 1.3) {
+  .canvas { --F:3cqmin; --P:calc(var(--F) + 5cqmin); }
+  .sub { font-size:3.4cqmin; }
+  .label { font-size:2.6cqmin; }
+  .hero .headline, .event .headline { font-size:8.4cqmin; }
+  .hero .photo, .event .photo { width:34%; }
+  .hero .text, .event .text { left:calc(var(--P) + 34% + 5cqmin); }
+  .statement .headline { font-size:11cqmin; }
+  .statement .sub { font-size:3.6cqmin; max-width:60%; }
+  .quote .q { font-size:7.4cqmin; }
+  .quote .mark { font-size:20cqmin; height:9cqmin; }
+  .offer .headline { font-size:7.4cqmin; }
+  .offer .price { font-size:24cqmin; }
+  .list .page { flex-direction:row; align-items:stretch; gap:6cqmin; }
+  .list .top { width:38%; max-height:none; justify-content:center; }
+  .list .headline { font-size:8cqmin; }
+  .list .items { padding-top:0; }
+  .list .tip { font-size:4.4cqmin; }
+  .list .n { font-size:3.4cqmin; margin-bottom:0.8cqmin; }
+  .versus .headline { font-size:7.6cqmin; }
+  .versus .pair { padding:0 12cqmin; }
+  .versus .label { font-size:2.4cqmin; }
+}
+</style></head><body>
+<div class="canvas hero"><div class="frame"></div>
+<figure class="photo arch"><img data-slot="image" src="{{image}}" style="object-position:{{focal}};object-position:calc({{focal_x}} * 100%) calc({{focal_y}} * 100%);"/></figure>
+<div class="text"><div class="fit"><div class="headline display c" data-slot="headline" data-safe-check data-autofit data-autofit-min="0.45">{{headline}}</div></div>
+<div class="sub c clamp3" data-slot="sub" data-safe-check>{{sub}}</div>
+<div class="label c" data-slot="cta" data-safe-check>{{cta}}</div></div>
+</div>
+<script>
+document.querySelectorAll('[data-slot]').forEach(el => {
+  if (el.tagName === 'IMG' || el.children.length) return;
+  const t = el.textContent; if (!t.trim()) return;
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let h = esc(t).replace(/(\S+-\S+)/g, '<span class="nw">$1</span>');
+  if (t.trim().split(/\s+/).length > 3) h = h.replace(/\s+(\S+)\s*$/, '&nbsp;$1');
+  el.innerHTML = h;
+});
+</script>
+</body></html>

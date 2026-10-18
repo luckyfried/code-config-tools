@@ -1,0 +1,29 @@
+{
+  "family": "playful_pop",
+  "layout": "carousel-cta",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "headline",
+    "cta",
+    "handle"
+  ],
+  "max_chars": {
+    "headline": 56,
+    "cta": 28,
+    "handle": 30
+  },
+  "defaults": {
+    "headline": "Ready to try it?",
+    "cta": "Visit us this week",
+    "handle": "@yourbrand"
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+  ]
+}

@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay[wght].ttf'); font-weight:400 900; }
+@font-face { font-family:'Playfair Display'; src:url('../../../fonts/PlayfairDisplay/PlayfairDisplay-Italic[wght].ttf'); font-style:italic; font-weight:400 900; }
+@font-face { font-family:'Bitter'; src:url('../../../fonts/Bitter/Bitter[wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Archivo Black'; src:url('../../../fonts/ArchivoBlack/ArchivoBlack-Regular.ttf'); font-weight:400 900; }
+@font-face { font-family:'Archivo'; src:url('../../../fonts/Archivo/Archivo[wdth,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Fraunces'; src:url('../../../fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Caveat'; src:url('../../../fonts/Caveat/Caveat[wght].ttf'); font-weight:400 700; }
+@font-face { font-family:'Work Sans'; src:url('../../../fonts/WorkSans/WorkSans[wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'Space Grotesk'; src:url('../../../fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf'); font-weight:300 700; }
+@font-face { font-family:'Manrope'; src:url('../../../fonts/Manrope/Manrope[wght].ttf'); font-weight:200 800; }
+@font-face { font-family:'Inter'; src:url('../../../fonts/Inter/Inter[opsz,wght].ttf'); font-weight:100 900; }
+@font-face { font-family:'DM Serif Display'; src:url('../../../fonts/DMSerifDisplay/DMSerifDisplay-Regular.ttf'); font-weight:400; }
+@font-face { font-family:'DM Serif Display'; src:url('../../../fonts/DMSerifDisplay/DMSerifDisplay-Italic.ttf'); font-style:italic; font-weight:400; }
+@font-face { font-family:'JetBrains Mono'; src:url('../../../fonts/JetBrainsMono/JetBrainsMono[wght].ttf'); font-weight:100 800; }
+
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+body{container-type:size;container-name:page}
+:root,.canvas{
+  --fam-bg:#E2321B; --fam-fg:#FFF3E2; --fam-accent:#FFCF2E; --fam-accent2:#151311;
+  --bg:#E2321B; --fg:#FFF3E2; --accent:#FFCF2E; --accent2:#151311;
+  --ink:#151311; --paper:#FFF3E2;
+  --on-bg:var(--fg); --on-accent:var(--ink); --on-accent2:var(--paper);
+  --font-display:'Archivo'; --font-body:'Archivo';
+  --pad:6.5cqw;
+  /*{brand_css}*/
+}
+.canvas{position:relative;width:100cqw;height:100cqh;overflow:hidden;background:var(--bg);color:var(--fg);
+  font-family:var(--font-body),'Archivo',sans-serif;-webkit-font-smoothing:antialiased}
+.canvas::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:50;opacity:.06;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+[data-autofit]{overflow:hidden}
+/* display type: extra-condensed black caps */
+.hl{font-family:var(--font-display),'Archivo',sans-serif;font-weight:900;font-variation-settings:"wdth" 62;
+  text-transform:uppercase;line-height:.86;letter-spacing:-.003em;text-wrap:balance;padding:.05em 0 .12em;overflow-wrap:normal}
+.sub{font-weight:500;font-variation-settings:"wdth" 100;font-size:min(3.15cqw,4.72cqh);line-height:1.24;text-wrap:pretty}
+.meta{font-weight:800;font-variation-settings:"wdth" 88;text-transform:uppercase;letter-spacing:.045em;font-size:min(2.45cqw,3.68cqh);line-height:1.2;text-wrap:balance}
+.meta:empty,.sub:empty{display:none}
+.ph{position:relative;overflow:hidden;
+  background:repeating-linear-gradient(-45deg,color-mix(in srgb,var(--bg) 82%,#000) 0 1.2cqw,var(--bg) 1.2cqw 2.4cqw)}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focal,center);
+  filter:contrast(1.05) saturate(1.06)}
+.ph img[src=""]{display:none}
+.hlbox{display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;min-height:0}
+.safe{padding:var(--pad)}
+@container page (aspect-ratio < 0.66){ .safe{padding:13.6cqh var(--pad) 17.6cqh} }
+/* stacked colour bars behind each headline line (for type set over photos) */
+.bars{line-height:1}
+.bars span{background:var(--bg);color:var(--fg);-webkit-box-decoration-break:clone;box-decoration-break:clone;padding:0 .13em}
+.scrim{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(12,10,8,.86) 0%,rgba(12,10,8,.55) 22%,rgba(12,10,8,.18) 45%,rgba(12,10,8,0) 62%)}
+.onphoto{color:#fff}
+
+/* ---- layout: quote ---- */
+
+.quote{display:flex;flex-direction:column;background:var(--accent2);color:var(--on-accent2)}
+.quote .qmark{flex:0 0 auto;font-family:'Archivo Black','Archivo',sans-serif;font-size:34cqw;line-height:.62;height:15cqw;color:var(--hi2);margin-left:-.6cqw;overflow:hidden}
+.quote .hlbox{flex:1 1 0;justify-content:center}
+.quote .hl{font-size:17cqw;line-height:.9;font-variation-settings:"wdth" 66}
+.quote .foot{flex:0 0 auto;display:flex;align-items:center;gap:3cqw;margin-top:4cqw}
+.quote .foot .bar{flex:0 0 auto;width:9cqw;height:1.2cqw;background:var(--hi2)}
+.quote .author{color:var(--hi2);font-size:min(2.9cqw,4.35cqh)}
+@container page (aspect-ratio > 1.3){ .quote .qmark{font-size:24cqw;height:10cqw} .quote .hl{font-size:15cqh} }
+
+</style></head><body>
+<div class="canvas quote safe">
+  <div class="qmark">&ldquo;</div>
+  <div class="hlbox"><div class="hl" data-slot="quote" data-autofit data-autofit-min="0.25" data-safe-check>{{quote}}</div></div>
+  <div class="foot"><span class="bar"></span><div class="meta author" data-slot="author" data-safe-check>{{author}}</div></div>
+</div>
+<script>
+(function(){
+  var cv=document.querySelector('.canvas'); if(!cv) return;
+  var probe=document.createElement('i'); probe.style.display='none'; document.body.appendChild(probe);
+  function g(k){return getComputedStyle(cv).getPropertyValue('--'+k).trim();}
+  function rgb(c){probe.style.color='';probe.style.color=c;var m=getComputedStyle(probe).color.match(/[\d.]+/g);return m?m.slice(0,3).map(Number):[128,128,128];}
+  function L(c){var a=rgb(c).map(function(x){x=x/255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);});return .2126*a[0]+.7152*a[1]+.0722*a[2];}
+  function C(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+  function best(c){return C(c,g('ink'))>=C(c,g('paper'))?g('ink'):g('paper');}
+  var bg=g('bg');
+  if(C(g('fg'),bg)<3){cv.style.setProperty('--fg',best(bg));}
+  ['bg','accent','accent2'].forEach(function(k){cv.style.setProperty('--on-'+k,best(g(k)));});
+  var hi=C(g('accent'),bg)>=2.3?g('accent'):(C(g('accent2'),bg)>=2.3?g('accent2'):g('fg'));
+  cv.style.setProperty('--hi',hi);
+  var a2=g('accent2'); cv.style.setProperty('--hi2',C(g('accent'),a2)>=2.3?g('accent'):best(a2));
+  probe.remove();
+})();
+</script>
+</body></html>

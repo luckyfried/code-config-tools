@@ -1,0 +1,35 @@
+{
+  "family": "playful_pop",
+  "layout": "list",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "headline",
+    "tip1",
+    "tip2",
+    "tip3",
+    "tip4"
+  ],
+  "max_chars": {
+    "headline": 44,
+    "tip1": 64,
+    "tip2": 64,
+    "tip3": 64,
+    "tip4": 64
+  },
+  "defaults": {
+    "headline": "4 tips to get started",
+    "tip1": "Start small.",
+    "tip2": "Stay consistent.",
+    "tip3": "Ask for feedback.",
+    "tip4": "Celebrate progress."
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post",
+    "pinterest_pin"
+  ]
+}

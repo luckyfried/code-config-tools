@@ -1,0 +1,28 @@
+{
+  "family": "playful_pop",
+  "layout": "carousel-cover",
+  "label": "Playful pop",
+  "for": "food trucks, ice cream, kids, casual brands",
+  "slots": [
+    "headline",
+    "sub",
+    "image"
+  ],
+  "max_chars": {
+    "headline": 46,
+    "sub": 70
+  },
+  "defaults": {
+    "headline": "5 things we learned",
+    "sub": "Swipe through",
+    "image": "../../_shared/placeholder/playful_pop.svg"
+  },
+  "formats": [
+    "ig_carousel",
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "fb_post",
+    "li_post"
+  ]
+}

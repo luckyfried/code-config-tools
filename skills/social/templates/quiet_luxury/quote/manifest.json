@@ -1,0 +1,26 @@
+{
+  "family": "quiet_luxury",
+  "layout": "quote",
+  "label": "Quiet luxury",
+  "for": "salons, weddings, premium products",
+  "slots": [
+    "quote",
+    "author"
+  ],
+  "max_chars": {
+    "quote": 160,
+    "author": 40
+  },
+  "defaults": {
+    "quote": "This is the best thing I've tasted all year.",
+    "author": "— A happy customer"
+  },
+  "formats": [
+    "ig_feed_portrait",
+    "ig_feed_square",
+    "ig_story",
+    "link_card",
+    "fb_post",
+    "li_post"
+  ]
+}
