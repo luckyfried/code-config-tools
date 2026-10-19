@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the nine and the photos around them. Writes build/photo_index.json,
-build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: read every photo. Writes build/photo_index.json, build/picks.json and build/photos/*.jpg.
 
 USAGE (from the workspace root):
     python3 S/scripts/picks.py
 
-Scores every photo of the year (color, contrast, exposure), finds each one's focal point (where the detail is,
-so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in build/photos/.
-A reel among the nine gets a poster frame (ffmpeg, 40% of the way in) that stands for it on the wall; the reel
-itself stays available as footage. picks.json carries the nine in rank order (each with its photo, its library
-source, its reel when it is one, its score, brightness, focal point and colors) and two chapters around them:
-"opener", the year's most striking photo outside the nine (the wall's world), and "nine", the nine stills.
-To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json.
+Reads every photo of the person's posts and stories and every liked image (color, contrast, exposure, focal
+point, and the five colors each covers with their shares), converting HEIC and rotating by EXIF. Each index row
+carries its kind (post, story, liked) and, for a post, "row", its place in library.json's posts, so the research
+joins a photo to its caption and its time. picks.json names the opener, the feed's most striking photo, as a
+1600 px JPEG copy in build/photos/. To grade a photo for the film, run `grade.py photos FILE` and put
+"graded/<name>.jpg" in the beat's "photos" in build/storyboards/N/storyboard.json.
 """
 import datetime as dt
 import hashlib
@@ -115,12 +112,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
     d = _env.read_json("build/library.json")
-    s = _env.read_json("build/stats.json")
-    if not d or not s:
-        sys.exit("run gather.py and stats.py first")
+    if not d:
+        sys.exit("run gather.py first")
     index, skipped = [], 0
-    for kind, rows in (("post", d["posts"]), ("story", d["stories"])):
-        for r in rows:
+    for kind, rows in (("post", d["posts"]), ("story", d["stories"]), ("liked", d.get("liked_media") or [])):
+        for n, r in enumerate(rows):
             for m in r["media"]:
                 if Path(m).suffix.lower() in VIDEO:
                     continue
@@ -129,37 +125,29 @@ def main():
                 except Exception:
                     skipped += 1
                     continue
-                month = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month
-                index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"), **a})
-    if not index:
-        sys.exit("no photos could be opened; the video needs at least one photo")
+                row = {"src": m, "kind": kind, "ts": r.get("ts"), "likes": r.get("likes"), **a}
+                if kind == "post":
+                    row["row"] = n
+                if kind == "liked":
+                    row["account"] = r.get("account") or ""
+                index.append(row)
+    if not any(e["kind"] != "liked" for e in index):
+        sys.exit("no photos of their own could be opened; the kit reads their photos")
     _env.write_json("build/photo_index.json", index)
-    nine, chosen = [], set()
-    for t in s["top_nine"]:
-        still = poster(t["media"]) if t.get("video") else prepare(t["media"])
-        if not still:
-            print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
-            continue
-        a = analyse(still)
-        chosen.add(t["media"])
-        nine.append({"rank": t["rank"], "kind": t["kind"], "photo": still, "src": t["media"], "video": t.get("video"), **a})
-    feed = [e for e in index if e["kind"] == "post" and e["src"] not in chosen] or [e for e in index if e["src"] not in chosen] or index
+    feed = [e for e in index if e["kind"] == "post"] or [e for e in index if e["kind"] != "liked"]
     opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
-    out = {"nine": nine, "chapters": {"nine": [n["photo"] for n in nine]}, "focal": {}, "source_of": {}}
+    out = {"chapters": {}, "focal": {}, "source_of": {}}
     op = prepare(opener["src"])
     out["chapters"]["opener"] = [op] if op else []
     if op:
         out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
         out["source_of"][op] = opener["src"]
-    for n in nine:
-        out["focal"][n["photo"]] = f"{n['focal'][0] * 100:.0f}% {n['focal'][1] * 100:.0f}%"
-        out["source_of"][n["photo"]] = n["src"]
     _env.write_json("build/picks.json", out)
-    print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
-    for n in nine:
-        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}  bright {n['bright']}")
+    kinds = {k: sum(1 for e in index if e["kind"] == k) for k in ("post", "story", "liked")}
+    print(f"indexed {len(index)} photos ({kinds['post']} post, {kinds['story']} story, {kinds['liked']} liked; "
+          f"{skipped} could not be opened)")
     print("wrote build/picks.json and build/photo_index.json")
-    return 0 if len(nine) == 9 else 1
+    return 0
 
 
 if __name__ == "__main__":

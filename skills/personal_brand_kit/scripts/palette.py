@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the palette, from the person's own photos. Reads build/photo_index.json, writes build/palette.json.
+"""Movement 1, research: the palette, measured per post. Reads build/photo_index.json, writes build/palette.json.
 
 USAGE (from the workspace root):
-    python3 S/scripts/palette.py [--accent "#E8743B"]
+    python3 S/scripts/palette.py [--accent "#E8743B"] [--lead-floor 0.08]
 
-The year's five dominant colors (weighted by how much of each photo they cover, kept distinct from each
-other), each with a plain name ("sea blue", "sunset orange") and the photo that shows it best, and the card
-roles drawn from them: bg (a deep tone of their darkest color), ink (warm white), accent (their most vivid
-color, lifted until it reads on bg at 3:1 or more) and accent2. --accent overrides the accent role.
+Clusters the colors of their post photos into candidate colors (stories and liked images stay out, so a week of
+stories or a mood board cannot recolor the feed; with fewer than 12 post photos the stories join), then reads
+each post: the candidate covering most of its photos is the color that post leads with. "feed" is every named
+color that leads at least --lead-floor of their posts, with the share of posts it leads, how many posts, how much
+of the feed's area it covers, and the post that shows it best. "likes" is the same clustering over the liked
+images, by area. Every color carries a plain name ("terracotta", "sea blue"), never a code alone. The card roles
+come from the feed: bg (a deep tone of their darkest color), ink (warm white), accent (their most vivid color,
+lifted until it reads on bg at 3:1 or more) and accent2. --accent overrides the accent role.
 """
 import argparse
 import colorsys
@@ -98,42 +102,107 @@ def hex_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--accent")
-    a = ap.parse_args()
-    idx = _env.read_json("build/photo_index.json")
-    if not idx:
-        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
-    # weighted color samples: each photo's dominant colors by the share of the photo they cover
-    samples = [(tuple(c["rgb"]), c["share"]) for e in idx for c in e["colors"]]
+REACH = 30  # Lab distance past which a color belongs to no candidate
+
+
+def cluster(samples, merge=14):
+    """Weighted colors [(rgb, weight)] merged within `merge` Lab units: [(rgb, weight)], heaviest first."""
     clusters = []  # [rgb_sum, weight]
     for rgb, w in sorted(samples, key=lambda s: -s[1]):
         best = min(clusters, key=lambda c: dist(tuple(v / c[1] for v in c[0]), rgb), default=None)
-        if best and dist(tuple(v / best[1] for v in best[0]), rgb) < 14:
+        if best and dist(tuple(v / best[1] for v in best[0]), rgb) < merge:
             best[0] = [best[0][i] + rgb[i] * w for i in range(3)]
             best[1] += w
         else:
             clusters.append([[v * w for v in rgb], w])
-    cols = sorted(((tuple(v / c[1] for v in c[0]), c[1]) for c in clusters), key=lambda c: -c[1])
-    chosen = []
-    for gap in (32, 24, 16, 8, 0):
-        for rgb, w in cols:
-            if len(chosen) < 5 and all(dist(rgb, c[0]) >= gap for c in chosen) and (rgb, w) not in chosen:
-                chosen.append((rgb, w))
-        if len(chosen) >= 5:
-            break
-    total = sum(w for _, w in chosen) or 1
-    import picks  # noqa: E402  (same folder; prepares photos the same way)
-    year, names = [], set()
-    for rgb, w in chosen:
-        nm = unique_name(rgb, names)
-        names.add(nm)
-        ex = min(idx, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
-        year.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": picks.prepare(ex["src"])})
-    year.sort(key=lambda c: -c["share"])
+    return sorted(((tuple(v / c[1] for v in c[0]), c[1]) for c in clusters), key=lambda c: -c[1])
 
-    rgbs = [hex_rgb(c["hex"]) for c in year]
+
+def distinct(cols, k, gaps=(32, 24, 16, 8, 0)):
+    """Up to k of the colors, heaviest first, kept at least a gap apart (the gap shrinks until k are found)."""
+    chosen = []
+    for gap in gaps:
+        for rgb, w in cols:
+            if len(chosen) < k and all(dist(rgb, c[0]) >= gap for c in chosen) and (rgb, w) not in chosen:
+                chosen.append((rgb, w))
+        if len(chosen) >= k:
+            break
+    return chosen
+
+
+def nearest(rgb, cands, reach=None):
+    """The index of the closest candidate; None when reach is given and none is within it."""
+    i = min(range(len(cands)), key=lambda k: dist(cands[k], rgb))
+    return None if reach and dist(cands[i], rgb) > reach else i
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--accent")
+    ap.add_argument("--lead-floor", type=float, default=0.08, help="share of posts a color must lead to join the feed palette")
+    a = ap.parse_args()
+    idx = _env.read_json("build/photo_index.json")
+    if not idx:
+        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
+    import picks  # noqa: E402  (same folder; prepares photos the same way)
+    own = [e for e in idx if e["kind"] == "post"]
+    if len(own) < 12:
+        own = [e for e in idx if e["kind"] in ("post", "story")]
+    area = sum(c["share"] for e in own for c in e["colors"]) or 1
+    cols = [c for c in cluster([(tuple(c["rgb"]), c["share"]) for e in own for c in e["colors"]]) if c[1] / area >= 0.015]
+    cands = [rgb for rgb, _ in distinct(cols, 8, gaps=(24, 18))]
+    # each post's lead: the candidate covering most of its photos; a post whose photos sit mostly outside every
+    # candidate leads with none of them (off palette)
+    posts = {}
+    for e in own:
+        key = e.get("row", e["src"])
+        cover = posts.setdefault(key, {"cover": [0.0] * len(cands), "photos": []})
+        cover["photos"].append(e)
+        for c in e["colors"]:
+            i = nearest(tuple(c["rgb"]), cands, reach=REACH)
+            if i is not None:
+                cover["cover"][i] += c["share"]
+    led = [0] * len(cands)
+    best_photo = [None] * len(cands)
+    off = []
+    for key, p in posts.items():
+        i = max(range(len(cands)), key=lambda k: p["cover"][k])
+        if p["cover"][i] / len(p["photos"]) < 0.3:
+            off.append(key)
+            continue
+        led[i] += 1
+        frac = p["cover"][i] / len(p["photos"])
+        if not best_photo[i] or frac > best_photo[i][0]:
+            best_photo[i] = (frac, p["photos"][0]["src"])
+    n = len(posts)
+    order = sorted(range(len(cands)), key=lambda i: -led[i])
+    keep = [i for i in order if led[i] / n >= a.lead_floor]
+    keep += [i for i in order if i not in keep and led[i]][:max(0, 3 - len(keep))]
+    area_of = [0.0] * len(cands)
+    for e in own:
+        for c in e["colors"]:
+            area_of[nearest(tuple(c["rgb"]), cands)] += c["share"]
+    feed, names = [], set()
+    for i in keep:
+        nm = unique_name(cands[i], names)
+        names.add(nm)
+        feed.append({"hex": hexc(cands[i]), "name": nm, "share": round(led[i] / n, 3), "posts": led[i],
+                     "area": round(area_of[i] / area, 3), "photo": picks.prepare(best_photo[i][1]) if best_photo[i] else None})
+    others = [{"hex": hexc(cands[i]), "name": name_of(cands[i]), "posts": led[i], "share": round(led[i] / n, 3)}
+              for i in order if i not in keep and led[i]]
+    liked = [e for e in idx if e["kind"] == "liked"]
+    likes = []
+    if liked:
+        larea = sum(c["share"] for e in liked for c in e["colors"]) or 1
+        lnames = set()
+        lcols = [c for c in cluster([(tuple(c["rgb"]), c["share"]) for e in liked for c in e["colors"]]) if c[1] / larea >= 0.03]
+        for rgb, w in distinct(lcols, 5):
+            nm = unique_name(rgb, lnames)
+            lnames.add(nm)
+            likes.append({"hex": hexc(rgb), "name": nm, "area": round(w / larea, 3)})
+        likes.sort(key=lambda c: -c["area"])
+
+    rgbs = [hex_rgb(c["hex"]) for c in feed]
     darkest = min(rgbs, key=lum)
     h, l, s = hls(darkest)
     bg = from_hls(h, min(l, 0.11), min(s, 0.45))
@@ -148,12 +217,18 @@ def main():
     accent2 = lift(next((c for c in vivid[1:] if dist(c, vivid[0]) > 25), vivid[-1]))
     roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
              "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
-    _env.write_json("build/palette.json", {"year": year, "roles": roles,
+    _env.write_json("build/palette.json", {"feed": feed, "others": others, "likes": likes, "posts_read": n,
+                                            "off_palette": off,
+                                            "lead_floor": a.lead_floor, "roles": roles,
                                             "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
                                                       "ink_on_bg": round(contrast(ink, bg), 2)}})
-    print("year palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in year))
+    print(f"feed palette ({n} posts): " + ", ".join(f"{c['name']} {c['hex']} leads {c['share']:.0%}" for c in feed))
+    print(f"off palette: {len(off)} posts")
+    if others:
+        print("below the floor: " + ", ".join(f"{c['name']} {c['posts']} posts" for c in others))
+    if likes:
+        print("likes palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['area']:.0%})" for c in likes))
     print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
-    print(f"accent on bg {contrast(accent, bg):.1f}:1, ink on bg {contrast(ink, bg):.1f}:1")
     print("wrote build/palette.json")
     return 0
 

@@ -3,7 +3,7 @@
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
-        [--door browser="closed: no signed-in session"] [--year 2026] [--photos DIR] [--root .]
+        [--door browser="closed: no signed-in session"] [--since 2025-10-19] [--photos DIR] [--likes DIR] [--root .]
 
 Doors, in order of preference (every one tried is recorded in library.json and in out/brief.md):
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
@@ -13,6 +13,9 @@ Doors, in order of preference (every one tried is recorded in library.json and i
      and per-reel likes and comments (past_instagram_insights), the username. Missing files are tolerated.
   3. Facebook "Download your information" exports under --root: posts, photos, albums.
   4. --photos DIR, else the largest folder of photos under --root (dates from EXIF, else the file time).
+  5. Liked media: --likes DIR, else a folder under --root whose name says likes, liked, saved, inspiration or
+     moodboard and holds at least 8 images (the posts the person likes or saves, as screenshots or downloads; an
+     export lists likes without their pictures). File names starting "<account>_" name the account.
 With every door closed it writes out/brief.md with the one sentence on how to open one and exits 3: tell the
 person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
 
@@ -24,9 +27,10 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
    "comments": [{"account": "", "text": "", "ts": 0}], "followers": [{"account": "", "ts": 0}],
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
-The year: --year when the person named one, else the latest year with at least 12 posts, reels and stories.
-Links every media file of the year into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook)
-under its date, writes build/library.json and prints a summary; every choice it made is listed under "assumptions".
+The window: from --since when the person named a start, else the twelve months that end on the latest post.
+Links every media file of the window into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook,
+liked_media) under its date, writes build/library.json and prints a summary; every choice it made is listed under
+"assumptions".
 """
 import argparse
 import datetime as dt
@@ -43,9 +47,10 @@ import _env  # noqa: E402
 SKIP = {"out", "build", ".claude", ".git", "node_modules", ".venv", "venv", "__pycache__", ".cache", "custom-skills"}
 IMG = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 VID = {".mp4", ".mov", ".m4v"}
-HOWTO = ("To make your best nine I need your Instagram: connect your Instagram account here, or in the Instagram "
-         "app go to Your activity, then Download your information, choose JSON, and put the folder or zip it sends you "
-         "in this workspace.")
+HOWTO = ("To read your style I need your Instagram: connect your Instagram account here, or in the Instagram app go "
+         "to Your activity, then Download your information, choose JSON, and put the folder or zip it sends you in this "
+         "workspace. A folder of the posts you like or save, as screenshots, makes the kit sharper.")
+LIKE_WORDS = ("like", "liked", "saved", "inspiration", "moodboard", "mood-board", "mood_board")
 
 
 def fix(s):
@@ -262,7 +267,7 @@ def read_export(root):
                 acct = fix(e.get("title") or s_.get("value") or "")
                 if acct:
                     following.append({"account": acct, "ts": s_.get("timestamp")})
-    handle, name = None, None
+    handle, name, bio = None, None, None
     for f in first(root, "../personal_information/personal_information/personal_information.json",
                    "personal_information/personal_information/personal_information.json", "account_information/personal_information.json"):
         data = load(f) or {}
@@ -270,6 +275,7 @@ def read_export(root):
             smd = u.get("string_map_data") or {}
             handle = handle or fix((smd.get("Username") or {}).get("value", "")) or None
             name = name or fix((smd.get("Name") or {}).get("value", "")) or None
+            bio = bio or fix((smd.get("Bio") or {}).get("value", "")) or None
     if not handle:
         m = re.match(r"instagram-([A-Za-z0-9._]+?)-\d{4}-\d{2}-\d{2}", root.name)
         if m:
@@ -277,7 +283,7 @@ def read_export(root):
             notes.append(f"Username taken from the export's folder name ({root.name}).")
     return {"posts": posts, "reels": reels, "stories": stories, "likes": likes, "comments": comments,
             "followers": followers, "saved": saved, "following": following, "handle": handle, "name": name,
-            "found": found, "notes": notes}
+            "bio": bio, "found": found, "notes": notes}
 
 
 def is_fb_export(d):
@@ -327,7 +333,7 @@ def read_pulled(folder):
         return dict(row, media=out)
     keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
     d = {k: [media(r) if isinstance(r, dict) else r for r in data.get(k) or []] for k in keys}
-    d.update(handle=data.get("handle"), name=data.get("name"), source=data.get("source") or "connected account",
+    d.update(handle=data.get("handle"), name=data.get("name"), bio=data.get("bio"), source=data.get("source") or "connected account",
              found={k: [str(f)] for k in keys if d[k]})
     return d
 
@@ -352,36 +358,56 @@ def read_photos(folder):
     return posts, vids
 
 
+def is_likes_folder(d):
+    return any(w in d.name.lower() for w in LIKE_WORDS)
+
+
+def likes_folder(root):
+    """The folder of liked or saved images: named for likes, at least 8 images."""
+    best = (0, None)
+    for d, kids in walk(root):
+        n = sum(1 for k in kids if k.suffix.lower() in IMG)
+        if is_likes_folder(d) and n > best[0]:
+            best = (n, d)
+    return best[1] if best[0] >= 8 else None
+
+
+def read_likes(folder):
+    rows = []
+    for f in sorted(f for f in Path(folder).rglob("*") if f.suffix.lower() in IMG and f.is_file()):
+        acct = re.match(r"^(.+?)_\d+$", f.stem)
+        rows.append({"account": acct.group(1) if acct else "", "ts": photo_date(f), "media": [str(f.resolve())]})
+    return rows
+
+
 def largest_photo_folder(root):
     best = (0, None)
     for d, kids in walk(root):
+        if is_likes_folder(d):
+            continue
         n = sum(1 for k in kids if k.suffix.lower() in IMG)
         if n > best[0]:
             best = (n, d)
     return best[1] if best[0] >= 8 else None
 
 
-def year_of(ts):
-    return dt.datetime.fromtimestamp(int(ts), dt.timezone.utc).year
+def day_of(ts):
+    return dt.datetime.fromtimestamp(int(ts), dt.timezone.utc).date()
 
 
-def pick_year(rows, asked):
-    if asked:
-        return asked, f"The year is {asked}, as asked."
-    counts = {}
-    for r in rows:
-        if r.get("ts"):
-            counts[year_of(r["ts"])] = counts.get(year_of(r["ts"]), 0) + 1
-    if not counts:
-        return dt.date.today().year, "No dates in the data; used the current year."
-    full = [y for y, n in counts.items() if n >= 12]
-    y = max(full) if full else max(counts)
-    return y, f"The year is {y}: the latest year with enough posts, reels and stories ({counts[y]})."
+def pick_window(rows, since):
+    """(first day, last day, why): from the asked start, else the twelve months ending on the latest post."""
+    dates = [day_of(r["ts"]) for r in rows if r.get("ts")]
+    last = max(dates) if dates else dt.date.today()
+    if since:
+        return since, last, f"The window starts {since}, as asked, and ends on the latest post, {last}."
+    first = last - dt.timedelta(days=364)
+    return first, last, f"The window is the twelve months that end on the latest post: {first} to {last}."
 
 
 def write_howto(out):
     out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
+    (out / "brief.md").write_text(f"# Brand kit: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
                                   f"photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
@@ -397,9 +423,9 @@ def rel(p, root):
 
 
 def shelve(lib):
-    """Every media file of the year, linked into build/library/<kind>/ under its date; the rows point at the links."""
+    """Every media file of the window, linked into build/library/<kind>/ under its date; the rows point at the links."""
     base = Path("build/library").resolve()
-    for kind in ("posts", "reels", "stories", "likes", "saved", "facebook"):
+    for kind in ("posts", "reels", "stories", "likes", "saved", "facebook", "liked_media"):
         for n, row in enumerate(lib[kind]):
             media = []
             for i, m in enumerate(row.get("media") or []):
@@ -422,8 +448,9 @@ def shelve(lib):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
-    ap.add_argument("--year", type=int)
+    ap.add_argument("--since", type=dt.date.fromisoformat, help="first day of the window the person named (YYYY-MM-DD)")
     ap.add_argument("--photos", help="a folder of photos the person named")
+    ap.add_argument("--likes", help="a folder of the images the person likes or saves")
     ap.add_argument("--pulled", action="append", default=[], help="a folder holding items.json the agent pulled")
     ap.add_argument("--door", action="append", default=[], help='name="open: ..." or name="closed: why"')
     a = ap.parse_args()
@@ -435,7 +462,7 @@ def main():
         doors[k.strip()] = v.strip() or "tried"
     keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
     d = {k: [] for k in keys}
-    d.update(handle=None, name=None, found={}, notes=[])
+    d.update(handle=None, name=None, bio=None, found={}, notes=[])
     sources = []
     pulled = a.pulled or (["build/library/pulled"] if Path("build/library/pulled/items.json").exists() else [])
     for folder in pulled:
@@ -445,7 +472,7 @@ def main():
             continue
         for k in keys:
             d[k] = merge(d[k], p[k])
-        d["handle"], d["name"] = d["handle"] or p["handle"], d["name"] or p["name"]
+        d["handle"], d["name"], d["bio"] = d["handle"] or p["handle"], d["name"] or p["name"], d["bio"] or p["bio"]
         d["found"].update(p["found"])
         sources.append(p["source"])
         doors.setdefault(p["source"], f"open: {len(p['posts'])} posts, {len(p['likes'])} likes pulled")
@@ -458,7 +485,7 @@ def main():
         for k in keys:
             if k in x:
                 d[k] = merge(d[k], x[k])
-        d["handle"], d["name"] = d["handle"] or x["handle"], d["name"] or x["name"]
+        d["handle"], d["name"], d["bio"] = d["handle"] or x["handle"], d["name"] or x["name"], d["bio"] or x["bio"]
         for k, v in x["found"].items():
             d["found"].setdefault(k, v)
         d["notes"] += x["notes"]
@@ -487,44 +514,53 @@ def main():
             d["found"]["photos"] = str(folder)
             source = "photos"
             doors["photo_folder"] = f"open: {len(posts)} photos in {rel(folder, root)}"
-            assumptions.append(f"No Instagram account or download was reachable, so the film is made from the {len(posts)} "
-                               f"photos in {rel(folder, root)}. Likes, comments and followers need the account or the download.")
+            assumptions.append(f"No Instagram account or download was reachable, so the kit reads the {len(posts)} photos in "
+                               f"{rel(folder, root)}. Captions, cadence and likes need the account or the download.")
         elif d["facebook"]:
             source = "facebook"
             d["posts"] = [dict(r, likes=None, comments=None) for r in d["facebook"]]
-            assumptions.append("Only a Facebook download was found, so the film is made from its posts and photos.")
+            assumptions.append("Only a Facebook download was found, so the kit reads its posts and photos.")
         else:
             write_howto(Path("out"))
             print(HOWTO)
             return 3
-    year, why = pick_year(d["posts"] + d["reels"] + d["stories"], a.year)
+    first_day, last_day, why = pick_window(d["posts"] + d["reels"] + d["stories"], a.since)
     assumptions.append(why)
     handle = d["handle"] or "you"
     assumptions.append(f"Handle: @{handle}." if d["handle"] else "No username in the data; the cards say 'you'.")
-    inyear = lambda rows: sorted((r for r in rows if r.get("ts") and year_of(r["ts"]) == year), key=lambda r: r["ts"])
-    lib = {k: inyear(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
+    inwindow = lambda rows: sorted((r for r in rows if r.get("ts") and first_day <= day_of(r["ts"]) <= last_day),
+                                 key=lambda r: r["ts"])
+    lib = {k: inwindow(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
+    lfolder = Path(a.likes) if a.likes else likes_folder(root)
+    lib["liked_media"] = read_likes(lfolder) if lfolder else []
+    lib["liked_media"] += [r for r in d["likes"] + d["saved"] if r.get("media")]
+    if lfolder:
+        doors["liked_media"] = f"open: {len(lib['liked_media'])} liked images in {rel(lfolder, root)}"
+        d["found"]["liked_media"] = [str(lfolder)]
+    else:
+        doors["liked_media"] = ("open: pulled with the account" if lib["liked_media"] else
+                                "closed: no folder of liked or saved images; the likes are read by account only")
     dates = [r["ts"] for r in lib["posts"] + lib["reels"] + lib["stories"]]
     span = {"first": dt.datetime.fromtimestamp(min(dates), dt.timezone.utc).date().isoformat() if dates else None,
             "last": dt.datetime.fromtimestamp(max(dates), dt.timezone.utc).date().isoformat() if dates else None}
-    if span["last"] and span["last"] < f"{year}-12-01":
-        assumptions.append(f"The data runs to {span['last']}, so the year covers January to that day.")
+
     if source in ("export", "accounts"):
         missing = [k for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers") if not d["found"].get(k)]
         if missing:
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
         if not any(p.get("likes") is not None for p in lib["posts"] + lib["reels"]):
-            assumptions.append("The data has no likes per post, so the nine are picked by comments, else spread across the year.")
+            assumptions.append("The data has no likes per post, so what lands best is read from comments, else left out.")
     shelve(lib)
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
         assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
     out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
-           "year": year, "range": span, "found": d["found"], **lib, "followers": d["followers"],
+           "bio": d["bio"], "year": last_day.year, "window": [str(first_day), str(last_day)], "range": span, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
     _env.write_json("build/library.json", out)
-    print(f"source: {source}   handle: @{handle}   year: {year}   range: {span['first']} to {span['last']}")
+    print(f"source: {source}   handle: @{handle}   range: {span['first']} to {span['last']}")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
-                                                   "following", "facebook")))
+                                                   "following", "facebook", "liked_media")))
     for k, v in doors.items():
         print(f"door {k}: {v}")
     for x in out["assumptions"]:
