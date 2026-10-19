@@ -1,0 +1,163 @@
+bn2 READY: skills/ig_best_nine (Muse social kit 2, "my best nine")
+
+BRANCH
+  clone /home/rib/configurator/.claude/worktrees/kit-yir, branch ig-best-nine, cut from 404c4d8 (merge of #10)
+  kit tip 8e1359b; this file is committed on top of it (the commit that adds thoughts/bn2/ready.txt is the branch tip)
+    8b046c8 Add the ig_best_nine kit: the nine most-liked posts as a film, a wall and a story card
+    5996f7c Keep the best-nine kicker in place while the tiles land
+    27d0e49 Name the Facebook download door like the others and match the sheet docs to six frames
+    8e1359b Set the best-nine image's title in a band under the wall, never over a photo
+  not pushed, no PR (the lead pushes and opens it)
+
+FILES ADDED (71, all under skills/ig_best_nine/, plus this file)
+  SKILL.md (name: ig_best_nine; description carries the trigger phrasings: "my best nine", "top nine", "my top 9",
+    "best nine video", "my most liked posts this year as a video", "my top posts this year", "top 9 grid", and more)
+  pipeline/ 0-gather.md to 6-deliver.md (7)
+  scripts/ (15, executable, argparse --help): _env setup gather stats picks palette research grade storyboard vote
+    clips music film qa deliver
+  critic/critic.md; design/ (6: standards.md grade.md type.json easing.json transitions.json safe-areas.json)
+  evals/blind.md, evals/fixtures/make_person.py; fonts/ (7)
+  motion/ (32): package.json package-lock.json .npmrc .gitignore render.mjs sample/storyboard.json,
+    public/ (fonts, fx/grain.png, graded/sample-1.jpg to sample-10.jpg), src/: Beat Film Root index photo system
+    text texture transitions types, components/: Opener ClipShot Countdown (new) Grid (new)
+  What changed from kit 1: picks (the nine by likes, ties by comments then the newer post; stats.json carries the
+  tenth and its gap), research (why each of the nine worked, the wall's rhythm and an alternating order with number
+  one top left), three boards on the brief's axes (1 on the beat / kinetic / still-first, 2 nine to one / editorial /
+  clip-first, 3 one camera / documentary / still-first, reels playing inside their tiles), Grid and Countdown
+  compositions in place of StatCard Mosaic KineticType PhotoLive Closer, 15-30 s boards, deliverables
+  out/best-nine.png (1080x1080) and out/story.png (1080x1920), the gate's wall check (1080x1080, nine distinct
+  sources in build/wall.json, no flat cell, every pair of cells different) and story check, caption and brief.md
+  ("## the nine" table, the tenth's gap, the wall's why), the critics' best-nine questions.
+
+CHECK 1: compile, help, clean npm ci and render (final tree 8e1359b, exported with git archive to scratch)
+  python3 -m py_compile scripts/*.py evals/fixtures/make_person.py     -> ok, 16 files
+  python3 <each of the 16> --help                                       -> 16 of 16 answer
+  cd /mnt/data/scratch/kit-bn2/check1c/kit/motion && npm_config_cache=/mnt/data/scratch/kit-bn2/check1c/npm-cache \
+    npm ci --no-audit --no-fund                                         -> rc 0, 2.65 s, 257 packages
+  npx remotion render src/index.ts Film /mnt/data/scratch/kit-bn2/check1c/sample-film.mp4 --gl=swangle --log=info
+                                                                        -> rc 0, 20.19 s (includes the Chrome Headless
+                                                                           Shell download into motion/node_modules/.remotion),
+                                                                           0 SAFE_BREACH
+  ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv sample-film.mp4
+                                                                        -> stream,h264,1080,1920,30/1,19.400000
+  npx remotion still src/index.ts Card /mnt/data/scratch/kit-bn2/check1c/sample-wall.png --gl=swangle
+                                                                        -> rc 0, 2.19 s, 1080x1080
+  (earlier passes: check1 on 8b046c8 npm ci 2.70 s, render 20.81 s; check1b on 27d0e49 npm ci 5.62 s, render
+  138.93 s while both blind runs were rendering on the same machine)
+  The sample storyboard is board 1 of the hand fixture (Opener, Grid fly, ClipShot x2, Countdown x3, Grid reveal,
+  plus the wall and story cards), photos remapped to motion/public/graded/sample-N.jpg (10 files, 720 px, 468 KB).
+
+CHECK 2: fixture
+  python3 skills/ig_best_nine/evals/fixtures/make_person.py /mnt/data/scratch/kit-bn2/check2
+                                                                        -> rc 0, 5.43 s; 49M, 272 files, 251 images
+  The nine: 486 451 418 392 371 349 328 309 291 likes, the tenth 181 (a gap of 110); January to October; two reels
+  (ranks 2 and 6); each caption says why it worked. (5.82 s inside the hand run.)
+
+CHECK 3: hand run, every movement (not through claude)
+  script /mnt/data/scratch/kit-bn2/runs/hand.zsh a|b|c, workspace /mnt/data/scratch/kit-bn2/hand1, timings in
+  hand1/timings.txt. S = /home/rib/configurator/.claude/worktrees/kit-yir/skills/ig_best_nine. Agent-written files
+  are written by me: taste.md and taste.json (from dev1), vote/scores.json after looking at the three sheets
+  (runs/scores.py), critic/cut-1.json after looking at the frames, wall and story (runs/cut.py), caption.md.
+    fixture              python3 S/evals/fixtures/make_person.py hand1                      5.82 s
+    0 gather             python3 S/scripts/gather.py --door instagram_account="closed: no Instagram tool in this
+                         session" --door browser="closed: no signed-in browser in this session"   0.20 s
+    1 research           python3 S/scripts/research.py                                       9.21 s
+    2 storyboard draft   python3 S/scripts/storyboard.py draft   (17.9 s, 25.9 s, 22.0 s)    1.08 s
+    2 storyboard check   python3 S/scripts/storyboard.py check                               0.11 s
+    2 storyboard sheets  python3 S/scripts/storyboard.py sheets  (18 frames)                24.75 s
+    3 vote ballot        python3 S/scripts/vote.py ballot                                    0.05 s
+    3 vote tally         python3 S/scripts/vote.py tally   (winner 2: 96, 1: 87, 3: 86)      0.06 s
+    5 clips list         python3 S/scripts/clips.py list   (10 clips)                        0.05 s
+    5 clips normalize    python3 S/scripts/clips.py normalize  (two fixture reels as build/clips/01,02 stand in for
+                         model output: 2 generated, 2 their reels, 6 substituted)           26.88 s
+    4 music find         python3 S/scripts/music.py find   (rc 3: no music, as designed)     0.05 s
+    4 music make         python3 S/scripts/music.py make                                     1.16 s
+    4 music analyze      python3 S/scripts/music.py analyze  (84 bpm)                        0.22 s
+    4 storyboard snap    python3 S/scripts/storyboard.py snap  (11 beats, 9 cuts on the music, 28.0 s)  0.06 s
+    4 music master       python3 S/scripts/music.py master  (-14.0 LUFS)                     0.44 s
+    4 film render        python3 S/scripts/film.py render  (film + wall + story, 0 findings) 24.80 s
+    4 film frames        python3 S/scripts/film.py frames  (11 frames)                       6.45 s
+    6 qa check           python3 S/scripts/qa.py check   (CHECKS PASS)                       3.07 s
+    6 vote cut           python3 S/scripts/vote.py cut                                       0.18 s
+    6 vote verdict       python3 S/scripts/vote.py verdict  (SHIP, round 1, every score 4+)  0.06 s
+    6 deliver            python3 S/scripts/deliver.py   -> GATE GREEN (14 of 14)             3.68 s
+    total 108.4 s of script time. The hand run was on 5996f7c; after the two later commits the cards were re-rendered
+    on hand1 (film.py render --only cards: 2.8 s, 0 findings; qa.py check PASS, wall least cell difference 16.3) and
+    the stills route was run on a copy (film.py stills: rc 0; qa.py check PASS, wall 13.3).
+
+CHECK 4: blind runs (attempt 2 is the record; attempt 1 below)
+  script /mnt/data/scratch/kit-bn2/runs/blind.zsh with|without; kit placed from git archive of the tip (no
+  node_modules, no venv), so first-run setup ran inside the blind run. Command inside the sandbox:
+    CSC_DISABLE_KEYCHAIN=1 claude -p "make my best nine" --dangerously-skip-permissions \
+      --setting-sources project,local --strict-mcp-config --output-format stream-json --verbose > run.log 2>&1
+  TMPDIR=/mnt/data/scratch/kit-bn2/tmp; own session (no CLAUDE_CONFIG_DIR isolation needed).
+
+  blind-with (/mnt/data/scratch/kit-bn2/blind-with), kit 8e1359b
+    wall 205 s (rc 0, 33 turns, 07:08:20Z to 07:11:45Z); the Skill tool fired on the first turn; the kit copy is
+    identical to the export afterwards (the agent changed no kit file)
+    deliverables: out/film.mp4 out/best-nine.png out/story.png out/caption.md out/review.html out/brief.md, all present
+    ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv out/film.mp4
+      stream,h264,1080,1920,30/1,27.966667
+      stream,aac,0/0,27.967000
+    python3 .claude/skills/ig_best_nine/scripts/qa.py gate -> GATE GREEN, 14 of 14 (film 28.0 s, -14.1 LUFS, safe 3
+      jobs 0 findings, wall 1080x1080 9 distinct photos 0 flat cells least difference 16.3, story 1080x1920,
+      clips 10 of 10 accounted for: their two reels played, 8 substituted, "no video model in this session")
+    style sheets:
+      /mnt/data/scratch/kit-bn2/blind-with/build/storyboards/1/sheet.png
+      /mnt/data/scratch/kit-bn2/blind-with/build/storyboards/2/sheet.png
+      /mnt/data/scratch/kit-bn2/blind-with/build/storyboards/3/sheet.png
+    best-nine image: /mnt/data/scratch/kit-bn2/blind-with/out/best-nine.png
+    story card:      /mnt/data/scratch/kit-bn2/blind-with/out/story.png
+    vote (/mnt/data/scratch/kit-bn2/blind-with/build/vote.md): winner 2 nine to one 96 of 105; 3 one camera 75;
+      1 on the beat 64
+                          board 1   board 2   board 3
+      motion designer        24        32        25
+      editor                 23        30        25
+      person                 17        34        25
+      (board 1 lost on "them": the person critic scored it 1, all-caps kinetic type against her lowercase captions)
+    critics on the cut (build/critic/cut-1.json, round 1, verdict SHIP):
+      motion designer  professional 4 them 5 pacing 4 type 5 transitions 4 music 4 ending 5
+      person           professional 4 them 5 pacing 4 type 5 transitions 4 music 4 ending 5
+      (weakest point both name: the substituted clips are gentle pushes, not true motion; no video model here)
+    frames (python3 .claude/skills/ig_best_nine/scripts/film.py frames --out frames):
+      /mnt/data/scratch/kit-bn2/blind-with/frames/01-opener.png 02-no-9.png 03-no-8.png 04-no-7.png 05-no-6.png
+      06-no-5.png 07-no-4.png 08-no-3.png 09-no-2.png 10-no-1.png 11-wall.png
+      contact sheet: /mnt/data/scratch/kit-bn2/blind-with/frames-sheet.png
+    caption: "my nine most-liked of 2026. lisbon coffee, porto lunches, oaxaca at 6am, a whole summer in sicily, and
+      the harbor light that did all the work ☀ / which one was yours / #bestnine #filmphotography #foodtravel #slowtravel"
+
+  blind-without (/mnt/data/scratch/kit-bn2/blind-without), no kit, same prompt
+    wall 67 s (rc 0, 12 turns); deliverables: one file, best_nine_2026.jpg (2208x2208 grid on a white border, rank
+    order). No film, no 1080x1080 image, no story card, no caption file, no review page, no brief, no storyboards,
+    no vote, no critic scores; ffprobe: no film; qa.py gate: not applicable (no kit). It picked the same nine
+    correctly and offered options instead of finishing the set.
+
+  blind-with attempt 1 (/mnt/data/scratch/kit-bn2/blind-with-1, kit 27d0e49)
+    wall 423 s (rc 0, 42 turns); every deliverable; ffprobe stream,h264,1080,1920,30/1,27.966667 + aac 27.967000;
+    GATE GREEN 14 of 14; vote 2: 96, 3: 79, 1: 64; cut motion designer and person 4/5/4/5/4/4/5, SHIP.
+    But the agent edited the kit: the square card drew its "@handle · best nine 2026" chip over the bottom-left tile,
+    and the agent emptied the wall's text and added a guard to Grid.tsx. That is a kit defect, not an agent error:
+    fixed in 8e1359b (the wall sits inside the square's margin with the title and handle in a band beneath it, in
+    both the Remotion card and the stills route), then attempt 2 ran clean on the fixed kit without any kit edit.
+
+CHECK 5: fix loop
+  One fix round used of three (attempt 1 green but with a kit patch by the agent; attempt 2 green, no patch).
+  The process-review trigger (a fifth of attempts failing, a unit failing outright, or one reason three times) was
+  not met: zero failed steps in the hand run, two blind attempts both green, one defect found once. No codex
+  conference was held for that reason.
+
+FOR THE LEAD: a kit 1 defect found while copying (not fixed there; this packet writes only skills/ig_best_nine)
+  skills/ig_year_in_review/scripts/storyboard.py snap (around lines 811-814) replaces each beat's clip id with a dict
+  {id, file, image, status} that has no "frames". film.py clip_for() returns a dict clip unchanged, and
+  motion/src/components/ClipShot.tsx plays a clip only when clip.file && clip.frames, so every clip in a kit 1 film
+  (generated ones and the person's own reels) falls back to the animated still. In kit 2 snap leaves the clip id a
+  string and film.py props_for resolves it with frames from build/clips.json; the hand run and both blind runs show
+  their reels playing. The same three-line change fixes kit 1.
+
+NOT DONE, AND WHY
+  - No generated clip from a real video model: neither this session nor the blind sandbox has one. The generated
+    path is proven by hand (two fixture reels saved as build/clips/01.mp4, 02.mp4 arrive as "generated"); the blind
+    run proves the substitution path.
+  - No licensed or fetched music: the fixture carries none, so music.py make wrote the bed in every run.
+  - Film files are large (hand 133 MB, blind 132 MB for 28 s) because the standards keep kit 1's CRF 18 with film
+    grain; left as kit 1 has it.
