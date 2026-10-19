@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Build one invented person's 2026 on Instagram and Facebook, as the two "Download your information" exports.
+"""Build one invented person about to launch a product: her 2026 on Instagram and Facebook, as the two "Download
+your information" exports, and the product's own asset folder.
 
 USAGE:
     python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18]
@@ -19,17 +20,27 @@ DEST is a folder (a workspace). It receives:
         your_facebook_activity/posts/your_posts__check_ins__photos_and_videos_1.json
         your_facebook_activity/posts/album/0.json, 1.json
         your_facebook_activity/posts/media/<album>/*.jpg
+    tide-table-launch/                       the product's assets: six studio stills (1080x1350) and one 5 s
+                                             turntable clip (1080x1920 mp4), in the product's own palette
 
 The person has a clear taste: film-grain travel and food in warm earth tones (terracotta, ochre, olive, cream,
 espresso). About 120 posts (some carousels), 27 reels, 60 stories, 900 likes across 40 accounts whose names share
 that taste, 70 saves, 200 comments, 412 followers (96 new this year), 180 following. July (two weeks in Sicily) is
 clearly the busiest month and February the quietest.
 
-Her nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
-to October, between 291 and 486 likes, while nothing else reaches 225 (the tenth sits at least 66 below the
-ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table). Strings are written the way
-Meta writes them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic
-name over plain JPEG bytes. Needs Pillow and ffmpeg.
+The launch: Tide Table, her line of ceramic tableware, drops on 2026-11-14 (the blind-run prompt states the name, the
+date and the asset folder). The product's palette (cobalt, sea glass, lemon, porcelain, deep navy) is cool where
+hers is warm. Four posts about Tide Table are already in her feed (two of them among her most-responded posts).
+
+Her nine most-responded posts (comments plus saves) are planted clear of everything else: 306, 278, 253, 215, 182,
+159, 146, 129 and 106, while no other post or reel passes 45. Their likes run in a different order on purpose (the
+list post about Sicily has the most likes and ranks fourth by response), so a ranking by likes is visibly wrong.
+Their openers come in three styles, three each: a question ("would you ...?", "what would ...?", "which one ...?"),
+a confession ("confession: ...", "i almost didn't ...", "honestly, ...") and a number list ("3 things ...",
+"5 bread rules ...", "2 hours, 1 market, 0 plans"). The intended hook order is the response order above, and the
+styles rank question (mean 239), confession (196), list (156). Strings are written the way Meta writes them (UTF-8
+bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic name over plain JPEG
+bytes. Needs Pillow and ffmpeg.
 """
 import argparse
 import datetime as dt
@@ -85,18 +96,25 @@ ACCOUNTS = FRIENDS + [
 assert len(ACCOUNTS) == 40, len(ACCOUNTS)
 
 
-NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked, planted clear of everything else
-    (7, "post", "sunset", 486, 41, "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"),
-    (5, "reel", "market", 451, 52, "forty seconds of the oaxaca market at opening time. you asked for the sound of it \U0001F33F"),
-    (1, "post", "coffee", 418, 33, "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"),
-    (9, "post", "oldtown", 392, 29, "every door in marrakech is terracotta and i will not be taking questions"),
-    (3, "post", "table", 371, 38, "the porto lunch that lasted four hours. olive, ochre, bread, then more bread"),
-    (8, "reel", "beach", 349, 44, "a slow walk into the sea at golden hour, the reel you all sent to each other"),
-    (6, "post", "hills", 328, 24, "6am on the ridge above oaxaca. worth the alarm, worth the climb, worth that orange sky"),
-    (10, "post", "table", 309, 27, "back home and still cooking like it's sicily: tomatoes, olive oil, sea salt and nothing else"),
-    (4, "post", "market", 291, 22, "the porto market in april, every crate orange and ochre at once #shotonfilm"),
+PRODUCT, LAUNCH, ASSETS = "Tide Table", "2026-11-14", "tide-table-launch"
+COAST = {"cobalt": (32, 72, 168), "sea glass": (148, 198, 188), "lemon": (238, 208, 72), "porcelain": (244, 243, 238),
+         "deep navy": (18, 28, 58)}
+PLANTED = [  # (month, kind, scene, likes, comments, saves, style, caption): her nine most-responded, in response order
+    (6, "post", "table", 260, 96, 210, "question", "would you eat breakfast off this? oaxaca, 7am, the light doing everything"),
+    (10, "post", "plates", 205, 88, 190, "confession", "confession: i've been making plates in secret for a year. tide table is nearly ready"),
+    (9, "post", "plates", 188, 71, 182, "question", "what would you cook first on a cobalt plate? asking for tide table"),
+    (7, "post", "sunset", 486, 40, 175, "list", "3 things sicily taught me: eat late, swim early, never rush the bread"),
+    (3, "post", "market", 240, 62, 120, "confession", "i almost didn't post this one. the porto market before anyone else woke up"),
+    (1, "post", "coffee", 300, 55, 104, "question", "which one is your morning cup? lisbon, one window, two espressos"),
+    (5, "reel", "market", 350, 18, 128, "list", "5 bread rules i live by, filmed at the oaxaca market at opening"),
+    (8, "reel", "beach", 330, 39, 90, "confession", "honestly, the best meal of the year was this one, on the sand, with salt hair"),
+    (4, "post", "oldtown", 280, 22, 84, "list", "2 hours, 1 market, 0 plans. porto in april"),
 ]
-OTHER_CAP = 225  # no other post or reel reaches this many likes
+PRODUCT_POSTS = [  # (month, likes, comments, saves, caption): the other two posts about the product, ordinary numbers
+    (9, 92, 6, 9, "glaze tests for tide table, round four"),
+    (10, 88, 5, 8, "kiln day. tide table is close"),
+]
+OTHER_CAP = 225  # no other post or reel reaches this many likes, and none passes 45 comments plus saves
 
 
 def film_look(im, rng):
@@ -236,6 +254,16 @@ def draw_scene(job):
         d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(246, 240, 230))
         d.ellipse([cx - int(r * .78), cy - int(r * .78), cx + int(r * .78), cy + int(r * .78)], fill=mix(b, e, 0.55))
         d.ellipse([cx - r // 3, cy - r // 4, cx + r // 3, cy + r // 4], fill=mix(c, b, 0.3))
+    elif kind == "plates":
+        d.rectangle([0, 0, sw, sh], fill=mix(e, b, 0.4))
+        for y in range(0, sh, 22):
+            d.line([(0, y), (sw, y + rng.randint(-6, 6))], fill=mix(e, b, 0.5), width=2)
+        for _ in range(rng.randint(2, 3)):
+            r = rng.randint(sw // 6, sw // 4)
+            cx, cy = rng.randint(r, sw - r), rng.randint(r, sh - r)
+            d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=COAST["cobalt"])
+            d.ellipse([cx - int(r * .84), cy - int(r * .84), cx + int(r * .84), cy + int(r * .84)], fill=COAST["porcelain"])
+            d.ellipse([cx - int(r * .3), cy - int(r * .3), cx + int(r * .3), cy + int(r * .3)], fill=COAST["sea glass"])
     else:  # flowers
         for y in range(sh):
             d.line([(0, y), (sw, y)], fill=mix(c, b, y / sh))
@@ -252,6 +280,75 @@ def draw_scene(job):
     im = film_look(im, rng)
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     im.save(path, "JPEG", quality=84)  # a .heic name still gets JPEG bytes
+    return path
+
+
+def draw_product(job):
+    """job = (path, w, h, shot, seed): a clean studio still of the tableware, in the product's palette (no film look)."""
+    from PIL import Image, ImageDraw, ImageFilter
+    path, w, h, shot, seed = job
+    rng = random.Random(seed)
+    sw, sh = w // 2, h // 2
+    C = COAST
+    bg = {"plate": C["cobalt"], "bowl": C["lemon"], "cup": C["sea glass"], "stack": C["deep navy"], "glaze": C["cobalt"],
+          "set": C["porcelain"]}[shot]
+    im = Image.new("RGB", (sw, sh), bg)
+    d = ImageDraw.Draw(im)
+    for y in range(sh):
+        d.line([(0, y), (sw, y)], fill=mix(bg, (0, 0, 0), 0.18 * y / sh))
+    cx, cy = sw // 2, int(sh * 0.48)
+
+    def plate(cx, cy, r, rim=C["cobalt"], well=C["porcelain"], dot=C["lemon"]):
+        d.ellipse([cx - r + 8, cy - r + 14, cx + r + 8, cy + r + 14], fill=mix(bg, (0, 0, 0), 0.35))
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=rim)
+        d.ellipse([cx - int(r * .86), cy - int(r * .86), cx + int(r * .86), cy + int(r * .86)], fill=well)
+        for k in range(12):
+            ang = k * math.pi / 6
+            px, py = cx + int(math.cos(ang) * r * .93), cy + int(math.sin(ang) * r * .93)
+            d.ellipse([px - 5, py - 5, px + 5, py + 5], fill=dot)
+    if shot == "plate":
+        plate(cx, cy, int(sw * 0.38))
+    elif shot == "bowl":
+        r = int(sw * 0.32)
+        d.ellipse([cx - r, cy - r // 2, cx + r, cy + r // 2 + 10], fill=mix(bg, (0, 0, 0), 0.3))
+        d.chord([cx - r, cy - r, cx + r, cy + r], 0, 180, fill=C["cobalt"])
+        d.ellipse([cx - r, cy - r // 4, cx + r, cy + r // 4], fill=C["porcelain"])
+        d.ellipse([cx - int(r * .8), cy - r // 6, cx + int(r * .8), cy + r // 6], fill=C["sea glass"])
+    elif shot == "cup":
+        r = int(sw * 0.2)
+        d.rectangle([cx - r, cy - r, cx + r, cy + int(r * 1.3)], fill=C["porcelain"])
+        d.ellipse([cx - r, cy - r - r // 4, cx + r, cy - r + r // 4], fill=C["cobalt"])
+        d.ellipse([cx - r, cy + int(r * 1.3) - r // 4, cx + r, cy + int(r * 1.3) + r // 4], fill=C["porcelain"])
+        d.arc([cx + r - 10, cy - r // 3, cx + r + r // 2 + 10, cy + r // 2 + 20], 270, 90, fill=C["porcelain"], width=14)
+        d.rectangle([cx - r, cy + r // 3, cx + r, cy + r // 3 + 16], fill=C["lemon"])
+    elif shot == "stack":
+        for k in range(5):
+            y = cy + int(sh * 0.12) - k * 26
+            d.ellipse([cx - int(sw * .34), y - 22, cx + int(sw * .34), y + 22], fill=[C["cobalt"], C["porcelain"]][k % 2])
+        plate(cx, cy - int(sh * 0.08), int(sw * 0.3))
+    elif shot == "glaze":
+        for _ in range(240):
+            x, y, r = rng.randint(0, sw), rng.randint(0, sh), rng.randint(6, 40)
+            d.ellipse([x - r, y - r, x + r, y + r], fill=mix(C["cobalt"], rng.choice([C["sea glass"], C["deep navy"], C["porcelain"]]), rng.random() * 0.5))
+    else:  # set
+        plate(int(sw * 0.34), int(sh * 0.4), int(sw * 0.26))
+        plate(int(sw * 0.68), int(sh * 0.62), int(sw * 0.22), rim=C["lemon"], dot=C["cobalt"])
+        r = int(sw * 0.1)
+        d.ellipse([int(sw * 0.7) - r, int(sh * 0.26) - r, int(sw * 0.7) + r, int(sh * 0.26) + r], fill=C["cobalt"])
+    im = im.filter(ImageFilter.GaussianBlur(0.8)).resize((w, h), Image.BICUBIC)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    im.save(path, "JPEG", quality=90)
+    return path
+
+
+def make_turntable(still, path, secs=5):
+    """The product's short clip: the plate turning on its cobalt ground, 1080x1920, 30 fps."""
+    frames = int(secs * 30)
+    bg = "0x%02x%02x%02x" % COAST["cobalt"]
+    vf = (f"scale=1080:1350,pad=1080:1920:0:285:color={bg},rotate='t*0.5':ow=iw:oh=ih:c={bg},"
+          f"zoompan=z='1+0.08*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", still, "-vf", vf, "-frames:v", str(frames),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", path], check=True)
     return path
 
 
@@ -281,7 +378,8 @@ def main():
     dest.mkdir(parents=True, exist_ok=True)
     root = dest / f"instagram-{HANDLE}-{end.isoformat()}"
     fb = dest / f"facebook-{HANDLE.replace('.', '')}-{end.isoformat()}"
-    for r in (root, fb):
+    assets = dest / ASSETS
+    for r in (root, fb, assets):
         if r.exists():
             shutil.rmtree(r)
     jobs, counter = [], [0]
@@ -301,6 +399,15 @@ def main():
             cap += " " + " ".join(rng.sample(TAGS, rng.randint(1, 3)))
         return cap
 
+    def insight(uri, ts, likes, comments, saves=None):
+        if saves is None:  # an ordinary post: comments plus saves stay at or under 40
+            comments = min(comments, 30)
+            saves = min(int(likes / rng.uniform(9, 16)), 40 - comments)
+        return {"media_map_data": {"Media Thumbnail": {"uri": uri, "creation_timestamp": ts, "title": ""}},
+                "string_map_data": {"Creation Timestamp": {"value": dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%b %d, %Y %I:%M %p")},
+                                    "Likes": {"value": str(likes)}, "Comments": {"value": str(comments)},
+                                    "Saves": {"value": str(saves)}}}
+
     posts, insights = [], []
     for m in months:
         for _ in range(SEASON[m][0]):
@@ -317,29 +424,22 @@ def main():
                               "title": ig_text(cap) if n_media == 1 else "", "cross_post_source": {"source_app": "FB"}})
             posts.append({"media": items} if n_media == 1 else {"media": items, "title": ig_text(cap), "creation_timestamp": ts})
             likes = min(OTHER_CAP - 1, int(rng.lognormvariate(4.0, 0.45)) + (45 if m == 7 else 0))
-            insights.append({"media_map_data": {"Media Thumbnail": {"uri": items[0]["uri"], "creation_timestamp": ts, "title": ""}},
-                             "string_map_data": {"Creation Timestamp": {"value": dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%b %d, %Y %I:%M %p")},
-                                                 "Likes": {"value": str(likes)},
-                                                 "Comments": {"value": str(max(0, int(likes / rng.uniform(9, 22))))},
-                                                 "Saves": {"value": str(int(likes / 12))}}})
-    def insight(uri, ts, likes, comments):
-        return {"media_map_data": {"Media Thumbnail": {"uri": uri, "creation_timestamp": ts, "title": ""}},
-                "string_map_data": {"Creation Timestamp": {"value": dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%b %d, %Y %I:%M %p")},
-                                    "Likes": {"value": str(likes)}, "Comments": {"value": str(comments)},
-                                    "Saves": {"value": str(int(likes / 12))}}}
+            insights.append(insight(items[0]["uri"], ts, likes, max(0, int(likes / rng.uniform(9, 22)))))
 
     nine_reels = []
-    for k, (m, kind, scene, likes, comments, cap) in enumerate(NINE):
+    rows = [(m, kind, scene, likes, comments, saves, cap) for m, kind, scene, likes, comments, saves, _, cap in PLANTED] + \
+           [(m, "post", "plates", likes, comments, saves, cap) for m, likes, comments, saves, cap in PRODUCT_POSTS]
+    for k, (m, kind, scene, likes, comments, saves, cap) in enumerate(rows):
         ts = ts_for(rng, year, m, end)
         if kind == "reel":
-            nine_reels.append((m, scene, likes, comments, cap, ts))
+            nine_reels.append((m, scene, likes, comments, saves, cap, ts))
             continue
         w, h = (1080, 1350) if k % 2 == 0 else (1080, 1080)
         uri = media_path("posts", ts, ".jpg")
         jobs.append((str(root / uri), w, h, scene, pal(m), rng.random()))
         posts.append({"media": [{"uri": uri, "creation_timestamp": ts, "media_metadata": {"photo_metadata": {"exif_data": []}},
                                  "title": ig_text(cap), "cross_post_source": {"source_app": "FB"}}]})
-        insights.append(insight(uri, ts, likes, comments))
+        insights.append(insight(uri, ts, likes, comments, saves))
     rng.shuffle(posts)
 
     # four reel clips, 25 reels that point at them
@@ -359,13 +459,13 @@ def main():
                                  "media_metadata": {"video_metadata": {}}}]})
         likes = min(OTHER_CAP - 1, int(rng.lognormvariate(3.7, 0.4)))
         reel_insights.append(insight(clip_uris[i % 4], ts, likes, max(0, int(likes / rng.uniform(8, 20)))))
-    for i, (m, scene, likes, comments, cap, ts) in enumerate(nine_reels):
+    for i, (m, scene, likes, comments, saves, cap, ts) in enumerate(nine_reels):
         still = str(root / f"media/reels/top{i + 1}-still.jpg")
         jobs.append((still, 1080, 1920, scene, pal(m), rng.random()))
         uri = f"media/reels/{17843000000000000 + i * 7907}.mp4"
         clip_jobs.append((str(root / uri), still, (6, 8)[i % 2]))
         reels.append({"media": [{"uri": uri, "creation_timestamp": ts, "title": ig_text(cap), "media_metadata": {"video_metadata": {}}}]})
-        reel_insights.append(insight(uri, ts, likes, comments))
+        reel_insights.append(insight(uri, ts, likes, comments, saves))
 
     stories = []
     for i in range(60):
@@ -461,15 +561,23 @@ def main():
     write(fb, "personal_information/profile_information/profile_information.json",
           {"profile_v2": {"name": {"full_name": NAME}}})
 
+    shots = ["plate", "bowl", "cup", "stack", "glaze", "set"]
+    product_jobs = [(str(assets / f"tide-table-{k + 1:02d}-{s}.jpg"), 1080, 1350, s, rng.random()) for k, s in enumerate(shots)]
     with Pool(max(2, os.cpu_count() or 2)) as pool:
         pool.map(draw_scene, jobs, chunksize=4)
+        pool.map(draw_product, product_jobs)
         pool.map(make_reel, clip_jobs)
+    make_turntable(product_jobs[0][0], str(assets / "tide-table-turntable.mp4"))
     print(json.dumps({"workspace": str(dest), "instagram": root.name, "facebook": fb.name, "handle": HANDLE,
                       "posts": len(posts), "post_media": sum(len(p["media"]) for p in posts), "reels": len(reels),
                       "reel_clips": len(clip_jobs), "stories": len(stories), "likes": 900, "liked_accounts": len(liked),
                       "saved": len(saved), "comments": len(comments), "followers": len(followers),
                       "following": len(following), "facebook_posts": len(fb_posts), "facebook_albums": len(albums),
-                      "images": len(jobs)}, indent=2))
+                      "images": len(jobs), "product": PRODUCT, "launch": LAUNCH, "assets": ASSETS,
+                      "product_stills": len(product_jobs), "product_clips": 1,
+                      "intended_hooks": [{"rank": i + 1, "response": c + s, "style": st, "opener": cap}
+                                         for i, (_, _, _, _, c, s, st, cap) in enumerate(PLANTED)],
+                      "intended_styles": ["question", "confession", "list"]}, indent=2))
 
 
 if __name__ == "__main__":
