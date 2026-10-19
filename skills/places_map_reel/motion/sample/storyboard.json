@@ -1,467 +1,1126 @@
 {
- "id": "sample",
- "name": "on the beat",
- "direction": "kinetic",
- "structure": "the wall assembles tile by tile on the beat, then the top three",
- "tone": "kinetic",
- "clip_use": "still-first: short generated bridges in their colors are the transitions between tiles",
- "idea": "the nine land one per beat, from nine to one, until the wall is whole; then the top three hit full frame in heavy type and the wall comes back to close",
- "music": {
-  "direction": "driving, bright, 118 bpm: four-on-the-floor, claps, a hook",
-  "bpm": 84,
-  "mood": "drive"
- },
+ "id": "1",
+ "name": "the route",
  "beats": [
   {
    "id": "opener",
    "kind": "Opener",
-   "frames": 57,
+   "frames": 86,
    "transition": null,
    "photos": [
     "graded/sample-1.jpg"
    ],
    "text": {
     "kicker": "@maren.okafor",
-    "headline": "best nine"
-   }
-  },
-  {
-   "id": "wall-build",
-   "kind": "Grid",
-   "frames": 181,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "text": {
-    "kicker": "best nine 2026",
-    "headline": "the nine you loved most"
-   },
-   "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
-   ],
-   "data": {
-    "mode": "fly",
-    "tiles": [
-     {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
-     },
-     {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
-     },
-     {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
-     },
-     {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
-     },
-     {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
-     }
-    ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     5
-    ],
-    "shots": 10,
-    "cuts": [
-     13,
-     26,
-     39,
-     48,
-     69,
-     78,
-     91,
-     103,
-     112
-    ]
-   }
-  },
-  {
-   "id": "bridge-1",
-   "kind": "ClipShot",
-   "frames": 30,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
+    "headline": "where the year went",
+    "line": "2026 in 11 places"
    },
    "clip": null,
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
-   "text": {
-    "kicker": "and the top three"
+   "data": {
+    "focus": []
    }
   },
   {
-   "id": "no-3",
-   "kind": "Countdown",
-   "frames": 52,
+   "id": "overview",
+   "kind": "MapJourney",
+   "frames": 93,
    "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
+    "preset": "iris",
+    "frames": 15
    },
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
+   "photos": [],
    "text": {
-    "kicker": "january 8",
-    "headline": "first coffee of the year in lisbon, one cup by one window",
-    "line": "418 likes"
+    "kicker": "2026",
+    "headline": "11 places on one map"
    },
    "data": {
-    "rank": 3,
-    "of": 9,
-    "slot": 8,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
+    "mode": "overview",
+    "cam0": [
+     360.757,
+     413.097,
+     320.627
     ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     8
-    ]
-   }
+    "cam1": [
+     475.321,
+     378.764,
+     13
+    ],
+    "done": 0,
+    "legs": [],
+    "focus": []
+   },
+   "clip": null
   },
   {
-   "id": "no-2",
-   "kind": "Countdown",
-   "frames": 52,
+   "id": "leg-01-porto",
+   "kind": "MapJourney",
+   "frames": 83,
    "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-left"
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "mar 3 to 10",
+    "headline": "porto",
+    "line": "274 km from lisbon"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     0
+    ],
+    "done": 0,
+    "cam0": [
+     475.321,
+     378.764,
+     13
+    ],
+    "cam1": [
+     475.321,
+     378.764,
+     13
+    ],
+    "arrive": "porto",
+    "card": {
+     "photo": "graded/sample-2.jpg",
+     "again": false,
+     "name": "porto",
+     "country": "portugal",
+     "when": "mar 3 to 10",
+     "visits": 2,
+     "km_from_home": 274
+    },
+    "pinned": [],
+    "focus": [
+     "porto"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-02-coimbra",
+   "kind": "MapJourney",
+   "frames": 84,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
    },
    "photos": [
     "graded/sample-3.jpg"
    ],
    "text": {
-    "kicker": "may 16",
-    "headline": "forty seconds of the oaxaca market at opening time",
-    "line": "451 likes"
+    "kicker": "mar 12 to 15",
+    "headline": "coimbra",
+    "line": "107 km from porto"
    },
    "data": {
-    "rank": 2,
-    "of": 9,
-    "slot": 7,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
+    "mode": "leg",
+    "legs": [
+     1
     ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
+    "done": 1,
+    "cam0": [
+     475.321,
+     378.764,
+     13
+    ],
+    "cam1": [
+     476.335,
+     376.108,
+     13
+    ],
+    "arrive": "coimbra",
+    "card": {
+     "photo": "graded/sample-3.jpg",
+     "again": false,
+     "name": "coimbra",
+     "country": "portugal",
+     "when": "mar 12 to 15",
+     "visits": 1,
+     "km_from_home": 176
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     }
+    ],
+    "focus": [
+     "coimbra"
     ]
-   }
+   },
+   "clip": null
   },
   {
-   "id": "bridge-2",
-   "kind": "ClipShot",
-   "frames": 30,
+   "id": "leg-03-aveiro",
+   "kind": "MapJourney",
+   "frames": 74,
    "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "apr 3 to 7",
+    "headline": "aveiro",
+    "line": "53 km from coimbra"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     2
+    ],
+    "done": 2,
+    "cam0": [
+     476.335,
+     376.108,
+     13
+    ],
+    "cam1": [
+     476.294,
+     377.048,
+     13
+    ],
+    "arrive": "aveiro",
+    "card": {
+     "photo": "graded/sample-4.jpg",
+     "again": false,
+     "name": "aveiro",
+     "country": "portugal",
+     "when": "apr 3 to 7",
+     "visits": 1,
+     "km_from_home": 217
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     }
+    ],
+    "focus": [
+     "aveiro"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-04-evora",
+   "kind": "MapJourney",
+   "frames": 93,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "apr 18 to 22",
+    "headline": "\u00e9vora",
+    "line": "240 km from aveiro"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     3
+    ],
+    "done": 3,
+    "cam0": [
+     476.294,
+     377.048,
+     13
+    ],
+    "cam1": [
+     477.004,
+     379.995,
+     13
+    ],
+    "arrive": "evora",
+    "card": {
+     "photo": "graded/sample-1.jpg",
+     "again": false,
+     "name": "\u00e9vora",
+     "country": "portugal",
+     "when": "apr 18 to 22",
+     "visits": 1,
+     "km_from_home": 109
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     }
+    ],
+    "focus": [
+     "evora"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-05-seville",
+   "kind": "MapJourney",
+   "frames": 93,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-5.jpg"
+   ],
+   "text": {
+    "kicker": "may 1 to 9",
+    "headline": "seville",
+    "line": "212 km from \u00e9vora"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     4
+    ],
+    "done": 4,
+    "cam0": [
+     477.004,
+     379.995,
+     13
+    ],
+    "cam1": [
+     480.714,
+     385.783,
+     13
+    ],
+    "arrive": "seville",
+    "card": {
+     "photo": "graded/sample-5.jpg",
+     "again": false,
+     "name": "seville",
+     "country": "spain",
+     "when": "may 1 to 9",
+     "visits": 2,
+     "km_from_home": 314
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     }
+    ],
+    "focus": [
+     "seville"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-06-cordoba",
+   "kind": "MapJourney",
+   "frames": 93,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "may 11 to 14",
+    "headline": "c\u00f3rdoba",
+    "line": "119 km from seville"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     5
+    ],
+    "done": 5,
+    "cam0": [
+     480.714,
+     385.783,
+     13
+    ],
+    "cam1": [
+     485.07,
+     386.985,
+     13
+    ],
+    "arrive": "cordoba",
+    "card": {
+     "photo": "graded/sample-6.jpg",
+     "again": false,
+     "name": "c\u00f3rdoba",
+     "country": "spain",
+     "when": "may 11 to 14",
+     "visits": 1,
+     "km_from_home": 393
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     }
+    ],
+    "focus": [
+     "cordoba"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-07-granada",
+   "kind": "MapJourney",
+   "frames": 94,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-7.jpg"
+   ],
+   "text": {
+    "kicker": "jun 2 to 8",
+    "headline": "granada",
+    "line": "131 km from c\u00f3rdoba"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     6
+    ],
+    "done": 6,
+    "cam0": [
+     485.07,
+     386.985,
+     13
+    ],
+    "cam1": [
+     488.396,
+     387.404,
+     13
+    ],
+    "arrive": "granada",
+    "card": {
+     "photo": "graded/sample-7.jpg",
+     "again": false,
+     "name": "granada",
+     "country": "spain",
+     "when": "jun 2 to 8",
+     "visits": 1,
+     "km_from_home": 518
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     },
+     {
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
+     }
+    ],
+    "focus": [
+     "granada"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-08-faro",
+   "kind": "MapJourney",
+   "frames": 93,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-8.jpg"
+   ],
+   "text": {
+    "kicker": "jun 18 to 26",
+    "headline": "faro",
+    "line": "386 km from granada"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     7
+    ],
+    "done": 7,
+    "cam0": [
+     488.396,
+     387.404,
+     13
+    ],
+    "cam1": [
+     484.002,
+     388.913,
+     26.574
+    ],
+    "arrive": "faro",
+    "card": {
+     "photo": "graded/sample-8.jpg",
+     "again": false,
+     "name": "faro",
+     "country": "portugal",
+     "when": "jun 18 to 26",
+     "visits": 1,
+     "km_from_home": 218
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     },
+     {
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
+     },
+     {
+      "id": "granada",
+      "photo": "graded/sample-7.jpg"
+     }
+    ],
+    "focus": [
+     "faro"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "fly-oaxaca",
+   "kind": "ClipShot",
+   "frames": 74,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
    },
    "clip": null,
    "photos": [
-    "graded/sample-2.jpg"
+    "graded/sample-9.jpg"
    ],
    "text": {
-    "kicker": "number one"
-   }
-  },
-  {
-   "id": "no-1",
-   "kind": "Countdown",
-   "frames": 74,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "photos": [
-    "graded/sample-2.jpg"
-   ],
-   "text": {
-    "kicker": "july 15",
-    "headline": "the light did all the work here",
-    "line": "486 likes"
+    "kicker": "8,766 km",
+    "headline": "to oaxaca"
    },
    "data": {
-    "rank": 1,
-    "of": 9,
-    "slot": 0,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     0,
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
+    "focus": [
+     "oaxaca"
     ]
    }
   },
   {
-   "id": "closer",
-   "kind": "Grid",
-   "frames": 169,
+   "id": "leg-09-oaxaca",
+   "kind": "MapJourney",
+   "frames": 112,
    "transition": {
-    "preset": "slide",
-    "frames": 9,
-    "direction": "from-bottom"
-   },
-   "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine 2026",
-    "line": "3,395 likes across these nine"
+    "preset": "fade",
+    "frames": 15
    },
    "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
+    "graded/sample-9.jpg"
    ],
+   "text": {
+    "kicker": "jul 5 to 24",
+    "headline": "oaxaca",
+    "line": "8,766 km from faro"
+   },
    "data": {
-    "mode": "reveal",
-    "tiles": [
+    "mode": "leg",
+    "legs": [
+     8
+    ],
+    "done": 8,
+    "cam0": [
+     484.002,
+     388.913,
+     26.574
+    ],
+    "cam1": [
+     354.718,
+     420.5,
+     468.333
+    ],
+    "arrive": "oaxaca",
+    "card": {
+     "photo": "graded/sample-9.jpg",
+     "again": false,
+     "name": "oaxaca",
+     "country": "mexico",
+     "when": "jul 5 to 24",
+     "visits": 1,
+     "km_from_home": 8621
+    },
+    "pinned": [
      {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
      },
      {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
      },
      {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
      },
      {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
      },
      {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
      },
      {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
      },
      {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
+      "id": "granada",
+      "photo": "graded/sample-7.jpg"
      },
      {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
+      "id": "faro",
+      "photo": "graded/sample-8.jpg"
      }
     ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
+    "focus": [
+     "oaxaca"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-10-seville",
+   "kind": "MapJourney",
+   "frames": 94,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-10.jpg"
+   ],
+   "text": {
+    "kicker": "again, aug 6 to 14",
+    "headline": "seville",
+    "line": "8,924 km from oaxaca"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     9
     ],
-    "weights": [
-     1
+    "done": 9,
+    "cam0": [
+     354.718,
+     420.5,
+     468.333
     ],
-    "shots": 1,
-    "stagger": 2
-   }
+    "cam1": [
+     482.317,
+     381.769,
+     24.72
+    ],
+    "arrive": "seville",
+    "card": {
+     "photo": "graded/sample-10.jpg",
+     "again": true,
+     "name": "seville",
+     "country": "spain",
+     "when": "aug 6 to 14",
+     "visits": 2,
+     "km_from_home": 314
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     },
+     {
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
+     },
+     {
+      "id": "granada",
+      "photo": "graded/sample-7.jpg"
+     },
+     {
+      "id": "faro",
+      "photo": "graded/sample-8.jpg"
+     },
+     {
+      "id": "oaxaca",
+      "photo": "graded/sample-9.jpg"
+     }
+    ],
+    "focus": [
+     "seville"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-11-porto",
+   "kind": "MapJourney",
+   "frames": 93,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-11.jpg"
+   ],
+   "text": {
+    "kicker": "again, sep 3 to 9",
+    "headline": "porto",
+    "line": "475 km from seville"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     10
+    ],
+    "done": 10,
+    "cam0": [
+     482.317,
+     381.769,
+     24.72
+    ],
+    "cam1": [
+     479.72,
+     381.092,
+     16.647
+    ],
+    "arrive": "porto",
+    "card": {
+     "photo": "graded/sample-11.jpg",
+     "again": true,
+     "name": "porto",
+     "country": "portugal",
+     "when": "sep 3 to 9",
+     "visits": 2,
+     "km_from_home": 274
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     },
+     {
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
+     },
+     {
+      "id": "granada",
+      "photo": "graded/sample-7.jpg"
+     },
+     {
+      "id": "faro",
+      "photo": "graded/sample-8.jpg"
+     },
+     {
+      "id": "oaxaca",
+      "photo": "graded/sample-9.jpg"
+     }
+    ],
+    "focus": [
+     "porto"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-12-madrid",
+   "kind": "MapJourney",
+   "frames": 93,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-12.jpg"
+   ],
+   "text": {
+    "kicker": "sep 15 to 20",
+    "headline": "madrid",
+    "line": "424 km from porto"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     11
+    ],
+    "done": 11,
+    "cam0": [
+     479.72,
+     381.092,
+     16.647
+    ],
+    "cam1": [
+     482.906,
+     375.741,
+     30.169
+    ],
+    "arrive": "madrid",
+    "card": {
+     "photo": "graded/sample-12.jpg",
+     "again": false,
+     "name": "madrid",
+     "country": "spain",
+     "when": "sep 15 to 20",
+     "visits": 1,
+     "km_from_home": 504
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     },
+     {
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
+     },
+     {
+      "id": "granada",
+      "photo": "graded/sample-7.jpg"
+     },
+     {
+      "id": "faro",
+      "photo": "graded/sample-8.jpg"
+     },
+     {
+      "id": "oaxaca",
+      "photo": "graded/sample-9.jpg"
+     }
+    ],
+    "focus": [
+     "madrid"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "leg-13-lisbon",
+   "kind": "MapJourney",
+   "frames": 94,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-13.jpg"
+   ],
+   "text": {
+    "kicker": "home, oct 2 to 17",
+    "headline": "lisbon",
+    "line": "back home, 504 km from madrid"
+   },
+   "data": {
+    "mode": "leg",
+    "legs": [
+     12
+    ],
+    "done": 12,
+    "cam0": [
+     482.906,
+     375.741,
+     30.169
+    ],
+    "cam1": [
+     482.178,
+     380.139,
+     33.376
+    ],
+    "arrive": "lisbon",
+    "card": {
+     "photo": "graded/sample-13.jpg",
+     "again": false,
+     "name": "lisbon",
+     "country": "portugal",
+     "when": "oct 2 to 17",
+     "visits": 3,
+     "km_from_home": 0
+    },
+    "pinned": [
+     {
+      "id": "porto",
+      "photo": "graded/sample-2.jpg"
+     },
+     {
+      "id": "coimbra",
+      "photo": "graded/sample-3.jpg"
+     },
+     {
+      "id": "aveiro",
+      "photo": "graded/sample-4.jpg"
+     },
+     {
+      "id": "evora",
+      "photo": "graded/sample-1.jpg"
+     },
+     {
+      "id": "seville",
+      "photo": "graded/sample-5.jpg"
+     },
+     {
+      "id": "cordoba",
+      "photo": "graded/sample-6.jpg"
+     },
+     {
+      "id": "granada",
+      "photo": "graded/sample-7.jpg"
+     },
+     {
+      "id": "faro",
+      "photo": "graded/sample-8.jpg"
+     },
+     {
+      "id": "oaxaca",
+      "photo": "graded/sample-9.jpg"
+     },
+     {
+      "id": "madrid",
+      "photo": "graded/sample-12.jpg"
+     }
+    ],
+    "focus": [
+     "lisbon"
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "the-map",
+   "kind": "Poster",
+   "frames": 179,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "photos": [],
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "2026 in 11 places",
+    "line": "20,615 km along the way"
+   },
+   "data": {
+    "layout": {
+     "poster": {
+      "rect": [
+       0,
+       250,
+       1080,
+       900
+      ],
+      "cam": [
+       477.566,
+       381.769,
+       32.476
+      ],
+      "inset": {
+       "rect": [
+        40,
+        600,
+        330,
+        260
+       ],
+       "cam": [
+        231.472,
+        451.829,
+        30
+       ],
+       "ids": [
+        "oaxaca"
+       ]
+      },
+      "labels": {
+       "lisbon": "left",
+       "seville": "right",
+       "porto": "right",
+       "granada": "below",
+       "faro": "right",
+       "madrid": "left",
+       "aveiro": "right",
+       "evora": "right",
+       "coimbra": "right",
+       "cordoba": "left",
+       "oaxaca": "right"
+      },
+      "size": 30
+     },
+     "reel": {
+      "rect": [
+       0,
+       210,
+       1080,
+       870
+      ],
+      "cam": [
+       478.998,
+       381.769,
+       35.844
+      ],
+      "inset": {
+       "rect": [
+        40,
+        590,
+        300,
+        240
+       ],
+       "cam": [
+        231.472,
+        451.829,
+        30
+       ],
+       "ids": [
+        "oaxaca"
+       ]
+      },
+      "labels": {
+       "lisbon": "left",
+       "seville": "right",
+       "porto": "right",
+       "granada": "below",
+       "faro": "right",
+       "madrid": "left",
+       "aveiro": "right",
+       "evora": "right",
+       "coimbra": "right",
+       "cordoba": "left",
+       "oaxaca": "right"
+      },
+      "size": 34
+     }
+    },
+    "night": false,
+    "focus": []
+   },
+   "clip": null
   }
  ],
  "handle": "maren.okafor",
@@ -472,91 +1131,100 @@
   "fps": 30
  },
  "system": {
-  "direction": "kinetic",
+  "direction": "documentary",
   "display": {
-   "family": "Archivo Black",
-   "file": "fonts/ArchivoBlack/ArchivoBlack-Regular.ttf",
-   "weight": 400,
-   "tracking": -0.02,
-   "case": "uppercase",
-   "lineHeight": 0.9
+   "family": "Space Grotesk",
+   "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf",
+   "weight": 600,
+   "tracking": -0.03,
+   "case": "none",
+   "lineHeight": 0.95
   },
   "text": {
-   "family": "Archivo",
-   "file": "fonts/Archivo/Archivo[wdth,wght].ttf",
-   "weight": 600,
+   "family": "JetBrains Mono",
+   "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf",
+   "weight": 500,
    "tracking": 0.0,
    "case": "none",
-   "lineHeight": 1.2
+   "lineHeight": 1.3
   },
   "scale": {
-   "hero": 330,
-   "h1": 168,
-   "h2": 116,
-   "h3": 70,
-   "body": 42,
-   "label": 30
+   "hero": 250,
+   "h1": 136,
+   "h2": 96,
+   "h3": 58,
+   "body": 36,
+   "label": 26
   },
   "colors": {
-   "bg": "#20140d",
-   "ink": "#f0e6d7",
-   "accent": "#a87824",
-   "accent2": "#8d5e1f",
-   "muted": "#92887c",
-   "paper": "#f0e6d7",
+   "bg": "#1a110e",
+   "ink": "#ece0cc",
+   "accent": "#e0a030",
+   "accent2": "#c9824f",
+   "muted": "#8e8376",
+   "paper": "#e6d6b9",
    "swatches": [
     {
-     "hex": "#624229",
-     "name": "chocolate"
+     "hex": "#8F7758",
+     "name": "taupe"
     },
     {
-     "hex": "#906B4C",
+     "hex": "#87593C",
      "name": "caramel"
     },
     {
-     "hex": "#4B3525",
-     "name": "warm chocolate"
+     "hex": "#55382E",
+     "name": "chocolate"
     },
     {
-     "hex": "#735B3E",
-     "name": "olive"
+     "hex": "#904A48",
+     "name": "berry"
     },
     {
-     "hex": "#B29A79",
-     "name": "taupe"
+     "hex": "#C3AF8D",
+     "name": "sand"
     }
    ]
   },
+  "map": {
+   "sea": "#402a1e",
+   "land": "#5d412f",
+   "coast": "#7c6452",
+   "route": "#e0a030",
+   "pin": "#e0a030",
+   "label": "#ece0cc",
+   "halo": "#5d412f"
+  },
   "texture": {
-   "grain": 0.08,
-   "vignette": 0,
-   "leaks": false
+   "grain": 0.16,
+   "vignette": 0.32,
+   "leaks": true
   },
   "ease": {
    "enter": [
-    0.22,
-    1.2,
-    0.36,
+    0.33,
+    0,
+    0.15,
     1
    ],
    "exit": [
-    0.8,
+    0.6,
     0,
-    0.9,
-    0.3
+    0.8,
+    0.2
    ],
    "move": [
-    0.7,
+    0.37,
     0,
-    0.2,
+    0.63,
     1
    ],
    "spring": {
-    "damping": 13,
-    "stiffness": 190,
-    "mass": 0.6
+    "damping": 26,
+    "stiffness": 80,
+    "mass": 1
    },
-   "stagger": 3
+   "stagger": 6
   },
   "safe": {
    "reel": {
@@ -565,266 +1233,1961 @@
     "left": 72,
     "right": 150
    },
-   "story": {
-    "top": 250,
-    "bottom": 340,
-    "left": 72,
-    "right": 72
-   },
-   "square": {
-    "top": 40,
-    "bottom": 40,
-    "left": 40,
-    "right": 40
+   "poster": {
+    "top": 64,
+    "bottom": 64,
+    "left": 64,
+    "right": 64
    }
   }
  },
- "wall": {
-  "id": "best-nine",
-  "kind": "Grid",
+ "map": {
+  "land": "map/land.json",
+  "pins": [
+   {
+    "id": "lisbon",
+    "name": "lisbon",
+    "x": 474.592,
+    "y": 383.161,
+    "far": false,
+    "home": true,
+    "rows": 32,
+    "km_from_home": 0
+   },
+   {
+    "id": "porto",
+    "name": "porto",
+    "x": 476.05,
+    "y": 374.366,
+    "far": false,
+    "home": false,
+    "rows": 21,
+    "km_from_home": 274
+   },
+   {
+    "id": "coimbra",
+    "name": "coimbra",
+    "x": 476.62,
+    "y": 377.851,
+    "far": false,
+    "home": false,
+    "rows": 6,
+    "km_from_home": 176
+   },
+   {
+    "id": "aveiro",
+    "name": "aveiro",
+    "x": 475.969,
+    "y": 376.244,
+    "far": false,
+    "home": false,
+    "rows": 8,
+    "km_from_home": 217
+   },
+   {
+    "id": "evora",
+    "name": "\u00e9vora",
+    "x": 478.039,
+    "y": 383.747,
+    "far": false,
+    "home": false,
+    "rows": 8,
+    "km_from_home": 109
+   },
+   {
+    "id": "seville",
+    "name": "seville",
+    "x": 483.389,
+    "y": 387.818,
+    "far": false,
+    "home": false,
+    "rows": 27,
+    "km_from_home": 314
+   },
+   {
+    "id": "cordoba",
+    "name": "c\u00f3rdoba",
+    "x": 486.75,
+    "y": 386.151,
+    "far": false,
+    "home": false,
+    "rows": 6,
+    "km_from_home": 393
+   },
+   {
+    "id": "granada",
+    "name": "granada",
+    "x": 490.042,
+    "y": 388.656,
+    "far": false,
+    "home": false,
+    "rows": 10,
+    "km_from_home": 518
+   },
+   {
+    "id": "faro",
+    "name": "faro",
+    "x": 477.963,
+    "y": 389.171,
+    "far": false,
+    "home": false,
+    "rows": 9,
+    "km_from_home": 218
+   },
+   {
+    "id": "oaxaca",
+    "name": "oaxaca",
+    "x": 231.472,
+    "y": 451.829,
+    "far": true,
+    "home": false,
+    "rows": 27,
+    "km_from_home": 8621
+   },
+   {
+    "id": "madrid",
+    "name": "madrid",
+    "x": 489.763,
+    "y": 377.117,
+    "far": false,
+    "home": false,
+    "rows": 9,
+    "km_from_home": 504
+   }
+  ],
+  "legs": [
+   {
+    "from": "lisbon",
+    "to": "porto",
+    "km": 274,
+    "far": false,
+    "arc": [
+     [
+      474.592,
+      383.161
+     ],
+     [
+      474.741,
+      382.863
+     ],
+     [
+      474.883,
+      382.564
+     ],
+     [
+      475.017,
+      382.263
+     ],
+     [
+      475.145,
+      381.962
+     ],
+     [
+      475.265,
+      381.659
+     ],
+     [
+      475.378,
+      381.355
+     ],
+     [
+      475.484,
+      381.05
+     ],
+     [
+      475.583,
+      380.743
+     ],
+     [
+      475.674,
+      380.436
+     ],
+     [
+      475.759,
+      380.127
+     ],
+     [
+      475.836,
+      379.817
+     ],
+     [
+      475.906,
+      379.506
+     ],
+     [
+      475.969,
+      379.194
+     ],
+     [
+      476.025,
+      378.88
+     ],
+     [
+      476.073,
+      378.565
+     ],
+     [
+      476.114,
+      378.25
+     ],
+     [
+      476.149,
+      377.932
+     ],
+     [
+      476.175,
+      377.614
+     ],
+     [
+      476.195,
+      377.295
+     ],
+     [
+      476.208,
+      376.974
+     ],
+     [
+      476.213,
+      376.652
+     ],
+     [
+      476.211,
+      376.329
+     ],
+     [
+      476.202,
+      376.005
+     ],
+     [
+      476.186,
+      375.68
+     ],
+     [
+      476.163,
+      375.353
+     ],
+     [
+      476.133,
+      375.025
+     ],
+     [
+      476.095,
+      374.696
+     ],
+     [
+      476.05,
+      374.366
+     ]
+    ]
+   },
+   {
+    "from": "porto",
+    "to": "coimbra",
+    "km": 107,
+    "far": false,
+    "arc": [
+     [
+      476.05,
+      374.366
+     ],
+     [
+      476.032,
+      374.497
+     ],
+     [
+      476.017,
+      374.627
+     ],
+     [
+      476.004,
+      374.757
+     ],
+     [
+      475.995,
+      374.886
+     ],
+     [
+      475.988,
+      375.015
+     ],
+     [
+      475.984,
+      375.143
+     ],
+     [
+      475.983,
+      375.271
+     ],
+     [
+      475.985,
+      375.399
+     ],
+     [
+      475.99,
+      375.526
+     ],
+     [
+      475.998,
+      375.653
+     ],
+     [
+      476.008,
+      375.779
+     ],
+     [
+      476.021,
+      375.904
+     ],
+     [
+      476.037,
+      376.029
+     ],
+     [
+      476.056,
+      376.154
+     ],
+     [
+      476.078,
+      376.278
+     ],
+     [
+      476.103,
+      376.402
+     ],
+     [
+      476.13,
+      376.525
+     ],
+     [
+      476.16,
+      376.648
+     ],
+     [
+      476.194,
+      376.771
+     ],
+     [
+      476.23,
+      376.893
+     ],
+     [
+      476.268,
+      377.014
+     ],
+     [
+      476.31,
+      377.135
+     ],
+     [
+      476.355,
+      377.255
+     ],
+     [
+      476.402,
+      377.375
+     ],
+     [
+      476.452,
+      377.495
+     ],
+     [
+      476.505,
+      377.614
+     ],
+     [
+      476.561,
+      377.733
+     ],
+     [
+      476.62,
+      377.851
+     ]
+    ]
+   },
+   {
+    "from": "coimbra",
+    "to": "aveiro",
+    "km": 53,
+    "far": false,
+    "arc": [
+     [
+      476.62,
+      377.851
+     ],
+     [
+      476.614,
+      377.786
+     ],
+     [
+      476.608,
+      377.722
+     ],
+     [
+      476.599,
+      377.659
+     ],
+     [
+      476.59,
+      377.596
+     ],
+     [
+      476.579,
+      377.533
+     ],
+     [
+      476.567,
+      377.472
+     ],
+     [
+      476.554,
+      377.41
+     ],
+     [
+      476.539,
+      377.349
+     ],
+     [
+      476.523,
+      377.289
+     ],
+     [
+      476.506,
+      377.229
+     ],
+     [
+      476.487,
+      377.17
+     ],
+     [
+      476.467,
+      377.111
+     ],
+     [
+      476.446,
+      377.053
+     ],
+     [
+      476.423,
+      376.995
+     ],
+     [
+      476.399,
+      376.938
+     ],
+     [
+      476.374,
+      376.882
+     ],
+     [
+      476.347,
+      376.826
+     ],
+     [
+      476.32,
+      376.77
+     ],
+     [
+      476.29,
+      376.715
+     ],
+     [
+      476.26,
+      376.661
+     ],
+     [
+      476.228,
+      376.607
+     ],
+     [
+      476.195,
+      376.553
+     ],
+     [
+      476.161,
+      376.5
+     ],
+     [
+      476.125,
+      376.448
+     ],
+     [
+      476.088,
+      376.396
+     ],
+     [
+      476.05,
+      376.345
+     ],
+     [
+      476.01,
+      376.294
+     ],
+     [
+      475.969,
+      376.244
+     ]
+    ]
+   },
+   {
+    "from": "aveiro",
+    "to": "evora",
+    "km": 240,
+    "far": false,
+    "arc": [
+     [
+      475.969,
+      376.244
+     ],
+     [
+      475.96,
+      376.535
+     ],
+     [
+      475.958,
+      376.824
+     ],
+     [
+      475.961,
+      377.111
+     ],
+     [
+      475.971,
+      377.397
+     ],
+     [
+      475.986,
+      377.681
+     ],
+     [
+      476.008,
+      377.963
+     ],
+     [
+      476.036,
+      378.244
+     ],
+     [
+      476.07,
+      378.523
+     ],
+     [
+      476.111,
+      378.8
+     ],
+     [
+      476.157,
+      379.076
+     ],
+     [
+      476.21,
+      379.35
+     ],
+     [
+      476.268,
+      379.622
+     ],
+     [
+      476.333,
+      379.892
+     ],
+     [
+      476.404,
+      380.161
+     ],
+     [
+      476.481,
+      380.428
+     ],
+     [
+      476.564,
+      380.694
+     ],
+     [
+      476.653,
+      380.957
+     ],
+     [
+      476.748,
+      381.219
+     ],
+     [
+      476.85,
+      381.48
+     ],
+     [
+      476.958,
+      381.738
+     ],
+     [
+      477.071,
+      381.995
+     ],
+     [
+      477.191,
+      382.251
+     ],
+     [
+      477.317,
+      382.504
+     ],
+     [
+      477.449,
+      382.756
+     ],
+     [
+      477.588,
+      383.006
+     ],
+     [
+      477.732,
+      383.255
+     ],
+     [
+      477.882,
+      383.502
+     ],
+     [
+      478.039,
+      383.747
+     ]
+    ]
+   },
+   {
+    "from": "evora",
+    "to": "seville",
+    "km": 212,
+    "far": false,
+    "arc": [
+     [
+      478.039,
+      383.747
+     ],
+     [
+      478.185,
+      383.951
+     ],
+     [
+      478.335,
+      384.151
+     ],
+     [
+      478.488,
+      384.347
+     ],
+     [
+      478.644,
+      384.538
+     ],
+     [
+      478.803,
+      384.725
+     ],
+     [
+      478.966,
+      384.908
+     ],
+     [
+      479.132,
+      385.086
+     ],
+     [
+      479.302,
+      385.26
+     ],
+     [
+      479.475,
+      385.429
+     ],
+     [
+      479.651,
+      385.594
+     ],
+     [
+      479.83,
+      385.755
+     ],
+     [
+      480.013,
+      385.911
+     ],
+     [
+      480.199,
+      386.063
+     ],
+     [
+      480.388,
+      386.211
+     ],
+     [
+      480.581,
+      386.354
+     ],
+     [
+      480.777,
+      386.493
+     ],
+     [
+      480.976,
+      386.627
+     ],
+     [
+      481.179,
+      386.757
+     ],
+     [
+      481.385,
+      386.883
+     ],
+     [
+      481.595,
+      387.004
+     ],
+     [
+      481.807,
+      387.121
+     ],
+     [
+      482.023,
+      387.234
+     ],
+     [
+      482.243,
+      387.342
+     ],
+     [
+      482.465,
+      387.446
+     ],
+     [
+      482.691,
+      387.546
+     ],
+     [
+      482.92,
+      387.641
+     ],
+     [
+      483.153,
+      387.732
+     ],
+     [
+      483.389,
+      387.818
+     ]
+    ]
+   },
+   {
+    "from": "seville",
+    "to": "cordoba",
+    "km": 119,
+    "far": false,
+    "arc": [
+     [
+      483.389,
+      387.818
+     ],
+     [
+      483.527,
+      387.796
+     ],
+     [
+      483.664,
+      387.77
+     ],
+     [
+      483.8,
+      387.742
+     ],
+     [
+      483.934,
+      387.712
+     ],
+     [
+      484.067,
+      387.678
+     ],
+     [
+      484.199,
+      387.642
+     ],
+     [
+      484.329,
+      387.603
+     ],
+     [
+      484.458,
+      387.561
+     ],
+     [
+      484.586,
+      387.517
+     ],
+     [
+      484.712,
+      387.47
+     ],
+     [
+      484.837,
+      387.42
+     ],
+     [
+      484.96,
+      387.367
+     ],
+     [
+      485.082,
+      387.312
+     ],
+     [
+      485.203,
+      387.253
+     ],
+     [
+      485.322,
+      387.192
+     ],
+     [
+      485.44,
+      387.129
+     ],
+     [
+      485.557,
+      387.062
+     ],
+     [
+      485.672,
+      386.993
+     ],
+     [
+      485.786,
+      386.921
+     ],
+     [
+      485.899,
+      386.847
+     ],
+     [
+      486.01,
+      386.769
+     ],
+     [
+      486.12,
+      386.689
+     ],
+     [
+      486.228,
+      386.606
+     ],
+     [
+      486.335,
+      386.521
+     ],
+     [
+      486.441,
+      386.432
+     ],
+     [
+      486.545,
+      386.341
+     ],
+     [
+      486.648,
+      386.248
+     ],
+     [
+      486.75,
+      386.151
+     ]
+    ]
+   },
+   {
+    "from": "cordoba",
+    "to": "granada",
+    "km": 131,
+    "far": false,
+    "arc": [
+     [
+      486.75,
+      386.151
+     ],
+     [
+      486.84,
+      386.277
+     ],
+     [
+      486.932,
+      386.4
+     ],
+     [
+      487.026,
+      386.52
+     ],
+     [
+      487.122,
+      386.638
+     ],
+     [
+      487.22,
+      386.753
+     ],
+     [
+      487.32,
+      386.865
+     ],
+     [
+      487.423,
+      386.975
+     ],
+     [
+      487.527,
+      387.082
+     ],
+     [
+      487.633,
+      387.186
+     ],
+     [
+      487.742,
+      387.288
+     ],
+     [
+      487.852,
+      387.386
+     ],
+     [
+      487.965,
+      387.483
+     ],
+     [
+      488.079,
+      387.576
+     ],
+     [
+      488.196,
+      387.667
+     ],
+     [
+      488.314,
+      387.755
+     ],
+     [
+      488.435,
+      387.84
+     ],
+     [
+      488.558,
+      387.923
+     ],
+     [
+      488.682,
+      388.003
+     ],
+     [
+      488.809,
+      388.081
+     ],
+     [
+      488.938,
+      388.155
+     ],
+     [
+      489.069,
+      388.227
+     ],
+     [
+      489.202,
+      388.297
+     ],
+     [
+      489.337,
+      388.363
+     ],
+     [
+      489.474,
+      388.427
+     ],
+     [
+      489.613,
+      388.488
+     ],
+     [
+      489.754,
+      388.547
+     ],
+     [
+      489.897,
+      388.603
+     ],
+     [
+      490.042,
+      388.656
+     ]
+    ]
+   },
+   {
+    "from": "granada",
+    "to": "faro",
+    "km": 386,
+    "far": false,
+    "arc": [
+     [
+      490.042,
+      388.656
+     ],
+     [
+      489.605,
+      388.541
+     ],
+     [
+      489.168,
+      388.436
+     ],
+     [
+      488.732,
+      388.341
+     ],
+     [
+      488.296,
+      388.256
+     ],
+     [
+      487.861,
+      388.181
+     ],
+     [
+      487.426,
+      388.116
+     ],
+     [
+      486.991,
+      388.06
+     ],
+     [
+      486.557,
+      388.014
+     ],
+     [
+      486.124,
+      387.978
+     ],
+     [
+      485.69,
+      387.952
+     ],
+     [
+      485.257,
+      387.936
+     ],
+     [
+      484.825,
+      387.93
+     ],
+     [
+      484.393,
+      387.934
+     ],
+     [
+      483.961,
+      387.947
+     ],
+     [
+      483.53,
+      387.971
+     ],
+     [
+      483.099,
+      388.004
+     ],
+     [
+      482.669,
+      388.047
+     ],
+     [
+      482.239,
+      388.1
+     ],
+     [
+      481.81,
+      388.162
+     ],
+     [
+      481.381,
+      388.235
+     ],
+     [
+      480.952,
+      388.318
+     ],
+     [
+      480.524,
+      388.41
+     ],
+     [
+      480.096,
+      388.512
+     ],
+     [
+      479.668,
+      388.624
+     ],
+     [
+      479.241,
+      388.746
+     ],
+     [
+      478.815,
+      388.878
+     ],
+     [
+      478.389,
+      389.019
+     ],
+     [
+      477.963,
+      389.171
+     ]
+    ]
+   },
+   {
+    "from": "faro",
+    "to": "oaxaca",
+    "km": 8766,
+    "far": true,
+    "arc": [
+     [
+      477.963,
+      389.171
+     ],
+     [
+      471.434,
+      389.295
+     ],
+     [
+      464.924,
+      389.494
+     ],
+     [
+      458.433,
+      389.766
+     ],
+     [
+      451.96,
+      390.113
+     ],
+     [
+      445.507,
+      390.533
+     ],
+     [
+      439.072,
+      391.027
+     ],
+     [
+      432.656,
+      391.595
+     ],
+     [
+      426.259,
+      392.237
+     ],
+     [
+      419.88,
+      392.953
+     ],
+     [
+      413.521,
+      393.743
+     ],
+     [
+      407.18,
+      394.607
+     ],
+     [
+      400.858,
+      395.545
+     ],
+     [
+      394.554,
+      396.557
+     ],
+     [
+      388.27,
+      397.643
+     ],
+     [
+      382.004,
+      398.803
+     ],
+     [
+      375.757,
+      400.036
+     ],
+     [
+      369.529,
+      401.344
+     ],
+     [
+      363.32,
+      402.726
+     ],
+     [
+      357.13,
+      404.181
+     ],
+     [
+      350.958,
+      405.711
+     ],
+     [
+      344.805,
+      407.314
+     ],
+     [
+      338.671,
+      408.991
+     ],
+     [
+      332.556,
+      410.743
+     ],
+     [
+      326.459,
+      412.568
+     ],
+     [
+      320.382,
+      414.467
+     ],
+     [
+      314.323,
+      416.44
+     ],
+     [
+      308.283,
+      418.487
+     ],
+     [
+      302.261,
+      420.608
+     ],
+     [
+      296.259,
+      422.803
+     ],
+     [
+      290.275,
+      425.072
+     ],
+     [
+      284.31,
+      427.415
+     ],
+     [
+      278.364,
+      429.832
+     ],
+     [
+      272.437,
+      432.323
+     ],
+     [
+      266.528,
+      434.888
+     ],
+     [
+      260.639,
+      437.526
+     ],
+     [
+      254.768,
+      440.239
+     ],
+     [
+      248.916,
+      443.026
+     ],
+     [
+      243.082,
+      445.886
+     ],
+     [
+      237.268,
+      448.821
+     ],
+     [
+      231.472,
+      451.829
+     ]
+    ]
+   },
+   {
+    "from": "oaxaca",
+    "to": "seville",
+    "km": 8924,
+    "far": true,
+    "arc": [
+     [
+      231.472,
+      451.829
+     ],
+     [
+      238.144,
+      451.702
+     ],
+     [
+      244.798,
+      451.5
+     ],
+     [
+      251.432,
+      451.223
+     ],
+     [
+      258.046,
+      450.869
+     ],
+     [
+      264.642,
+      450.44
+     ],
+     [
+      271.218,
+      449.936
+     ],
+     [
+      277.775,
+      449.356
+     ],
+     [
+      284.313,
+      448.7
+     ],
+     [
+      290.832,
+      447.969
+     ],
+     [
+      297.332,
+      447.163
+     ],
+     [
+      303.812,
+      446.28
+     ],
+     [
+      310.273,
+      445.322
+     ],
+     [
+      316.715,
+      444.289
+     ],
+     [
+      323.138,
+      443.18
+     ],
+     [
+      329.541,
+      441.995
+     ],
+     [
+      335.926,
+      440.735
+     ],
+     [
+      342.291,
+      439.399
+     ],
+     [
+      348.637,
+      437.988
+     ],
+     [
+      354.964,
+      436.501
+     ],
+     [
+      361.271,
+      434.939
+     ],
+     [
+      367.559,
+      433.3
+     ],
+     [
+      373.829,
+      431.587
+     ],
+     [
+      380.079,
+      429.798
+     ],
+     [
+      386.309,
+      427.933
+     ],
+     [
+      392.521,
+      425.992
+     ],
+     [
+      398.713,
+      423.977
+     ],
+     [
+      404.886,
+      421.885
+     ],
+     [
+      411.04,
+      419.718
+     ],
+     [
+      417.175,
+      417.475
+     ],
+     [
+      423.29,
+      415.157
+     ],
+     [
+      429.387,
+      412.763
+     ],
+     [
+      435.464,
+      410.294
+     ],
+     [
+      441.522,
+      407.749
+     ],
+     [
+      447.56,
+      405.128
+     ],
+     [
+      453.58,
+      402.432
+     ],
+     [
+      459.58,
+      399.661
+     ],
+     [
+      465.561,
+      396.813
+     ],
+     [
+      471.523,
+      393.89
+     ],
+     [
+      477.466,
+      390.892
+     ],
+     [
+      483.389,
+      387.818
+     ]
+    ]
+   },
+   {
+    "from": "seville",
+    "to": "porto",
+    "km": 475,
+    "far": false,
+    "arc": [
+     [
+      483.389,
+      387.818
+     ],
+     [
+      483.275,
+      387.257
+     ],
+     [
+      483.15,
+      386.701
+     ],
+     [
+      483.014,
+      386.152
+     ],
+     [
+      482.868,
+      385.609
+     ],
+     [
+      482.71,
+      385.071
+     ],
+     [
+      482.541,
+      384.54
+     ],
+     [
+      482.361,
+      384.015
+     ],
+     [
+      482.171,
+      383.495
+     ],
+     [
+      481.969,
+      382.982
+     ],
+     [
+      481.756,
+      382.475
+     ],
+     [
+      481.533,
+      381.973
+     ],
+     [
+      481.298,
+      381.478
+     ],
+     [
+      481.052,
+      380.988
+     ],
+     [
+      480.796,
+      380.505
+     ],
+     [
+      480.528,
+      380.027
+     ],
+     [
+      480.249,
+      379.556
+     ],
+     [
+      479.96,
+      379.091
+     ],
+     [
+      479.659,
+      378.631
+     ],
+     [
+      479.348,
+      378.178
+     ],
+     [
+      479.025,
+      377.73
+     ],
+     [
+      478.692,
+      377.289
+     ],
+     [
+      478.347,
+      376.853
+     ],
+     [
+      477.992,
+      376.424
+     ],
+     [
+      477.626,
+      376.0
+     ],
+     [
+      477.248,
+      375.583
+     ],
+     [
+      476.86,
+      375.171
+     ],
+     [
+      476.46,
+      374.766
+     ],
+     [
+      476.05,
+      374.366
+     ]
+    ]
+   },
+   {
+    "from": "porto",
+    "to": "madrid",
+    "km": 424,
+    "far": false,
+    "arc": [
+     [
+      476.05,
+      374.366
+     ],
+     [
+      476.509,
+      374.615
+     ],
+     [
+      476.971,
+      374.854
+     ],
+     [
+      477.435,
+      375.081
+     ],
+     [
+      477.901,
+      375.296
+     ],
+     [
+      478.37,
+      375.501
+     ],
+     [
+      478.84,
+      375.694
+     ],
+     [
+      479.313,
+      375.877
+     ],
+     [
+      479.788,
+      376.048
+     ],
+     [
+      480.266,
+      376.207
+     ],
+     [
+      480.745,
+      376.356
+     ],
+     [
+      481.227,
+      376.493
+     ],
+     [
+      481.711,
+      376.62
+     ],
+     [
+      482.198,
+      376.735
+     ],
+     [
+      482.686,
+      376.839
+     ],
+     [
+      483.177,
+      376.931
+     ],
+     [
+      483.67,
+      377.013
+     ],
+     [
+      484.166,
+      377.083
+     ],
+     [
+      484.663,
+      377.142
+     ],
+     [
+      485.163,
+      377.19
+     ],
+     [
+      485.665,
+      377.227
+     ],
+     [
+      486.17,
+      377.252
+     ],
+     [
+      486.676,
+      377.266
+     ],
+     [
+      487.185,
+      377.269
+     ],
+     [
+      487.696,
+      377.261
+     ],
+     [
+      488.21,
+      377.242
+     ],
+     [
+      488.725,
+      377.212
+     ],
+     [
+      489.243,
+      377.17
+     ],
+     [
+      489.763,
+      377.117
+     ]
+    ]
+   },
+   {
+    "from": "madrid",
+    "to": "lisbon",
+    "km": 504,
+    "far": false,
+    "arc": [
+     [
+      489.763,
+      377.117
+     ],
+     [
+      489.155,
+      377.166
+     ],
+     [
+      488.551,
+      377.227
+     ],
+     [
+      487.953,
+      377.3
+     ],
+     [
+      487.359,
+      377.386
+     ],
+     [
+      486.77,
+      377.484
+     ],
+     [
+      486.186,
+      377.595
+     ],
+     [
+      485.608,
+      377.718
+     ],
+     [
+      485.034,
+      377.853
+     ],
+     [
+      484.465,
+      378.001
+     ],
+     [
+      483.901,
+      378.161
+     ],
+     [
+      483.342,
+      378.333
+     ],
+     [
+      482.787,
+      378.518
+     ],
+     [
+      482.238,
+      378.716
+     ],
+     [
+      481.694,
+      378.925
+     ],
+     [
+      481.155,
+      379.147
+     ],
+     [
+      480.62,
+      379.382
+     ],
+     [
+      480.091,
+      379.629
+     ],
+     [
+      479.566,
+      379.888
+     ],
+     [
+      479.047,
+      380.159
+     ],
+     [
+      478.532,
+      380.443
+     ],
+     [
+      478.022,
+      380.74
+     ],
+     [
+      477.517,
+      381.048
+     ],
+     [
+      477.017,
+      381.37
+     ],
+     [
+      476.522,
+      381.703
+     ],
+     [
+      476.032,
+      382.049
+     ],
+     [
+      475.547,
+      382.407
+     ],
+     [
+      475.067,
+      382.778
+     ],
+     [
+      474.592,
+      383.161
+     ]
+    ]
+   }
+  ],
+  "route": [
+   "lisbon",
+   "porto",
+   "coimbra",
+   "aveiro",
+   "evora",
+   "seville",
+   "cordoba",
+   "granada",
+   "faro",
+   "oaxaca",
+   "seville",
+   "porto",
+   "madrid",
+   "lisbon"
+  ]
+ },
+ "count": 11,
+ "total_km": 20615,
+ "poster": {
+  "id": "poster",
+  "kind": "Poster",
   "frames": 90,
   "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
+  "photos": [],
   "text": {
    "kicker": "@maren.okafor",
-   "headline": "best nine 2026"
+   "headline": "2026 in 11 places",
+   "line": "20,615 km along the way"
   },
   "data": {
-   "mode": "reveal",
-   "tiles": [
-    {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
+   "layout": {
+    "poster": {
+     "rect": [
+      0,
+      250,
+      1080,
+      900
+     ],
+     "cam": [
+      477.566,
+      381.769,
+      32.476
+     ],
+     "inset": {
+      "rect": [
+       40,
+       600,
+       330,
+       260
+      ],
+      "cam": [
+       231.472,
+       451.829,
+       30
+      ],
+      "ids": [
+       "oaxaca"
+      ]
+     },
+     "labels": {
+      "lisbon": "left",
+      "seville": "right",
+      "porto": "right",
+      "granada": "below",
+      "faro": "right",
+      "madrid": "left",
+      "aveiro": "right",
+      "evora": "right",
+      "coimbra": "right",
+      "cordoba": "left",
+      "oaxaca": "right"
+     },
+     "size": 30
     },
-    {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
-    },
-    {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
+    "reel": {
+     "rect": [
+      0,
+      210,
+      1080,
+      870
+     ],
+     "cam": [
+      478.998,
+      381.769,
+      35.844
+     ],
+     "inset": {
+      "rect": [
+       40,
+       590,
+       300,
+       240
+      ],
+      "cam": [
+       231.472,
+       451.829,
+       30
+      ],
+      "ids": [
+       "oaxaca"
+      ]
+     },
+     "labels": {
+      "lisbon": "left",
+      "seville": "right",
+      "porto": "right",
+      "granada": "below",
+      "faro": "right",
+      "madrid": "left",
+      "aveiro": "right",
+      "evora": "right",
+      "coimbra": "right",
+      "cordoba": "left",
+      "oaxaca": "right"
+     },
+     "size": 34
     }
-   ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
-   ],
-   "weights": [
-    1
-   ],
-   "shots": 1
-  }
- },
- "story": {
-  "id": "story",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
+   },
+   "night": false,
+   "focus": []
+  },
   "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "my best nine of 2026",
-   "line": "which one is your favorite?"
-  },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
-    {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
-    },
-    {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
-    },
-    {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
-    }
-   ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
-   ],
-   "weights": [
-    1
-   ],
-   "shots": 1
-  }
- },
- "seconds": 19.4
+  "clip": null
+ }
 }
