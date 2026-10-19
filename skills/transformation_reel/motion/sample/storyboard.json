@@ -23,7 +23,7 @@
    "clip": null,
    "text": {
     "kicker": "2025.08.09 \u2192 2026.10.14",
-    "headline": "14 months of pottery",
+    "headline": "14 months of my pottery",
     "line": "26 posts, oldest first"
    }
   },
@@ -47,7 +47,7 @@
    },
    "data": {
     "day": 1,
-    "month": 1,
+    "month": 0,
     "progress": 0.0,
     "milestone": false,
     "ticks": [
@@ -81,7 +81,7 @@
    },
    "data": {
     "day": 29,
-    "month": 1,
+    "month": 0,
     "progress": 0.065,
     "milestone": false,
     "ticks": [
@@ -141,7 +141,7 @@
    },
    "data": {
     "day": 113,
-    "month": 4,
+    "month": 3,
     "progress": 0.2599,
     "milestone": false,
     "ticks": [
@@ -175,7 +175,7 @@
    },
    "data": {
     "day": 169,
-    "month": 6,
+    "month": 5,
     "progress": 0.3898,
     "milestone": true,
     "ticks": [
@@ -225,7 +225,7 @@
    },
    "data": {
     "day": 400,
-    "month": 14,
+    "month": 13,
     "progress": 0.9258,
     "milestone": true,
     "ticks": [
@@ -259,7 +259,7 @@
    },
    "data": {
     "day": 432,
-    "month": 15,
+    "month": 14,
     "progress": 1.0,
     "milestone": false,
     "ticks": [
@@ -296,7 +296,7 @@
    ],
    "text": {
     "kicker": "august 2025 to october 2026",
-    "headline": "14 months of pottery",
+    "headline": "14 months of my pottery",
     "line": "@maren.okafor"
    },
    "data": {
@@ -313,6 +313,7 @@
  ],
  "handle": "maren.okafor",
  "subject": "pottery",
+ "phrase": "my pottery",
  "span": {
   "first": "2025-08-09",
   "latest": "2026-10-14",
@@ -416,12 +417,6 @@
     "bottom": 670,
     "left": 72,
     "right": 150
-   },
-   "story": {
-    "top": 250,
-    "bottom": 340,
-    "left": 72,
-    "right": 72
    },
    "portrait": {
     "top": 56,

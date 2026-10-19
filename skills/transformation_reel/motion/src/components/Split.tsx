@@ -44,7 +44,7 @@ const PairCard: React.FC<{beat: Beat}> = ({beat}) => {
   const labels: string[] = beat.data?.labels ?? [];
   const tb = beat.data?.layout === 'tb';
   const gap = 12;
-  const band = 270;
+  const band = 300;
   const area = {left: s.left, top: s.top, width: s.width, height: s.height - band};
   const boxes: Box[] = tb
     ? [{...area, height: (area.height - gap) / 2}, {...area, top: area.top + (area.height + gap) / 2, height: (area.height - gap) / 2}]

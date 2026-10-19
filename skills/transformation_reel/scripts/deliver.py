@@ -41,13 +41,14 @@ def plain(line):
     return "" if qa.SPAN.search(c) else c
 
 
-def caption(taste, sub):
+def caption(taste, sub, film):
     own = Path("build/caption.md")
     if own.exists() and own.read_text().strip():
         return own.read_text().strip() + "\n"
     reg = taste.get("register") or {}
     span = sub.get("span") or taste.get("span") or {}
-    words = " ".join(sub.get("terms") or []) if sub.get("named") else sub.get("subject") or taste.get("subject")
+    # the subject the way the film says it (their own phrase when they named it)
+    words = film.get("phrase") or sub.get("named") or sub.get("subject") or taste.get("subject")
     then = next((x for x in [plain(sub.get("first", {}).get("caption"))] + [plain(x) for x in (sub.get("voice") or {}).get("early", {}).get("lines", [])] if x), "")
     now = next((x for x in [plain(c.get("line")) for c in sub.get("changed") or []] if x), "")
     lines = [f"{span.get('label')} of {words}, {span.get('from')} to {span.get('to')}"]
@@ -201,7 +202,7 @@ def main():
     engine = _env.read_json("build/engine.json") or {}
     cuts = [_env.read_json(p) for p in vote.rounds()]
     OUT.mkdir(exist_ok=True)
-    cap = caption(taste, sub)
+    cap = caption(taste, sub, film)
     (OUT / "caption.md").write_text(cap)
     (OUT / "brief.md").write_text(brief(lib, taste, sub, film, win, clips, music, engine, cuts))
     sheets = OUT / "storyboards"

@@ -176,19 +176,22 @@ def cmd_frames(a):
         subprocess.run([ff, "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", str(film), "-frames:v", "1", str(dst)], check=True)
 
     shots = 0
-    for i, b in enumerate(tl["beats"], 1):
-        # the settled moment of the beat's longest shot: past its entrance, before the next cut or transition
+    beats = tl["beats"]
+    for i, b in enumerate(beats, 1):
+        # the settled moment of the beat's longest shot: past its own entrance, before the next cut and before the
+        # next beat's transition starts drawing over it
+        into = b["frames"] - (beats[i]["transition"] if i < len(beats) else 0)
         edges = b.get("shots") or [0, b["frames"]]
-        spans = [(edges[k], edges[k + 1]) for k in range(len(edges) - 1)]
+        spans = [(max(edges[k], b["transition"]), min(edges[k + 1], into)) for k in range(len(edges) - 1)]
+        spans = [e for e in spans if e[1] > e[0]] or [(b["transition"], max(b["transition"] + 1, into))]
         lo, hi = max(spans, key=lambda e: e[1] - e[0])
-        lo = max(lo, b["transition"])
         grab((b["start"] + lo + (hi - lo) * 0.7) / FPS, out / f"{i:02d}-{b['id']}.png")
         if len(spans) >= 4:
             # a beat cut into many shots also gets every shot
             sub = out / f"{i:02d}-{b['id']}"
             sub.mkdir(exist_ok=True)
             for k, (a_, z) in enumerate(spans, 1):
-                grab((b["start"] + max(a_, b["transition"]) + (z - max(a_, b["transition"])) * 0.7) / FPS, sub / f"{k:02d}.png")
+                grab((b["start"] + a_ + (z - a_) * 0.7) / FPS, sub / f"{k:02d}.png")
                 shots += 1
     print(f"{len(tl['beats'])} frames -> {out}/" + (f", and {shots} shot frames in its beat folders" if shots else ""))
     return 0

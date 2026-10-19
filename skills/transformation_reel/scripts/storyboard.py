@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import grade  # noqa: E402
+import timeline as tl  # noqa: E402
 
 DESIGN = _env.SKILL / "design"
 BOARDS = Path("build/storyboards")
@@ -173,10 +174,14 @@ class Ctx:
         return self.say(f"{MONTHS[d.month - 1]} {d.day}, {d.year}")
 
     def count(self, p):
+        """The day of the run (day 1 is the first post) and the whole months since the first post."""
         d = dt.date.fromisoformat(p["date"])
-        days = (d - self.first_day).days
-        months = (d.year - self.first_day.year) * 12 + d.month - self.first_day.month - (1 if d.day < self.first_day.day else 0)
-        return days + 1, months + 1
+        return (d - self.first_day).days + 1, tl.span_of(self.first_day, d)["months"]
+
+    def since(self, p):
+        """The time since the first post, measured the way the caption measures the span: "day one", "3 weeks in", "14 months in"."""
+        d = dt.date.fromisoformat(p["date"])
+        return self.say("day one" if d == self.first_day else f"{tl.span_of(self.first_day, d)['label']} in")
 
     def progress(self, p):
         whole = (self.last_day - self.first_day).days or 1
@@ -371,9 +376,8 @@ def board_then_now(ctx):
             else:
                 c["prompt"] = alive(ctx, p, d, secs)
             clips.append(c)
-        day, month = ctx.count(p)
         beats.append(dated(ctx, p, d, 3.0 if key else 2.1, tr("edge", d, way, frames=14), clip=clip,
-                           line=ctx.say("day one" if i == 0 else f"month {month}")))
+                           line=ctx.since(p)))
     changed = next((c["line"] for c in ctx.sub.get("changed") or [] if c["id"] != ctx.latest()["id"]), None)
     beats.append(split(ctx, "then-now", "wipe", 4.4, tr("edge", d, way, frames=14),
                        {"kicker": ctx.span_line(), "headline": ctx.title(), "line": ctx.say(short(re.sub(r"^\s*milestone\s*[:\-–]\s*", "", changed or "", flags=re.I), 70)) or None}, d))
@@ -412,9 +416,8 @@ def board_chapters(ctx):
                 clip = f"{n:02d}"
                 clips.append({"id": clip, "beat": f"{q['id']}-{q['date']}", "role": "their own reel", "prompt": None, "source": q["video"],
                               "seconds": 3, "image": q["graded"]})
-            day, month = ctx.count(q)
             beats.append(dated(ctx, q, d, 2.4 if clip else 1.8, tr("whip", d, "from-left" if j % 2 else "from-right"), clip=clip,
-                               line=ctx.say(f"month {month}")))
+                               line=ctx.since(q)))
     n += 1
     clips.append({"id": f"{n:02d}", "beat": "closer", "role": "the closer",
                   "prompt": ctx.prompt(f"{ctx.world()}, the camera pulling back to show everything made so far", d, 3), "seconds": 3,
@@ -455,7 +458,7 @@ def shot_cuts(bt, grid_s=None, tol=0.25, start=0):
 def finish(ctx, board):
     """Fills the system, drops empty beats, scales durations to the direction's target, adds the then/now card."""
     d = board["direction"]
-    board.update({"handle": ctx.handle, "subject": ctx.subject, "span": ctx.span, "format": {"width": 1080, "height": 1920, "fps": FPS},
+    board.update({"handle": ctx.handle, "subject": ctx.subject, "phrase": ctx.phrase, "span": ctx.span, "format": {"width": 1080, "height": 1920, "fps": FPS},
                   "system": ctx.system(d)})
     beats = []
     for bt in board["beats"]:

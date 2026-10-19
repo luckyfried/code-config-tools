@@ -46,11 +46,14 @@ SUBJECTS = {
     "baking": ["sourdough", "bread", "loaf", "bake", "baking", "crumb", "starter", "pastry", "croissant", "cake"],
     "knitting": ["knit", "knitting", "crochet", "yarn", "sweater", "embroidery", "sewing", "quilt"],
     "music": ["guitar", "piano", "violin", "drums", "practice", "chords", "cover", "singing"],
-    "glow-up": ["glowup", "selfie", "me", "skincare", "hair", "transformation", "weightloss", "progresspic"],
+    "glow-up": ["glowup", "selfie", "skincare", "hair", "transformation", "weightloss", "progresspic"],
     "woodworking": ["woodworking", "wood", "carving", "joinery", "workbench", "furniture"],
     "pet": ["puppy", "kitten", "dog", "cat", "pup"],
     "calligraphy": ["calligraphy", "lettering", "handlettering", "brushlettering"],
 }
+# words that name a subject only as a hashtag: in running text they mean anything ("home by the sea", "a run of luck")
+HASHTAG_ONLY = {"home", "flat", "house", "paint", "hair", "cover", "practice", "run", "pr", "lift", "wood", "starter", "crumb",
+                "cake", "cat", "dog", "art", "sketch", "transformation"}
 STOP = {"my", "the", "a", "an", "of", "our", "me", "i", "and", "year", "progress", "journey", "video", "reel", "this"}
 MILESTONE = re.compile(r"\b(milestone|first|finally|sold|proud|\d+(?:st|nd|rd|th))\b", re.I)
 CHANGED = re.compile(r"\b(now|ago|months? in|years? in|weeks? in|taller|thinner|lighter|bigger|stronger|better|faster|"
@@ -71,7 +74,7 @@ def matches(row, terms):
     cap = (row.get("caption") or "").lower()
     toks = set(tokens(re.sub(r"#\w+", " ", cap)))
     tags = [t.lower() for t in re.findall(r"#(\w+)", cap)]
-    return bool(toks & terms) or any(t in tags or any(len(x) >= 4 and x in tag for tag in tags) for t in terms for x in [t])
+    return bool(toks & (terms - HASHTAG_ONLY)) or any(t in tags or any(len(x) >= 4 and x in tag for tag in tags) for t in terms for x in [t])
 
 
 def date_of(ts):

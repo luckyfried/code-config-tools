@@ -37,7 +37,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 
-PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|NaN|\bNone\b|@handle\b|your_handle", re.I)
+# a template or a code value leaking into the text: words like "thenandnow" or "nonetheless" are not leaks, so the code
+# values match as whole words in their own case
+PLACEHOLDER = re.compile(r"(?i:TODO|TBD|lorem|ipsum|XXX|PLACEHOLDER|@handle\b|your_handle)|\{\{|\}\}|\bundefined\b|\bNaN\b|\bNone\b")
 FILM = Path("out/film.mp4")
 CARD = Path("out/then-now.png")
 LENGTH = (30, 60)

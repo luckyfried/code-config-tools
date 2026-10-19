@@ -36,7 +36,7 @@ export const Rail: React.FC<{beat: Beat; color?: string; track?: string; delay?:
   );
 };
 
-/** The count since the first post, in the display face: "day 71", "month 6". */
+/** The count since the first post, in the display face: "day 71", "6 months in". */
 const Count: React.FC<{text: string; size: number; color: string; delay?: number}> = ({text, size, color, delay = 0}) => {
   const {system} = useSys();
   const s = useSafe();

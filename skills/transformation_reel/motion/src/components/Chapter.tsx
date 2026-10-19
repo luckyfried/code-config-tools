@@ -69,13 +69,13 @@ export const Chapter: React.FC<{beat: Beat}> = ({beat}) => {
     );
   }
 
-  const shade = d === 'kinetic' ? 0.55 : 0.35;
+  const shade = d === 'kinetic' ? 0.22 : 0.12;
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       {bg}
       <AbsoluteFill style={{background: system.colors.bg, opacity: tween(0.85, shade, 0, 18)}} />
       {d === 'documentary' ? <Leaks strength={0.8} seed={beat.id} /> : null}
-      <Scrim side="bottom" strength={0.85} />
+      <Scrim side="bottom" strength={0.8} />
       <SafeBox name="number" justify="start">
         <ChapterNumber n={n} size={system.scale.hero * (d === 'kinetic' ? 1.25 : 1)} />
       </SafeBox>
