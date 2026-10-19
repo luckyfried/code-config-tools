@@ -143,9 +143,9 @@ export const RouteMap: React.FC<{
     return (
       <g key={i} opacity={reached ? 1 : 0.35}>
         <circle cx={p[0]} cy={p[1]} r={stroke * (reached ? 1.25 : 0.8)} fill={reached ? c : 'none'} stroke={c} strokeWidth={stroke * 0.35} />
-        {labels && spot ? (
+        {labels && spot && reached ? (
           <text x={spot.x} y={spot.y} textAnchor={spot.anchor}
-            style={{...faceStyle(system.text), fontSize: size, fill: k, opacity: reached ? 0.5 + 0.5 * q : 0.45, textTransform: 'lowercase'}}>
+            style={{...faceStyle(system.text), fontSize: size, fill: k, opacity: 0.5 + 0.5 * q, textTransform: 'lowercase'}}>
             {place}
           </text>
         ) : null}

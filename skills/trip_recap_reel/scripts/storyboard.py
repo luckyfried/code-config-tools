@@ -441,7 +441,9 @@ def board_postcards(ctx):
                   {"kicker": ctx.range_line(), "headline": ctx.say(ctx.name),
                    "line": ctx.say(f"postcards from {len(ctx.places)} places" if len(ctx.places) > 1 else "a postcard")})]
     for i, pl in enumerate(ctx.places):
-        photos = ctx.place_photos(pl["name"], 2)
+        first = next((x for x in ctx.picks.get("days") or [] if pl["name"] in x["places"]), None)
+        # A place visited twice gets its first visit's photo and caption, so the postcards follow the route.
+        photos = (ctx.fresh(first["photos"], 2) if first and first.get("photos") else []) or ctx.place_photos(pl["name"], 2)
         cap = clean(ctx.caption_of(photos[0])) if photos else ""
         day = next((x for x in ctx.days if pl["name"] in x["places"]), None)
         line = cap or (day or {}).get("line") or pl["name"]

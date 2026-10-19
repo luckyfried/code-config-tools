@@ -34,7 +34,7 @@ const Stamp: React.FC<{x: number; y: number; w: number; place: string; date: str
       opacity: Math.min(1, p * 2)}}>
       <div style={{position: 'absolute', inset: 0, background: system.colors.accent, border: `${Math.round(w * 0.04)}px dotted ${system.colors.paper}`,
         boxShadow: '0 6px 16px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: w * 0.1, boxSizing: 'border-box'}}>
-        <div style={{...faceStyle(system.display), fontSize: w * 0.2, color: system.colors.paper, lineHeight: 1, overflowWrap: 'anywhere'}}>{place}</div>
+        <div style={{...faceStyle(system.display), fontSize: Math.min(w * 0.2, (w * 0.8) / (Math.max(1, place.length) * 0.58)), color: system.colors.paper, lineHeight: 1, whiteSpace: 'nowrap'}}>{place}</div>
         <div style={{...faceStyle(system.text), fontSize: w * 0.1, color: system.colors.paper, marginTop: w * 0.05, letterSpacing: '0.08em', textTransform: 'uppercase'}}>{date}</div>
       </div>
       <svg width={w * 1.5} height={w} style={{position: 'absolute', left: -w * 0.85, top: h * 0.45, overflow: 'visible', opacity: 0.55 * p}}>
