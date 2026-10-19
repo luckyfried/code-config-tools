@@ -1,0 +1,743 @@
+{
+ "id": "1",
+ "name": "the route",
+ "beats": [
+  {
+   "id": "opener",
+   "kind": "Opener",
+   "frames": 96,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "october 3 to 8, 2026",
+    "headline": "amalfi coast",
+    "line": "6 days, 4 places"
+   },
+   "clip": null
+  },
+  {
+   "id": "route",
+   "kind": "Route",
+   "frames": 134,
+   "transition": {
+    "preset": "iris",
+    "frames": 15
+   },
+   "photos": [],
+   "text": {
+    "kicker": "the route",
+    "headline": "napoli to amalfi"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     4
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "flyover",
+   "kind": "ClipShot",
+   "frames": 70,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {},
+   "clip": null
+  },
+  {
+   "id": "day-1",
+   "kind": "Day",
+   "frames": 134,
+   "transition": {
+    "preset": "wipe",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-3.jpg",
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "day 1 \u00b7 sat, oct 3",
+    "headline": "napoli",
+    "line": "first night in napoli and the pizza was everything"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     0
+    ],
+    "day": 1,
+    "of": 6,
+    "weights": [
+     1,
+     1
+    ],
+    "cuts": [
+     67
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "day-2",
+   "kind": "Day",
+   "frames": 134,
+   "transition": {
+    "preset": "wipe",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-5.jpg",
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "day 2 \u00b7 sun, oct 4",
+    "headline": "capri",
+    "line": "the ferry to capri at 8am, worth every minute"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     1
+    ],
+    "day": 2,
+    "of": 6,
+    "weights": [
+     1,
+     1
+    ],
+    "cuts": [
+     67
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "place-1",
+   "kind": "Montage",
+   "frames": 168,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-7.jpg",
+    "graded/sample-8.jpg",
+    "graded/sample-9.jpg",
+    "graded/sample-10.jpg",
+    "graded/sample-1.jpg",
+    "graded/sample-3.jpg"
+   ],
+   "text": {
+    "headline": "napoli"
+   },
+   "data": {
+    "weights": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "place": "napoli",
+    "cuts": [
+     28,
+     56,
+     84,
+     112,
+     140
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "postcard-1",
+   "kind": "Postcard",
+   "frames": 206,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-7.jpg"
+   ],
+   "text": {
+    "kicker": "napoli",
+    "headline": "six days on the amalfi coast with my two favorite people",
+    "line": "sat, oct 3"
+   },
+   "data": {
+    "stamp": {
+     "place": "napoli",
+     "date": "sat, oct 3"
+    },
+    "no": 1,
+    "of": 4
+   },
+   "clip": null
+  },
+  {
+   "id": "clip-05",
+   "kind": "ClipShot",
+   "frames": 83,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "capri",
+    "headline": "the capri boat, the whole way round"
+   },
+   "clip": null
+  },
+  {
+   "id": "closer",
+   "kind": "Closer",
+   "frames": 140,
+   "transition": {
+    "preset": "iris",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-7.jpg"
+   ],
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "amalfi coast",
+    "line": "with @theo.makes and @dani.reyes"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     4
+    ]
+   },
+   "clip": null
+  }
+ ],
+ "handle": "maren.okafor",
+ "trip": {
+  "name": "amalfi coast",
+  "from": "2026-10-03",
+  "to": "2026-10-08",
+  "days": 6,
+  "places": [
+   "napoli",
+   "capri",
+   "positano",
+   "amalfi"
+  ]
+ },
+ "format": {
+  "width": 1080,
+  "height": 1920,
+  "fps": 30
+ },
+ "system": {
+  "direction": "documentary",
+  "display": {
+   "family": "Space Grotesk",
+   "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf",
+   "weight": 600,
+   "tracking": -0.03,
+   "case": "none",
+   "lineHeight": 0.95
+  },
+  "text": {
+   "family": "JetBrains Mono",
+   "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf",
+   "weight": 500,
+   "tracking": 0.0,
+   "case": "none",
+   "lineHeight": 1.3
+  },
+  "scale": {
+   "hero": 250,
+   "h1": 136,
+   "h2": 96,
+   "h3": 58,
+   "body": 36,
+   "label": 26
+  },
+  "colors": {
+   "bg": "#0c121f",
+   "ink": "#d8dad5",
+   "accent": "#687695",
+   "accent2": "#ABA579",
+   "muted": "#7c8083",
+   "paper": "#d3d0c2",
+   "swatches": [
+    {
+     "hex": "#728295",
+     "name": "slate"
+    },
+    {
+     "hex": "#84565B",
+     "name": "dusty mauve"
+    },
+    {
+     "hex": "#B2B5AB",
+     "name": "stone gray"
+    },
+    {
+     "hex": "#273C67",
+     "name": "deep navy"
+    },
+    {
+     "hex": "#ABA579",
+     "name": "sage"
+    }
+   ]
+  },
+  "texture": {
+   "grain": 0.16,
+   "vignette": 0.32,
+   "leaks": true
+  },
+  "ease": {
+   "enter": [
+    0.33,
+    0,
+    0.15,
+    1
+   ],
+   "exit": [
+    0.6,
+    0,
+    0.8,
+    0.2
+   ],
+   "move": [
+    0.37,
+    0,
+    0.63,
+    1
+   ],
+   "spring": {
+    "damping": 26,
+    "stiffness": 80,
+    "mass": 1
+   },
+   "stagger": 6
+  },
+  "safe": {
+   "reel": {
+    "top": 270,
+    "bottom": 670,
+    "left": 72,
+    "right": 150
+   },
+   "story": {
+    "top": 250,
+    "bottom": 340,
+    "left": 72,
+    "right": 72
+   },
+   "square": {
+    "top": 40,
+    "bottom": 40,
+    "left": 40,
+    "right": 40
+   }
+  }
+ },
+ "stories": [
+  {
+   "id": "story-1",
+   "kind": "Opener",
+   "frames": 96,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "october 3 to 8, 2026",
+    "headline": "amalfi coast",
+    "line": "6 days, 4 places"
+   },
+   "settle": 0,
+   "clip": null
+  },
+  {
+   "id": "story-2",
+   "kind": "Day",
+   "frames": 134,
+   "transition": null,
+   "photos": [
+    "graded/sample-3.jpg",
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "day 1 \u00b7 sat, oct 3",
+    "headline": "napoli",
+    "line": "first night in napoli and the pizza was everything"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     0
+    ],
+    "day": 1,
+    "of": 6,
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
+  },
+  {
+   "id": "story-3",
+   "kind": "Day",
+   "frames": 134,
+   "transition": null,
+   "photos": [
+    "graded/sample-3.jpg",
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "day 3 \u00b7 mon, oct 5",
+    "headline": "positano",
+    "line": "lemons the size of my head in positano"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     2
+    ],
+    "day": 3,
+    "of": 6,
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
+  },
+  {
+   "id": "story-4",
+   "kind": "Day",
+   "frames": 134,
+   "transition": null,
+   "photos": [
+    "graded/sample-5.jpg",
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "day 5 \u00b7 wed, oct 7",
+    "headline": "amalfi",
+    "line": "the road into amalfi, eyes closed for most"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     3
+    ],
+    "day": 5,
+    "of": 6,
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
+  },
+  {
+   "id": "story-5",
+   "kind": "Closer",
+   "frames": 140,
+   "transition": null,
+   "photos": [
+    "graded/sample-7.jpg"
+   ],
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "amalfi coast",
+    "line": "with @theo.makes and @dani.reyes"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     4
+    ],
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
+  }
+ ]
+}
