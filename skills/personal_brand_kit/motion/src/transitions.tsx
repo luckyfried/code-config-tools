@@ -105,7 +105,7 @@ export const transitionFor = (t: Transition, system: System, width: number, heig
       return {presentation: pres(Bars, {color: system.colors.accent, second: system.colors.accent2}), timing};
     case 'dip':
       return {
-        presentation: pres(Dip, {color: system.direction === 'editorial' ? system.colors.paper : '#000000'}),
+        presentation: pres(Dip, {color: system.colors.bg}),
         timing,
       };
     case 'match':

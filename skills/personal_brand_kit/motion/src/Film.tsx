@@ -2,6 +2,7 @@ import React from 'react';
 import {AbsoluteFill, useVideoConfig} from 'remotion';
 import {TransitionSeries} from '@remotion/transitions';
 import {BeatView} from './Beat';
+import {GuideCard} from './components/GuideCard';
 import {BeatProvider, FontGate, SystemProvider} from './system';
 import {Finish} from './texture';
 import {transitionFor} from './transitions';
@@ -39,14 +40,17 @@ export const Film: React.FC<FilmProps> = ({board}) => {
   );
 };
 
-/** The best-nine image or the story card: a beat at its settled frame, laid out for that format. */
-export const Card: React.FC<CardProps> = ({board, beat, format}) => (
-  <SystemProvider value={{system: board.system, board, format, still: true, beat}}>
-    <FontGate system={board.system}>
-      <AbsoluteFill style={{background: board.system.colors.bg}}>
-        <BeatView beat={beat} />
-        <Finish />
-      </AbsoluteFill>
-    </FontGate>
-  </SystemProvider>
-);
+/** One guide card as a 1080x1350 still, in the board's system. */
+export const Card: React.FC<CardProps> = ({board, card}) => {
+  const c = board.cards.find((x) => x.n === card) ?? board.cards[0];
+  return (
+    <SystemProvider value={{system: board.system, board, format: 'guide', still: true}}>
+      <FontGate system={board.system}>
+        <AbsoluteFill style={{background: board.system.colors.card}}>
+          <GuideCard card={c} settled />
+          <Finish />
+        </AbsoluteFill>
+      </FontGate>
+    </SystemProvider>
+  );
+};

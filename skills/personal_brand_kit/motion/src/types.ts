@@ -19,6 +19,8 @@ export type Safe = {top: number; bottom: number; left: number; right: number};
 
 export type System = {
   direction: 'editorial' | 'kinetic' | 'documentary';
+  /** the film's field: dark, paper, or their lead color */
+  field: 'dark' | 'paper' | 'lead';
   display: Face;
   text: Face;
   scale: {hero: number; h1: number; h2: number; h3: number; body: number; label: number};
@@ -29,6 +31,11 @@ export type System = {
     accent2: string;
     muted: string;
     paper: string;
+    /** the guide cards: their ground, ink, accent and quiet ink */
+    card: string;
+    cardInk: string;
+    cardAccent: string;
+    cardMuted: string;
     swatches: {hex: string; name: string}[];
   };
   texture: {grain: number; vignette: number; leaks: boolean};
@@ -47,23 +54,11 @@ export type Clip = {
   status: 'generated' | 'their_reel' | 'substituted' | 'pending';
 };
 
-/** One of the nine: rank 1 is the most liked. */
-export type Tile = {
-  rank: number;
-  photo: string;
-  likes?: number | null;
-  comments?: number | null;
-  label?: string;
-  caption?: string;
-  kind?: string;
-  clip?: Clip | null;
-};
-
 export type Transition = {preset: string; frames: number; direction?: string};
 
 export type Beat = {
   id: string;
-  kind: 'Opener' | 'ClipShot' | 'Countdown' | 'Grid';
+  kind: 'Opener' | 'ClipShot' | 'Reveal' | 'Swipe' | 'Poster';
   frames: number;
   transition?: Transition | null;
   treatment?: 'push' | 'parallax' | 'mask' | 'split';
@@ -74,19 +69,26 @@ export type Beat = {
   settle?: number;
 };
 
+/** One card of the brand guide, 1080x1350. Its fields depend on its kind; storyboard.py cards() writes them. */
+export type GuideCardData = {
+  n: number;
+  id: string;
+  kind: 'palette' | 'type' | 'compositions' | 'voice' | 'pillars' | 'cadence' | 'aspire' | 'stop' | 'statement' | 'week';
+  title: string;
+  [key: string]: any;
+};
+
 export type Board = {
   id: string;
   name: string;
   handle: string;
-  year: number;
   format: {width: number; height: number; fps: number};
   system: System;
   beats: Beat[];
-  /** the best-nine image (1080x1080) */
-  wall?: Beat;
-  /** the story card (1080x1920) */
-  story?: Beat;
+  /** the ten guide cards, in order */
+  cards: GuideCardData[];
 };
 
 export type FilmProps = {board: Board};
-export type CardProps = {board: Board; beat: Beat; format: 'square' | 'story'};
+/** One guide card as a still: the card's number in board.cards. */
+export type CardProps = {board: Board; card: number};

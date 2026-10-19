@@ -1,562 +1,323 @@
 {
- "id": "sample",
- "name": "on the beat",
- "direction": "kinetic",
- "structure": "the wall assembles tile by tile on the beat, then the top three",
- "tone": "kinetic",
- "clip_use": "still-first: short generated bridges in their colors are the transitions between tiles",
- "idea": "the nine land one per beat, from nine to one, until the wall is whole; then the top three hit full frame in heavy type and the wall comes back to close",
+ "id": "1",
+ "name": "one card at a time",
+ "field": "dark",
+ "structure": "a reel that reveals the ten cards one at a time",
+ "tone": "bold",
+ "clip_use": "a generated opener for the feed's world, and a generated bridge between the halves",
+ "idea": "each card lands on its own beat, full and readable, on a dark field cut from your photos; the statement holds longest.",
  "music": {
   "direction": "driving, bright, 118 bpm: four-on-the-floor, claps, a hook",
-  "bpm": 84,
+  "bpm": 118,
   "mood": "drive"
  },
  "beats": [
   {
    "id": "opener",
    "kind": "Opener",
-   "frames": 57,
+   "frames": 89,
    "transition": null,
    "photos": [
     "graded/sample-1.jpg"
    ],
-   "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine"
-   }
-  },
-  {
-   "id": "wall-build",
-   "kind": "Grid",
-   "frames": 181,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "text": {
-    "kicker": "best nine 2026",
-    "headline": "the nine you loved most"
-   },
-   "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
-   ],
-   "data": {
-    "mode": "fly",
-    "tiles": [
-     {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
-     },
-     {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
-     },
-     {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
-     },
-     {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
-     },
-     {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
-     }
-    ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     5
-    ],
-    "shots": 10,
-    "cuts": [
-     13,
-     26,
-     39,
-     48,
-     69,
-     78,
-     91,
-     103,
-     112
-    ]
-   }
-  },
-  {
-   "id": "bridge-1",
-   "kind": "ClipShot",
-   "frames": 30,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
-   },
    "clip": null,
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
    "text": {
-    "kicker": "and the top three"
+    "kicker": "@sample.handle",
+    "headline": "your brand kit",
+    "line": "ten cards, read from your own feed"
    }
   },
   {
-   "id": "no-3",
-   "kind": "Countdown",
-   "frames": 52,
+   "id": "card-01",
+   "kind": "Reveal",
+   "frames": 78,
    "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
+    "preset": "dip",
+    "frames": 18
    },
    "photos": [
-    "graded/sample-4.jpg"
+    "graded/sample-1.jpg"
    ],
-   "text": {
-    "kicker": "january 8",
-    "headline": "first coffee of the year in lisbon, one cup by one window",
-    "line": "418 likes"
-   },
    "data": {
-    "rank": 3,
-    "of": 9,
-    "slot": 8,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     8
-    ]
-   }
+    "card": 1,
+    "of": 10
+   },
+   "clip": null
   },
   {
-   "id": "no-2",
-   "kind": "Countdown",
-   "frames": 52,
+   "id": "card-02",
+   "kind": "Reveal",
+   "frames": 78,
    "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-left"
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-bottom"
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "data": {
+    "card": 2,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "card-03",
+   "kind": "Reveal",
+   "frames": 78,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-right"
    },
    "photos": [
     "graded/sample-3.jpg"
    ],
-   "text": {
-    "kicker": "may 16",
-    "headline": "forty seconds of the oaxaca market at opening time",
-    "line": "451 likes"
-   },
    "data": {
-    "rank": 2,
-    "of": 9,
-    "slot": 7,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
-    ]
-   }
+    "card": 3,
+    "of": 10
+   },
+   "clip": null
   },
   {
-   "id": "bridge-2",
+   "id": "card-04",
+   "kind": "Reveal",
+   "frames": 78,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-bottom"
+   },
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "data": {
+    "card": 4,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "card-05",
+   "kind": "Reveal",
+   "frames": 78,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-5.jpg"
+   ],
+   "data": {
+    "card": 5,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "bridge",
    "kind": "ClipShot",
-   "frames": 30,
+   "frames": 45,
    "transition": {
     "preset": "whip",
-    "frames": 9,
+    "frames": 18,
     "direction": "from-right"
    },
    "clip": null,
    "photos": [
-    "graded/sample-2.jpg"
+    "graded/sample-6.jpg"
    ],
    "text": {
-    "kicker": "number one"
+    "headline": "and where it goes next"
    }
   },
   {
-   "id": "no-1",
-   "kind": "Countdown",
-   "frames": 74,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "photos": [
-    "graded/sample-2.jpg"
-   ],
-   "text": {
-    "kicker": "july 15",
-    "headline": "the light did all the work here",
-    "line": "486 likes"
-   },
-   "data": {
-    "rank": 1,
-    "of": 9,
-    "slot": 0,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     0,
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
-    ]
-   }
-  },
-  {
-   "id": "closer",
-   "kind": "Grid",
-   "frames": 169,
+   "id": "card-06",
+   "kind": "Reveal",
+   "frames": 78,
    "transition": {
     "preset": "slide",
-    "frames": 9,
+    "frames": 18,
     "direction": "from-bottom"
    },
-   "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine 2026",
-    "line": "3,395 likes across these nine"
+   "photos": [
+    "graded/sample-6.jpg"
+   ],
+   "data": {
+    "card": 6,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "card-07",
+   "kind": "Reveal",
+   "frames": 78,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-right"
    },
    "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
+    "graded/sample-7.jpg"
+   ],
+   "data": {
+    "card": 7,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "card-08",
+   "kind": "Reveal",
+   "frames": 78,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-bottom"
+   },
+   "photos": [
+    "graded/sample-8.jpg"
+   ],
+   "data": {
+    "card": 8,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "card-09",
+   "kind": "Reveal",
+   "frames": 112,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-9.jpg"
+   ],
+   "data": {
+    "card": 9,
+    "of": 10
+   },
+   "clip": null
+  },
+  {
+   "id": "card-10",
+   "kind": "Reveal",
+   "frames": 78,
+   "transition": {
+    "preset": "slide",
+    "frames": 18,
+    "direction": "from-bottom"
+   },
+   "photos": [
     "graded/sample-10.jpg"
    ],
    "data": {
-    "mode": "reveal",
-    "tiles": [
-     {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
-     },
-     {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
-     },
-     {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
-     },
-     {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
-     },
-     {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
-     }
-    ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1
-    ],
-    "shots": 1,
-    "stagger": 2
-   }
+    "card": 10,
+    "of": 10
+   },
+   "clip": null
   }
  ],
- "handle": "maren.okafor",
- "year": 2026,
+ "handle": "sample.handle",
  "format": {
   "width": 1080,
   "height": 1920,
   "fps": 30
  },
+ "direction": "editorial",
  "system": {
-  "direction": "kinetic",
+  "direction": "editorial",
+  "field": "dark",
   "display": {
-   "family": "Archivo Black",
-   "file": "fonts/ArchivoBlack/ArchivoBlack-Regular.ttf",
-   "weight": 400,
-   "tracking": -0.02,
-   "case": "uppercase",
-   "lineHeight": 0.9
+   "family": "Fraunces",
+   "file": "fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf",
+   "weight": 500,
+   "tracking": -0.025,
+   "case": "none",
+   "lineHeight": 0.98
   },
   "text": {
-   "family": "Archivo",
-   "file": "fonts/Archivo/Archivo[wdth,wght].ttf",
-   "weight": 600,
+   "family": "Inter",
+   "file": "fonts/Inter/Inter[opsz,wght].ttf",
+   "weight": 500,
    "tracking": 0.0,
    "case": "none",
-   "lineHeight": 1.2
+   "lineHeight": 1.25
   },
   "scale": {
-   "hero": 330,
-   "h1": 168,
-   "h2": 116,
-   "h3": 70,
-   "body": 42,
-   "label": 30
+   "hero": 270,
+   "h1": 150,
+   "h2": 104,
+   "h3": 62,
+   "body": 40,
+   "label": 28
   },
   "colors": {
-   "bg": "#20140d",
-   "ink": "#f0e6d7",
-   "accent": "#a87824",
-   "accent2": "#8d5e1f",
-   "muted": "#92887c",
-   "paper": "#f0e6d7",
+   "bg": "#271a12",
+   "ink": "#ede7d9",
+   "accent": "#ba5f45",
+   "accent2": "#72723a",
+   "muted": "#948b7f",
+   "paper": "#ede7d9",
+   "card": "#ede7d9",
+   "cardInk": "#4e3425",
+   "cardAccent": "#ba5f45",
+   "cardMuted": "#968576",
    "swatches": [
     {
-     "hex": "#624229",
-     "name": "chocolate"
+     "hex": "#BA5F45",
+     "name": "terracotta"
     },
     {
-     "hex": "#906B4C",
-     "name": "caramel"
+     "hex": "#DFD4BA",
+     "name": "cream"
     },
     {
-     "hex": "#4B3525",
-     "name": "warm chocolate"
-    },
-    {
-     "hex": "#735B3E",
+     "hex": "#72723A",
      "name": "olive"
     },
     {
-     "hex": "#B29A79",
-     "name": "taupe"
+     "hex": "#573A29",
+     "name": "chocolate"
     }
    ]
   },
   "texture": {
-   "grain": 0.08,
-   "vignette": 0,
+   "grain": 0.064,
+   "vignette": 0.0,
    "leaks": false
   },
   "ease": {
    "enter": [
-    0.22,
-    1.2,
-    0.36,
+    0.16,
+    1,
+    0.3,
     1
    ],
    "exit": [
-    0.8,
-    0,
-    0.9,
-    0.3
-   ],
-   "move": [
     0.7,
     0,
-    0.2,
+    0.84,
+    0
+   ],
+   "move": [
+    0.45,
+    0,
+    0.55,
     1
    ],
    "spring": {
-    "damping": 13,
-    "stiffness": 190,
-    "mass": 0.6
+    "damping": 200,
+    "stiffness": 90,
+    "mass": 1
    },
-   "stagger": 3
+   "stagger": 5
   },
   "safe": {
    "reel": {
@@ -579,252 +340,336 @@
    }
   }
  },
- "wall": {
-  "id": "best-nine",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "best nine 2026"
-  },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
+ "cards": [
+  {
+   "kind": "palette",
+   "title": "your palette",
+   "colors": [
     {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
+     "name": "terracotta",
+     "hex": "#BA5F45",
+     "share": 0.382,
+     "role": "lead",
+     "label": "38% of your posts"
     },
     {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
+     "name": "cream",
+     "hex": "#DFD4BA",
+     "share": 0.255,
+     "role": "ground",
+     "label": "26% of your posts"
     },
     {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
+     "name": "olive",
+     "hex": "#72723A",
+     "share": 0.186,
+     "role": "accent",
+     "label": "19% of your posts"
     },
     {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
+     "name": "chocolate",
+     "hex": "#573A29",
+     "share": 0.127,
+     "role": "ink",
+     "label": "13% of your posts"
     }
    ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
-   ],
-   "weights": [
-    1
-   ],
-   "shots": 1
-  }
- },
- "story": {
-  "id": "story",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "my best nine of 2026",
-   "line": "which one is your favorite?"
+   "line": "4 colors carry 95% of your feed",
+   "n": 1,
+   "id": "01-palette"
   },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
+  {
+   "kind": "type",
+   "title": "your type",
+   "display": "Fraunces",
+   "text": "Inter",
+   "why": "quiet lowercase captions of about 8.7 words: a soft serif for the statement and a plain sans for labels",
+   "sample": "table, market, walk and coffee, in terracotta and cream, 3 times a week.",
+   "caption": "saturday market: peaches, green almonds, fennel.\n\nwhat's in your bag?",
+   "n": 2,
+   "id": "02-type"
+  },
+  {
+   "kind": "compositions",
+   "title": "how you frame",
+   "habits": [
     {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
+     "name": "tall 4:5 frames",
+     "share": 0.724,
+     "label": "72% of your photos",
+     "photo": "graded/sample-1.jpg"
     },
     {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
+     "name": "subject centered",
+     "share": 0.902,
+     "label": "90% of your photos",
+     "photo": "graded/sample-2.jpg"
     },
     {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
+     "name": "one color field covers half the frame or more",
+     "share": 0.959,
+     "label": "96% of your photos",
+     "photo": "graded/sample-3.jpg"
     }
    ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
+   "n": 3,
+   "id": "03-compositions"
+  },
+  {
+   "kind": "voice",
+   "title": "how you write",
+   "devices": [
+    {
+     "name": "opening label",
+     "share": 0.82,
+     "label": "82%"
+    },
+    {
+     "name": "line breaks",
+     "share": 0.754,
+     "label": "75%"
+    },
+    {
+     "name": "list of three",
+     "share": 0.697,
+     "label": "70%"
+    },
+    {
+     "name": "closing question",
+     "share": 0.574,
+     "label": "57%"
+    }
    ],
-   "weights": [
-    1
+   "examples": [
+    "saturday market: peaches, green almonds, fennel.\n\nwhat's in your bag?",
+    "lunch at home: same as always.\n\nwho's coming over? 🌿",
+    "market morning: green almonds, cherries, quince.\n\nwhat's in your bag?"
    ],
-   "shots": 1
+   "case": "lowercase",
+   "n": 4,
+   "id": "04-voice"
+  },
+  {
+   "kind": "pillars",
+   "title": "what you post about",
+   "pillars": [
+    {
+     "name": "table",
+     "share": 0.465,
+     "label": "46%",
+     "words": [
+      "table",
+      "tonight",
+      "sunday"
+     ],
+     "photo": "graded/sample-4.jpg"
+    },
+    {
+     "name": "market",
+     "share": 0.25,
+     "label": "25%",
+     "words": [
+      "market",
+      "cherries",
+      "figs"
+     ],
+     "photo": "graded/sample-5.jpg"
+    },
+    {
+     "name": "walk",
+     "share": 0.164,
+     "label": "16%",
+     "words": [
+      "walk",
+      "home",
+      "old"
+     ],
+     "photo": "graded/sample-6.jpg"
+    },
+    {
+     "name": "coffee",
+     "share": 0.121,
+     "label": "12%",
+     "words": [
+      "coffee",
+      "window",
+      "espresso"
+     ],
+     "photo": "graded/sample-7.jpg"
+    }
+   ],
+   "n": 5,
+   "id": "05-pillars"
+  },
+  {
+   "kind": "cadence",
+   "title": "when you post",
+   "days": [
+    {
+     "day": "mon",
+     "posts": 1,
+     "time": null
+    },
+    {
+     "day": "tue",
+     "posts": 35,
+     "time": "08:00"
+    },
+    {
+     "day": "wed",
+     "posts": 1,
+     "time": null
+    },
+    {
+     "day": "thu",
+     "posts": 41,
+     "time": "12:35"
+    },
+    {
+     "day": "fri",
+     "posts": 1,
+     "time": null
+    },
+    {
+     "day": "sat",
+     "posts": 2,
+     "time": null
+    },
+    {
+     "day": "sun",
+     "posts": 41,
+     "time": "18:30"
+    }
+   ],
+   "line": "2.9 posts a week; 96% land on these days, within the hour",
+   "timezone": "UTC",
+   "n": 6,
+   "id": "06-cadence"
+  },
+  {
+   "kind": "aspire",
+   "title": "what your likes say",
+   "colors": [
+    {
+     "name": "ice blue",
+     "hex": "#D3DBE0"
+    },
+    {
+     "name": "sky blue",
+     "hex": "#9FB6C5"
+    },
+    {
+     "name": "sea blue",
+     "hex": "#618DAD"
+    },
+    {
+     "name": "slate",
+     "hex": "#3B5D7D"
+    }
+   ],
+   "subjects": [
+    "the sea and the coast",
+    "film photography",
+    "light"
+   ],
+   "line": "your likes lean ice blue and sky blue and the sea and the coast; your feed is terracotta and cream",
+   "photos": [
+    "graded/sample-8.jpg",
+    "graded/sample-9.jpg",
+    "graded/sample-10.jpg"
+   ],
+   "n": 7,
+   "id": "07-aspire"
+  },
+  {
+   "kind": "stop",
+   "title": "what to let go of",
+   "items": [
+    {
+     "line": "the 5 posts outside your system",
+     "why": "they break your cadence, palette, pillar, voice and got 0.4x your usual likes"
+    }
+   ],
+   "n": 8,
+   "id": "08-stop"
+  },
+  {
+   "kind": "statement",
+   "title": "your brand in one line",
+   "statement": "table, market, walk and coffee, in terracotta and cream, 3 times a week.",
+   "handle": "@sample.handle",
+   "swatches": [
+    "#BA5F45",
+    "#DFD4BA",
+    "#72723A",
+    "#573A29"
+   ],
+   "n": 9,
+   "id": "09-statement"
+  },
+  {
+   "kind": "week",
+   "title": "your first week",
+   "days": [
+    {
+     "date": "2026-10-20",
+     "day": "tue",
+     "kind": "post",
+     "time": "08:00",
+     "pillar": "table",
+     "caption": "from the table: bread, burrata, lemons."
+    },
+    {
+     "date": "2026-10-21",
+     "day": "wed",
+     "kind": "story",
+     "time": "",
+     "pillar": "market",
+     "caption": "at the market: apricots, fennel, plums."
+    },
+    {
+     "date": "2026-10-22",
+     "day": "thu",
+     "kind": "post",
+     "time": "12:35",
+     "pillar": "walk",
+     "caption": "on the way: a cat, tiled steps, bougainvillea."
+    },
+    {
+     "date": "2026-10-23",
+     "day": "fri",
+     "kind": "story",
+     "time": "",
+     "pillar": "table",
+     "caption": "sunday table: bread, olive oil, lemons."
+    },
+    {
+     "date": "2026-10-24",
+     "day": "sat",
+     "kind": "story",
+     "time": "",
+     "pillar": "coffee",
+     "caption": "morning cup: a window seat, the paper, a cortado."
+    },
+    {
+     "date": "2026-10-25",
+     "day": "sun",
+     "kind": "post",
+     "time": "18:30",
+     "pillar": "table",
+     "caption": "tonight's table: olive oil, burrata, sea salt."
+    },
+    {
+     "date": "2026-10-26",
+     "day": "mon",
+     "kind": "story",
+     "time": "",
+     "pillar": "market",
+     "caption": "saturday market: apricots, cherries, plums."
+    }
+   ],
+   "n": 10,
+   "id": "10-week"
   }
- },
- "seconds": 19.4
+ ]
 }

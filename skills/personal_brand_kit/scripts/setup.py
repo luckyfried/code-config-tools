@@ -3,7 +3,7 @@
 USAGE:
     python3 scripts/setup.py          # resolve (installing only what is missing) and print the tools as JSON
 
-First-run setup for the best-nine toolkit. Prints:
+First-run setup for the personal brand kit. Prints:
     {"python": ".../python3", "ffmpeg": ".../ffmpeg", "ffprobe": ".../ffprobe" | null, "node": ".../node" | null,
      "motion": ".../motion" | null, "engine": "remotion" | "stills", "ok": true}
 

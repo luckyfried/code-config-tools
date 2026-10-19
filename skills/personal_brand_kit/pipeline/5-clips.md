@@ -7,9 +7,9 @@ does not arrive is replaced by an animated treatment of one of their photos, so 
 python3 S/scripts/clips.py list
 ```
 
-`list` prints one block per clip: its beat, its role (the wall's world for the opener, a transition between
-tiles, a tile's photo brought to life, their own reel), the prompt built from `taste.json` (palette words, subject, mood, camera,
-light, vertical 9:16 (square for a clip that plays inside a tile), its length in seconds, "no text, no logos, no people's faces"), the photo to start from when
+`list` prints one block per clip: its beat, its role (the opener's world in their palette, a bridge or a turn
+between the halves of the guide, the world behind the poster, their own reel), the prompt built from `taste.json` (palette words, subject, mood, camera,
+light, vertical 9:16, its length in seconds, "no text, no logos, no people's faces"), the photo to start from when
 the clip is image-to-video, and the file to save.
 
 ## Generate
@@ -28,7 +28,7 @@ If you have no video generation tool, generate nothing and say so in the next co
 python3 S/scripts/clips.py normalize [--why "no video model in this session"]
 ```
 
-`normalize` scales and crops each file to 1080×1920 (1080×1080 for a tile), conforms it to 30 fps, trims or loops it to its beat, grades
+`normalize` scales and crops each file to 1080×1920, conforms it to 30 fps, trims or loops it to its beat, grades
 it with the film's grade, and writes `build/public/clips/NN.mp4`, its frames as `build/public/clips/NN/0001.jpg`
 onward (the renderer reads the frames, which retry on their own when a request drops), and `build/clips.json` (each
 clip: generated, their_reel or substituted, and why). Pass `--why` when clips are missing for a reason you know; `brief.md` quotes it.

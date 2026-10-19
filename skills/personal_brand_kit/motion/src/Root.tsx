@@ -25,14 +25,10 @@ export const Root: React.FC = () => (
       id="Card"
       component={Card as React.FC<any>}
       width={1080}
-      height={1080}
+      height={1350}
       fps={30}
       durationInFrames={1}
-      defaultProps={{board, beat: board.wall ?? board.beats[0], format: 'square'} satisfies CardProps}
-      calculateMetadata={({props}) => {
-        const p = props as CardProps;
-        return {width: 1080, height: p.format === 'story' ? 1920 : 1080, durationInFrames: Math.max(1, p.beat.frames), fps: 30};
-      }}
+      defaultProps={{board, card: 1} satisfies CardProps}
     />
   </>
 );

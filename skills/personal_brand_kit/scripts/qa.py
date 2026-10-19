@@ -2,20 +2,24 @@
 """Movement 6: the measurable checks and the gate that refuses delivery.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/qa.py check     # the film, the best-nine image and the story card only (run before the critics watch the cut)
+    python3 S/scripts/qa.py check     # the film, the ten cards, brand.json, plan.md and the guide's colors (before the critics watch)
     python3 S/scripts/qa.py gate      # everything below; exit 0 only when every check passes
 
 The gate refuses:
-  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 15-30 s
+  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 20-30 s
   audio     music was found but the film has no AAC track near 192 kbps, or its loudness is off -14 LUFS by more than 1 LU
   black     a black stretch of 0.4 s or more (ffmpeg blackdetect)
   frozen    a frozen stretch of 1.5 s or more (ffmpeg freezedetect): nothing on screen may stand still that long
-  safe      text that left its safe box or was cut off (SAFE_BREACH in build/render-report.json), a font that did
-            not load, or a render job that failed
+  safe      text that left its safe box or a card's body (SAFE_BREACH in build/render-report.json), a font that
+            did not load, or a render job that failed
   text      a placeholder string anywhere in the film's words, the caption, the brief or the review page
-  wall      out/best-nine.png is not 1080x1080, build/wall.json does not name nine distinct photos, or the image's
-            nine cells are not nine different pictures (each cell's center, compared with every other)
-  story     out/story.png is not 1080x1920
+  cards     out/cards/ does not hold the ten cards in order (01-palette .. 10-week), each 1080x1350, ten different images
+  brand     build/brand.json (out/brand.json once delivered) fails design/brand.schema.json, or its pillar shares do
+            not sum to 1 within 0.01
+  plan      out/plan.md does not carry 30 entries on 30 different dates, each naming a pillar from brand.json and
+            each with a caption
+  colors    a color the guide names (the GUIDE_COLORS lines the card renders log) is not in brand.json's palette or
+            its aspire palette, or the palette and aspire cards logged none
   research  build/taste.md (you are / you like / your style / your voice / avoid) or build/taste.json is missing
   boards    three storyboards, each with storyboard.md, storyboard.json and six style-sheet frames
   vote      build/vote.md and build/winner.json are missing
@@ -33,12 +37,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import brand as brandkit  # noqa: E402
 
 PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|NaN|\bNone\b|@handle\b|your_handle", re.I)
 FILM = Path("out/film.mp4")
-WALL = Path("out/best-nine.png")
-STORY = Path("out/story.png")
-LENGTH = (15, 30)
+CARDS = Path("out/cards")
+CARD_KINDS = ["palette", "type", "compositions", "voice", "pillars", "cadence", "aspire", "stop", "statement", "week"]
+ENTRY = re.compile(r"^- \*\*(\d{4}-\d{2}-\d{2})\*\* .*· pillar: (.+?)\s*$")
+LENGTH = (20, 30)
 
 
 def sha(p):
@@ -105,41 +111,80 @@ def film_checks():
     bad = [f["text"][:160] for f in rep.get("findings", []) if f["text"].startswith(("SAFE_BREACH", "FONT_ERROR", "RENDER_ERROR", "UNKNOWN_KIND"))]
     check("safe", rep and not rep.get("failed") and not bad, f"{rep.get('jobs', 0)} render jobs, {rep.get('failed', '?')} failed, "
           f"{len(bad)} findings" + (f": {bad[0]}" if bad else ""))
-    check("wall", *wall_check())
-    sz = png_size(STORY) if STORY.exists() else None
-    check("story", sz == (1080, 1920), f"out/story.png {'at %dx%d' % sz if sz else 'is missing'}")
+    check("cards", *cards_check())
+    b = the_brand()
+    errs = brandkit.check(b) if b else ["brand.json is missing: run brand.py system"]
+    check("brand", not errs, f"{brand_path()} valid, pillar shares sum to {sum(p.get('share', 0) for p in (b or {}).get('pillars', [])):.3f}"
+          if not errs else f"{len(errs)} errors: {errs[0]}")
+    check("plan", *plan_check(b or {}))
+    check("colors", *colors_check(b or {}))
     return res
 
 
-def wall_check():
-    """The best-nine image: 1080x1080, nine distinct sources, and nine cells that are nine different pictures."""
-    if not WALL.exists():
-        return False, "out/best-nine.png is missing"
-    sz = png_size(WALL)
-    slots = (_env.read_json("build/wall.json") or {}).get("slots") or []
-    srcs = [x.get("photo") for x in slots if x.get("photo")]
-    _env.need("PIL")
-    from PIL import Image, ImageStat
-    im = Image.open(WALL).convert("L")
-    w, h = im.size
-    cells, flat = [], 0
-    for i in range(9):
-        x, y = (i % 3) * w / 3, (i // 3) * h / 3
-        c = im.crop((int(x + w / 6 - w / 16), int(y + h / 6 - h / 16), int(x + w / 6 + w / 16), int(y + h / 6 + h / 16))).resize((16, 16), Image.BILINEAR)
-        if ImageStat.Stat(c).stddev[0] <= 4:
-            flat += 1
-        cells.append(list(c.tobytes()))
-    diffs = [sum(abs(p - q) for p, q in zip(cells[i], cells[j])) / 256 for i in range(9) for j in range(i + 1, 9)]
-    least = min(diffs)
-    ok = sz == (1080, 1080) and len(srcs) == 9 and len(set(srcs)) == 9 and flat == 0 and least > 6
-    return ok, (f"out/best-nine.png at {sz[0]}x{sz[1]}, {len(set(srcs))} distinct photos in build/wall.json, "
-                f"{flat} flat cells, least difference between two cells {least:.1f}")
+def brand_path():
+    return "out/brand.json" if Path("out/brand.json").exists() else "build/brand.json"
+
+
+def the_brand():
+    return _env.read_json(brand_path())
+
+
+def cards_check():
+    files = [CARDS / f"{n:02d}-{k}.png" for n, k in enumerate(CARD_KINDS, 1)]
+    missing = [f.name for f in files if not f.exists()]
+    if missing:
+        return False, f"out/cards/ is missing {missing}"
+    sizes = {png_size(f) for f in files}
+    extra = sorted(p.name for p in CARDS.glob("*.png") if p not in files)
+    distinct = len({sha(f) for f in files})
+    ok = sizes == {(1080, 1350)} and distinct == 10 and not extra
+    return ok, f"10 cards at {', '.join('%dx%d' % z for z in sizes)}, {distinct} distinct" + (f"; stray files {extra}" if extra else "")
+
+
+def plan_check(b):
+    p = Path("out/plan.md")
+    if not p.exists():
+        return False, "out/plan.md is missing: run brand.py plan"
+    lines = p.read_text().splitlines()
+    names = {x.get("name") for x in b.get("pillars", [])}
+    entries, bad, bare = [], [], 0
+    for i, ln in enumerate(lines):
+        m = ENTRY.match(ln)
+        if not m:
+            continue
+        entries.append(m.group(1))
+        if m.group(2) not in names:
+            bad.append(f"{m.group(1)} {m.group(2)!r}")
+        cap = [x for x in lines[i + 1:i + 12] if x.startswith("  >")]
+        if not any(x[3:].strip() for x in cap):
+            bare += 1
+    ok = len(entries) == 30 and len(set(entries)) == 30 and not bad and not bare
+    return ok, (f"{len(entries)} dated entries, {len(set(entries))} dates, {bare} without a caption" +
+                (f"; pillars not in brand.json: {bad[:3]}" if bad else ""))
+
+
+def colors_check(b):
+    rep = _env.read_json("build/render-report.json") or {}
+    named = {}
+    for g in rep.get("guide", []):
+        if g["text"].startswith("GUIDE_COLORS "):
+            d = json.loads(g["text"][len("GUIDE_COLORS "):])
+            named[d["card"]] = d.get("names") or []
+    known = {c["name"].lower() for c in b.get("palette", [])} | {c["name"].lower() for c in (b.get("aspire") or {}).get("palette", [])}
+    shown = sorted({n for v in named.values() for n in v})
+    stray = [n for n in shown if n.lower() not in known]
+    logged = all(named.get(k) for k in ("01-palette", "07-aspire"))
+    ok = logged and not stray
+    return ok, (f"{len(shown)} color names on the cards, all in brand.json" if ok else
+                f"{len(shown)} color names on the cards" + (f"; not in brand.json: {stray}" if stray else "") +
+                ("" if logged else "; the palette and aspire cards logged no names (render the cards)"))
 
 
 def words_in(obj, acc):
     if isinstance(obj, dict):
         for k, v in obj.items():
-            if k in ("kicker", "headline", "line", "text", "meta", "label", "signoff", "name") and isinstance(v, str):
+            if k in ("kicker", "headline", "line", "text", "meta", "label", "signoff", "name", "title", "statement", "why",
+                     "caption", "sample") and isinstance(v, str):
                 acc.append(v)
             else:
                 words_in(v, acc)
@@ -154,8 +199,9 @@ def gate_checks():
     def check(name, ok, detail):
         res.append((name, bool(ok), detail))
     film = _env.read_json("build/film.json") or {}
-    texts = words_in({"beats": film.get("beats"), "wall": film.get("wall"), "story": film.get("story")}, [])
-    for f in ("out/caption.md", "out/brief.md", "out/review.html"):
+    texts = words_in({"beats": film.get("beats")}, [])
+    texts += [t for c in film.get("cards", []) for t in words_in({"card": c}, [])]
+    for f in ("out/caption.md", "out/brief.md", "out/review.html", "out/plan.md"):
         if Path(f).exists():
             texts.append(Path(f).read_text())
     hits = sorted({m.group(0) for t in texts for m in PLACEHOLDER.finditer(t)})
@@ -187,9 +233,9 @@ def gate_checks():
     body = re.sub(r"#\w+", "", cap)
     tags = re.findall(r"#\w+", cap)
     reg = cap and (not lower or body == body.lower()) and 1 <= len(tags) <= 10
-    check("deliver", reg and Path("out/review.html").exists() and Path("out/brief.md").exists(),
+    check("deliver", reg and all(Path(f).exists() for f in ("out/review.html", "out/brief.md", "out/brand.json", "out/plan.md")),
           f"caption {len(cap.split())} words, {len(tags)} hashtags" + (", lowercase like theirs" if lower else "") +
-          ("" if Path("out/review.html").exists() else "; review.html missing") + ("" if Path("out/brief.md").exists() else "; brief.md missing"))
+          "".join(f"; {f} missing" for f in ("out/review.html", "out/brief.md", "out/brand.json") if not Path(f).exists()))
     return res
 
 

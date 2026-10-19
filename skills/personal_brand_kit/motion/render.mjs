@@ -6,7 +6,8 @@
 //             "jobs": [{"type": "video", "composition": "Film", "props": {...}, "out": "/abs/film.mp4"},
 //                      {"type": "still", "composition": "Film", "props": {...}, "frame": 120, "scale": 0.5, "out": "/abs/01.png"}]}
 // Every console line a composition prints that starts with SAFE_BREACH, FONT_ERROR or UNKNOWN_KIND is
-// collected into the report with the job it came from.
+// collected into the report's findings with the job it came from; GUIDE_ lines (what a guide card shows) go to its
+// guide list.
 import {bundle} from '@remotion/bundler';
 import {ensureBrowser, openBrowser, renderMedia, renderStill, selectComposition} from '@remotion/renderer';
 import fs from 'node:fs';
@@ -18,18 +19,20 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const started = Date.now();
 const findings = [];
+const guide = [];
 const timings = [];
 
 const onBrowserLog = (job) => (log) => {
   const text = String(log.text ?? '');
   if (/^(SAFE_BREACH|FONT_ERROR|UNKNOWN_KIND)/.test(text)) findings.push({job: job.out, text});
+  else if (/^GUIDE_/.test(text)) guide.push({job: job.out, text});
 };
 
 await ensureBrowser();
 const serveUrl = await bundle({
   entryPoint: path.join(here, 'src', 'index.ts'),
   publicDir: spec.publicDir,
-  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'bn-bundle'), String(process.pid)),
+  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'pb-bundle'), String(process.pid)),
 });
 const bundled = Date.now();
 const browser = await openBrowser('chrome', {chromiumOptions: {gl: spec.gl ?? 'swangle'}});
@@ -89,7 +92,7 @@ for (const job of spec.jobs) {
   }
 }
 await browser.close({silent: true});
-const report = {bundle_seconds: (bundled - started) / 1000, seconds: (Date.now() - started) / 1000, jobs: spec.jobs.length, failed, retries, findings, timings};
+const report = {bundle_seconds: (bundled - started) / 1000, seconds: (Date.now() - started) / 1000, jobs: spec.jobs.length, failed, retries, findings, guide, timings};
 if (spec.report) fs.writeFileSync(spec.report, JSON.stringify(report, null, 2));
 process.stderr.write(`rendered ${spec.jobs.length - failed} of ${spec.jobs.length} jobs in ${report.seconds.toFixed(1)} s\n`);
 process.exit(failed ? 1 : 0);

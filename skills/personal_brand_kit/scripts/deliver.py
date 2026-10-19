@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Movement 6, last step: write out/caption.md, out/brief.md and out/review.html, then run the gate.
+"""Movement 6, last step: write out/brand.json, out/caption.md, out/brief.md and out/review.html, then run the gate.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/deliver.py
 
-caption.md is build/caption.md when the agent wrote one in the person's voice, otherwise a short caption drafted
-from build/taste.json in their register (their case, their length, their own hashtags). brief.md says where the
-material came from (every door tried, open or closed), what the run assumed, the vote, every clip and whether it was
-generated, taken from their own reels or substituted with an animated photo, where the music came from, which
-engine rendered the film, and the critics' scores of the cut; it opens with the nine, each with its numbers and why it
-worked. review.html plays the film and shows the best-nine image, the story card, the caption, the three storyboards'
-style sheets and the vote, with the runners-up.
+brand.json is build/brand.json, copied as it stands (the system the ten cards show). out/plan.md is written by
+brand.py plan and only checked here. caption.md is build/caption.md when the agent wrote one in the person's voice,
+otherwise a short caption drafted from build/brand.json in their register (their case, their own hashtags) to post
+with the film or the cards. brief.md says where the material came from (every door tried, open or closed), what the
+run assumed, what the read found (palette, type, pillars, cadence, voice, what to stop), the vote, every clip and
+whether it was generated, taken from their own reels or substituted with an animated photo, where the music came from,
+which engine rendered the film, and the critics' scores of the cut. review.html plays the film and shows the ten
+cards, the caption, the three storyboards' style sheets and the vote, with the runners-up.
 Exit 0 only when qa.py gate passes; on a failed gate the page carries a red banner naming what is wrong.
 """
 import html
@@ -32,21 +33,16 @@ def esc(s):
     return html.escape("" if s is None else str(s))
 
 
-def caption(taste, win):
+def caption(brand, taste):
     own = Path("build/caption.md")
     if own.exists() and own.read_text().strip():
         return own.read_text().strip() + "\n"
     reg = taste.get("register") or {}
-    places = taste.get("places") or []
-    year = taste.get("year")
-    lines = [f"my best nine of {year}, the ones you loved most"]
-    if len(places) >= 2:
-        lines.append(", ".join(places[:-1]) + " and " + places[-1])
-    lines.append("which one is your favorite?")
-    body = "\n".join(lines)
+    lines = ["my style, in ten cards", brand.get("statement") or "", "which card is most you?"]
+    body = "\n".join(x for x in lines if x)
     body = body.lower() if reg.get("lowercase") else body[:1].upper() + body[1:]
-    tags = list(dict.fromkeys((reg.get("hashtags") or [])[:3] + ["#bestnine", f"#bestnine{year}"]))
-    return f"{body}\n\n{' '.join(tags)}\n"
+    tags = list(dict.fromkeys((reg.get("hashtags") or [])[:3]))
+    return body + ("\n\n" + " ".join(tags) if tags else "") + "\n"
 
 
 def clip_rows(clips):
@@ -61,34 +57,39 @@ def clip_rows(clips):
     return rows
 
 
-def nine_rows():
-    st = _env.read_json("build/stats.json") or {}
-    why = {x["rank"]: x for x in (_env.read_json("build/research.json") or {}).get("nine", [])}
-    rows = ["| # | posted | likes | comments | why it worked |", "|---|---|---|---|---|"]
-    for t in st.get("top_nine") or []:
-        w = (why.get(t["rank"]) or {}).get("why") or ""
-        rows.append(f"| {t['rank']} | {t.get('date_label') or t.get('date')} ({t.get('kind')}) | {t.get('likes', '-')} | "
-                    f"{t.get('comments', '-')} | {w.replace('|', '/')} |")
-    ten = st.get("tenth") or {}
-    if ten.get("likes") is not None:
-        rows += ["", f"The tenth had {ten['likes']} likes, {ten.get('gap')} fewer than the ninth."]
-    return rows
+def found_rows(brand):
+    pct = lambda x: f"{round(100 * (x or 0))}%"
+    pal = ", ".join(f"{c['name']} {c['hex']} ({c.get('role')}, {pct(c.get('share'))})" for c in brand.get("palette") or [])
+    ty = brand.get("type") or {}
+    cad = brand.get("cadence") or {}
+    slots = ", ".join(f"{s['day']} {s['time']}" for s in cad.get("slots") or [])
+    voice = brand.get("voice") or {}
+    L = [f"- Statement: {brand.get('statement')}",
+         f"- Palette: {pal}.",
+         f"- Type: {ty.get('display')} for headlines, {ty.get('text')} for text. {ty.get('why') or ''}".rstrip(),
+         "- Compositions: " + ", ".join(f"{c['name']} {pct(c.get('share'))}" for c in brand.get("compositions") or []) + ".",
+         "- Pillars: " + ", ".join(f"{p['name']} {pct(p.get('share'))}" for p in brand.get("pillars") or []) + ".",
+         f"- Cadence: {cad.get('per_week')} posts a week; best slots {slots} ({cad.get('timezone')}).",
+         f"- Voice: {voice.get('case')}, about {voice.get('avg_words')} words a caption; "
+         + ", ".join(d["name"] for d in voice.get("devices") or []) + "."]
+    asp = brand.get("aspire") or {}
+    if asp:
+        L.append("- What you like elsewhere: " + ", ".join(asp.get("subjects") or []) + ".")
+    for s in brand.get("stop") or []:
+        L.append(f"- Stop: {s.get('line')}, because {s.get('why')}.")
+    return L
 
 
-def brief(lib, taste, win, clips, music, engine, cuts):
-    handle, year = lib.get("handle") or taste.get("handle"), lib.get("year") or taste.get("year")
-    L = [f"# @{handle}, best nine of {year}: how this was made", "", "## the nine", ""] + nine_rows()
-    wall = taste.get("wall") or {}
-    if wall.get("why"):
-        L += ["", f"The wall: {wall['why']}"]
-    L += ["", "## where your photos came from", ""]
+def brief(lib, taste, brand, win, clips, music, engine, cuts):
+    handle = brand.get("handle") or lib.get("handle")
+    L = [f"# @{handle}, personal brand kit: how this was made", "", "## what the read found", ""] + found_rows(brand)
+    L += ["", "The ten cards in out/cards show this; out/brand.json holds it; out/plan.md is the next 30 days.",
+          "", "## where your material came from", ""]
     for door, state in (lib.get("doors") or {}).items():
         L.append(f"- {door.replace('_', ' ')}: {state}")
     L += ["", "## what this run assumed", ""] + [f"- {a}" for a in lib.get("assumptions") or []]
     L += ["", "## what it learned about you", "",
-          "build/taste.md has the whole read. In short: " + ", ".join(taste.get("pillars") or []) + "; palette "
-          + ", ".join(dict.fromkeys(c["name"] for c in (taste.get("palette") or {}).get("year", []))) + "; avoid "
-          + ", ".join(taste.get("avoid") or []) + ".", "",
+          "build/taste.md has the whole read. It avoids " + (", ".join(taste.get("avoid") or []) or "nothing named") + ".", "",
           "## the storyboards and the vote", ""]
     tot = win.get("totals") or {}
     for i in win.get("order") or []:
@@ -145,7 +146,7 @@ h1{{font-size:30px;margin:0 0 4px}} h2{{margin:40px 0 12px;font-size:20px}} .sub
 .banner{{background:#b3261e;color:#fff;padding:14px 18px;border-radius:10px;margin-bottom:20px}}
 .top{{display:grid;grid-template-columns:380px 1fr;gap:36px;align-items:start}}
 video{{width:380px;border-radius:16px;background:#000;display:block}}
-.posts{{display:grid;grid-template-columns:420px 236px;gap:18px;align-items:start}}
+.posts{{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}}
 .sheets{{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}}
 .posts img,.sheets img{{width:100%;border-radius:8px;display:block}}
 .board h3{{margin:10px 0 2px;font-size:17px}} .board p{{margin:0;opacity:.8;font-size:14px}}
@@ -154,14 +155,15 @@ pre{{white-space:pre-wrap;background:rgba(127,127,127,.12);padding:16px;border-r
 table{{border-collapse:collapse}} td,th{{padding:6px 12px;border-bottom:1px solid rgba(127,127,127,.3);text-align:left}}
 button{{background:{accent};color:{bg};border:0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}}
 </style></head><body><main>
-<h1>{title}</h1><p class="sub">Your best-nine film, the best-nine image, a story card and a caption, ready to post.</p>
+<h1>{title}</h1><p class="sub">Your style guide in ten cards, a film that reveals it, your brand file and the next 30 days.</p>
 {banner}
 <div class="top"><video src="film.mp4" controls playsinline loop></video><div>
 <h2 style="margin-top:0">Caption</h2><pre id="cap">{caption}</pre>
 <button onclick="navigator.clipboard.writeText(document.getElementById('cap').innerText);this.textContent='Copied'">Copy caption</button>
 <h2>How it was made</h2><p><a href="brief.md">brief.md</a> says where everything came from, which clips were made and
-which were stood in for, and where the music came from.</p></div></div>
-<h2>The best-nine image and the story card</h2>{posts}
+which were stood in for, and where the music came from. <a href="plan.md">plan.md</a> is the next 30 days, and
+<a href="brand.json">brand.json</a> holds the whole system.</p></div></div>
+<h2>The ten cards</h2>{posts}
 <h2>The three storyboards</h2><div class="sheets">{boards}</div>
 <h2>The vote</h2>{table}<p>{runners}</p>
 </main></body></html>
@@ -174,17 +176,20 @@ def main():
         return 0
     lib = _env.read_json("build/library.json") or {}
     taste = _env.read_json("build/taste.json") or {}
+    brand = _env.read_json("build/brand.json") or {}
     win = _env.read_json("build/winner.json") or {}
-    if not (lib and taste and win):
-        sys.exit("build/library.json, build/taste.json or build/winner.json is missing; run the earlier movements first")
+    if not (lib and taste and brand and win):
+        sys.exit("build/library.json, build/taste.json, build/brand.json or build/winner.json is missing; "
+                 "run the earlier movements first")
     clips = (_env.read_json("build/clips.json") or {}).get("clips") or {}
     music = _env.read_json("build/music.json") or {}
     engine = _env.read_json("build/engine.json") or {}
     cuts = [_env.read_json(p) for p in vote.rounds()]
     OUT.mkdir(exist_ok=True)
-    cap = caption(taste, win)
+    shutil.copyfile("build/brand.json", OUT / "brand.json")
+    cap = caption(brand, taste)
     (OUT / "caption.md").write_text(cap)
-    (OUT / "brief.md").write_text(brief(lib, taste, win, clips, music, engine, cuts))
+    (OUT / "brief.md").write_text(brief(lib, taste, brand, win, clips, music, engine, cuts))
     sheets = OUT / "storyboards"
     sheets.mkdir(exist_ok=True)
     cells = []
@@ -204,14 +209,14 @@ def main():
     names = {i: (_env.read_json(f"build/storyboards/{i}/storyboard.json") or {}).get("name") for i in win.get("order") or []}
     runners = ("Runners-up: " + ", ".join(f"{esc(i)}. {esc(names[i])}" for i in (win.get("order") or [])[1:])
                + ". Want a different take? Say \"do the second one\" and that storyboard is made instead.")
-    pal = (taste.get("palette") or {}).get("year") or []
+    pal = brand.get("palette") or []
     colors = (_env.read_json(f"build/storyboards/{win.get('board')}/storyboard.json") or {}).get("system", {}).get("colors", {})
     bg, ink, accent = colors.get("bg", "#141212"), colors.get("ink", "#f4efe8"), colors.get("accent", pal[0]["hex"] if pal else "#e6b26d")
-    handle, year = lib.get("handle"), lib.get("year")
-    posts = gallery([p for p in ("best-nine.png", "story.png") if (OUT / p).exists()], "posts")
+    handle = brand.get("handle") or lib.get("handle")
+    posts = gallery(sorted(f"cards/{p.name}" for p in (OUT / "cards").glob("*.png")), "posts")
 
     def page(banner):
-        return PAGE.format(title=esc(f"@{handle} · best nine {year}"), banner=banner, caption=esc(cap), bg=bg, ink=ink,
+        return PAGE.format(title=esc(f"@{handle} · personal brand kit"), banner=banner, caption=esc(cap), bg=bg, ink=ink,
                            accent=accent, posts=posts, boards="".join(cells), table=table, runners=runners)
 
     (OUT / "review.html").write_text(page(""))
@@ -222,7 +227,7 @@ def main():
         (OUT / "review.html").write_text(page(f"<div class='banner'><b>Not ready to post.</b><ul>{items}</ul></div>"))
         print("deliver: the gate failed; fix what it names and run deliver.py again", file=sys.stderr)
         return 1
-    print("delivered: out/film.mp4, out/best-nine.png, out/story.png, out/caption.md, out/review.html, out/brief.md")
+    print("delivered: out/film.mp4, out/cards/ (10), out/brand.json, out/plan.md, out/caption.md, out/review.html, out/brief.md")
     return 0
 
 
