@@ -6,7 +6,11 @@ import {Card, CARD_PAD, LivePhoto, Scrim} from '../photo';
 import {Leaks} from '../texture';
 import type {Beat} from '../types';
 
-/** A dimmed product still that keeps moving under the type, so no frame of the countdown stands still. */
+/**
+ * The product still, lightly veiled, that keeps moving under the type, so no frame of the countdown stands still.
+ * The veil stays light so the product's own colors survive (a heavy dark veil turns a lemon glaze olive); the type
+ * carries a shadow for its contrast instead.
+ */
 const Under: React.FC<{beat: Beat; dim: number}> = ({beat, dim}) => {
   const {system} = useSys();
   return (
@@ -26,13 +30,15 @@ const Tick: React.FC<{beat: Beat; days: number; label: string}> = ({beat, days, 
   const p = pop(0, system.direction === 'kinetic' ? {damping: 12, stiffness: 200} : undefined);
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
-      <Under beat={beat} dim={0.55} />
+      <Under beat={beat} dim={0.28} />
       <SafeBox name="tick" justify="center" align="center">
-        <div style={{...faceStyle(system.display), fontSize: Math.min(s.width / (String(days).length * 0.62), system.scale.hero * 2.4), lineHeight: 0.85,
-          color: system.direction === 'kinetic' ? system.colors.accent : system.colors.ink, transform: `scale(${0.75 + 0.25 * p})`, opacity: tween(0, 1, 0, 5)}}>
-          {days}
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', textShadow: '0 4px 30px rgba(0,0,0,0.55)'}}>
+          <div style={{...faceStyle(system.display), fontSize: Math.min(s.width / (String(days).length * 0.62), system.scale.hero * 2.4), lineHeight: 0.85,
+            color: system.direction === 'kinetic' ? system.colors.accent : system.colors.ink, transform: `scale(${0.75 + 0.25 * p})`, opacity: tween(0, 1, 0, 5)}}>
+            {days}
+          </div>
+          <Line text={label} delay={4} size={system.scale.label * 1.3} />
         </div>
-        <Line text={label} delay={4} size={system.scale.label * 1.3} />
       </SafeBox>
     </AbsoluteFill>
   );
