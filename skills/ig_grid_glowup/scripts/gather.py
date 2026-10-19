@@ -17,7 +17,7 @@ With every door closed it writes out/brief.md with the one sentence on how to op
 person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
 
 items.json (every key optional; ts is a unix timestamp; media are paths relative to items.json):
-  {"source": "instagram account", "handle": "...", "name": "...",
+  {"source": "instagram account", "handle": "...", "name": "...", "bio": "...",
    "posts": [{"ts": 0, "caption": "", "media": ["a.jpg"], "likes": 0, "comments": 0, "saves": 0, "place": ""}],
    "reels": [...same...], "stories": [{"ts": 0, "media": ["s.jpg"]}],
    "likes": [{"account": "", "ts": 0, "caption": "", "media": ["liked.jpg"]}], "saved": [...same as likes...],
@@ -265,7 +265,7 @@ def read_export(root):
                 acct = fix(e.get("title") or s_.get("value") or "")
                 if acct:
                     following.append({"account": acct, "ts": s_.get("timestamp")})
-    handle, name = None, None
+    handle, name, bio = None, None, None
     for f in first(root, "../personal_information/personal_information/personal_information.json",
                    "personal_information/personal_information/personal_information.json", "account_information/personal_information.json"):
         data = load(f) or {}
@@ -273,13 +273,14 @@ def read_export(root):
             smd = u.get("string_map_data") or {}
             handle = handle or fix((smd.get("Username") or {}).get("value", "")) or None
             name = name or fix((smd.get("Name") or {}).get("value", "")) or None
+            bio = bio or fix((smd.get("Bio") or {}).get("value", "")) or None
     if not handle:
         m = re.match(r"instagram-([A-Za-z0-9._]+?)-\d{4}-\d{2}-\d{2}", root.name)
         if m:
             handle = m.group(1)
             notes.append(f"Username taken from the export's folder name ({root.name}).")
     return {"posts": posts, "reels": reels, "stories": stories, "likes": likes, "comments": comments,
-            "followers": followers, "saved": saved, "following": following, "handle": handle, "name": name,
+            "followers": followers, "saved": saved, "following": following, "handle": handle, "name": name, "bio": bio,
             "found": found, "notes": notes}
 
 
@@ -330,7 +331,7 @@ def read_pulled(folder):
         return dict(row, media=out)
     keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
     d = {k: [media(r) if isinstance(r, dict) else r for r in data.get(k) or []] for k in keys}
-    d.update(handle=data.get("handle"), name=data.get("name"), source=data.get("source") or "connected account",
+    d.update(handle=data.get("handle"), name=data.get("name"), bio=data.get("bio"), source=data.get("source") or "connected account",
              found={k: [str(f)] for k in keys if d[k]})
     return d
 
@@ -440,7 +441,7 @@ def main():
             continue
         for k in keys:
             d[k] = merge(d[k], p[k])
-        d["handle"], d["name"] = d["handle"] or p["handle"], d["name"] or p["name"]
+        d["handle"], d["name"], d["bio"] = d["handle"] or p["handle"], d["name"] or p["name"], d.get("bio") or p.get("bio")
         d["found"].update(p["found"])
         sources.append(p["source"])
         doors.setdefault(p["source"], f"open: {len(p['posts'])} posts, {len(p['likes'])} likes pulled")
@@ -453,7 +454,7 @@ def main():
         for k in keys:
             if k in x:
                 d[k] = merge(d[k], x[k])
-        d["handle"], d["name"] = d["handle"] or x["handle"], d["name"] or x["name"]
+        d["handle"], d["name"], d["bio"] = d["handle"] or x["handle"], d["name"] or x["name"], d.get("bio") or x.get("bio")
         for k, v in x["found"].items():
             d["found"].setdefault(k, v)
         d["notes"] += x["notes"]
@@ -516,7 +517,7 @@ def main():
     if no_media:
         assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
     out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
-           "year": year, "range": span, "found": d["found"], **lib, "grid": grid, "followers": d["followers"],
+           "bio": d.get("bio"), "year": year, "range": span, "found": d["found"], **lib, "grid": grid, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
     _env.write_json("build/library.json", out)
     print(f"source: {source}   handle: @{handle}   grid: {len(grid)}   range: {span['first']} to {span['last']}")

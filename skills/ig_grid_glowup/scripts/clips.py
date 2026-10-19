@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
-"""Movement 5: the generated clips the winning storyboard asks for, conformed, graded and placed.
+"""Movement 5: the generated clips the winning storyboard asks for, conformed, graded and placed; and the
+generated stills that stand in for a post no library photo fits.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/clips.py list [--board N]       # every clip: its prompt, length, source photo, the file to save
     python3 S/scripts/clips.py normalize [--board N] [--why "..."]
                                                       # conform what arrived; substitute what did not -> build/clips.json
+    python3 S/scripts/clips.py stills [--board N]     # every stand-in still of every board (or of board N): conform
+                                                      # build/stills/<id>.png from the image model, else paint one
+                                                      # -> build/public/stills/<id>.jpg + build/stills.json
 
 list writes build/clips/requests.json and prints one block per clip. The agent generates each clip with its
 video model (image-to-video from the named photo when the model takes an image) and saves it as
 build/clips/NN.mp4 (.mov and .webm are read too). A clip whose role is "their own reel" needs no generation:
 it is cut from their footage. A clip that plays inside one tile of the wall (it names a tile) is square.
+
+A stand-in still is a post of the nine that no library photo fits (storyboard.py names each one, with its prompt
+and its color). The agent makes each with its image model (4:5, 1080x1350) and saves it as build/stills/<id>.png
+(.jpg and .webp are read too), then runs `clips.py stills`. A still that did not arrive is painted: late light
+through a window falling across a plain wall in the slot's color, with film grain, so the grid still reads as one
+palette. build/stills.json records each as generated or painted, and the plan says which posts they are.
 
 normalize scales and crops each file to 1080x1920 (1080x1080 for a tile), conforms it to 30 fps, trims it to its beat (looping a
 short file), applies the film's grade (build/grade.json, the same filter as the photos) and writes
@@ -159,13 +169,102 @@ def cmd_normalize(a):
     return 0
 
 
+STILLS = Path("build/stills")
+STILL_OUT = grade.PUBLIC / "stills"
+PW, PH = 1080, 1350
+
+
+def paint_still(color, seed, path):
+    """Late light through a window across a plain wall in one color: a quiet frame that sits in the palette."""
+    _env.need("PIL")
+    import random
+    from PIL import Image, ImageChops, ImageDraw, ImageFilter
+    rnd = random.Random(seed)
+    r, g, b = (int(color.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    W, H = PW, PH
+    base = Image.new("RGB", (W, H), (r, g, b))
+    shade = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(shade)
+    for y in range(H):
+        d.line([(0, y), (W, y)], fill=int(70 * (y / H) ** 1.4))
+    dark = Image.new("RGB", (W, H), (int(r * 0.55), int(g * 0.52), int(b * 0.5)))
+    im = Image.composite(dark, base, shade)
+    light = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(light)
+    x0, slant = rnd.randint(-200, 120), rnd.uniform(0.35, 0.6)
+    panes = [(0.0, 0.46), (0.52, 1.0)]
+    for top, bot in panes:
+        for k in range(2):
+            ya, yb = 160 + top * 760, 160 + bot * 760
+            xa = x0 + k * 330
+            d.polygon([(xa, ya), (xa + 300, ya), (xa + 300 + slant * (yb - ya), yb), (xa + slant * (yb - ya), yb)], fill=255)
+    light = light.filter(ImageFilter.GaussianBlur(26))
+    warm = Image.new("RGB", (W, H), (min(255, int(r * 1.35 + 40)), min(255, int(g * 1.3 + 30)), min(255, int(b * 1.15 + 14))))
+    im = Image.composite(warm, im, light.point(lambda v: int(v * 0.75)))
+    leaf = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(leaf)
+    cx, cy = rnd.randint(620, 860), rnd.randint(180, 420)
+    for i in range(7):
+        ang = -0.9 + i * 0.3
+        ex, ey = cx + int(260 * __import__("math").cos(ang)), cy + int(260 * __import__("math").sin(ang))
+        d.line([(cx, cy), (ex, ey)], fill=150, width=10)
+        d.ellipse([ex - 60, ey - 26, ex + 60, ey + 26], fill=150)
+    leaf = leaf.filter(ImageFilter.GaussianBlur(14))
+    im = Image.composite(Image.new("RGB", (W, H), (int(r * 0.7), int(g * 0.66), int(b * 0.62))), im, ImageChops.multiply(leaf, light))
+    noise = Image.effect_noise((W, H), 22).convert("RGB")
+    im = ImageChops.add(ImageChops.multiply(im, Image.new("RGB", (W, H), (236, 236, 236))), ImageChops.multiply(noise, Image.new("RGB", (W, H), (20, 20, 20))))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im.save(path, quality=92)
+
+
+def still_arrived(sid):
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        p = STILLS / f"{sid}{ext}"
+        if p.exists() and p.stat().st_size > 1000:
+            return p
+    return None
+
+
+def make_stills(stills):
+    """Each stand-in as build/public/stills/<id>.jpg: the image model's file cropped to 4:5 and graded, else painted."""
+    rec = (_env.read_json("build/stills.json") or {}).get("stills", {})
+    g = grade.ensure_recipe()
+    for st in stills:
+        dst = STILL_OUT / f"{st['id']}.jpg"
+        src = still_arrived(st["id"])
+        if src:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            vf = f"scale={PW}:{PH}:force_original_aspect_ratio=increase,crop={PW}:{PH},{g['filter']}"
+            r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-i", str(src), "-vf", vf, "-q:v", "2", str(dst)], capture_output=True, text=True)
+            if r.returncode == 0:
+                rec[st["id"]] = {"n": st["n"], "status": "generated", "from": str(src), "prompt": st["prompt"], "file": f"stills/{st['id']}.jpg"}
+                continue
+        paint_still(st["color"], st["id"], dst)
+        rec[st["id"]] = {"n": st["n"], "status": "painted", "color": st["color"], "prompt": st["prompt"], "file": f"stills/{st['id']}.jpg",
+                         "why": "no image model file at build/stills/" + st["id"] + ".png"}
+    _env.write_json("build/stills.json", {"stills": rec})
+    return rec
+
+
+def cmd_stills(a):
+    boards = [board_for(a)] if a.board else [_env.read_json(f) for f in sorted(Path("build/storyboards").glob("*/storyboard.json"))]
+    todo = [st for b in boards for st in b.get("stills", [])]
+    for st in todo:
+        print(f"still {st['id']} (post {st['n']}), 4:5 1080x1350 -> save as {(STILLS / (st['id'] + '.png')).resolve()}")
+        print(f"  prompt: {st['prompt']}")
+    rec = make_stills(todo)
+    n = {s: sum(1 for st in todo if rec[st["id"]]["status"] == s) for s in ("generated", "painted")}
+    print(f"stills: {n['generated']} generated, {n['painted']} painted in their palette -> build/public/stills/, build/stills.json")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["list", "normalize"])
+    ap.add_argument("cmd", choices=["list", "normalize", "stills"])
     ap.add_argument("--board")
     ap.add_argument("--why", help="normalize: why the missing clips did not arrive (for example: no video model in this session)")
     a = ap.parse_args()
-    return {"list": cmd_list, "normalize": cmd_normalize}[a.cmd](a)
+    return {"list": cmd_list, "normalize": cmd_normalize, "stills": cmd_stills}[a.cmd](a)
 
 
 if __name__ == "__main__":
