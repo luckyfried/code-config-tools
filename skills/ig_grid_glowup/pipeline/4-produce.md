@@ -22,9 +22,9 @@ emoji or none, about what is in that post, true to the day it goes up. Edit the 
 python3 S/scripts/plan.py check
 ```
 
-`check` refuses a caption that is empty, a placeholder, over 40 words, out of their case, a repeat of another, or
-word for word the caption of a post already on their grid, and writes `out/plan.md`. The film carries these
-captions, so the plan comes before `snap`.
+`check` refuses a caption that is empty, a placeholder, over 40 words, out of their case, a repeat of another,
+naming a weekday other than the day it goes up, or word for word the caption of a post already on their grid, and
+writes `out/plan.md`. The film carries these captions, so the plan comes before `snap`.
 
 ## Music
 

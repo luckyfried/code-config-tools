@@ -124,6 +124,9 @@ def problems(plan):
             bad.append(f"{where}: the caption runs {len(body.split())} words; keep it under {MAX_WORDS}")
         if reg.get("lowercase") and TAG.sub("", cap) != TAG.sub("", cap).lower():
             bad.append(f"{where}: they write in lowercase; this caption has capitals")
+        named = [d.lower() for d in DAYS if re.search(rf"\b{d.lower()}", body)]
+        if named and (s.get("weekday") or "").lower() not in named:
+            bad.append(f"{where}: the caption says {named[0]} but the post goes up on a {s.get('weekday')}")
         if body in seen:
             bad.append(f"{where}: the same caption as another slot")
         if body in old:
