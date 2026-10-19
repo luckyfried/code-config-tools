@@ -36,10 +36,19 @@ export const FontGate: React.FC<{system: System; children: React.ReactNode}> = (
     Promise.all(
       faces.map(async (f) => {
         if (loaded.has(f.family)) return;
-        const face = new FontFace(f.family, `url(${staticFile(f.file)})`, {weight: '100 900'});
-        await face.load();
-        document.fonts.add(face);
-        loaded.add(f.family);
+        // a request to the render server can drop under load; a face gets three tries before it is an error
+        for (let attempt = 1; ; attempt++) {
+          try {
+            const face = new FontFace(f.family, `url(${staticFile(f.file)})`, {weight: '100 900'});
+            await face.load();
+            document.fonts.add(face);
+            loaded.add(f.family);
+            return;
+          } catch (e) {
+            if (attempt >= 3) throw e;
+            await new Promise((r) => setTimeout(r, 250 * attempt));
+          }
+        }
       }),
     )
       .then(() => {
