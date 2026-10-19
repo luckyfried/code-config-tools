@@ -58,11 +58,12 @@ export const Tease: React.FC<{beat: Beat}> = ({beat}) => {
   ) : null;
   const words = (
     <>
-      {t.kicker ? <Kicker text={t.kicker} delay={6} color={d === 'kinetic' ? system.colors.accent : undefined} /> : null}
+      {t.kicker ? <Kicker text={t.kicker} delay={6} color={d === 'kinetic' ? system.colors.accent : d === 'documentary' ? system.colors.ink : undefined} /> : null}
       {t.headline ? <Headline text={t.headline} max={open >= 1 ? 'hero' : 'h1'} lines={2} delay={10} width={d === 'editorial' ? s.width - 2 * CARD_PAD : undefined} /> : null}
       {t.line ? <Line text={t.line} delay={18} /> : null}
     </>
   );
+  // Off a card the words sit over the product's lightest part, partly above the scrim's reach, so they carry a shadow.
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       {ghost}
@@ -71,7 +72,7 @@ export const Tease: React.FC<{beat: Beat}> = ({beat}) => {
       {(t.headline || t.kicker) && d !== 'editorial' ? <Scrim side="bottom" strength={0.85} /> : null}
       {t.headline || t.kicker ? (
         <SafeBox name="tease" justify="end" align={d === 'documentary' ? 'start' : d === 'kinetic' ? 'center' : 'start'}>
-          {d === 'editorial' ? <Card>{words}</Card> : words}
+          {d === 'editorial' ? <Card>{words}</Card> : <div style={{textShadow: '0 2px 18px rgba(0,0,0,0.6)'}}>{words}</div>}
         </SafeBox>
       ) : null}
     </AbsoluteFill>
