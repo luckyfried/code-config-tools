@@ -33,7 +33,7 @@ export const Exchange: React.FC<{beat: Beat}> = ({beat}) => {
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       {photo ? <LivePhoto file={photo} treatment="push" intensity={0.8} /> : null}
-      <AbsoluteFill style={{background: system.colors.bg, opacity: 0.45}} />
+      <AbsoluteFill style={{background: `linear-gradient(to bottom, color-mix(in srgb, ${system.colors.bg} 72%, transparent) 0%, color-mix(in srgb, ${system.colors.bg} 55%, transparent) 45%, transparent 80%)`}} />
       <Scrim side="both" strength={0.85} />
       {system.direction === 'documentary' ? <Leaks strength={0.6} seed={beat.id} /> : null}
       <SafeBox name="exchange" justify="center">

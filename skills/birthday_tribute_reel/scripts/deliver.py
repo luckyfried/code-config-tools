@@ -76,8 +76,8 @@ def who_rows(shared):
     occ = shared.get("occasion") or {}
     c = shared.get("counts") or {}
     f, l = shared.get("first") or {}, shared.get("latest") or {}
-    L = [f"- For @{who.get('handle')} ({who.get('name') or who.get('first')}), found by {who.get('matched_by')}"
-         + (f" from your words \"{who.get('words')}\"" if who.get("words") else "") + "."]
+    L = [f"- For @{who.get('handle')} ({who.get('name') or who.get('first')}): {who.get('matched_by')}"
+         + (f" (you said \"{who.get('words')}\")" if who.get("words") and who.get("words").lstrip("@") != who.get("handle") else "") + "."]
     n = who.get("named_one") or {}
     if n:
         L.append(f"- What the two of you share on Instagram: tagged together {n.get('tagged', 0)} times, mentioned "

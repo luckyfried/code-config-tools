@@ -113,9 +113,9 @@ def resolve(lib, words):
     m = re.search(r"@([\w.]+)", w)
     exact = (m.group(1) if m else low).rstrip(".")
     if exact in c:
-        handle, by = exact, "the handle the person gave"
+        handle, by = exact, "the handle you gave"
     elif m:
-        handle, by = exact, "the handle the person gave"
+        handle, by = exact, "the handle you gave"
         notes.append(f"@{exact} is not tagged or named anywhere in the data, so the video has no shared photos to use.")
     elif w and low not in US and not (RELATION.fullmatch(low.replace("my ", "")) if low else False):
         toks = [t for t in re.findall(r"[a-z]+", low) if t not in {"my", "the", "for", "our", "a", "an"} and not RELATION.fullmatch(t)]

@@ -77,14 +77,15 @@ def render_jobs(jobs, report, concurrency=None):
     if t.get("engine") != "remotion":
         sys.exit("the motion engine is not installed (setup.py reports engine 'stills'); run film.py stills")
     spec = {"publicDir": str(PUBLIC.resolve()), "report": str(Path(report).resolve()), "jobs": jobs,
-            "bundleDir": str(Path(os.environ.get("TMPDIR") or Path("build/.bundle").resolve()) / "bt-bundle")}
+            "bundleDir": str(Path(os.environ.get("TMPDIR") or "build/.bundle").resolve() / "bt-bundle")}
     if concurrency:
         spec["concurrency"] = concurrency
     jf = Path("build/render") / f"{Path(report).stem}.jobs.json"
     _env.write_json(jf, spec)
     node = t["node"]
     env = dict(os.environ, PATH=f"{Path(node).parent}{os.pathsep}{os.environ.get('PATH', '')}")
-    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env)
+    # cwd is the motion folder: Remotion keeps its browser in .remotion/ under the working directory, where setup.py put it
+    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env, cwd=t["motion"])
     rep = _env.read_json(report) or {"failed": len(jobs), "findings": [{"text": f"render.mjs exited {r.returncode}"}]}
     return rep
 
