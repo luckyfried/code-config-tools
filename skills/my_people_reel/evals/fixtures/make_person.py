@@ -535,7 +535,8 @@ def main():
         by_month.setdefault(month_of(post["media"][0]["creation_timestamp"]), []).append(post)
     for h, (name, stretch, her_tags, story_tags, tags_of_her, theirs, hers) in PEOPLE.items():
         for m in spread(h, her_tags - shown[h]):
-            free = [p for p in by_month.get(m, []) if h not in [t["value"] for t in p["media"][0].get("tagged_users", [])]]
+            free = [p for p in by_month.get(m, []) if not p["media"][0].get("tagged_users")] or \
+                [p for p in by_month.get(m, []) if h not in [t["value"] for t in p["media"][0].get("tagged_users", [])]]
             tag(rng.choice(free or posts)["media"][0], [h])
         for m in spread(h, story_tags):
             free = [st for st in stories if month_of(st["creation_timestamp"]) == m and not st.get("tagged_users")]

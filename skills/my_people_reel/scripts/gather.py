@@ -9,8 +9,10 @@ Doors, in order of preference (every one tried is recorded in library.json and i
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
      browser session, saved under --pulled DIR as items.json (shape below) with the media files beside it.
   2. Instagram "Download your information" exports (JSON) anywhere under --root, as folders or .zip files (a zip is
-     unpacked into build/export/): posts, reels, stories, likes, saves, comments, followers, following, per-post
-     and per-reel likes and comments (past_instagram_insights), the username. Missing files are tolerated.
+     unpacked into build/export/): posts, reels, and stories with the accounts tagged in them, the posts that tag the
+     person, the comments the person wrote and the comments others wrote on the person's posts, likes, saves,
+     followers, following, per-post likes and comments (past_instagram_insights), the username. Missing files are
+     tolerated.
   3. Facebook "Download your information" exports under --root: posts, photos, albums.
   4. --photos DIR, else the largest folder of photos under --root (dates from EXIF, else the file time).
 With every door closed it writes out/brief.md with the one sentence on how to open one and exits 3: tell the
@@ -18,14 +20,17 @@ person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) i
 
 items.json (every key optional; ts is a unix timestamp; media are paths relative to items.json):
   {"source": "instagram account", "handle": "...", "name": "...",
-   "posts": [{"ts": 0, "caption": "", "media": ["a.jpg"], "likes": 0, "comments": 0, "place": ""}],
-   "reels": [...same...], "stories": [{"ts": 0, "media": ["s.jpg"]}],
+   "posts": [{"ts": 0, "caption": "", "media": ["a.jpg"], "likes": 0, "comments": 0, "tagged": ["friend.handle"]}],
+   "reels": [...same...], "stories": [{"ts": 0, "media": ["s.jpg"], "tagged": []}],
+   "tagged_in": [{"account": "who posted it", "ts": 0, "caption": "", "media": ["t.jpg"], "tagged": []}],
    "likes": [{"account": "", "ts": 0, "caption": "", "media": ["liked.jpg"]}], "saved": [...same as likes...],
-   "comments": [{"account": "", "text": "", "ts": 0}], "followers": [{"account": "", "ts": 0}],
+   "comments": [{"account": "whose post the person commented on", "text": "", "ts": 0}],
+   "received": [{"account": "who wrote it on the person's post", "text": "", "ts": 0}],
+   "followers": [{"account": "", "ts": 0}],
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
 The year: --year when the person named one, else the latest year with at least 12 posts, reels and stories.
-Links every media file of the year into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook)
+Links every media file of the year into build/library/<kind>/ (posts, reels, stories, tagged_in, likes, saved, facebook)
 under its date, writes build/library.json and prints a summary; every choice it made is listed under "assumptions".
 """
 import argparse
@@ -43,7 +48,7 @@ import _env  # noqa: E402
 SKIP = {"out", "build", ".claude", ".git", "node_modules", ".venv", "venv", "__pycache__", ".cache", "custom-skills"}
 IMG = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 VID = {".mp4", ".mov", ".m4v"}
-HOWTO = ("To make your best nine I need your Instagram: connect your Instagram account here, or in the Instagram "
+HOWTO = ("To make the film of your people I need your Instagram: connect your Instagram account here, or in the Instagram "
          "app go to Your activity, then Download your information, choose JSON, and put the folder or zip it sends you "
          "in this workspace.")
 
@@ -147,6 +152,19 @@ def media_items(entry):
     return out
 
 
+def tags_of(entry):
+    """Every account tagged on an entry or on any of its media, in order, once each."""
+    out = []
+    items = entry.get("media") if isinstance(entry.get("media"), list) else []
+    for m in [entry] + [i for i in items if isinstance(i, dict)]:
+        for t in m.get("tagged_users") or m.get("usertags") or []:
+            v = fix(t.get("value") or t.get("username") or "") if isinstance(t, dict) else fix(t)
+            v = v.lstrip("@").strip().lower()
+            if v and v not in out:
+                out.append(v)
+    return out
+
+
 def read_export(root):
     md = Media(root)
     found, notes = {}, []
@@ -188,7 +206,7 @@ def read_export(root):
             paths = [md.resolve(u) for u, _, _ in items]
             ins = insights_ts.get(int(ts or 0)) or next((insights[Path(u).name] for u, _, _ in items if Path(u).name in insights), {})
             posts.append({"ts": ts, "caption": cap, "media": [p for p in paths if p],
-                          "likes": ins.get("likes"), "comments": ins.get("comments")})
+                          "likes": ins.get("likes"), "comments": ins.get("comments"), "tagged": tags_of(e)})
     reels = []
     rf = first(root, "content/reels.json")
     found["reels"] = [str(f) for f in rf]
@@ -201,7 +219,7 @@ def read_export(root):
                 ts = items[0][1]
                 ins = insights_ts.get(int(ts or 0)) or {}
                 reels.append({"ts": ts, "caption": fix(items[0][2]), "media": [p for p in (md.resolve(u) for u, _, _ in items) if p],
-                              "likes": ins.get("likes"), "comments": ins.get("comments")})
+                              "likes": ins.get("likes"), "comments": ins.get("comments"), "tagged": tags_of(e)})
     stories = []
     sf = first(root, "content/stories.json")
     found["stories"] = [str(f) for f in sf]
@@ -210,7 +228,17 @@ def read_export(root):
         rows = data.get("ig_stories", []) if isinstance(data, dict) else data
         for e in rows or []:
             for u, ts, t in media_items(e):
-                stories.append({"ts": ts, "media": [p for p in [md.resolve(u)] if p]})
+                stories.append({"ts": ts, "media": [p for p in [md.resolve(u)] if p], "tagged": tags_of(e)})
+    tagged_in = []
+    tf = first(root, "content/posts_you_are_tagged_in.json", "*/*tagged_in*.json", "*/*tagged*.json")
+    found["tagged_in"] = [str(f) for f in tf[:1]]
+    for f in tf[:1]:
+        data = load(f) or {}
+        rows = next((v for v in data.values() if isinstance(v, list)), []) if isinstance(data, dict) else data
+        for e in rows or []:
+            for u, ts, t in media_items(e):
+                tagged_in.append({"account": fix(e.get("owner") or e.get("author") or "").lstrip("@").lower(), "ts": ts,
+                                  "caption": fix(t), "media": [p for p in [md.resolve(u)] if p], "tagged": tags_of(e)})
     likes = []
     lf = first(root, "likes/liked_posts.json")
     found["likes"] = [str(f) for f in lf]
@@ -231,9 +259,22 @@ def read_export(root):
         rows = data.get("comments_media_comments", []) if isinstance(data, dict) else data
         for e in rows or []:
             smd = e.get("string_map_data") or {}
-            comments.append({"account": fix((smd.get("Media Owner") or {}).get("value", "")),
+            on = ((e.get("media_list_data") or [{}])[0] or {}).get("uri")
+            comments.append({"account": fix((smd.get("Media Owner") or {}).get("value", "")).lstrip("@").lower(),
                              "text": fix((smd.get("Comment") or {}).get("value", "")),
-                             "ts": (smd.get("Time") or {}).get("timestamp")})
+                             "ts": (smd.get("Time") or {}).get("timestamp"), "on": md.resolve(on) if on else None})
+    received = []
+    rcf = first(root, "comments/comments_on_your_posts*.json", "comments/*received*.json")
+    found["received"] = [str(f) for f in rcf]
+    for f in rcf:
+        data = load(f) or []
+        rows = next((v for v in data.values() if isinstance(v, list)), []) if isinstance(data, dict) else data
+        for e in rows or []:
+            smd = e.get("string_map_data") or {}
+            who = next((smd[k].get("value", "") for k in ("Author", "Username", "Media Owner") if isinstance(smd.get(k), dict)), "")
+            on = ((e.get("media_list_data") or [{}])[0] or {}).get("uri")
+            received.append({"account": fix(who).lstrip("@").lower(), "text": fix((smd.get("Comment") or {}).get("value", "")),
+                             "ts": (smd.get("Time") or {}).get("timestamp"), "on": md.resolve(on) if on else None})
     followers = []
     ff = first(root, "../connections/followers_and_following/followers_*.json", "connections/followers_and_following/followers_*.json",
                "followers_and_following/followers_*.json")
@@ -275,7 +316,8 @@ def read_export(root):
         if m:
             handle = m.group(1)
             notes.append(f"Username taken from the export's folder name ({root.name}).")
-    return {"posts": posts, "reels": reels, "stories": stories, "likes": likes, "comments": comments,
+    return {"posts": posts, "reels": reels, "stories": stories, "tagged_in": tagged_in, "received": received,
+            "likes": likes, "comments": comments,
             "followers": followers, "saved": saved, "following": following, "handle": handle, "name": name,
             "found": found, "notes": notes}
 
@@ -325,7 +367,8 @@ def read_pulled(folder):
             if p.exists():
                 out.append(str(p.resolve()))
         return dict(row, media=out)
-    keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
+    keys = ("posts", "reels", "stories", "tagged_in", "likes", "saved", "comments", "received", "followers", "following",
+            "facebook")
     d = {k: [media(r) if isinstance(r, dict) else r for r in data.get(k) or []] for k in keys}
     d.update(handle=data.get("handle"), name=data.get("name"), source=data.get("source") or "connected account",
              found={k: [str(f)] for k in keys if d[k]})
@@ -381,7 +424,7 @@ def pick_year(rows, asked):
 
 def write_howto(out):
     out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
+    (out / "brief.md").write_text(f"# My people: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
                                   f"photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
@@ -399,7 +442,7 @@ def rel(p, root):
 def shelve(lib):
     """Every media file of the year, linked into build/library/<kind>/ under its date; the rows point at the links."""
     base = Path("build/library").resolve()
-    for kind in ("posts", "reels", "stories", "likes", "saved", "facebook"):
+    for kind in ("posts", "reels", "stories", "tagged_in", "likes", "saved", "facebook"):
         for n, row in enumerate(lib[kind]):
             media = []
             for i, m in enumerate(row.get("media") or []):
@@ -433,7 +476,8 @@ def main():
     for x in a.door:
         k, _, v = x.partition("=")
         doors[k.strip()] = v.strip() or "tried"
-    keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
+    keys = ("posts", "reels", "stories", "tagged_in", "likes", "saved", "comments", "received", "followers", "following",
+            "facebook")
     d = {k: [] for k in keys}
     d.update(handle=None, name=None, found={}, notes=[])
     sources = []
@@ -502,18 +546,19 @@ def main():
     handle = d["handle"] or "you"
     assumptions.append(f"Handle: @{handle}." if d["handle"] else "No username in the data; the cards say 'you'.")
     inyear = lambda rows: sorted((r for r in rows if r.get("ts") and year_of(r["ts"]) == year), key=lambda r: r["ts"])
-    lib = {k: inyear(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
+    lib = {k: inyear(d[k]) for k in ("posts", "reels", "stories", "tagged_in", "likes", "saved", "comments", "received",
+                                     "facebook")}
     dates = [r["ts"] for r in lib["posts"] + lib["reels"] + lib["stories"]]
     span = {"first": dt.datetime.fromtimestamp(min(dates), dt.timezone.utc).date().isoformat() if dates else None,
             "last": dt.datetime.fromtimestamp(max(dates), dt.timezone.utc).date().isoformat() if dates else None}
     if span["last"] and span["last"] < f"{year}-12-01":
         assumptions.append(f"The data runs to {span['last']}, so the year covers January to that day.")
     if source in ("export", "accounts"):
-        missing = [k for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers") if not d["found"].get(k)]
+        missing = [k for k in ("posts", "reels", "stories", "tagged_in", "comments", "received", "followers") if not d["found"].get(k)]
         if missing:
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
-        if not any(p.get("likes") is not None for p in lib["posts"] + lib["reels"]):
-            assumptions.append("The data has no likes per post, so the nine are picked by comments, else spread across the year.")
+        if not any(r.get("tagged") for r in lib["posts"] + lib["reels"] + lib["stories"]):
+            assumptions.append("The data has no tags on posts, so the people are ranked by mentions and comments.")
     shelve(lib)
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
@@ -523,8 +568,8 @@ def main():
            "following": d["following"], "assumptions": assumptions + d["notes"]}
     _env.write_json("build/library.json", out)
     print(f"source: {source}   handle: @{handle}   year: {year}   range: {span['first']} to {span['last']}")
-    print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
-                                                   "following", "facebook")))
+    print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "tagged_in", "likes", "saved", "comments",
+                                                   "received", "followers", "following", "facebook")))
     for k, v in doors.items():
         print(f"door {k}: {v}")
     for x in out["assumptions"]:

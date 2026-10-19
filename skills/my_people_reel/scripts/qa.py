@@ -2,26 +2,26 @@
 """Movement 6: the measurable checks and the gate that refuses delivery.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/qa.py check     # the film, the best-nine image and the story card only (run before the critics watch the cut)
+    python3 S/scripts/qa.py check     # the film, the people in it and their story cards only (run before the critics watch the cut)
     python3 S/scripts/qa.py gate      # everything below; exit 0 only when every check passes
 
 The gate refuses:
-  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 15-30 s
+  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 30-60 s
   audio     music was found but the film has no AAC track near 192 kbps, or its loudness is off -14 LUFS by more than 1 LU
   black     a black stretch of 0.4 s or more (ffmpeg blackdetect)
   frozen    a frozen stretch of 1.5 s or more (ffmpeg freezedetect): nothing on screen may stand still that long
   safe      text that left its safe box or was cut off (SAFE_BREACH in build/render-report.json), a font that did
             not load, or a render job that failed
   text      a placeholder string anywhere in the film's words, the caption, the brief or the review page
-  wall      out/best-nine.png is not 1080x1080, build/wall.json does not name nine distinct photos, or the image's
-            nine cells are not nine different pictures (each cell's center, compared with every other)
-  story     out/story.png is not 1080x1920
+  cards     a person in build/taste.json has no out/people/NN-<handle>.png at 1080x1920, or two cards are the same image
+  people    a person in build/taste.json appears in no beat of the film (a board row, a portrait, or a wall tile)
   research  build/taste.md (you are / you like / your style / your voice / avoid) or build/taste.json is missing
   boards    three storyboards, each with storyboard.md, storyboard.json and six style-sheet frames
   vote      build/vote.md and build/winner.json are missing
   clips     the film's storyboard lists clips and build/clips.json does not account for every one
   critic    the latest cut round in build/critic/ is not for this film, or scores below 4 with the one fix unspent
-  deliver   out/caption.md, out/review.html or out/brief.md is missing, or the caption is not in their register
+  deliver   out/caption.md, out/review.html or out/brief.md is missing, the caption is not in their register, or it
+            does not tag every person
 """
 import argparse
 import hashlib
@@ -36,9 +36,8 @@ import _env  # noqa: E402
 
 PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|NaN|\bNone\b|@handle\b|your_handle", re.I)
 FILM = Path("out/film.mp4")
-WALL = Path("out/best-nine.png")
-STORY = Path("out/story.png")
-LENGTH = (15, 30)
+CARDS = Path("out/people")
+LENGTH = (30, 60)
 
 
 def sha(p):
@@ -105,35 +104,53 @@ def film_checks():
     bad = [f["text"][:160] for f in rep.get("findings", []) if f["text"].startswith(("SAFE_BREACH", "FONT_ERROR", "RENDER_ERROR", "UNKNOWN_KIND"))]
     check("safe", rep and not rep.get("failed") and not bad, f"{rep.get('jobs', 0)} render jobs, {rep.get('failed', '?')} failed, "
           f"{len(bad)} findings" + (f": {bad[0]}" if bad else ""))
-    check("wall", *wall_check())
-    sz = png_size(STORY) if STORY.exists() else None
-    check("story", sz == (1080, 1920), f"out/story.png {'at %dx%d' % sz if sz else 'is missing'}")
+    check("cards", *cards_check())
+    check("people", *people_check())
     return res
 
 
-def wall_check():
-    """The best-nine image: 1080x1080, nine distinct sources, and nine cells that are nine different pictures."""
-    if not WALL.exists():
-        return False, "out/best-nine.png is missing"
-    sz = png_size(WALL)
-    slots = (_env.read_json("build/wall.json") or {}).get("slots") or []
-    srcs = [x.get("photo") for x in slots if x.get("photo")]
-    _env.need("PIL")
-    from PIL import Image, ImageStat
-    im = Image.open(WALL).convert("L")
-    w, h = im.size
-    cells, flat = [], 0
-    for i in range(9):
-        x, y = (i % 3) * w / 3, (i // 3) * h / 3
-        c = im.crop((int(x + w / 6 - w / 16), int(y + h / 6 - h / 16), int(x + w / 6 + w / 16), int(y + h / 6 + h / 16))).resize((16, 16), Image.BILINEAR)
-        if ImageStat.Stat(c).stddev[0] <= 4:
-            flat += 1
-        cells.append(list(c.tobytes()))
-    diffs = [sum(abs(p - q) for p, q in zip(cells[i], cells[j])) / 256 for i in range(9) for j in range(i + 1, 9)]
-    least = min(diffs)
-    ok = sz == (1080, 1080) and len(srcs) == 9 and len(set(srcs)) == 9 and flat == 0 and least > 6
-    return ok, (f"out/best-nine.png at {sz[0]}x{sz[1]}, {len(set(srcs))} distinct photos in build/wall.json, "
-                f"{flat} flat cells, least difference between two cells {least:.1f}")
+def the_people():
+    """The people of the film and the brief, in rank order: build/taste.json (the agent's edit), else build/people.json."""
+    ppl = (_env.read_json("build/taste.json") or {}).get("people") or (_env.read_json("build/people.json") or {}).get("people") or []
+    return [x["handle"] for x in ppl if x.get("handle")]
+
+
+def cards_check():
+    """One story card per person: out/people/NN-<handle>.png at 1080x1920, every card a different image."""
+    ppl = the_people()
+    if not ppl:
+        return False, "no people in build/taste.json"
+    have = {f.stem.split("-", 1)[1]: f for f in CARDS.glob("[0-9][0-9]-*.png")} if CARDS.exists() else {}
+    missing = [h for h in ppl if h not in have]
+    wrong = [h for h in ppl if h in have and png_size(have[h]) != (1080, 1920)]
+    same = len({sha(have[h]) for h in ppl if h in have}) < len([h for h in ppl if h in have])
+    ok = not missing and not wrong and not same
+    return ok, (f"{len(ppl) - len(missing)} of {len(ppl)} cards in out/people/ at 1080x1920"
+                + (f"; missing {missing}" if missing else "") + (f"; wrong size {wrong}" if wrong else "")
+                + ("; two cards are the same image" if same else ""))
+
+
+def people_in(bt):
+    data = bt.get("data") or {}
+    out = set()
+    if bt.get("kind") == "Leaderboard":
+        shown = set(data.get("shown") or [])
+        out |= {r["handle"] for r in data.get("rows", []) if r.get("rank") in shown}
+    if bt.get("kind") == "Portrait" and data.get("handle"):
+        out.add(data["handle"])
+    for t in data.get("tiles", []):
+        out |= set(t.get("people") or [])
+    return out
+
+
+def people_check():
+    """Every person is on screen in at least one beat of the film."""
+    ppl = the_people()
+    beats = (_env.read_json("build/film.json") or {}).get("beats") or []
+    seen = set().union(*(people_in(b) for b in beats)) if beats else set()
+    gone = [h for h in ppl if h not in seen]
+    return bool(ppl) and not gone, f"{len(ppl) - len(gone)} of {len(ppl)} people appear in a beat of {len(beats)}" + (
+        f"; in no beat: {gone}" if gone else "")
 
 
 def words_in(obj, acc):
@@ -154,7 +171,7 @@ def gate_checks():
     def check(name, ok, detail):
         res.append((name, bool(ok), detail))
     film = _env.read_json("build/film.json") or {}
-    texts = words_in({"beats": film.get("beats"), "wall": film.get("wall"), "story": film.get("story")}, [])
+    texts = words_in({"beats": film.get("beats"), "cards": film.get("cards")}, [])
     for f in ("out/caption.md", "out/brief.md", "out/review.html"):
         if Path(f).exists():
             texts.append(Path(f).read_text())
@@ -187,8 +204,10 @@ def gate_checks():
     body = re.sub(r"#\w+", "", cap)
     tags = re.findall(r"#\w+", cap)
     reg = cap and (not lower or body == body.lower()) and 1 <= len(tags) <= 10
-    check("deliver", reg and Path("out/review.html").exists() and Path("out/brief.md").exists(),
+    untagged = [h for h in the_people() if not re.search(r"@" + re.escape(h) + r"(?!\w|\.\w)", cap)]
+    check("deliver", reg and not untagged and Path("out/review.html").exists() and Path("out/brief.md").exists(),
           f"caption {len(cap.split())} words, {len(tags)} hashtags" + (", lowercase like theirs" if lower else "") +
+          (f", tags all {len(the_people())} people" if not untagged else f"; caption does not tag {untagged}") +
           ("" if Path("out/review.html").exists() else "; review.html missing") + ("" if Path("out/brief.md").exists() else "; brief.md missing"))
     return res
 

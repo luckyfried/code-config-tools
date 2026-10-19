@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the nine and the photos around them. Writes build/photo_index.json,
-build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: prepare each person's best photo, the group photos for the wall, and the opener. Writes
+build/photo_index.json, build/picks.json and build/photos/*.jpg.
 
 USAGE (from the workspace root):
     python3 S/scripts/picks.py
 
-Scores every photo of the year (color, contrast, exposure), finds each one's focal point (where the detail is,
-so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in build/photos/.
-A reel among the nine gets a poster frame (ffmpeg, 40% of the way in) that stands for it on the wall; the reel
-itself stays available as footage. picks.json carries the nine in rank order (each with its photo, its library
-source, its reel when it is one, its score, brightness, focal point and colors) and two chapters around them:
-"opener", the year's most striking photo outside the nine (the wall's world), and "nine", the nine stills.
+Scores every photo of the year, the person's own and the ones their people posted of them (color, contrast,
+exposure), finds each one's focal point (where the detail is, so a cover crop keeps it), converts HEIC and rotates
+by EXIF, and saves a 1600 px JPEG copy in build/photos/. Reads build/people.json.
+  people   one best photo per person, in rank order: a photo whose caption names them first, then the one with the
+           fewest other people in it, then the best scored, never the same photo for two people
+  wall     nine photos with the most of the people in them, every person in at least one, in date order (a group
+           reel stands in by its poster frame, 40% of the way in, and keeps its footage for the film); when the
+           year has fewer group photos, each person's next photos fill the wall
+  opener   the photo with the most of them in it, outside the wall when there is one
 To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json.
+build/storyboards/N/storyboard.json, and in the person's card under "cards".
 """
 import datetime as dt
 import hashlib
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -115,51 +119,102 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
     d = _env.read_json("build/library.json")
-    s = _env.read_json("build/stats.json")
-    if not d or not s:
-        sys.exit("run gather.py and stats.py first")
-    index, skipped = [], 0
-    for kind, rows in (("post", d["posts"]), ("story", d["stories"])):
+    ppl = _env.read_json("build/people.json")
+    if not d or not ppl:
+        sys.exit("run gather.py and people.py first")
+    index, skipped, seen = [], 0, set()
+    for kind, rows in (("post", d["posts"]), ("tagged", d.get("tagged_in", [])), ("story", d["stories"])):
         for r in rows:
             for m in r["media"]:
-                if Path(m).suffix.lower() in VIDEO:
+                if Path(m).suffix.lower() in VIDEO or m in seen:
                     continue
+                seen.add(m)
                 try:
                     a = analyse(m)
                 except Exception:
                     skipped += 1
                     continue
                 month = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month
-                index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"), **a})
+                index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"),
+                              "tagged": r.get("tagged") or [], **a})
     if not index:
-        sys.exit("no photos could be opened; the video needs at least one photo")
+        sys.exit("no photos could be opened; the film needs at least one photo")
     _env.write_json("build/photo_index.json", index)
-    nine, chosen = [], set()
-    for t in s["top_nine"]:
-        still = poster(t["media"]) if t.get("video") else prepare(t["media"])
+    score = {e["src"]: e for e in index}
+    handles = [p["handle"] for p in ppl["people"]]
+    people, used = [], set()
+    for p in ppl["people"]:
+        cands = [x for x in p["photos"] if x["src"] in score or Path(x["src"]).suffix.lower() in VIDEO]
+        named = lambda x: p["handle"] in {m.lower() for m in re.findall(r"@([A-Za-z0-9._]*[A-Za-z0-9_])", x["caption"])}
+        cands.sort(key=lambda x: (not named(x), len([w for w in x["with"] if w in handles]), Path(x["src"]).suffix.lower() in VIDEO,
+                                  -(score.get(x["src"]) or {}).get("score", 0)))
+        pick = next((x for x in cands if x["src"] not in used), None)
+        src, still = None, None
+        if pick:
+            src = pick["src"]
+            still = poster(src) if Path(src).suffix.lower() in VIDEO else prepare(src)
         if not still:
-            print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
+            print(f"no photo of @{p['handle']} could be opened; the card uses a group photo", file=sys.stderr)
             continue
-        a = analyse(still)
-        chosen.add(t["media"])
-        nine.append({"rank": t["rank"], "kind": t["kind"], "photo": still, "src": t["media"], "video": t.get("video"), **a})
-    feed = [e for e in index if e["kind"] == "post" and e["src"] not in chosen] or [e for e in index if e["src"] not in chosen] or index
-    opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
-    out = {"nine": nine, "chapters": {"nine": [n["photo"] for n in nine]}, "focal": {}, "source_of": {}}
-    op = prepare(opener["src"])
+        used.add(src)
+        people.append({"rank": p["rank"], "handle": p["handle"], "photo": still, "src": src, "with": pick["with"],
+                       "ts": pick["ts"], "caption": pick["caption"], **analyse(still)})
+    groups = {}
+    for p in ppl["people"]:
+        for x in p["photos"]:
+            g = groups.setdefault(x["src"], {"src": x["src"], "ts": x["ts"], "caption": x["caption"], "kind": x["kind"],
+                                             "owner": x["owner"], "people": set()})
+            g["people"].add(p["handle"])
+    for g in groups.values():
+        g["video"] = g["src"] if Path(g["src"]).suffix.lower() in VIDEO else None
+        g["score"] = (score.get(g["src"]) or {}).get("score", 0.5 if g["video"] else 0)
+    pool = sorted(groups.values(), key=lambda g: (-len(g["people"]), -g["score"]))
+    portraits = {x["src"] for x in people}
+    wall, covered = [], set()
+    for g in pool:
+        if len(wall) < 9 and len(g["people"]) >= 2 and g["people"] - covered and g["src"] not in portraits:
+            wall.append(g)
+            covered |= g["people"]
+    for g in pool:
+        if len(wall) < 9 and len(g["people"]) >= 2 and g not in wall and g["src"] not in portraits:
+            wall.append(g)
+    for g in pool:
+        if len(wall) < 9 and g not in wall and (g["people"] - covered or len(wall) < 9):
+            wall.append(g)
+            covered |= g["people"]
+    wall.sort(key=lambda g: g["ts"])
+    tiles = []
+    for g in wall:
+        still = poster(g["src"]) if g["video"] else prepare(g["src"])
+        if not still:
+            continue
+        tiles.append({"photo": still, "src": g["src"], "video": g["video"], "ts": g["ts"], "caption": g["caption"],
+                      "people": [h for h in handles if h in g["people"]], "owner": g["owner"], **analyse(still)})
+    rest = [g for g in pool if g not in wall and not g["video"]]
+    opener = rest[0] if rest and len(rest[0]["people"]) >= 2 else (max(wall, key=lambda g: len(g["people"])) if wall else None)
+    out = {"people": people, "wall": tiles, "chapters": {"people": [x["photo"] for x in people], "wall": [t["photo"] for t in tiles]},
+           "focal": {}, "source_of": {}}
+    op = (poster(opener["src"]) if opener["video"] else prepare(opener["src"])) if opener else None
+    if not op:
+        best = max((e for e in index if e["bright"] > 0.25), key=lambda e: e["score"], default=index[0])
+        op = prepare(best["src"])
     out["chapters"]["opener"] = [op] if op else []
-    if op:
-        out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
-        out["source_of"][op] = opener["src"]
-    for n in nine:
-        out["focal"][n["photo"]] = f"{n['focal'][0] * 100:.0f}% {n['focal'][1] * 100:.0f}%"
-        out["source_of"][n["photo"]] = n["src"]
+    for x in people + tiles:
+        out["focal"][x["photo"]] = f"{x['focal'][0] * 100:.0f}% {x['focal'][1] * 100:.0f}%"
+        out["source_of"][x["photo"]] = x["src"]
     _env.write_json("build/picks.json", out)
+    missing = [h for h in handles if h not in {x["handle"] for x in people}]
+    off_wall = [h for h in handles if not any(h in t["people"] for t in tiles)]
     print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
-    for n in nine:
-        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}  bright {n['bright']}")
+    for x in people:
+        print(f"  {x['rank']}. @{x['handle']:<16} {Path(x['src']).name}  with {len(x['with'])} others  score {x['score']}")
+    print(f"wall: {len(tiles)} photos, " + "; ".join(f"{len(t['people'])} people{' (reel)' if t['video'] else ''}" for t in tiles))
+    if missing:
+        print("no photo for: " + ", ".join(missing))
+    if off_wall:
+        print("not on the wall: " + ", ".join(off_wall))
     print("wrote build/picks.json and build/photo_index.json")
-    return 0 if len(nine) == 9 else 1
+    return 0 if not missing and len(tiles) == 9 else 1
 
 
 if __name__ == "__main__":

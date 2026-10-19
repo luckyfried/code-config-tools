@@ -47,23 +47,26 @@ export type Clip = {
   status: 'generated' | 'their_reel' | 'substituted' | 'pending';
 };
 
-/** One of the nine: rank 1 is the most liked. */
+/** One photo on the party wall, numbered in date order; people are the handles in it. */
 export type Tile = {
   rank: number;
   photo: string;
-  likes?: number | null;
-  comments?: number | null;
+  people?: string[];
   label?: string;
   caption?: string;
+  line?: string;
   kind?: string;
   clip?: Clip | null;
 };
+
+/** One person on the leaderboard: rank 1 is the person they spent the most of the year with. */
+export type Row = {rank: number; handle: string; photo: string; score: number; stretch?: string};
 
 export type Transition = {preset: string; frames: number; direction?: string};
 
 export type Beat = {
   id: string;
-  kind: 'Opener' | 'ClipShot' | 'Countdown' | 'Grid';
+  kind: 'Opener' | 'ClipShot' | 'Grid' | 'Leaderboard' | 'Portrait';
   frames: number;
   transition?: Transition | null;
   treatment?: 'push' | 'parallax' | 'mask' | 'split';
@@ -82,11 +85,9 @@ export type Board = {
   format: {width: number; height: number; fps: number};
   system: System;
   beats: Beat[];
-  /** the best-nine image (1080x1080) */
-  wall?: Beat;
-  /** the story card (1080x1920) */
-  story?: Beat;
+  /** one story card (1080x1920) per person, in rank order: a Portrait beat each */
+  cards?: Beat[];
 };
 
 export type FilmProps = {board: Board};
-export type CardProps = {board: Board; beat: Beat; format: 'square' | 'story'};
+export type CardProps = {board: Board; beat: Beat; format: 'story'};

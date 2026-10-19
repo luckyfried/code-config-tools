@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-"""Movement 2: three storyboards, each a different film of the same nine, each with a rendered style sheet.
+"""Movement 2: three storyboards, each a different film of the same people, each with a rendered style sheet.
 Also the step that turns the winning storyboard into the renderer's props, cut to the music.
 
 USAGE (from the workspace root):
     python3 S/scripts/storyboard.py draft            # build/storyboards/{1,2,3}/storyboard.json + storyboard.md
-    python3 S/scripts/storyboard.py check            # every board: beats, the nine, assets, text, clips, 15-30 s
+    python3 S/scripts/storyboard.py check            # every board: beats, every person, the wall, assets, text, clips, 30-60 s
     python3 S/scripts/storyboard.py sheets           # six frames per board: build/storyboards/N/frames/01..06.png + sheet.png
     python3 S/scripts/storyboard.py snap [--board N] # the winner (build/winner.json) cut to build/music.json -> build/film.json
 
-draft reads build/taste.json first (palette, type direction, pacing, register, the nine and why each worked, the
-wall order), then build/stats.json, picks.json, palette.json and research.json. The three boards differ on how
-the grid assembles, on tone, and on how generated clips are used:
-  1  on the beat     the wall assembles tile by tile on the beat, then the top three   kinetic      still-first;
-                     generated clips are the transitions between tiles
-  2  nine to one     a countdown, one tile at a time, ending on the whole wall          editorial    clip-first;
-                     each tile's photo brought to life (their own reel where the tile is one)
-  3  one camera      one continuous camera across a 3x3 wall, then the pull back        documentary  still-first;
-                     a generated opener for the wall's world, their own reels playing in their tiles
-Every board carries the wall (the 1080x1080 best-nine image) and the story card (1080x1920), both in the
-board's palette and type. The agent may edit any storyboard.json (text, order, photos, prompts) before sheets;
-check validates it.
+draft reads build/taste.json first (palette, type direction, register, the people in their order with each one's
+stretch, line and why, and the eras), then build/people.json, picks.json, palette.json and research.json. The three
+boards differ on structure, on tone, and on how generated clips are used:
+  1  the board       a leaderboard that builds person by person to the beat, up to    kinetic      still-first;
+                     number one, then the whole board held                                         generated clips are the
+                                                                                                   texture between people
+  2  portraits       one portrait per person in the order they owned the year, a      editorial    clip-first;
+                     line of theirs set as type, ending on the party wall                          each portrait's photo
+                                                                                                   brought to life
+  3  the party wall  one continuous camera across a 3x3 wall of the photos with the   documentary  still-first;
+                     most of them in it, then the pull back                                        a generated opener for
+                                                                                                   the wall's world, their
+                                                                                                   own reels in their tiles
+Every board carries `cards`: one story card (1080x1920) per person, their best photo and their line, in the board's
+palette and type. The agent may edit any storyboard.json (text, order, photos, prompts) before sheets; check
+validates it.
 """
 import argparse
 import copy
@@ -39,8 +43,8 @@ BOARDS = Path("build/storyboards")
 FPS = 30
 MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october",
           "november", "december"]
-TARGET = {"editorial": 26, "kinetic": 18, "documentary": 22}
-LENGTH = (15, 30)
+TARGET = {"editorial": 40, "kinetic": 32, "documentary": 36}
+LENGTH = (30, 60)
 SNAKE = [0, 1, 2, 5, 4, 3, 6, 7, 8]
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2728\uFE0F\u200D]")
 STOP = {"and", "i", "the", "a", "an", "to", "of", "be", "will", "not", "in", "on", "at", "with", "for", "is", "it", "my",
@@ -101,8 +105,9 @@ class Ctx:
             sys.exit("build/taste.json is missing: run research.py and write the taste profile first")
         if not Path("build/taste.md").exists():
             sys.exit("build/taste.md is missing: write the taste profile (movement 1) before storyboards")
-        self.stats = _env.read_json("build/stats.json") or {}
-        self.picks = (_env.read_json("build/picks.json") or {}).get("chapters", {})
+        self.stats = _env.read_json("build/people.json") or {}
+        self.picked = _env.read_json("build/picks.json") or {}
+        self.picks = self.picked.get("chapters", {})
         self.palette = _env.read_json("build/palette.json") or {}
         self.research = _env.read_json("build/research.json") or {}
         self.index = _env.read_json("build/photo_index.json") or []
@@ -131,62 +136,69 @@ class Ctx:
             return None
         return grade.graded_name(p)
 
-    def nine(self):
-        """The nine as tiles, in rank order: graded photo, numbers, date and the caption's lead line, in their voice."""
-        if hasattr(self, "_nine"):
-            return self._nine
-        info = {n["rank"]: n for n in (_env.read_json("build/picks.json") or {}).get("nine", [])}
-        why = {x["rank"]: x for x in self.research.get("nine", [])}
+    def people(self):
+        """The people in their order (taste.json, which the agent may edit, wins over the counts), each with their
+        graded best photo, score, stretch and line, in her register."""
+        if hasattr(self, "_people"):
+            return self._people
+        photo = {x["handle"]: x for x in self.picked.get("people", [])}
+        score = {x["handle"]: x for x in self.stats.get("people", [])}
         out = []
-        for t in self.stats.get("top_nine", []):
-            n = info.get(t["rank"])
-            ph = self.photo(n["photo"]) if n else None
+        for k, t in enumerate(self.taste.get("people") or []):
+            h = t["handle"]
+            pk = photo.get(h) or {}
+            ph = self.photo(t.get("photo") or pk.get("photo")) if (t.get("photo") or pk.get("photo")) else None
             if not ph:
                 continue
-            out.append({"rank": t["rank"], "kind": t["kind"], "photo": ph, "likes": t.get("likes"), "comments": t.get("comments"),
-                        "label": self.say(t.get("date_label") or ""), "caption": self.say(short(t.get("caption") or "") or t.get("date_label") or ""),
-                        "video": n.get("video"), "subject": (why.get(t["rank"]) or {}).get("subject") or [],
-                        "place": (why.get(t["rank"]) or {}).get("place")})
-        self._nine = out
+            sc = score.get(h) or {}
+            out.append({"rank": k + 1, "handle": h, "photo": ph, "image": pk.get("src"), "score": sc.get("score") or 0,
+                        "stretch": self.say(t.get("stretch") or (sc.get("stretch") or {}).get("label") or ""),
+                        "first": min((sc.get("stretch") or {}).get("months") or [13]),
+                        "line": self.say(short(t.get("line") or "", 110)) or None, "line_from": t.get("line_from"),
+                        "together": sc.get("photos_together") or 0,
+                        "place": next((e["place"] for e in self.taste.get("eras") or [] if e.get("owner") == h and e.get("place")), None)})
+        self._people = out
         return out
 
-    def order(self):
-        """The wall: which rank sits in each of the nine slots (taste.json wall.order, else rank order)."""
-        ranks = [t["rank"] for t in self.nine()]
-        want = [r for r in (self.taste.get("wall") or {}).get("order") or [] if r in ranks]
-        return want if sorted(want) == sorted(ranks) else ranks
+    def handles(self):
+        return [x["handle"] for x in self.people()]
+
+    def place_in(self, ts):
+        if not ts:
+            return None
+        m = MONTHS[dt.datetime.fromtimestamp(ts, dt.timezone.utc).month - 1]
+        for e in self.taste.get("eras") or []:
+            a, b = MONTHS.index(e["from"]), MONTHS.index(e["to"])
+            if a <= MONTHS.index(m) <= b and e.get("place"):
+                return e["place"]
+        return None
+
+    def wall(self):
+        """The party wall: the group photos picks.py chose (fewest photos that hold everyone, filled to nine), in date
+        order, each tile with its date and place, the handles in it, and her caption's lead line."""
+        if hasattr(self, "_wall"):
+            return self._wall
+        mine = set(self.handles())
+        out = []
+        for k, t in enumerate(self.picked.get("wall", [])):
+            ph = self.photo(t["photo"])
+            if not ph:
+                continue
+            when = dt.datetime.fromtimestamp(t["ts"], dt.timezone.utc) if t.get("ts") else None
+            place = self.place_in(t.get("ts"))
+            label = " · ".join(x for x in ((f"{MONTHS[when.month - 1]} {when.day}" if when else ""), place or "") if x)
+            ppl = [h for h in t.get("people", []) if h in mine] or t.get("people", [])
+            cap = short(re.sub(r"@[\w.]+", "", t.get("caption") or ""), 50)
+            out.append({"rank": len(out) + 1, "photo": ph, "people": ppl, "label": self.say(label),
+                        "caption": " ".join("@" + h for h in ppl), "line": self.say(cap) if len(cap) >= 8 else None,
+                        "video": t.get("video"), "kind": "reel" if t.get("video") else "photo", "image": t.get("src")})
+        self._wall = out
+        return out
 
     def chapter(self, name, n=None):
         out = [self.photo(p) for p in self.picks.get(name, [])]
         out = [p for p in out if p]
         return out[:n] if n else out
-
-    def month_photos(self, m, n=1):
-        rows = [r for r in self.index if r.get("month") == m and r.get("kind") == "post"]
-        rows.sort(key=lambda r: -r.get("score", 0))
-        out = []
-        for r in rows:
-            p = self.photo(r["src"])
-            if p and p not in self.used:
-                out.append(p)
-                self.used.add(p)
-            if len(out) >= n:
-                break
-        return out
-
-    def place_photos(self, place, n=3):
-        hits = []
-        for r in self.lib.get("posts", []):
-            if place in (r.get("caption") or "").lower() and r.get("media"):
-                hits.append(r["media"][0])
-        out = []
-        for h in hits:
-            p = self.photo(h)
-            if p and p not in out:
-                out.append(p)
-            if len(out) >= n:
-                break
-        return out
 
     def system(self, direction):
         types = design("type.json")[direction]
@@ -231,7 +243,7 @@ class Ctx:
             "texture": texture, "ease": {k: ease[k] for k in ("enter", "exit", "move", "spring", "stagger")}, "safe": safe,
         }
 
-    def prompt(self, subject, direction, seconds):
+    def prompt(self, subject, direction, seconds, faces=False):
         t = self.taste
         colors = [s.get("name") for s in t.get("palette", {}).get("likes", [])[:3] if s.get("name")] + \
                  [s.get("name") for s in t.get("palette", {}).get("year", [])[:2] if s.get("name")]
@@ -241,7 +253,8 @@ class Ctx:
         light = "warm golden-hour light" if t.get("texture", {}).get("leaks") else "soft natural light"
         film = ", visible film grain" if t.get("texture", {}).get("grain") else ""
         return (f"{subject}. Palette: {', '.join(dict.fromkeys(c for c in colors if c))}. {camera}, {light}{film}. "
-                f"Vertical 9:16, {seconds} seconds, one continuous shot. No text, no logos, no people's faces.")
+                f"Vertical 9:16, {seconds} seconds, one continuous shot. No text, no logos, "
+                + ("every face kept exactly as it is in the photograph." if faces else "no people's faces."))
 
 
 def short(cap, limit=60):
@@ -271,148 +284,137 @@ def sec(s):
     return int(round(s * FPS))
 
 
-def likes_line(ctx, t, comments=False):
-    if t.get("likes") is None:
-        return ctx.say(f"{t['comments']} comments") if t.get("comments") is not None else None
-    s = f"{t['likes']:,} likes"
-    if comments and t.get("comments"):
-        s += f" · {t['comments']} comments"
-    return ctx.say(s)
-
-
 def tiles(ctx, clips=None):
-    """The nine for a Grid or a Countdown, in rank order, each with its clip id when the board gives it one."""
-    return [{"rank": t["rank"], "photo": t["photo"], "likes": t["likes"], "comments": t["comments"], "label": t["label"],
-             "caption": t["caption"], "kind": t["kind"], **({"clip": clips[t["rank"]]} if clips and t["rank"] in clips else {})}
-            for t in ctx.nine()]
+    """The wall for a Grid, in date order, each tile with its clip id when the board gives it one."""
+    return [{"rank": t["rank"], "photo": t["photo"], "people": t["people"], "label": t["label"], "caption": t["caption"],
+             "line": t["line"], "kind": t["kind"], **({"clip": clips[t["rank"]]} if clips and t["rank"] in clips else {})}
+            for t in ctx.wall()]
 
 
 def grid(ctx, bid, mode, seconds, transition, text, clips=None, stagger=None):
-    order = ctx.order()
-    if mode == "fly":
-        weights = [1] * 9 + [5]
-    elif mode == "camera":
-        weights = [1] * 9 + [2.2]
-    else:
-        weights = [1]
+    order = [t["rank"] for t in ctx.wall()]
+    weights = [1] * len(order) + [2.2] if mode == "camera" else [1]
     data = {"mode": mode, "tiles": tiles(ctx, clips), "order": order, "weights": weights, "shots": len(weights)}
     if mode == "camera":
         data["path"] = SNAKE
     if stagger is not None:
         data["stagger"] = stagger
     return {"id": bid, "kind": "Grid", "frames": sec(seconds), "transition": transition, "text": text,
-            "photos": [t["photo"] for t in ctx.nine()], "data": data}
+            "photos": [t["photo"] for t in ctx.wall()], "data": data}
 
 
-def countdown(ctx, t, seconds, transition, clip=None, comments=False):
-    order = ctx.order()
-    by_rank = {x["rank"]: x["photo"] for x in ctx.nine()}
-    shown = [i for i, r in enumerate(order) if r >= t["rank"]]
-    b = {"id": f"no-{t['rank']}", "kind": "Countdown", "frames": sec(seconds), "transition": transition, "photos": [t["photo"]],
-         "text": {"kicker": t["label"], "headline": t["caption"], "line": likes_line(ctx, t, comments)},
-         "data": {"rank": t["rank"], "of": len(order), "slot": order.index(t["rank"]) if t["rank"] in order else 0,
-                  "wall": [by_rank.get(r) for r in order], "shown": shown}}
+def rows(ctx):
+    return [{"rank": x["rank"], "handle": x["handle"], "photo": x["photo"], "score": x["score"], "stretch": x["stretch"]}
+            for x in ctx.people()]
+
+
+def attribution(ctx, x):
+    """Whose words the line is, and when in the year they were there."""
+    who = f"@{x['handle']}" if x.get("line_from") == "their comment" else f"me, about @{x['handle']}"
+    return ctx.say(f"{who} · {x['stretch']}" if x.get("stretch") else who)
+
+
+def board_row(ctx, x, seconds, transition, shown):
+    return {"id": f"no-{x['rank']}", "kind": "Leaderboard", "frames": sec(seconds), "transition": transition, "photos": [x["photo"]],
+            "text": {"kicker": ctx.say(f"no. {x['rank']} · @{x['handle']}"), "headline": x["line"] or f"@{x['handle']}",
+                     "line": ctx.say(f"{x['together']} photos together" if x["together"] else x["stretch"])},
+            "data": {"rows": rows(ctx), "shown": shown, "me": x["rank"]}}
+
+
+def portrait(ctx, x, seconds, transition, clip=None, bid=None):
+    b = {"id": bid or f"person-{x['rank']}", "kind": "Portrait", "frames": sec(seconds), "transition": transition, "photos": [x["photo"]],
+         "text": {"kicker": ctx.say(f"no. {x['rank']} · @{x['handle']}"), "headline": x["line"] or f"@{x['handle']}",
+                  "line": attribution(ctx, x)},
+         "data": {"rank": x["rank"], "handle": x["handle"]}}
     if clip:
         b["clip"] = clip
     return b
 
 
-def total_likes(ctx):
-    n = [t["likes"] for t in ctx.nine() if t.get("likes") is not None]
-    return sum(n) if len(n) == len(ctx.nine()) and n else None
-
-
-def sign_line(ctx):
-    n = total_likes(ctx)
-    return ctx.say(f"{n:,} likes across these nine") if n else ctx.say(f"my {ctx.year} on instagram")
+def tags_line(ctx):
+    return " ".join("@" + h for h in ctx.handles())
 
 
 def world_subject(ctx):
     pl = [x for x in (ctx.taste.get("places") or []) if x != "home"]
-    pil = ctx.taste.get("pillars") or []
-    where = ", ".join(pl[:3]) if pl else "a sunlit old town"
-    return f"an establishing shot of the world these nine photos share: {where}, {', '.join(pil[:2])}, light moving slowly across it"
+    where = ", ".join(pl[:3]) if pl else "a long table outside on a warm evening"
+    return (f"an establishing shot of the places this group shared: {where}; an empty long table after a dinner, "
+            "string lights, glasses catching the light, slow movement")
 
 
-def alive_prompt(ctx, t, d, secs):
-    what = " and ".join(([t["place"]] if t.get("place") else []) + list(t.get("subject") or [])[:2]) or "this moment"
-    return ctx.prompt(f"this photograph comes alive ({what}): the light shifts across it, a gentle movement, a slow push in", d, secs)
+def alive_prompt(ctx, x, d, secs):
+    where = f" in {x['place']}" if x.get("place") else ""
+    return ctx.prompt(f"this photograph of a friend{where} comes alive: the light shifts across it, hair and fabric move "
+                      "gently in a breeze, a slow push in", d, secs, faces=True)
 
 
-def board_beat(ctx):
+def board_leader(ctx):
     d = "kinetic"
-    nine = ctx.nine()
-    top = {t["rank"]: t for t in nine}
+    ppl = ctx.people()
+    n = len(ppl)
     beats = [
-        {"id": "opener", "kind": "Opener", "frames": sec(2.0), "transition": None, "photos": ctx.chapter("opener", 1),
-         "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say("best nine")}},
-        grid(ctx, "wall-build", "fly", 6.4, tr("bars", d), {"kicker": ctx.say(f"best nine {ctx.year}"), "headline": ctx.say("the nine you loved most")}),
-        {"id": "bridge-1", "kind": "ClipShot", "frames": sec(1.2), "transition": tr("whip", d, "from-right"), "clip": "01",
-         "photos": [top[3]["photo"]] if 3 in top else [], "text": {"headline": ctx.say("and the top three")}},
+        {"id": "opener", "kind": "Opener", "frames": sec(2.4), "transition": None, "photos": ctx.chapter("opener", 1),
+         "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say("my people"), "line": ctx.say(f"the {n} who made my {ctx.year}")}},
+        {"id": "bridge-1", "kind": "ClipShot", "frames": sec(1.4), "transition": tr("whip", d, "from-right"), "clip": "01",
+         "photos": [ppl[-1]["photo"]] if ppl else [], "text": {"headline": ctx.say("counted by every tag and every comment")}},
     ]
-    for r in (3, 2):
-        if r in top:
-            beats.append(countdown(ctx, top[r], 1.8, tr("whip", d, "from-right" if r == 3 else "from-left")))
-    beats += [
-        {"id": "bridge-2", "kind": "ClipShot", "frames": sec(1.0), "transition": tr("whip", d, "from-right"), "clip": "02",
-         "photos": [top[1]["photo"]] if 1 in top else [], "text": {"headline": ctx.say("number one")}},
-        countdown(ctx, top[1], 2.6, tr("bars", d)) if 1 in top else None,
-        grid(ctx, "closer", "reveal", 3.2, tr("slide", d, "from-bottom"),
-             {"kicker": f"@{ctx.handle}", "headline": ctx.say(f"best nine {ctx.year}"), "line": sign_line(ctx)}, stagger=2),
-    ]
+    shown = []
+    for k, x in enumerate(reversed(ppl)):
+        shown = shown + [x["rank"]]
+        if x["rank"] == 1 and n > 1:
+            beats.append({"id": "bridge-2", "kind": "ClipShot", "frames": sec(1.2), "transition": tr("whip", d, "from-right"), "clip": "02",
+                          "photos": [x["photo"]], "text": {"headline": ctx.say("and number one")}})
+        trn = tr("bars", d) if x["rank"] == 1 else tr("whip", d, "from-right" if k % 2 == 0 else "from-left")
+        beats.append(board_row(ctx, x, 4.4 if x["rank"] == 1 else 3.4, trn, list(shown)))
+    beats.append({"id": "board", "kind": "Leaderboard", "frames": sec(3.6), "transition": tr("slide", d, "from-bottom"),
+                  "photos": ctx.chapter("opener", 1),
+                  "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say(f"my people {ctx.year}")},
+                  "data": {"rows": rows(ctx), "shown": [x["rank"] for x in ppl], "me": None}})
     colors = [s.get("name") for s in ctx.taste.get("palette", {}).get("year", [])[:3] if s.get("name")]
-    bridge = lambda n: ctx.prompt(f"an abstract fast whip of light through warm glass in {', '.join(colors) or 'their colors'}, "
-                                  f"{['streaks left to right', 'a burst outward from the center'][n]}", d, 1)
-    clips = [{"id": f"{n + 1:02d}", "beat": f"bridge-{n + 1}", "role": "a transition between tiles", "prompt": bridge(n), "seconds": 1, "image": None}
-             for n in range(2)]
-    return finish(ctx, {"id": "1", "name": ctx.say("on the beat"), "direction": d,
-                        "structure": "the wall assembles tile by tile on the beat, then the top three", "tone": "kinetic",
-                        "clip_use": "still-first: short generated bridges in their colors are the transitions between tiles",
-                        "idea": ctx.say("the nine land one per beat, from nine to one, until the wall is whole; then the top three "
-                                        "hit full frame in heavy type and the wall comes back to close."),
-                        "music": {"direction": "driving, bright, 118 bpm: four-on-the-floor, claps, a hook", "bpm": 118, "mood": "drive"},
+    bridge = lambda k: ctx.prompt(f"an abstract fast whip of warm light through confetti and glass in {', '.join(colors) or 'their colors'}, "
+                                  f"{['streaks left to right', 'a burst outward from the center'][k]}", d, 1)
+    clips = [{"id": f"{k + 1:02d}", "beat": f"bridge-{k + 1}", "role": "texture between people", "prompt": bridge(k), "seconds": 1, "image": None}
+             for k in range(2)]
+    return finish(ctx, {"id": "1", "name": ctx.say("the board"), "direction": d,
+                        "structure": "a leaderboard that builds person by person to number one, then the whole board", "tone": "kinetic",
+                        "clip_use": "still-first: short generated bursts in their colors are the texture between people",
+                        "idea": ctx.say(f"the board fills from number {n} to number one, one person per beat, each landing over "
+                                        "their best photo with a line of theirs in heavy type; the whole board holds at the end."),
+                        "music": {"direction": "driving, bright, 120 bpm: four-on-the-floor, claps, a hook", "bpm": 120, "mood": "drive"},
                         "beats": [b for b in beats if b], "clips": clips})
 
 
-def board_countdown(ctx):
+def board_portraits(ctx):
     d = "editorial"
-    nine = sorted(ctx.nine(), key=lambda t: -t["rank"])
-    clips, ids = [], {}
-    clips.append({"id": "01", "beat": "opener", "role": "the wall's world", "prompt": ctx.prompt(world_subject(ctx), d, 3),
-                  "seconds": 3, "image": None})
-    beats = [{"id": "opener", "kind": "Opener", "frames": sec(2.6), "transition": None, "photos": ctx.chapter("opener", 1),
-              "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say("best nine"), "line": ctx.say(f"my most-liked of {ctx.year}, counted down")},
+    ppl = sorted(ctx.people(), key=lambda x: (x["first"], x["rank"]))
+    clips = [{"id": "01", "beat": "opener", "role": "the world they shared", "prompt": ctx.prompt(world_subject(ctx), d, 3),
+              "seconds": 3, "image": None}]
+    beats = [{"id": "opener", "kind": "Opener", "frames": sec(3.0), "transition": None, "photos": ctx.chapter("opener", 1),
+              "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say("my people"), "line": ctx.say(f"{ctx.year}, in the order you owned it")},
               "clip": "01"}]
-    for k, t in enumerate(nine):
+    for k, x in enumerate(ppl):
         cid = f"{k + 2:02d}"
-        ids[t["rank"]] = cid
-        last = t["rank"] == 1
-        trn = tr("dip", d) if last else tr("wipe", d, "from-right" if k % 2 == 0 else "from-left") if k else tr("dip", d)
-        beats.append(countdown(ctx, t, 3.0 if last else 2.0, trn, clip=cid, comments=True))
-        c = {"id": cid, "beat": f"no-{t['rank']}", "role": "their own reel" if t.get("video") else "the tile's photo brought to life",
-             "seconds": 3 if last else 2, "image": t["photo"]}
-        if t.get("video"):
-            c.update(prompt=None, source=t["video"])
-        else:
-            c["prompt"] = alive_prompt(ctx, t, d, c["seconds"])
-        clips.append(c)
-    beats.append(grid(ctx, "wall", "reveal", 3.6, tr("match", d),
-                      {"kicker": f"@{ctx.handle}", "headline": ctx.say(f"best nine {ctx.year}"), "line": sign_line(ctx)}, stagger=4))
-    return finish(ctx, {"id": "2", "name": ctx.say("nine to one"), "direction": d, "structure": "a countdown from nine to one, then the whole wall",
-                        "tone": "quiet editorial", "clip_use": "clip-first: each tile's photo brought to life, their own reel where the tile is one",
-                        "idea": ctx.say("a countdown on paper-white pages in a soft serif: each of the nine gets its moment, alive, "
-                                        "with its date and its numbers, and the wall settles in at the end."),
-                        "music": {"direction": "warm, unhurried lo-fi around 84 bpm: soft keys, brushed drums", "bpm": 84, "mood": "calm"},
+        beats.append(portrait(ctx, x, 5.0, tr("wipe", d, "from-right" if k % 2 == 0 else "from-left") if k else tr("dip", d), clip=cid))
+        clips.append({"id": cid, "beat": f"person-{x['rank']}", "role": "a portrait transition: their photo brought to life",
+                      "seconds": 4, "image": x["photo"], "prompt": alive_prompt(ctx, x, d, 4)})
+    beats.append(grid(ctx, "wall", "reveal", 4.4, tr("match", d),
+                      {"kicker": ctx.say(f"my people {ctx.year}"), "headline": tags_line(ctx)}, stagger=4))
+    return finish(ctx, {"id": "2", "name": ctx.say("portraits"), "direction": d,
+                        "structure": "one portrait per person in the order they owned the year, then the party wall",
+                        "tone": "quiet editorial", "clip_use": "clip-first: each portrait's photo brought to life as the move into that person",
+                        "idea": ctx.say("a portrait series on paper-white pages in a soft serif: each person gets their stretch of the "
+                                        "year, their photo alive and a line of theirs set as type; the wall of all of you closes it."),
+                        "music": {"direction": "warm, unhurried, 86 bpm: soft keys, brushed drums, a bass that walks", "bpm": 86, "mood": "calm"},
                         "beats": beats, "clips": clips})
 
 
-def board_camera(ctx):
+def board_wall(ctx):
     d = "documentary"
-    reels = [t for t in ctx.nine() if t.get("video")]
-    clips = [{"id": "01", "beat": "opener", "role": "the wall's world", "prompt": ctx.prompt(world_subject(ctx), d, 3),
+    wall = ctx.wall()
+    clips = [{"id": "01", "beat": "opener", "role": "the party wall's world", "prompt": ctx.prompt(world_subject(ctx), d, 3),
               "seconds": 3, "image": None}]
     ids = {}
-    for k, t in enumerate(reels):
+    for k, t in enumerate([t for t in wall if t.get("video")]):
         cid = f"{k + 2:02d}"
         ids[t["rank"]] = cid
         clips.append({"id": cid, "beat": "wall", "tile": t["rank"], "role": "their own reel, playing in its tile", "prompt": None,
@@ -420,17 +422,18 @@ def board_camera(ctx):
     first = (ctx.stats.get("range") or {}).get("first") or f"{ctx.year}-01-01"
     last = (ctx.stats.get("range") or {}).get("last") or f"{ctx.year}-12-31"
     beats = [
-        {"id": "opener", "kind": "Opener", "frames": sec(2.4), "transition": None, "photos": ctx.chapter("opener", 1), "clip": "01",
-         "text": {"kicker": f"{first.replace('-', '.')} to {last.replace('-', '.')}", "headline": ctx.say("best nine"),
-                  "line": ctx.say(f"my {ctx.year}, by your likes")}},
-        grid(ctx, "wall", "camera", 19.0, tr("iris", d),
-             {"kicker": f"@{ctx.handle}", "headline": ctx.say(f"best nine {ctx.year}"), "line": sign_line(ctx)}, clips=ids),
+        {"id": "opener", "kind": "Opener", "frames": sec(2.6), "transition": None, "photos": ctx.chapter("opener", 1), "clip": "01",
+         "text": {"kicker": f"{first.replace('-', '.')} to {last.replace('-', '.')}", "headline": ctx.say("my people"),
+                  "line": ctx.say(f"{len(wall)} nights with all of you")}},
+        grid(ctx, "wall", "camera", 33.0, tr("iris", d),
+             {"kicker": ctx.say(f"my people {ctx.year}"), "headline": tags_line(ctx)}, clips=ids),
     ]
-    return finish(ctx, {"id": "3", "name": ctx.say("one camera"), "direction": d, "structure": "one continuous camera across a 3x3 wall, then the pull back",
+    return finish(ctx, {"id": "3", "name": ctx.say("the party wall"), "direction": d,
+                        "structure": "one continuous camera across a 3x3 wall of the photos with the most of them in it, then the pull back",
                         "tone": "documentary", "clip_use": "still-first: a generated opener for the wall's world, their own reels playing in their tiles",
-                        "idea": ctx.say("one unbroken camera move across the wall, tile to tile, with mono timestamps and the numbers "
-                                        "under each; it pulls back at the end and the whole wall is there."),
-                        "music": {"direction": "cinematic, warm, 92 bpm: a slow pulse, a piano figure, room", "bpm": 92, "mood": "film"},
+                        "idea": ctx.say("one unbroken camera move across the wall of group photos, tile to tile, with mono dates and the "
+                                        "handles of whoever is in each; it pulls back at the end and everyone is there."),
+                        "music": {"direction": "cinematic, warm, 94 bpm: a slow pulse, a piano figure, room noise", "bpm": 94, "mood": "film"},
                         "beats": beats, "clips": clips})
 
 
@@ -456,15 +459,16 @@ def shot_cuts(bt, grid_s=None, tol=0.25, start=0):
 
 
 def finish(ctx, board):
-    """Fills the system, drops empty beats, scales durations to the direction's target, adds the wall and the story card."""
+    """Fills the system, drops empty beats, scales durations to the direction's target, adds one story card per person."""
     d = board["direction"]
     board.update({"handle": ctx.handle, "year": ctx.year, "format": {"width": 1080, "height": 1920, "fps": FPS},
                   "system": ctx.system(d)})
     beats = []
     for bt in board["beats"]:
         bt["photos"] = [p for p in (bt.get("photos") or []) if p]
-        empty = (bt["kind"] in ("Countdown", "Opener") and not bt["photos"] and not bt.get("clip")) or \
-                (bt["kind"] == "Grid" and not (bt.get("data") or {}).get("tiles"))
+        empty = (bt["kind"] in ("Portrait", "Opener") and not bt["photos"] and not bt.get("clip")) or \
+                (bt["kind"] == "Grid" and not (bt.get("data") or {}).get("tiles")) or \
+                (bt["kind"] == "Leaderboard" and not (bt.get("data") or {}).get("rows"))
         if not empty:
             beats.append(bt)
     if beats:
@@ -488,16 +492,7 @@ def finish(ctx, board):
             c["prompt"] = c["prompt"].replace(f"{c['seconds']} seconds", f"{secs} seconds")
         c["seconds"] = secs
     board["clips"] = keep
-    still = {"mode": "reveal", "tiles": [{k: v for k, v in t.items() if k != "clip"} for t in tiles(ctx)], "order": ctx.order(),
-             "weights": [1], "shots": 1}
-    board["wall"] = {"id": "best-nine", "kind": "Grid", "frames": sec(3), "transition": None, "settle": 0,
-                     "photos": [t["photo"] for t in ctx.nine()], "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say(f"best nine {ctx.year}")},
-                     "data": dict(still)}
-    board["story"] = {"id": "story", "kind": "Grid", "frames": sec(3), "transition": None, "settle": 0,
-                      "photos": [t["photo"] for t in ctx.nine()],
-                      "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say(f"my best nine of {ctx.year}"),
-                               "line": ctx.say("which one is your favorite?")},
-                      "data": dict(still)}
+    board["cards"] = [{**portrait(ctx, x, 3, None, bid=f"card-{x['rank']:02d}-{x['handle']}"), "settle": 0} for x in ctx.people()]
     return board
 
 
@@ -520,7 +515,7 @@ def timeline(beats):
 def write_md(board, path):
     s = board["system"]
     lines = [f"# storyboard {board['id']}: {board['name']}", "", board["idea"], "",
-             f"- how the grid assembles: {board['structure']}", f"- tone: {board['tone']}", f"- generated clips: {board['clip_use']}",
+             f"- structure: {board['structure']}", f"- tone: {board['tone']}", f"- generated clips: {board['clip_use']}",
              f"- length: {film_seconds(board['beats']):.1f} s at {FPS} fps, 1080x1920",
              f"- music: {board['music']['direction']}",
              f"- type: {s['display']['family']} for headlines and numbers, {s['text']['family']} for labels and lines; scale {s['scale']}",
@@ -528,12 +523,14 @@ def write_md(board, path):
              f"swatches {', '.join(w['hex'] for w in s['colors']['swatches'])}",
              f"- texture: grain {s['texture']['grain']}, vignette {s['texture']['vignette']}, light leaks {'on' if s['texture']['leaks'] else 'off'}",
              f"- motion: enter {s['ease']['enter']}, spring {s['ease']['spring']}, stagger {s['ease']['stagger']} frames",
-             f"- the wall (slot 1 top left to slot 9 bottom right, by rank): {board['wall']['data']['order']}",
+             f"- the people, in rank order: {', '.join('@' + c['data']['handle'] for c in board.get('cards', []))}",
              "", "## beats", "", "| # | time | beat | component | carried by | text | transition in |", "|---|---|---|---|---|---|---|"]
     for i, (b, t) in enumerate(zip(board["beats"], timeline(board["beats"]))):
         txt = " / ".join(v for v in (b.get("text") or {}).values() if v)
         if b["kind"] == "Grid":
-            assets = f"the nine ({b['data']['mode']}" + (", their reels in their tiles" if any(x.get("clip") for x in b["data"]["tiles"]) else "") + ")"
+            assets = f"the party wall ({b['data']['mode']}" + (", their reels in their tiles" if any(x.get("clip") for x in b["data"]["tiles"]) else "") + ")"
+        elif b["kind"] == "Leaderboard":
+            assets = f"the board ({len(b['data']['shown'])} of {len(b['data']['rows'])} shown); " + ", ".join(Path(p).name for p in (b.get("photos") or [])[:1])
         else:
             assets = ", ".join(Path(p).name for p in (b.get("photos") or [])[:2])
         if b.get("clip"):
@@ -545,30 +542,36 @@ def write_md(board, path):
         src = f" (their reel: {Path(c['source']).name})" if c.get("source") else ""
         img = f" (from their photo {Path(c['image']).name})" if c.get("image") and c.get("prompt") else ""
         lines.append(f"- {c['id']} for `{c['beat']}`, {c['role']}, {c['seconds']} s{src}{img}: {c.get('prompt') or 'no generation; their own footage'}")
-    lines += ["", "The best-nine image (1080x1080) and the story card (1080x1920) are the wall in this board's palette and type.", ""]
+    lines += ["", "## story cards (1080x1920, one per person, in this board's palette and type)", ""]
+    for c in board.get("cards", []):
+        t = c.get("text") or {}
+        lines.append(f"- {c['id']}: {Path(c['photos'][0]).name if c.get('photos') else '-'}; {t.get('headline')} ({t.get('line')})")
+    lines.append("")
     path.write_text("\n".join(lines))
 
 
 def all_photos(b):
     out = set()
-    for x in b["beats"] + [b["wall"], b["story"]]:
+    for x in b["beats"] + b.get("cards", []):
         out |= set(x.get("photos") or [])
         data = x.get("data") or {}
         out |= {t["photo"] for t in data.get("tiles", []) if t.get("photo")}
-        out |= {p for p in data.get("wall", []) if p}
+        out |= {r["photo"] for r in data.get("rows", []) if r.get("photo")}
     out |= {c["image"] for c in b["clips"] if c.get("image")}
     return out
 
 
 def cmd_draft(a):
     ctx = Ctx()
-    if len(ctx.nine()) < 9:
-        sys.exit(f"only {len(ctx.nine())} of the nine have a photo; picks.py names the ones that could not be opened")
+    if len(ctx.people()) < len(ctx.taste.get("people") or []) or not ctx.people():
+        sys.exit(f"only {len(ctx.people())} of the {len(ctx.taste.get('people') or [])} people have a photo; picks.py names the ones that could not be opened")
+    if len(ctx.wall()) < 9:
+        sys.exit(f"the party wall has {len(ctx.wall())} of 9 photos; picks.py names the ones that could not be opened")
     g = grade.recipe(ctx.taste)
     _env.write_json("build/grade.json", g)
     grade.grade_photos()
     boards = []
-    for make in (board_beat, board_countdown, board_camera):
+    for make in (board_leader, board_portraits, board_wall):
         boards.append(make(ctx))
     referenced = sorted(set().union(*(all_photos(b) for b in boards)))
     grade.grade_photos([Path("build/photos") / Path(p).name for p in referenced])
@@ -602,19 +605,32 @@ def load_boards():
     return out
 
 
-KINDS = {"Opener", "ClipShot", "Countdown", "Grid"}
+KINDS = {"Opener", "ClipShot", "Grid", "Leaderboard", "Portrait"}
 PRESETS = set(design("transitions.json")["presets"])
 
 
-def nine_issues(name, x):
-    data = x.get("data") or {}
-    photos = [t.get("photo") for t in data.get("tiles", [])]
+def wall_issues(name, x):
+    photos = [t.get("photo") for t in (x.get("data") or {}).get("tiles", [])]
     out = []
     if len(photos) != 9 or len(set(photos)) != 9:
-        out.append(f"{name}: needs nine distinct photos, has {len(set(p for p in photos if p))}")
-    order = data.get("order") or []
-    if sorted(order) != sorted(t.get("rank") for t in data.get("tiles", [])):
-        out.append(f"{name}: the wall order does not place every rank once")
+        out.append(f"{name}: the party wall needs nine distinct photos, has {len(set(p for p in photos if p))}")
+    order = (x.get("data") or {}).get("order") or []
+    if sorted(order) != sorted(t.get("rank") for t in (x.get("data") or {}).get("tiles", [])):
+        out.append(f"{name}: the wall order does not place every tile once")
+    return out
+
+
+def people_in(bt):
+    """The handles a beat shows: its board rows, its portrait, the people in its tiles."""
+    data = bt.get("data") or {}
+    out = set()
+    if bt["kind"] == "Leaderboard":
+        shown = set(data.get("shown") or [])
+        out |= {r["handle"] for r in data.get("rows", []) if r["rank"] in shown}
+    if bt["kind"] == "Portrait" and data.get("handle"):
+        out.add(data["handle"])
+    for t in data.get("tiles", []):
+        out |= set(t.get("people") or [])
     return out
 
 
@@ -637,18 +653,26 @@ def board_issues(b):
         if bt.get("clip") and bt["clip"] not in clips:
             issues.append(f"{bt['id']}: clip {bt['clip']} is not in the clip list")
         if bt["kind"] == "Grid":
-            issues += nine_issues(bt["id"], bt)
+            issues += wall_issues(bt["id"], bt)
             for tl in bt["data"]["tiles"]:
                 if tl.get("clip") and tl["clip"] not in clips:
                     issues.append(f"{bt['id']}: tile {tl['rank']} clip {tl['clip']} is not in the clip list")
         for v in (bt.get("text") or {}).values():
             if v and any(x in str(v) for x in ("{", "}", "TODO", "lorem", "None", "XX")):
                 issues.append(f"{bt['id']}: placeholder in text: {v}")
-    for name in ("wall", "story"):
-        if not b.get(name):
-            issues.append(f"no {name} (the best-nine image and the story card come from the board)")
-        else:
-            issues += nine_issues(name, b[name])
+    cards = b.get("cards") or []
+    handles = [c.get("data", {}).get("handle") for c in cards]
+    if not cards:
+        issues.append("no cards (one story card per person comes from the board)")
+    for c in cards:
+        if c["kind"] != "Portrait" or not c.get("photos"):
+            issues.append(f"{c['id']}: a card is a Portrait with that person's photo")
+        if not (c.get("text") or {}).get("headline"):
+            issues.append(f"{c['id']}: a card carries a line of theirs")
+    seen = set().union(*(people_in(bt) for bt in b["beats"])) if b["beats"] else set()
+    for h in handles:
+        if h not in seen:
+            issues.append(f"@{h} is in no beat of the film")
     for p in sorted(all_photos(b)):
         if not (grade.PUBLIC / p).exists():
             issues.append(f"missing asset build/public/{p}")

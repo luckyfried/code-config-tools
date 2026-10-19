@@ -15,11 +15,10 @@ const at = (slot: number) => ({x: (slot % 3) * (T + G), y: Math.floor(slot / 3) 
 
 type Cam = {cx: number; cy: number; k: number; ay: number};
 
-/** Where the wall sits on screen when it is whole: below the type on the reel and the story, edge to edge on the square. */
+/** Where the wall sits on screen when it is whole: below the type. */
 const useWallBox = () => {
   const {format} = useSys();
   const s = useSafe();
-  if (format === 'square') return {size: s.W - 2 * 72, top: s.top};
   if (format === 'story') return {size: s.W - 2 * 72, top: s.top + 380};
   return {size: s.W - 2 * 48, top: s.top + 380};
 };
@@ -41,7 +40,7 @@ const Badge: React.FC<{rank: number; show: number}> = ({rank, show}) => {
   );
 };
 
-/** One tile at its slot: the photo, its own reel playing over it when it has one, and its rank. */
+/** One tile at its slot: the photo, its own reel playing over it when it has one, and its number. */
 const TileView: React.FC<{tile: Tile; slot: number; arrive: number; enter: number; badge: boolean; clipFrom?: number}> = ({
   tile, slot, arrive, enter, badge, clipFrom,
 }) => {
@@ -76,84 +75,17 @@ const TileView: React.FC<{tile: Tile; slot: number; arrive: number; enter: numbe
   );
 };
 
-/** kickerDelay: when the kicker wipes in; a negative value shows it already in place (it carries over from the shot before). */
-const Words: React.FC<{text: BeatText; name: string; delay?: number; numeral?: string; kickerDelay?: number}> = ({text, name, delay = 0, numeral, kickerDelay}) => {
+/** The words above the wall: who is in the photo, when, and her caption. */
+const Words: React.FC<{text: BeatText; name: string; delay?: number}> = ({text, name, delay = 0}) => {
   const {system, format} = useSys();
   const s = useSafe();
-  const {tween} = useMotion();
   const box = useWallBox();
-  if (format === 'square') {
-    return (
-      <SafeBox name={name} justify="center" top={box.top + box.size + 8}
-        style={{left: (s.W - box.size) / 2, right: (s.W - box.size) / 2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-        {text.headline ? (
-          <div style={{...faceStyle(system.display), fontSize: 40, lineHeight: 1, color: system.colors.ink, whiteSpace: 'nowrap'}}>{text.headline}</div>
-        ) : <div />}
-        {text.kicker ? (
-          <div style={{...faceStyle(system.text), fontSize: 26, fontWeight: 600, letterSpacing: '0.06em', color: system.colors.accent, whiteSpace: 'nowrap'}}>
-            {text.kicker}
-          </div>
-        ) : null}
-      </SafeBox>
-    );
-  }
-  const p = tween(0, 1, delay, 8);
   return (
     <SafeBox name={name} justify="start" bottom={s.H - box.top + 16}>
-      {numeral ? (
-        <div style={{...faceStyle(system.display), fontSize: system.scale.hero, lineHeight: 0.82, color: system.colors.accent,
-          transform: `translateY(${(1 - p) * 30}%) scale(${0.6 + 0.4 * p})`, transformOrigin: '0% 0%', opacity: Math.min(1, p * 2)}}>
-          {numeral}
-        </div>
-      ) : null}
-      {text.kicker ? <Kicker text={text.kicker} delay={kickerDelay ?? delay} /> : null}
-      {text.headline && !numeral ? <Headline text={text.headline} max="h2" lines={2} delay={delay + 4} /> : null}
-      {text.line && !numeral ? <Line text={text.line} delay={delay + 12} size={format === 'story' ? system.scale.body : system.scale.label} /> : null}
+      {text.kicker ? <Kicker text={text.kicker} delay={delay} /> : null}
+      {text.headline ? <Headline text={text.headline} max="h2" lines={2} delay={delay + 4} /> : null}
+      {text.line ? <Line text={text.line} delay={delay + 12} size={format === 'story' ? system.scale.body : system.scale.label} /> : null}
     </SafeBox>
-  );
-};
-
-/** fly: the nine land one per beat, nine to one, then the wall holds with the words. */
-const Fly: React.FC<{beat: Beat}> = ({beat}) => {
-  const {system} = useSys();
-  const {pop, drift, frame} = useMotion();
-  const s = useSafe();
-  const box = useWallBox();
-  const data = beat.data;
-  const tiles: Tile[] = data.tiles;
-  const order: number[] = data.order;
-  const spans = splits(beat, 10);
-  const by = new Map(tiles.map((t) => [t.rank, t]));
-  const k = box.size / V;
-  const hold = spans[9][0];
-  const shot = spans.findIndex(([a, n]) => frame >= a && frame < a + n);
-  const landing = shot >= 0 && shot < 9 ? 9 - shot : null;
-  return (
-    <AbsoluteFill style={{background: system.colors.bg}}>
-      <div style={{position: 'absolute', left: (s.W - box.size) / 2, top: box.top, width: V, height: V,
-        transform: `scale(${k * drift(1, 1.025)})`, transformOrigin: '0 0'}}>
-        {order.map((rank, slot) => {
-          const t = by.get(rank);
-          if (!t) return null;
-          const a = spans[9 - rank]?.[0] ?? 0;
-          const q = pop(a, {damping: 13, stiffness: 170});
-          return <TileView key={rank} tile={t} slot={slot} arrive={frame >= a ? 1 : 0} enter={frame >= a ? q : 0} badge />;
-        })}
-      </div>
-      {landing !== null ? (
-        <Sequence key={landing} from={spans[9 - landing][0]} durationInFrames={spans[9 - landing][1]} layout="none">
-          <SubShot frames={spans[9 - landing][1]}>
-            <Words text={{kicker: beat.text?.kicker}} name={`no-${landing}`} numeral={String(landing)} kickerDelay={landing === 9 ? 0 : -20} />
-          </SubShot>
-        </Sequence>
-      ) : (
-        <Sequence from={hold} durationInFrames={spans[9][1]} layout="none">
-          <SubShot frames={spans[9][1]}>
-            <Words text={beat.text ?? {}} name="hold" delay={2} kickerDelay={-20} />
-          </SubShot>
-        </Sequence>
-      )}
-    </AbsoluteFill>
   );
 };
 
@@ -168,7 +100,7 @@ const Reveal: React.FC<{beat: Beat}> = ({beat}) => {
   const by = new Map(tiles.map((t) => [t.rank, t]));
   const stagger = data.stagger ?? system.ease.stagger;
   const k = box.size / V;
-  const card = format === 'square' || format === 'story';
+  const card = format === 'story';
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       {system.texture.leaks && !card ? <Leaks strength={0.6} seed={beat.id} /> : null}
@@ -235,11 +167,10 @@ const Camera: React.FC<{beat: Beat}> = ({beat}) => {
       {spans.slice(0, 9).map(([a, n], i) => {
         const t = by.get(order[path[i]]);
         if (!t) return null;
-        const line = t.likes != null ? `${t.likes.toLocaleString('en-US')} likes${t.comments ? ` · ${t.comments} comments` : ''}` : undefined;
         return (
           <Sequence key={i} from={a} durationInFrames={n} layout="none">
             <SubShot frames={n}>
-              <Words text={{kicker: `${String(t.rank).padStart(2, '0')} · ${t.label ?? ''}`, headline: t.caption, line}} name={`tile-${t.rank}`} delay={4} />
+              <Words text={{kicker: `${String(t.rank).padStart(2, '0')} · ${t.label ?? ''}`, headline: t.caption, line: t.line}} name={`tile-${t.rank}`} delay={4} />
             </SubShot>
           </Sequence>
         );
@@ -257,8 +188,7 @@ export const Grid: React.FC<{beat: Beat}> = ({beat}) => {
   const {still} = useSys();
   const mode = beat.data?.mode ?? 'reveal';
   if (!beat.data?.tiles?.length) return null;
-  if (still || mode === 'reveal') return <Reveal beat={beat} />;
-  if (mode === 'camera') return <Camera beat={beat} />;
-  return <Fly beat={beat} />;
+  if (!still && mode === 'camera') return <Camera beat={beat} />;
+  return <Reveal beat={beat} />;
 };
 

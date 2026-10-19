@@ -5,12 +5,14 @@ USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/deliver.py
 
 caption.md is build/caption.md when the agent wrote one in the person's voice, otherwise a short caption drafted
-from build/taste.json in their register (their case, their length, their own hashtags). brief.md says where the
-material came from (every door tried, open or closed), what the run assumed, the vote, every clip and whether it was
-generated, taken from their own reels or substituted with an animated photo, where the music came from, which
-engine rendered the film, and the critics' scores of the cut; it opens with the nine, each with its numbers and why it
-worked. review.html plays the film and shows the best-nine image, the story card, the caption, the three storyboards'
-style sheets and the vote, with the runners-up.
+from build/taste.json in their register (their case, their own hashtags). Either way the caption tags every person
+in the film; a handle the agent's caption left out is added on a line of its own. brief.md opens with the people: each
+one's rank, the stretch of the year they owned, their best line and whose words it is, why they rank where they do,
+and their story card; then who came next, and how the order would differ counted by tags alone or comments alone.
+It goes on to say where the material came from (every door tried, open or closed), what the run assumed, the vote,
+every clip and whether it was generated, taken from their own reels or substituted with an animated photo, where
+the music came from, which engine rendered the film, and the critics' scores of the cut. review.html plays the film
+and shows the story cards, the caption, the three storyboards' style sheets and the vote, with the runners-up.
 Exit 0 only when qa.py gate passes; on a failed gate the page carries a red banner naming what is wrong.
 """
 import html
@@ -32,20 +34,31 @@ def esc(s):
     return html.escape("" if s is None else str(s))
 
 
+def handles(taste):
+    return [x["handle"] for x in taste.get("people") or [] if x.get("handle")]
+
+
+def tagged(text, h):
+    return re.search(r"@" + re.escape(h) + r"(?!\w|\.\w)", text) is not None
+
+
 def caption(taste, win):
+    reg = taste.get("register") or {}
+    ppl = handles(taste)
     own = Path("build/caption.md")
     if own.exists() and own.read_text().strip():
-        return own.read_text().strip() + "\n"
-    reg = taste.get("register") or {}
-    places = taste.get("places") or []
+        text = own.read_text().strip()
+        left = [h for h in ppl if not tagged(text, h)]
+        if left:
+            body, _, tags = text.rpartition("\n\n") if "\n\n" in text else (text, "", "")
+            line = " ".join("@" + h for h in left)
+            text = f"{body}\n{line}\n\n{tags}".strip() if tags else f"{text}\n{line}"
+        return text + "\n"
     year = taste.get("year")
-    lines = [f"my best nine of {year}, the ones you loved most"]
-    if len(places) >= 2:
-        lines.append(", ".join(places[:-1]) + " and " + places[-1])
-    lines.append("which one is your favorite?")
+    lines = [f"the people who made my {year}", " ".join("@" + h for h in ppl), "thank you for every one of these"]
     body = "\n".join(lines)
     body = body.lower() if reg.get("lowercase") else body[:1].upper() + body[1:]
-    tags = list(dict.fromkeys((reg.get("hashtags") or [])[:3] + ["#bestnine", f"#bestnine{year}"]))
+    tags = list(dict.fromkeys((reg.get("hashtags") or [])[:3] + ["#mypeople", f"#{year}recap"]))
     return f"{body}\n\n{' '.join(tags)}\n"
 
 
@@ -61,26 +74,44 @@ def clip_rows(clips):
     return rows
 
 
-def nine_rows():
-    st = _env.read_json("build/stats.json") or {}
-    why = {x["rank"]: x for x in (_env.read_json("build/research.json") or {}).get("nine", [])}
-    rows = ["| # | posted | likes | comments | why it worked |", "|---|---|---|---|---|"]
-    for t in st.get("top_nine") or []:
-        w = (why.get(t["rank"]) or {}).get("why") or ""
-        rows.append(f"| {t['rank']} | {t.get('date_label') or t.get('date')} ({t.get('kind')}) | {t.get('likes', '-')} | "
-                    f"{t.get('comments', '-')} | {w.replace('|', '/')} |")
-    ten = st.get("tenth") or {}
-    if ten.get("likes") is not None:
-        rows += ["", f"The tenth had {ten['likes']} likes, {ten.get('gap')} fewer than the ninth."]
+def people_rows(taste):
+    res = {x["handle"]: x for x in (_env.read_json("build/research.json") or {}).get("people", [])}
+    cards = {c["handle"]: c["file"] for c in (_env.read_json("build/cards.json") or {}).get("cards", [])}
+    rows = ["| # | who | their stretch | their best line | why | story card |", "|---|---|---|---|---|---|"]
+    for k, x in enumerate(taste.get("people") or [], 1):
+        h = x["handle"]
+        r = res.get(h) or {}
+        line = (x.get("line") or r.get("line") or "-").replace("|", "/")
+        src = x.get("line_from") or r.get("line_from")
+        card = cards.get(h, f"out/people/{k:02d}-{h}.png")
+        rows.append(f"| {k} | @{h} | {x.get('stretch') or r.get('stretch') or '-'} | \"{line}\"{f' ({src})' if src else ''} | "
+                    f"{(x.get('why') or r.get('why') or '').replace('|', '/')} | {card.removeprefix('out/')} |")
     return rows
+
+
+def ranking_notes(taste):
+    r = _env.read_json("build/research.json") or {}
+    ppl = handles(taste)
+    L = []
+    if r.get("ranked_by"):
+        L.append(f"The order counts {r['ranked_by']}.")
+    nxt = [x for x in r.get("next") or [] if x["handle"] not in ppl][:3]
+    if nxt:
+        L.append("Who came next: " + ", ".join(f"@{x['handle']} ({x['score']:g})" for x in nxt) + ".")
+    one = r.get("single_signal") or {}
+    for key, what in (("tags_only", "tags alone"), ("comments_only", "comments alone")):
+        o = one.get(key) or []
+        if o and o[:len(ppl)] != ppl:
+            L.append(f"Counted by {what}, the order would be " + ", ".join("@" + h for h in o[:len(ppl)]) + ".")
+    return L
 
 
 def brief(lib, taste, win, clips, music, engine, cuts):
     handle, year = lib.get("handle") or taste.get("handle"), lib.get("year") or taste.get("year")
-    L = [f"# @{handle}, best nine of {year}: how this was made", "", "## the nine", ""] + nine_rows()
-    wall = taste.get("wall") or {}
-    if wall.get("why"):
-        L += ["", f"The wall: {wall['why']}"]
+    L = [f"# @{handle}, my people of {year}: how this was made", "", "## my people", ""] + people_rows(taste)
+    notes = ranking_notes(taste)
+    if notes:
+        L += [""] + notes
     L += ["", "## where your photos came from", ""]
     for door, state in (lib.get("doors") or {}).items():
         L.append(f"- {door.replace('_', ' ')}: {state}")
@@ -145,7 +176,7 @@ h1{{font-size:30px;margin:0 0 4px}} h2{{margin:40px 0 12px;font-size:20px}} .sub
 .banner{{background:#b3261e;color:#fff;padding:14px 18px;border-radius:10px;margin-bottom:20px}}
 .top{{display:grid;grid-template-columns:380px 1fr;gap:36px;align-items:start}}
 video{{width:380px;border-radius:16px;background:#000;display:block}}
-.posts{{display:grid;grid-template-columns:420px 236px;gap:18px;align-items:start}}
+.posts{{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}}
 .sheets{{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}}
 .posts img,.sheets img{{width:100%;border-radius:8px;display:block}}
 .board h3{{margin:10px 0 2px;font-size:17px}} .board p{{margin:0;opacity:.8;font-size:14px}}
@@ -154,14 +185,14 @@ pre{{white-space:pre-wrap;background:rgba(127,127,127,.12);padding:16px;border-r
 table{{border-collapse:collapse}} td,th{{padding:6px 12px;border-bottom:1px solid rgba(127,127,127,.3);text-align:left}}
 button{{background:{accent};color:{bg};border:0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}}
 </style></head><body><main>
-<h1>{title}</h1><p class="sub">Your best-nine film, the best-nine image, a story card and a caption, ready to post.</p>
+<h1>{title}</h1><p class="sub">Your film of your people, a story card for each of them and a caption that tags them all, ready to post.</p>
 {banner}
 <div class="top"><video src="film.mp4" controls playsinline loop></video><div>
 <h2 style="margin-top:0">Caption</h2><pre id="cap">{caption}</pre>
 <button onclick="navigator.clipboard.writeText(document.getElementById('cap').innerText);this.textContent='Copied'">Copy caption</button>
 <h2>How it was made</h2><p><a href="brief.md">brief.md</a> says where everything came from, which clips were made and
 which were stood in for, and where the music came from.</p></div></div>
-<h2>The best-nine image and the story card</h2>{posts}
+<h2>The story cards, one per person</h2>{posts}
 <h2>The three storyboards</h2><div class="sheets">{boards}</div>
 <h2>The vote</h2>{table}<p>{runners}</p>
 </main></body></html>
@@ -208,10 +239,10 @@ def main():
     colors = (_env.read_json(f"build/storyboards/{win.get('board')}/storyboard.json") or {}).get("system", {}).get("colors", {})
     bg, ink, accent = colors.get("bg", "#141212"), colors.get("ink", "#f4efe8"), colors.get("accent", pal[0]["hex"] if pal else "#e6b26d")
     handle, year = lib.get("handle"), lib.get("year")
-    posts = gallery([p for p in ("best-nine.png", "story.png") if (OUT / p).exists()], "posts")
+    posts = gallery([f"people/{f.name}" for f in sorted((OUT / "people").glob("*.png"))], "posts")
 
     def page(banner):
-        return PAGE.format(title=esc(f"@{handle} · best nine {year}"), banner=banner, caption=esc(cap), bg=bg, ink=ink,
+        return PAGE.format(title=esc(f"@{handle} · my people {year}"), banner=banner, caption=esc(cap), bg=bg, ink=ink,
                            accent=accent, posts=posts, boards="".join(cells), table=table, runners=runners)
 
     (OUT / "review.html").write_text(page(""))
@@ -222,7 +253,7 @@ def main():
         (OUT / "review.html").write_text(page(f"<div class='banner'><b>Not ready to post.</b><ul>{items}</ul></div>"))
         print("deliver: the gate failed; fix what it names and run deliver.py again", file=sys.stderr)
         return 1
-    print("delivered: out/film.mp4, out/best-nine.png, out/story.png, out/caption.md, out/review.html, out/brief.md")
+    print(f"delivered: out/film.mp4, {len(list((OUT / 'people').glob('*.png')))} story cards in out/people/, out/caption.md, out/review.html, out/brief.md")
     return 0
 
 
