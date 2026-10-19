@@ -46,12 +46,12 @@ export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
         })}
       </div>
       <SafeBox name="closer" justify="end" align={d === 'kinetic' ? 'center' : 'start'}>
-        <Kicker text={t.kicker ?? `@${board.handle}`} delay={18} />
-        <Headline text={t.headline ?? 'see you next month'} max="h1" lines={2} delay={22} />
-        {t.line ? <Line text={t.line} delay={34} /> : null}
+        <Kicker text={t.kicker ?? `@${board.handle}`} delay={10} />
+        <Headline text={t.headline ?? 'see you next month'} max="h1" lines={2} delay={14} />
+        {t.line ? <Line text={t.line} delay={24} /> : null}
         <div style={{display: 'flex', gap: 8, marginTop: 30, width: '60%'}}>
           {system.colors.swatches.slice(0, 5).map((w, i) => (
-            <div key={i} style={{flex: 1, height: 10, background: w.hex, transform: `scaleX(${tween(0, 1, 38 + i * 3, 14)})`, transformOrigin: '0 50%'}} />
+            <div key={i} style={{flex: 1, height: 10, background: w.hex, transform: `scaleX(${tween(0, 1, 28 + i * 3, 14)})`, transformOrigin: '0 50%'}} />
           ))}
         </div>
         <div style={{...faceStyle(system.text), fontSize: system.scale.label * 0.85, textTransform: 'none', letterSpacing: '0.04em', color: system.colors.ink, opacity: tween(0, 0.7, 44, 12), marginTop: 18}}>

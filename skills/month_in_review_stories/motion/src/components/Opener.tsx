@@ -58,9 +58,9 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
           </div>
         </AbsoluteFill>
         <SafeBox name="opener" justify="end" align="center">
-          <Kicker text={t.kicker ?? `@${board.handle}`} delay={20} color={system.colors.ink} />
-          {t.headline ? <Headline text={t.headline} max="h2" lines={2} delay={24} /> : null}
-          <Swatches delay={30} height={18} />
+          <Kicker text={t.kicker ?? `@${board.handle}`} delay={8} color={system.colors.ink} />
+          {t.headline ? <Headline text={t.headline} max="h2" lines={2} delay={12} /> : null}
+          <Swatches delay={20} height={18} />
         </SafeBox>
       </AbsoluteFill>
     );

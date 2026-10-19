@@ -105,7 +105,8 @@ export const Headline: React.FC<{
         const p = pop(delay + i * stagger);
         const words = line.split(' ');
         return (
-          <div key={i} style={{overflow: 'hidden', paddingBottom: '0.08em', marginBottom: '-0.08em', whiteSpace: 'nowrap'}}>
+          // the mask reaches below the deepest descender of every display face, so a settled line is never clipped
+          <div key={i} style={{overflow: 'hidden', paddingBottom: '0.24em', marginBottom: '-0.24em', whiteSpace: 'nowrap'}}>
             {kinetic ? (
               words.map((wd, j) => {
                 const q = pop(delay + (i * words.length + j) * Math.max(1, stagger - 1));
@@ -114,7 +115,7 @@ export const Headline: React.FC<{
                     key={j}
                     style={{
                       display: 'inline-block',
-                      transform: `translateY(${(1 - q) * 105}%) scale(${0.7 + 0.3 * q}) rotate(${(1 - q) * -6}deg)`,
+                      transform: `translateY(${(1 - q) * 130}%) scale(${0.7 + 0.3 * q}) rotate(${(1 - q) * -6}deg)`,
                       transformOrigin: '50% 100%',
                       marginRight: j < words.length - 1 ? '0.24em' : 0,
                     }}
@@ -127,7 +128,7 @@ export const Headline: React.FC<{
               <span
                 style={{
                   display: 'inline-block',
-                  transform: `translateY(${(1 - p) * 110}%)`,
+                  transform: `translateY(${(1 - p) * 130}%)`,
                   opacity: tween(0, 1, delay + i * stagger, 6),
                 }}
               >

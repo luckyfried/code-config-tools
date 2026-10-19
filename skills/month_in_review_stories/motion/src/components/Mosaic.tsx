@@ -37,9 +37,9 @@ const Wall: React.FC<{group: Group; index: number}> = ({group, index}) => {
       </div>
       <Scrim side="bottom" strength={0.95} />
       <SafeBox name={`mosaic-${index}`} justify="end">
-        <Kicker text={group.label} delay={Math.min(30, n * 2)} />
-        <Headline text={group.headline} max="h1" lines={2} delay={Math.min(34, n * 2 + 4)} />
-        {group.line ? <Line text={group.line} delay={Math.min(44, n * 2 + 12)} /> : null}
+        <Kicker text={group.label} delay={Math.min(8, n * 2)} />
+        <Headline text={group.headline} max="h1" lines={2} delay={Math.min(12, n * 2 + 4)} />
+        {group.line ? <Line text={group.line} delay={Math.min(20, n * 2 + 12)} /> : null}
       </SafeBox>
     </AbsoluteFill>
   );
@@ -78,9 +78,9 @@ const PaletteBars: React.FC<{swatches: Swatch[]; beat: Beat}> = ({swatches, beat
         })}
       </div>
       <SafeBox name="palette" justify="end">
-        {t.kicker ? <Kicker text={t.kicker} delay={20} /> : null}
-        {t.headline ? <Headline text={t.headline} max="h1" lines={2} delay={24} /> : null}
-        {t.line ? <Line text={t.line} delay={34} /> : null}
+        {t.kicker ? <Kicker text={t.kicker} delay={8} /> : null}
+        {t.headline ? <Headline text={t.headline} max="h1" lines={2} delay={12} /> : null}
+        {t.line ? <Line text={t.line} delay={20} /> : null}
       </SafeBox>
     </AbsoluteFill>
   );
