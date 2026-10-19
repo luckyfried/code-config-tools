@@ -102,7 +102,7 @@ export const LivePhoto: React.FC<{
   );
 };
 
-const tint = (hex: string, a: number) => {
+export const tint = (hex: string, a: number) => {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };
