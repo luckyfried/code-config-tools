@@ -24,7 +24,8 @@ the rest are far. Distances are great-circle kilometers.
 they are kept in build/places.args.json and applied on every later run (--reset clears them).
 
 build/places.json: places [{id, name, country, lat, lon, x, y, home, far, rows, posts, stories, reels, photos,
-clips, first, last, months, visits, source, words}], visits, route (place ids in order), legs [{from, to, km, far}],
+clips, first, last, months, visits, source, words}], visits, route (place ids in order), route_visits (the visit
+behind each stop of the route, with its dates), legs [{from, to, km, far}],
 total_km, home, region, far, mentioned, unplaced, rows ({"posts:3": id, ...}), assumptions.
 x, y are Web Mercator in world units (0 to 1000 across the world), the map's coordinates.
 """
@@ -375,12 +376,18 @@ def main():
         ts = [x["ts"] for x in v["rows"]]
         out_visits.append({"place": ids[v["key"]], "from": date(min(ts)).isoformat() if ts else None,
                            "to": date(max(ts)).isoformat() if ts else None, "rows": len(v["rows"])})
-    route = [v["place"] for v in out_visits]
     home_id = ids.get(hk)
+    stops = list(out_visits)
+    if home_id and len(stops) > 2:
+        stops = [stops[0]] + [v for v in stops[1:-1] if v["place"] != home_id] + [stops[-1]]
+    route_visits = []
+    for v in stops:
+        if route_visits and route_visits[-1]["place"] == v["place"]:
+            route_visits[-1] = dict(route_visits[-1], to=v["to"] or route_visits[-1]["to"], rows=route_visits[-1]["rows"] + v["rows"])
+        else:
+            route_visits.append(dict(v))
+    route = [v["place"] for v in route_visits]
     if home_id:
-        inner = [p for p in route[1:-1] if p != home_id]
-        route = ([route[0]] if route else []) + inner + ([route[-1]] if len(route) > 1 else [])
-        route = [p for i, p in enumerate(route) if i == 0 or p != route[i - 1]]
         stays = sum(1 for v in out_visits[1:-1] if v["place"] == home_id)
         if stays:
             assumptions.append(f"The route leaves out the {stays} stay{'s' if stays > 1 else ''} at home between trips, so it reads as one journey.")
@@ -436,7 +443,7 @@ def main():
     if unplaced:
         assumptions.append(f"{unplaced} posts and stories have no geotag and name no place; they are not counted at any place.")
     total = sum(l["km"] for l in legs)
-    res = {"year": lib.get("year"), "count": len(places), "places": places, "visits": out_visits, "route": route, "legs": legs,
+    res = {"year": lib.get("year"), "count": len(places), "places": places, "visits": out_visits, "route": route, "route_visits": route_visits, "legs": legs,
            "total_km": total, "home": home_id, "region": region, "far": far, "mentioned": mentioned, "unplaced": unplaced,
            "rows": rowmap, "assumptions": assumptions}
     _env.write_json("build/places.json", res)
