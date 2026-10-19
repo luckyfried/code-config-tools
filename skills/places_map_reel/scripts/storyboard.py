@@ -50,6 +50,7 @@ REEL = (1080, 1920)
 POSTER = (1080, 1350)
 CARD_W = 430      # MapJourney's photo card width in px; the card hangs from the top of the safe area on one side
 RETURN = re.compile(r"\b(again|back in|back to|returned|return)\b", re.I)
+LABEL_W = 200     # room on the right of the overview's last pin for its label
 TEXT_H = 330      # the kicker, a two-line headline and the line, stacked up from the bottom of the safe area
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2728\uFE0F\u200D]")
 STOP = {"and", "i", "the", "a", "an", "to", "of", "be", "will", "not", "in", "on", "at", "with", "for", "is", "it", "my",
@@ -162,11 +163,19 @@ def project(cam, w, h, x, y):
     return (x - cx) * k + w / 2, (y - cy) * k + h / 2
 
 
-def label_sides(pins, cam, rect, size, text_w=0.56, blocks=(), bound=None):
-    """Where each pin's label sits (right, left, above, below), greedily, so no two labels and no label and pin overlap
-    and every label stays inside the map rect. pins: [(id, name, x, y, weight)] in world units; rect: [x, y, w, h] px."""
+def label_sides(pins, cam, rect, size, text_w=0.56, blocks=(), bound=None, lines=(), home=None):
+    """Where each pin's label sits (right, left, above, below), greedily, so no two labels and no label and pin overlap,
+    labels keep off the route's lines where they can, and every label stays inside the map rect.
+    pins: [(id, name, x, y, weight)] and lines: [[(x, y), ...]] in world units; rect: [x, y, w, h] px; home: the id
+    whose ringed dot is drawn larger."""
     rx, ry, rw, rh = rect
     placed, out = [], {}
+    route = []
+    for ln in lines:
+        pts = [project(cam, rw, rh, x, y) for x, y in ln]
+        for (ax, ay), (bx_, by_) in zip(pts, pts[1:]):
+            n = max(1, min(400, int(math.hypot(bx_ - ax, by_ - ay) / 8)))
+            route += [(ax + (bx_ - ax) * i / n, ay + (by_ - ay) * i / n) for i in range(n)]
     dots = []
     for pid, name, x, y, _ in pins:
         px, py = project(cam, rw, rh, x, y)
@@ -191,9 +200,11 @@ def label_sides(pins, cam, rect, size, text_w=0.56, blocks=(), bound=None):
 
     def cost(pid, bx, others):
         c = sum(overlap(bx, o) for o in others) * 6
-        c += sum(overlap(bx, (dx - size * 0.4, dy - size * 0.4, dx + size * 0.4, dy + size * 0.4)) for q, dx, dy in dots if q != pid) * 3
+        r = lambda q: size * (0.85 if q == home else 0.4)
+        c += sum(overlap(bx, (dx - r(q), dy - r(q), dx + r(q), dy + r(q))) for q, dx, dy in dots if q != pid) * 3
         out_of = max(0, b0[0] - bx[0]) + max(0, bx[2] - b0[2]) + max(0, b0[1] - bx[1]) + max(0, bx[3] - b0[3])
-        return c + out_of * size * 4 + sum(overlap(bx, k) * 2 for k in blocks)
+        on_route = sum(1 for qx, qy in route if bx[0] - 4 <= qx <= bx[2] + 4 and bx[1] - 4 <= qy <= bx[3] + 4)
+        return c + out_of * size * 4 + sum(overlap(bx, k) * 2 for k in blocks) + on_route * size * size * 0.6
 
     order = sorted(pins, key=lambda p: -p[4])
     boxes = {}
@@ -417,14 +428,17 @@ class Ctx:
         return fit(pts, w, h, pad, min_span)
 
     def leg_box(self, side):
-        """Where a leg's places sit in the reel: beside the photo card (side is the card's side) and above the type."""
+        """Where a leg's places sit in the reel: above the type and beside the photo card (side is the card's side), or
+        with no card (side None) clear of the right edge by a label's width, for the overview's labels."""
         sa = design("safe-areas.json")["reel"]
         W, H = REEL
         top, bottom = sa["top"] + 30, H - sa["bottom"] - TEXT_H - 30
         if side == "left":
             x0, x1 = sa["left"] + CARD_W + 20, W - sa["right"]
-        else:
+        elif side == "right":
             x0, x1 = sa["left"], W - sa["right"] - CARD_W + 10
+        else:
+            x0, x1 = sa["left"], W - sa["right"] - LABEL_W
         return [x0, top, x1 - x0, bottom - top]
 
     def leg_cam(self, ids, side, pad, min_span):
@@ -479,7 +493,8 @@ class Ctx:
         pins = [(q["id"], q["name"], q["x"], q["y"], q["rows"]) for q in self.map_data()["pins"] if q["id"] in near]
         blocks = [(irect[0] - 10, irect[1] - 10, irect[0] + irect[2] + 10, irect[1] + irect[3] + 10)] if irect else []
         bound = (lo - rect[0], 0, hi - rect[0], rect[3])
-        sides = label_sides(pins, cam, rect, size, text_w, blocks=blocks, bound=bound)
+        lines = [lg["arc"] for lg in self.map_data()["legs"]]
+        sides = label_sides(pins, cam, rect, size, text_w, blocks=blocks, bound=bound, lines=lines, home=self.home)
         if inset:
             ipins = [(q["id"], q["name"], q["x"], q["y"], q["rows"]) for q in self.map_data()["pins"] if q["id"] in far]
             sides.update(label_sides(ipins, inset["cam"], irect, round(size * 0.85), text_w))
@@ -555,12 +570,15 @@ def board_route(ctx):
     stops = ctx.pl.get("route_visits") or []
     W, H = REEL
     everyone = [p["id"] for p in ctx.places]
-    first_cam = (ctx.leg_cam([legs[0]["from"], legs[0]["to"]], ctx.card_side(legs[0]["from"], legs[0]["to"]), 0.3, 13)
-                 if legs else ctx.cam(everyone, W, H))
+    first_cam = ctx.leg_cam(ctx.near_ids(), None, 0.1, 13) if legs else ctx.cam(everyone, W, H)
+    x0, y0, bw, bh = ctx.leg_box(None)
+    near = set(ctx.near_ids()) if legs else set(everyone)
+    pins = [(q["id"], q["name"], q["x"], q["y"], q["rows"]) for q in m["pins"] if q["id"] in near]
+    first_labels = label_sides(pins, first_cam, [0, 0, W, H], 30, bound=(x0, y0, x0 + bw + LABEL_W, y0 + bh), home=ctx.home)
     beats = [opener(ctx, ctx.say("where the year went"), ctx.count_line()),
              {"id": "overview", "kind": "MapJourney", "frames": sec(2.6), "transition": tr("iris", d), "photos": [],
               "text": {"kicker": ctx.say(f"{ctx.year}"), "headline": ctx.say(f"{ctx.n} places on one map")},
-              "data": {"mode": "overview", "cam0": ctx.cam(everyone, W, H, 0.12, 10), "cam1": first_cam, "done": 0, "legs": [], "focus": []}}]
+              "data": {"mode": "overview", "cam0": ctx.cam(everyone, W, H, 0.12, 10), "cam1": first_cam, "labels": first_labels, "done": 0, "legs": [], "focus": []}}]
     clips = [{"id": "01", "beat": "opener", "role": "the opener: the first place of the year, from above",
               "prompt": ctx.prompt(f"an establishing aerial shot drifting over the rooftops of {ctx.by[ctx.places[0]['id']]['name']}, "
                                    f"{ctx.by[ctx.places[0]['id']].get('country', '')}, at first light", d, 3), "seconds": 3, "image": None}]

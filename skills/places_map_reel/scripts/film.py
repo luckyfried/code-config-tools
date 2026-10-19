@@ -367,7 +367,7 @@ def cmd_stills(a):
                 seen |= {lg["from"], lg["to"]}
             seen = seen or set(board["map"]["route"][:1])
             im = draw_map(dt.get("cam1") or dt.get("cam0"), W, H, upto=upto, ids=list(seen) if upto else list(pins),
-                          labels={} if dt.get("mode") == "overview" else None, size=30)
+                          labels=(dt.get("labels") or {}) if dt.get("mode") == "overview" else None, size=30)
             card = dt.get("card") or {}
             if card.get("photo"):
                 ph = photo(card["photo"], 400, 400)

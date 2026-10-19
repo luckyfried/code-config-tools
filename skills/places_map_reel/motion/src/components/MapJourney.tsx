@@ -118,7 +118,7 @@ export const MapJourney: React.FC<{beat: Beat}> = ({beat}) => {
         })}
         {d.mode === 'overview'
           ? board.map.pins.map((p, i) => (
-              <PinLabel key={`l${p.id}`} pin={p} at={px(p.id)} side="right" size={30} color={m.label} halo={m.halo}
+              <PinLabel key={`l${p.id}`} pin={p} at={px(p.id)} side={d.labels?.[p.id] ?? 'right'} size={30} color={m.label} halo={m.halo}
                 opacity={tween(0, 0.9, 14 + i * 3, 10)} />
             ))
           : null}
