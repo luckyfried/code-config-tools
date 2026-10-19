@@ -1,0 +1,23 @@
+{
+  "name": "ig-year-in-review-motion",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The year-in-review film, carousel and story cards, rendered by Remotion from storyboard.json",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Film out/film.mp4"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.536",
+    "@remotion/cli": "4.0.536",
+    "@remotion/layout-utils": "4.0.536",
+    "@remotion/renderer": "4.0.536",
+    "@remotion/transitions": "4.0.536",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.536"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}
