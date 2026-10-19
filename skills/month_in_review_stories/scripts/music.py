@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""The film's music: find it, or make a bed, then read its beat grid and master it to -14 LUFS.
+"""The music under the film and every animated card: find it, or make a bed, then read its beat grid and master it to -14 LUFS.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/music.py find [--origin "..."] # build/music.json: the track to use and where it came from
     python3 S/scripts/music.py make [--mood calm|drive|film] [--bpm N] [--seconds S]
                                                     # a bed made here (keys, bass, drums) when no music was found
     python3 S/scripts/music.py analyze              # onsets, tempo, beat grid and downbeats into build/music.json
-    python3 S/scripts/music.py master --seconds S   # loudness to -14 LUFS (true peak -1.5 dB), trimmed and faded
+    python3 S/scripts/music.py master [--seconds S] # loudness to -14 LUFS (true peak -1.5 dB), trimmed and faded (15 s)
 
 The music comes from whatever the person or the agent has: a track the agent fetched or generated saved as
 build/music/source.<ext> (any audio ffmpeg reads), else the longest audio file under the workspace that is
-30 s or longer (their own library), else `make`, which writes a warm bed in the winning storyboard's tempo and
+15 s or longer (their own library), else `make`, which writes a warm bed in the winning storyboard's tempo and
 mood. brief.md names the origin either way. analyze reads the energy envelope (ffmpeg decodes to mono PCM),
 picks onsets as peaks of its rise, takes the tempo by autocorrelation and lays a beat grid on the strongest
-phase; storyboard.py snap cuts the film on that grid.
+phase; storyboard.py snap cuts the film and every card on that grid. One 15 s master plays under all of them.
 """
 import argparse
 import array
@@ -61,7 +61,7 @@ def cmd_find(a):
             if any(part in SKIP for part in p.parts) or not p.is_file() or p.suffix.lower() not in AUDIO:
                 continue
             d = duration(p)
-            if d >= 30:
+            if d >= 15:
                 found.append((d, p))
         if not found:
             print("no music in the workspace. Put a track at build/music/source.<ext> (one you have, or one your "
@@ -139,7 +139,7 @@ def cmd_make(a):
     bm = (board or {}).get("music", {})
     mood = a.mood or bm.get("mood") or "calm"
     bpm = a.bpm or bm.get("bpm") or MOODS[mood]["bpm"]
-    seconds = a.seconds or ((board and sum(b["frames"] for b in board["beats"]) / 30) or 60) + 4
+    seconds = a.seconds or 15 + 4
     samples, sr = synth(mood, bpm)
     loop = MUSIC / "loop.wav"
     with wave.open(str(loop), "wb") as w:
@@ -236,9 +236,7 @@ def cmd_master(a):
     info = _env.read_json("build/music.json") or {}
     if not info.get("file"):
         sys.exit("no music: run music.py find (or make) first")
-    seconds = a.seconds or (_env.read_json("build/film.json") or {}).get("seconds")
-    if not seconds:
-        sys.exit("pass --seconds (the film length)")
+    seconds = a.seconds or (_env.read_json("build/film.json") or {}).get("seconds") or 15
     ff = _env.ffmpeg()
     fade = min(2.0, seconds * 0.05)
     pre = f"atrim=0:{seconds:.3f},asetpts=PTS-STARTPTS,afade=t=out:st={seconds - fade:.3f}:d={fade:.3f}"

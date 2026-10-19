@@ -28,7 +28,7 @@ export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
         </AbsoluteFill>
       ) : null}
       <Leaks strength={0.8} seed="closer" />
-      <div style={{position: 'absolute', left: 0, right: 0, top: s.top * 0.4, height: s.H * 0.33, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+      <div style={{position: 'absolute', left: 0, right: 0, top: s.top + 20, height: s.H * 0.34, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         {photos.map((p, i) => {
           const q = pop(i * 5, d === 'kinetic' ? {damping: 13} : undefined);
           const [ox, oy] = offsets[i % 4];

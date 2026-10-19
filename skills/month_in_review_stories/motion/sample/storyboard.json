@@ -1,562 +1,105 @@
 {
  "id": "sample",
- "name": "on the beat",
- "direction": "kinetic",
- "structure": "the wall assembles tile by tile on the beat, then the top three",
- "tone": "kinetic",
- "clip_use": "still-first: short generated bridges in their colors are the transitions between tiles",
- "idea": "the nine land one per beat, from nine to one, until the wall is whole; then the top three hit full frame in heavy type and the wall comes back to close",
- "music": {
-  "direction": "driving, bright, 118 bpm: four-on-the-floor, claps, a hook",
-  "bpm": 84,
-  "mood": "drive"
- },
- "beats": [
-  {
-   "id": "opener",
-   "kind": "Opener",
-   "frames": 57,
-   "transition": null,
-   "photos": [
-    "graded/sample-1.jpg"
-   ],
-   "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine"
-   }
-  },
-  {
-   "id": "wall-build",
-   "kind": "Grid",
-   "frames": 181,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "text": {
-    "kicker": "best nine 2026",
-    "headline": "the nine you loved most"
-   },
-   "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
-   ],
-   "data": {
-    "mode": "fly",
-    "tiles": [
-     {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
-     },
-     {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
-     },
-     {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
-     },
-     {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
-     },
-     {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
-     }
-    ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     5
-    ],
-    "shots": 10,
-    "cuts": [
-     13,
-     26,
-     39,
-     48,
-     69,
-     78,
-     91,
-     103,
-     112
-    ]
-   }
-  },
-  {
-   "id": "bridge-1",
-   "kind": "ClipShot",
-   "frames": 30,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
-   },
-   "clip": null,
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
-   "text": {
-    "kicker": "and the top three"
-   }
-  },
-  {
-   "id": "no-3",
-   "kind": "Countdown",
-   "frames": 52,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
-   },
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
-   "text": {
-    "kicker": "january 8",
-    "headline": "first coffee of the year in lisbon, one cup by one window",
-    "line": "418 likes"
-   },
-   "data": {
-    "rank": 3,
-    "of": 9,
-    "slot": 8,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     8
-    ]
-   }
-  },
-  {
-   "id": "no-2",
-   "kind": "Countdown",
-   "frames": 52,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-left"
-   },
-   "photos": [
-    "graded/sample-3.jpg"
-   ],
-   "text": {
-    "kicker": "may 16",
-    "headline": "forty seconds of the oaxaca market at opening time",
-    "line": "451 likes"
-   },
-   "data": {
-    "rank": 2,
-    "of": 9,
-    "slot": 7,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
-    ]
-   }
-  },
-  {
-   "id": "bridge-2",
-   "kind": "ClipShot",
-   "frames": 30,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
-   },
-   "clip": null,
-   "photos": [
-    "graded/sample-2.jpg"
-   ],
-   "text": {
-    "kicker": "number one"
-   }
-  },
-  {
-   "id": "no-1",
-   "kind": "Countdown",
-   "frames": 74,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "photos": [
-    "graded/sample-2.jpg"
-   ],
-   "text": {
-    "kicker": "july 15",
-    "headline": "the light did all the work here",
-    "line": "486 likes"
-   },
-   "data": {
-    "rank": 1,
-    "of": 9,
-    "slot": 0,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     0,
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
-    ]
-   }
-  },
-  {
-   "id": "closer",
-   "kind": "Grid",
-   "frames": 169,
-   "transition": {
-    "preset": "slide",
-    "frames": 9,
-    "direction": "from-bottom"
-   },
-   "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine 2026",
-    "line": "3,395 likes across these nine"
-   },
-   "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
-   ],
-   "data": {
-    "mode": "reveal",
-    "tiles": [
-     {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
-     },
-     {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
-     },
-     {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
-     },
-     {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
-     },
-     {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
-     }
-    ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1
-    ],
-    "shots": 1,
-    "stagger": 2
-   }
-  }
- ],
+ "name": "the diary",
  "handle": "maren.okafor",
  "year": 2026,
+ "month": {
+  "key": "2026-09",
+  "name": "September",
+  "short": "Sept",
+  "year": 2026
+ },
  "format": {
   "width": 1080,
   "height": 1920,
   "fps": 30
  },
  "system": {
-  "direction": "kinetic",
+  "direction": "editorial",
   "display": {
-   "family": "Archivo Black",
-   "file": "fonts/ArchivoBlack/ArchivoBlack-Regular.ttf",
-   "weight": 400,
-   "tracking": -0.02,
-   "case": "uppercase",
-   "lineHeight": 0.9
+   "family": "Fraunces",
+   "file": "fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf",
+   "weight": 500,
+   "tracking": -0.025,
+   "case": "none",
+   "lineHeight": 0.98
   },
   "text": {
-   "family": "Archivo",
-   "file": "fonts/Archivo/Archivo[wdth,wght].ttf",
-   "weight": 600,
+   "family": "Inter",
+   "file": "fonts/Inter/Inter[opsz,wght].ttf",
+   "weight": 500,
    "tracking": 0.0,
    "case": "none",
-   "lineHeight": 1.2
+   "lineHeight": 1.25
   },
   "scale": {
-   "hero": 330,
-   "h1": 168,
-   "h2": 116,
-   "h3": 70,
-   "body": 42,
-   "label": 30
+   "hero": 270,
+   "h1": 150,
+   "h2": 104,
+   "h3": 62,
+   "body": 40,
+   "label": 28
   },
   "colors": {
-   "bg": "#20140d",
-   "ink": "#f0e6d7",
-   "accent": "#a87824",
-   "accent2": "#8d5e1f",
-   "muted": "#92887c",
-   "paper": "#f0e6d7",
+   "bg": "#dbd0bb",
+   "ink": "#222435",
+   "accent": "#8a6835",
+   "accent2": "#353851",
+   "muted": "#757171",
+   "paper": "#dbd0bb",
    "swatches": [
     {
-     "hex": "#624229",
-     "name": "chocolate"
+     "hex": "#353851",
+     "name": "deep navy"
     },
     {
-     "hex": "#906B4C",
+     "hex": "#46474E",
+     "name": "charcoal"
+    },
+    {
+     "hex": "#AE9A76",
+     "name": "taupe"
+    },
+    {
+     "hex": "#99733B",
      "name": "caramel"
     },
     {
-     "hex": "#4B3525",
-     "name": "warm chocolate"
-    },
-    {
-     "hex": "#735B3E",
-     "name": "olive"
-    },
-    {
-     "hex": "#B29A79",
-     "name": "taupe"
+     "hex": "#685B50",
+     "name": "chocolate"
     }
    ]
   },
   "texture": {
-   "grain": 0.08,
+   "grain": 0.112,
    "vignette": 0,
    "leaks": false
   },
   "ease": {
    "enter": [
-    0.22,
-    1.2,
-    0.36,
+    0.16,
+    1,
+    0.3,
     1
    ],
    "exit": [
-    0.8,
-    0,
-    0.9,
-    0.3
-   ],
-   "move": [
     0.7,
     0,
-    0.2,
+    0.84,
+    0
+   ],
+   "move": [
+    0.45,
+    0,
+    0.55,
     1
    ],
    "spring": {
-    "damping": 13,
-    "stiffness": 190,
-    "mass": 0.6
+    "damping": 200,
+    "stiffness": 90,
+    "mass": 1
    },
-   "stagger": 3
+   "stagger": 5
   },
   "safe": {
    "reel": {
@@ -579,252 +122,209 @@
    }
   }
  },
- "wall": {
-  "id": "best-nine",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "best nine 2026"
+ "beats": [
+  {
+   "id": "f-weather",
+   "kind": "ClipShot",
+   "frames": 62,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "headline": "september"
+   },
+   "clip": null
   },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
-    {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
-    },
-    {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
-    },
-    {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
-    }
-   ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
-   ],
-   "weights": [
-    1
-   ],
-   "shots": 1
-  }
- },
- "story": {
-  "id": "story",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "my best nine of 2026",
-   "line": "which one is your favorite?"
+  {
+   "id": "f-glance",
+   "kind": "Diary",
+   "frames": 125,
+   "transition": {
+    "preset": "wipe",
+    "frames": 18,
+    "direction": "from-right"
+   },
+   "photos": [],
+   "text": {},
+   "data": {
+    "pages": [
+     {
+      "kicker": "september 2026",
+      "headline": "september, in review",
+      "lines": [
+       {
+        "n": "32",
+        "text": "posts, 2.5x a usual month"
+       },
+       {
+        "n": "23",
+        "text": "days i posted something"
+       },
+       {
+        "n": "8",
+        "text": "days in a row"
+       },
+       {
+        "n": "11",
+        "text": "stories"
+       }
+      ],
+      "photos": [
+       "graded/sample-1.jpg",
+       "graded/sample-3.jpg",
+       "graded/sample-4.jpg"
+      ]
+     }
+    ]
+   },
+   "clip": null
   },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
-    {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
-    },
-    {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
-    },
-    {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
-    }
+  {
+   "id": "f-no3",
+   "kind": "ClipShot",
+   "frames": 61,
+   "transition": {
+    "preset": "dip",
+    "frames": 18
+   },
+   "photos": [
+    "graded/sample-5.jpg"
    ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
+   "text": {
+    "kicker": "september 25",
+    "headline": "majorelle blue against saffron walls",
+    "line": "561 likes \u00b7 8.4x your usual"
+   },
+   "data": {
+    "chapter": "3"
+   },
+   "clip": null
+  },
+  {
+   "id": "f-no2",
+   "kind": "ClipShot",
+   "frames": 61,
+   "transition": {
+    "preset": "wipe",
+    "frames": 18,
+    "direction": "from-left"
+   },
+   "photos": [
+    "graded/sample-6.jpg"
    ],
-   "weights": [
-    1
+   "text": {
+    "kicker": "september 2",
+    "headline": "thirty seconds at the wheel",
+    "line": "597 likes \u00b7 8.9x your usual"
+   },
+   "data": {
+    "chapter": "2"
+   },
+   "clip": null
+  },
+  {
+   "id": "f-no1",
+   "kind": "ClipShot",
+   "frames": 61,
+   "transition": {
+    "preset": "match",
+    "frames": 18
+   },
+   "photos": [
+    "graded/sample-7.jpg"
    ],
-   "shots": 1
+   "text": {
+    "kicker": "september 20",
+    "headline": "the tile workshop in marrakech let me paint one",
+    "line": "642 likes \u00b7 9.6x your usual"
+   },
+   "data": {
+    "chapter": "1"
+   },
+   "clip": null
+  },
+  {
+   "id": "f-colors",
+   "kind": "Diary",
+   "frames": 103,
+   "transition": {
+    "preset": "wipe",
+    "frames": 18,
+    "direction": "from-right"
+   },
+   "photos": [],
+   "text": {},
+   "data": {
+    "pages": [
+     {
+      "kicker": "the colors of september",
+      "headline": "cobalt and indigo all month",
+      "lines": [
+       {
+        "n": "37%",
+        "text": "deep navy"
+       },
+       {
+        "n": "33%",
+        "text": "charcoal"
+       },
+       {
+        "n": "18%",
+        "text": "taupe"
+       }
+      ],
+      "swatches": [
+       {
+        "hex": "#353851",
+        "name": "deep navy"
+       },
+       {
+        "hex": "#46474E",
+        "name": "charcoal"
+       },
+       {
+        "hex": "#AE9A76",
+        "name": "taupe"
+       },
+       {
+        "hex": "#99733B",
+        "name": "caramel"
+       }
+      ],
+      "photos": [
+       "graded/sample-2.jpg",
+       "graded/sample-8.jpg"
+      ]
+     }
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "f-close",
+   "kind": "Closer",
+   "frames": 85,
+   "transition": {
+    "preset": "match",
+    "frames": 18
+   },
+   "photos": [
+    "graded/sample-7.jpg",
+    "graded/sample-6.jpg",
+    "graded/sample-5.jpg",
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "see you in october",
+    "line": "september: 32 posts, 642 likes on the best"
+   },
+   "data": {
+    "signoff": "my september on instagram"
+   },
+   "clip": null
   }
- },
- "seconds": 19.4
+ ],
+ "series": null
 }

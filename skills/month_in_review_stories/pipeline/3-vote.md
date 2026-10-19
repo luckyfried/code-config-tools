@@ -22,4 +22,4 @@ can say "do the second one".
 ## "Do the second one"
 
 When the person asks for a runner-up after delivery, run the rest of the pipeline from movement 5 with
-`--board N` on `clips.py` and `storyboard.py snap`.
+`--board N` on `clips.py` and `storyboard.py snap`, then movements 4 and 6 as they are.

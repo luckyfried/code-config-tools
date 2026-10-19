@@ -4,13 +4,14 @@
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/vote.py ballot     # build/vote/ballot.md + build/vote/scores.json to fill in
     python3 S/scripts/vote.py tally      # build/vote.md + build/winner.json (highest total; a tie goes to the person)
-    python3 S/scripts/vote.py cut        # build/critic/cut-N.json to fill in for the rendered film (next round N)
+    python3 S/scripts/vote.py cut        # build/critic/cut-N.json to fill in for the rendered film and cards (next round N)
     python3 S/scripts/vote.py verdict    # SHIP when every score of the latest round is 4 or more, else the worst thing
 
 The panel (S/critic/critic.md has each critic's brief): a motion designer (craft, pacing, type, transitions), an
-editor (story, emotion, the ending) and the person, modeled from build/taste.md (is this unmistakably me; would I
+editor (story, one idea per card, the series as a set) and the person, modeled from build/taste.md (is this unmistakably me; would I
 post it). Each scores every storyboard 1-5 on the seven criteria below and writes one paragraph per board.
-The finished cut is scored by the motion designer and the person on the same criteria.
+The finished cut (the film, every animated card and every static card) is scored by the motion designer and the
+person on the same criteria; the round records a fingerprint of those files so the gate knows it is current.
 """
 import argparse
 import hashlib
@@ -27,7 +28,7 @@ CRITERIA = {
     "type": "type is a system, not a default",
     "transitions": "every transition is intentional",
     "music": "the music and the cuts agree",
-    "ending": "the ending makes them want to post it",
+    "series": "the cards read as one numbered series, one idea each, and they would post every one",
 }
 PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "person": "the person (from taste.md)"}
 CUT_PANEL = {"motion_designer": "the motion designer", "person": "the person (from taste.md)"}
@@ -126,6 +127,20 @@ def cmd_tally(a):
     return 0
 
 
+def cut_files():
+    return [Path("out/film.mp4")] + sorted(Path("out/cards").glob("*.mp4")) + sorted(Path("out/cards").glob("*.png"))
+
+
+def fingerprint():
+    """One hash over the film and every card, animated and static."""
+    h = hashlib.sha256()
+    for f in cut_files():
+        if f.exists():
+            h.update(f.name.encode())
+            h.update(f.read_bytes())
+    return h.hexdigest()[:16]
+
+
 def rounds():
     return sorted(Path("build/critic").glob("cut-*.json"), key=lambda p: int(p.stem.split("-")[1]))
 
@@ -140,10 +155,10 @@ def cmd_cut(a):
         sys.exit("out/film.mp4 is missing: run film.py render first")
     data = blank(CUT_PANEL, ["film"])
     data["round"] = n
-    data["film"] = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
+    data["film"] = fingerprint()
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: fill in {f} after watching out/film.mp4 and the frames in build/frames/"
+    print(f"round {n}: fill in {f} after watching out/film.mp4, every card in out/cards/ and the frames in build/frames/"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 

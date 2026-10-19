@@ -103,24 +103,33 @@ def readable(c, bg, need=3.0):
 
 
 
-def short(cap, limit=60):
-    """A caption's lead line for the screen: no hashtags or emoji, cut at a clause or a word, never on a function word."""
-    c = EMOJI.sub("", re.sub(r"#\w+", "", cap or "")).strip()
+def clauses(cap):
+    """A caption as its clauses, with no hashtags, emoji or mentions."""
+    c = EMOJI.sub("", re.sub(r"[#@]\w[\w.]*", "", cap or "")).strip()
     c = re.sub(r"\s+", " ", c)
-    for sep in (". ", ": ", "; ", " - "):
-        if sep in c and len(c.split(sep)[0]) >= 14:
-            c = c.split(sep)[0]
-            break
-    if len(c) > limit and ", " in c[:limit] and len(c[:limit].rsplit(", ", 1)[0]) >= 14:
-        c = c[:limit].rsplit(", ", 1)[0]
-    if len(c) > limit:
-        c = c[:limit].rsplit(" ", 1)[0]
-    w = c.split()
+    return [x.strip(" ,;:-") for x in re.split(r"(?<=[.!?;:])\s+|\s+-\s+|,\s+", c) if x.strip(" ,;:-.")]
+
+
+def trim_stop(text):
+    w = text.split()
     while len(w) > 3 and w[-1].lower().strip(",.") in STOP:
         w.pop()
     return " ".join(w).strip(" ,;:-")
 
 
+def short(cap, limit=60):
+    """A caption's lead for the screen: whole clauses that fit, else the first clause cut at a word, never on a function word."""
+    parts = clauses(cap)
+    if not parts:
+        return ""
+    out = parts[0]
+    if len(out) > limit * 1.2:
+        out = out[:limit].rsplit(" ", 1)[0]
+    for x in parts[1:]:
+        if len(out) + 2 + len(x) > limit:
+            break
+        out = f"{out} {x}" if out.endswith((".", "!", "?")) else f"{out}, {x}"
+    return trim_stop(out.rstrip(".!?"))
 
 
 def tr(preset, direction, d=None):
@@ -157,6 +166,7 @@ class Ctx:
         self.index = _env.read_json("build/photo_index.json") or []
         self.lib = _env.read_json("build/library.json") or {}
         self.template = template
+        self.used = set()
         self.handle = self.stats.get("handle") or self.taste.get("handle") or "you"
         m = self.stats["month"]
         self.month = {"key": m["key"], "name": m["name"], "short": m["short"], "year": m["year"]}
@@ -238,17 +248,25 @@ class Ctx:
         return out
 
     def lines(self, n=3, limit=30):
-        """Her own lines from the month's captions, short enough for one line of type each."""
-        caps = [c for c in (self.stats.get("register") or {}).get("samples", [])] + \
-               [r.get("caption") or "" for r in self.lib.get("posts", []) if r.get("ts") and _ts(r["ts"]) == self.month["key"]]
+        """Her own lines from the month's captions: whole clauses short enough for one line of type each."""
+        caps = [r.get("caption") or "" for r in self.lib.get("posts", []) if r.get("ts") and _ts(r["ts"]) == self.month["key"]] + \
+               [c for c in (self.stats.get("register") or {}).get("samples", [])]
         out = []
         for c in caps:
             x = short(c, limit)
-            if 8 <= len(x) <= limit and x not in out and not x.startswith("@"):
-                out.append(self.say(x))
+            if 8 <= len(x) <= limit and len(x.split()) >= 2 and x not in out:
+                out.append(x)
             if len(out) >= n:
                 break
-        return out
+        return [self.say(x) for x in out]
+
+    def fresh(self, *cands):
+        """The first candidate photo no other card of this board leads with yet; it is then taken."""
+        flat = [p for c in cands for p in (c if isinstance(c, list) else [c]) if p]
+        pick = next((p for p in flat if p not in self.used), flat[0] if flat else None)
+        if pick:
+            self.used.add(pick)
+        return pick
 
     def colors(self):
         """The month's colors by the names she used for them when she named them, else by the palette's names."""
@@ -366,7 +384,7 @@ class Clips:
             "voice": f"an abstract opener: ink spreading slowly through wet paper in {', '.join(c[:2]) or 'their colors'}",
             "film": f"an abstract opener in {', '.join(c[:2]) or 'their colors'}: light sweeping across a textured wall",
         }[role]
-        return self.ask(f"opener-{role}", beat, f"the opener of the {TITLES.get(role, role)} card" if role != "film" else "the film's opener",
+        return self.ask(f"opener-{role}", beat, f"the opener of the card '{TITLES.get(role, role)}'" if role != "film" else "the film's opener",
                         subj, seconds, image)
 
     def alive(self, t, beat, seconds=3):
@@ -404,6 +422,7 @@ def beat(bid, kind, seconds, transition=None, photos=None, text=None, clip=None,
 def still_of(b, sid, **data):
     s = copy.deepcopy(b)
     s.update(id=sid, frames=STILL_FRAMES, transition=None, settle=0)
+    s["from"] = b["id"]
     s.pop("clip", None)
     if data:
         s["data"] = {**(s.get("data") or {}), **data}
@@ -484,12 +503,13 @@ def pillar_groups(ctx):
 # ------------------------------------------------------------------ the cards, one idea each
 def card_cover(ctx, cl, d, p):
     op = ctx.chapter("opener", 1)
+    ctx.fresh(op)
     month = ctx.month_photos(9)
     c, u, cad = facts(ctx)
     o = beat(f"{p}-open", "ClipShot", 1.5, photos=op)
     o["clip"] = cl.opener("cover", o["id"], op[0] if op else None)
     title = ctx.say("my month in review") if d == "kinetic" else ctx.say(f"{ctx.month['name']} in review")
-    t = beat(f"{p}-title", "Opener", 5.4, T(d, 0), op, {"kicker": f"@{ctx.handle}", "headline": title,
+    t = beat(f"{p}-title", "Opener", 5.4, T(d, 0), op, {"kicker": vs_line(ctx) if d == "documentary" else f"@{ctx.handle}", "headline": title,
                                                         "line": ctx.say(f"{c.get('posts', 0)} posts" + (f" · {c['stories']} stories" if c.get("stories") else ""))})
     m = beat(f"{p}-month", "Mosaic", 8.4, T(d, 1), month, data={"groups": [
         {"label": ctx.say(f"{ctx.month['name']} {ctx.year}"), "headline": ctx.say(f"{c.get('posts', 0)} posts this month"), "line": vs_line(ctx), "photos": month}]})
@@ -497,12 +517,13 @@ def card_cover(ctx, cl, d, p):
 
 
 def card_change(ctx, cl, d, p):
-    month = ctx.month_photos(6)
+    month = ctx.month_photos(12)
     sw = ctx.swatches()
-    img = next((s["photo"] for s in sw if s.get("photo")), month[0] if month else None)
+    img = ctx.fresh([s["photo"] for s in sw if s.get("photo")], month)
     o = beat(f"{p}-open", "ClipShot", 1.5, photos=[img], text={"headline": ctx.say("what changed")} if d == "kinetic" else None)
     o["clip"] = cl.opener("change", o["id"], img)
-    n = beat(f"{p}-numbers", "StatCard", 7.2, T(d, 0), month[:3], {"kicker": ctx.say(f"{ctx.month['name']} against my year")},
+    bgs = [ctx.fresh(month) for _ in range(3)]
+    n = beat(f"{p}-numbers", "StatCard", 7.2, T(d, 0), bgs, {"kicker": ctx.say(f"{ctx.month['name']} against my year")},
              data={"stats": num_stats(ctx, 3)})
     pal = beat(f"{p}-colors", "Mosaic", 6.6, T(d, 1), [s.get("photo") for s in sw],
                {"kicker": ctx.say(f"the colors of {ctx.month['name']}"), "headline": color_headline(ctx), "line": new_line(ctx)},
@@ -523,7 +544,7 @@ def card_moments(ctx, cl, d, p):
     likes = [t["likes"] for t in three if t.get("likes") is not None]
     line = ctx.say(", ".join(num(x) for x in likes[:-1]) + f" and {num(likes[-1])} likes") if len(likes) >= 2 else None
     st = beat(f"{p}-still", "PhotoLive", 3, None, [t["photo"] for t in three],
-              {"kicker": ctx.say(f"{ctx.month['name']} {ctx.year}"), "headline": ctx.say("the three that hit"), "line": line},
+              {"kicker": ctx.say(f"most liked in {ctx.month['name']}"), "headline": ctx.say("the three that hit"), "line": line},
               data={"items": [{"rank": str(t["rank"])} for t in three]})
     return beats, still_of(st, f"{p}-still")
 
@@ -531,10 +552,10 @@ def card_moments(ctx, cl, d, p):
 def card_pillars(ctx, cl, d, p):
     groups = pillar_groups(ctx)
     month = ctx.month_photos(4)
-    img = (groups[0]["photos"][0] if groups else month[0]) if (groups or month) else None
+    img = ctx.fresh([g["photos"][0] for g in groups], ctx.month_photos(12))
     o = beat(f"{p}-open", "ClipShot", 1.4, photos=[img])
     o["clip"] = cl.opener("pillars", o["id"], img)
-    k = beat(f"{p}-rows", "KineticType", 5.6, T(d, 0), month[1:2], {"kicker": ctx.say(f"what {ctx.month['name']} was about")},
+    k = beat(f"{p}-rows", "KineticType", 5.6, T(d, 0), [ctx.fresh(ctx.month_photos(12))], {"kicker": ctx.say(f"what {ctx.month['name']} was about")},
              data={"rows": pillar_rows(ctx)})
     beats = [o, k]
     if groups:
@@ -543,11 +564,11 @@ def card_pillars(ctx, cl, d, p):
 
 
 def card_voice(ctx, cl, d, p):
-    lines = ctx.lines(3, 24)
+    lines = ctx.lines(3, 26)
     c, u, cad = facts(ctx)
     three = ctx.three()
     op = ctx.chapter("opener", 1)
-    img = (ctx.month_photos(3)[2:3] or op or [None])[0]
+    img = ctx.fresh(ctx.month_photos(12)[2:], op)
     o = beat(f"{p}-open", "ClipShot", 1.4, photos=[img])
     o["clip"] = cl.opener("voice", o["id"], img)
     k = beat(f"{p}-lines", "KineticType", 6.0, T(d, 0), [img], {"kicker": ctx.say("in my words")},
@@ -638,9 +659,9 @@ def card_diary_change(ctx, cl, d, p):
 
 
 def card_diary_voice(ctx, cl, d, p):
-    beats, still = card_voice(ctx, cl, d, p)
+    beats, _ = card_voice(ctx, cl, d, p)
     pg = beat(f"{p}-lines", "Diary", 7.0, T(d, 0), data={"pages": [diary_voice(ctx)]})
-    return [beats[0], pg, beats[2]], still
+    return [beats[0], pg, beats[2]], still_of(pg, f"{p}-still", still=0)
 
 
 CARDS = {"cover": card_cover, "change": card_change, "moments": card_moments, "pillars": card_pillars, "voice": card_voice}
@@ -662,8 +683,8 @@ def film_beats(ctx, cl, d, kind):
     else:
         beats.append(beat("f-title", "Opener", 2.2, T(d, 0), op, {"kicker": f"@{ctx.handle}", "headline": ctx.say("my month in review"),
                                                                  "line": vs_line(ctx)}))
-        beats.append(beat("f-numbers", "StatCard", 3.0 if kind == "film" else 2.6, T(d, 1), month[:3],
-                          {"kicker": ctx.say(f"{ctx.month['name']} against my year")}, data={"stats": num_stats(ctx, 3 if kind == "film" else 2)}))
+        beats.append(beat("f-numbers", "StatCard", 3.2 if kind == "film" else 2.6, T(d, 1), month[:3],
+                          {"kicker": ctx.say(f"{ctx.month['name']} against my year")}, data={"stats": num_stats(ctx, 2)}))
         if kind == "film":
             sw = ctx.swatches()
             beats.append(beat("f-colors", "Mosaic", 2.2, T(d, 2), [s.get("photo") for s in sw],
@@ -690,6 +711,7 @@ def film_beats(ctx, cl, d, kind):
 # ------------------------------------------------------------------ the three boards
 def make_board(ctx, bid, axis, d, roles, makers, film_kind, meta):
     cl = Clips(ctx, d)
+    ctx.used = set()
     cards = []
     for n, role in enumerate(roles, 1):
         p = f"c{n}"
@@ -1046,8 +1068,10 @@ def cmd_check(a):
 def film_moments(beats, n):
     """n settled moments spread across a beat set."""
     cands = []
-    for t in timeline(beats):
-        sh = t["shots"]
+    tl = timeline(beats)
+    for k, t in enumerate(tl):
+        sh = list(t["shots"])
+        sh[-1] = max(sh[-2] + 1, sh[-1] - (tl[k + 1]["transition"] if k + 1 < len(tl) else 0))
         for lo, hi in zip(sh, sh[1:]):
             lo = max(lo, t["transition"])
             cands.append((t["id"], t["start"] + lo + int((hi - lo) * 0.7)))

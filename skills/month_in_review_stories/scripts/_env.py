@@ -1,4 +1,4 @@
-"""Shared helpers for the best-nine scripts (stdlib only).
+"""Shared helpers for the month-in-review scripts (stdlib only).
 
 - SKILL: this skill's folder, resolved from this file (no machine paths).
 - tools(): runs scripts/setup.py once per process and returns its JSON (python, ffmpeg, ffprobe, node, motion, engine).

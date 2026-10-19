@@ -30,7 +30,7 @@ export const KineticType: React.FC<{beat: Beat}> = ({beat}) => {
   return (
     <AbsoluteFill style={{background: d === 'kinetic' ? system.colors.accent2 : system.colors.bg}}>
       {photo ? (
-        <AbsoluteFill style={{opacity: d === 'editorial' ? 0.18 : 0.32}}>
+        <AbsoluteFill style={{opacity: d === 'editorial' ? 0.18 : d === 'kinetic' ? 0.2 : 0.32}}>
           <LivePhoto file={photo} treatment="push" intensity={1.4} />
         </AbsoluteFill>
       ) : null}
@@ -43,7 +43,7 @@ export const KineticType: React.FC<{beat: Beat}> = ({beat}) => {
           const lit = i === active;
           return (
             <div key={i} style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 24, overflow: 'hidden', width: '100%'}}>
-              <div style={{...faceStyle(f), fontSize: size, lineHeight: 1.0, whiteSpace: 'nowrap', color: lit ? (d === 'kinetic' ? system.colors.bg : system.colors.accent) : system.colors.ink,
+              <div style={{...faceStyle(f), fontSize: size, lineHeight: 1.0, whiteSpace: 'nowrap', color: lit ? system.colors.accent : system.colors.ink,
                 transform: d === 'kinetic' ? `translateX(${(1 - p) * -110}%) skewX(${(1 - p) * -12}deg)` : `translateY(${(1 - p) * 105}%)`, opacity: d === 'kinetic' ? 1 : Math.min(1, p * 1.4)}}>
                 {r.text}
               </div>

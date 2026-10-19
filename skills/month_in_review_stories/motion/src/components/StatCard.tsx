@@ -107,6 +107,11 @@ const Ledger: React.FC<{stats: Stat[]; kicker?: string; photo?: string}> = ({sta
               <div style={{...faceStyle(system.text), textTransform: 'none', fontSize: system.scale.label * 1.15, fontWeight: 500, marginTop: 8, color: system.colors.ink, opacity: 0.8}}>
                 {r.label}
               </div>
+              {r.line ? (
+                <div style={{...faceStyle(system.text), textTransform: 'none', fontSize: system.scale.label, fontWeight: 600, marginTop: 4, color: system.colors.accent}}>
+                  {r.line}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
