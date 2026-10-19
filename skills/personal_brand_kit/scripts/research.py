@@ -115,6 +115,7 @@ def spaced(rows, k=3):
 # voice -------------------------------------------------------------------------------------------------------------
 
 ITEM = r"[^,.:;\n?!]{2,32}"
+LIST3 = rf"(?:^|:\s*|[.!?]\s+)({ITEM}),\s+({ITEM}),\s+(?:and\s+)?({ITEM})(?:[.!\n]|$)"
 DEVICES = {
     "opening label": ("opens with a short label and a colon (\"sunday table:\")",
                       lambda c: bool(re.match(r"^\s*[^\s:#][^:\n]{1,28}:\s", c)) and len(c.split(":")[0].split()) <= 4),
@@ -409,6 +410,11 @@ def main():
         liked_rows = sorted((k for k in p["rows"] if k in photo_of), key=lambda k: -(rows[k].get("likes") or 0))
         p["photos"] = [photo_of[k] for k in liked_rows[:3]]
         p["examples"] = [rows[k]["caption"] for k in spaced(p["rows"])]
+        found = collections.Counter(x.strip() for k in p["rows"] for m in re.findall(LIST3, clean(rows[k]["caption"]))
+                                    for x in m[-3:] if len(x.split()) <= 4)
+        p["items"] = [x for x, _ in found.most_common(12)]
+        p["labels"] = [x for x, _ in collections.Counter(m.group(1) for k in p["rows"]
+                                                         for m in [re.match(r"^\s*([^:\n#]{2,28}):\s", rows[k]["caption"])] if m).most_common(4)]
 
     # likes: what they aspire to
     like_accounts = collections.Counter(r.get("account") for r in lib["likes"] if r.get("account"))
