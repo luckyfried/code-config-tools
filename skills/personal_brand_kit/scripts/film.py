@@ -68,7 +68,9 @@ def render_jobs(jobs, report, concurrency=None):
     _env.write_json(jf, spec)
     node = t["node"]
     env = dict(os.environ, PATH=f"{Path(node).parent}{os.pathsep}{os.environ.get('PATH', '')}")
-    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env)
+    # Every path in the spec is absolute; running from motion/ makes Remotion use the browser setup.py put in
+    # motion/node_modules/.remotion instead of downloading another one into the person's folder.
+    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env, cwd=t["motion"])
     rep = _env.read_json(report) or {"failed": len(jobs), "findings": [{"text": f"render.mjs exited {r.returncode}"}]}
     return rep
 
