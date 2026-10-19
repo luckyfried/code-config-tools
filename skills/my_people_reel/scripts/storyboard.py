@@ -680,7 +680,7 @@ def board_issues(b):
         if not c.get("prompt") and not c.get("source"):
             issues.append(f"clip {c['id']}: no prompt and no source")
         if c.get("prompt") and "no text" not in c["prompt"].lower():
-            issues.append(f"clip {c['id']}: the prompt must say no text, no logos, no faces")
+            issues.append(f"clip {c['id']}: the prompt must say no text and no logos")
     faces = {b["system"]["display"]["family"], b["system"]["text"]["family"]}
     if len(faces) > 2:
         issues.append("more than two type faces")

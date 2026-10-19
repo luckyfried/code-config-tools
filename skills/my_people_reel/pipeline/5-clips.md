@@ -7,10 +7,12 @@ does not arrive is replaced by an animated treatment of one of their photos, so 
 python3 S/scripts/clips.py list
 ```
 
-`list` prints one block per clip: its beat, its role (the wall's world for the opener, a transition between
-tiles, a tile's photo brought to life, their own reel), the prompt built from `taste.json` (palette words, subject, mood, camera,
-light, vertical 9:16 (square for a clip that plays inside a tile), its length in seconds, "no text, no logos, no people's faces"), the photo to start from when
-the clip is image-to-video, and the file to save.
+`list` prints one block per clip: its beat, its role (the world they shared for the opener, the texture between
+people on the board, a person's photo brought to life, their own reel playing in its tile), the prompt built from
+`taste.json` (palette words, subject, mood, camera, light, vertical 9:16 or square for a clip that plays inside a
+tile, its length in seconds, "no text, no logos", and either "no people's faces" or, when the clip starts from a
+photo of a person, "every face kept exactly as it is in the photograph"), the photo to start from when the clip is
+image-to-video, and the file to save.
 
 ## Generate
 

@@ -17,9 +17,7 @@ type Cam = {cx: number; cy: number; k: number; ay: number};
 
 /** Where the wall sits on screen when it is whole: below the type. */
 const useWallBox = () => {
-  const {format} = useSys();
   const s = useSafe();
-  if (format === 'story') return {size: s.W - 2 * 72, top: s.top + 380};
   return {size: s.W - 2 * 48, top: s.top + 380};
 };
 
@@ -77,21 +75,21 @@ const TileView: React.FC<{tile: Tile; slot: number; arrive: number; enter: numbe
 
 /** The words above the wall: who is in the photo, when, and her caption. */
 const Words: React.FC<{text: BeatText; name: string; delay?: number}> = ({text, name, delay = 0}) => {
-  const {system, format} = useSys();
+  const {system} = useSys();
   const s = useSafe();
   const box = useWallBox();
   return (
     <SafeBox name={name} justify="start" bottom={s.H - box.top + 16}>
       {text.kicker ? <Kicker text={text.kicker} delay={delay} /> : null}
       {text.headline ? <Headline text={text.headline} max="h2" lines={2} delay={delay + 4} /> : null}
-      {text.line ? <Line text={text.line} delay={delay + 12} size={format === 'story' ? system.scale.body : system.scale.label} /> : null}
+      {text.line ? <Line text={text.line} delay={delay + 12} size={system.scale.label} /> : null}
     </SafeBox>
   );
 };
 
 /** reveal: the whole wall settles in, slot by slot, under the words. */
 const Reveal: React.FC<{beat: Beat}> = ({beat}) => {
-  const {system, format} = useSys();
+  const {system} = useSys();
   const {pop, tween, drift} = useMotion();
   const s = useSafe();
   const box = useWallBox();
@@ -100,17 +98,16 @@ const Reveal: React.FC<{beat: Beat}> = ({beat}) => {
   const by = new Map(tiles.map((t) => [t.rank, t]));
   const stagger = data.stagger ?? system.ease.stagger;
   const k = box.size / V;
-  const card = format === 'story';
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
-      {system.texture.leaks && !card ? <Leaks strength={0.6} seed={beat.id} /> : null}
+      {system.texture.leaks ? <Leaks strength={0.6} seed={beat.id} /> : null}
       <div style={{position: 'absolute', left: (s.W - box.size) / 2, top: box.top, width: V, height: V,
-        transform: `scale(${k * (card ? 1 : drift(1, 1.02))})`, transformOrigin: '0 0'}}>
+        transform: `scale(${k * drift(1, 1.02)})`, transformOrigin: '0 0'}}>
         {(data.order as number[]).map((rank, slot) => {
           const t = by.get(rank);
           if (!t) return null;
           const e = system.direction === 'kinetic' ? pop(slot * stagger) : tween(0, 1, slot * stagger, 18);
-          return <TileView key={rank} tile={t} slot={slot} arrive={1} enter={e} badge={!card} />;
+          return <TileView key={rank} tile={t} slot={slot} arrive={1} enter={e} badge />;
         })}
       </div>
       <Words text={beat.text ?? {}} name="wall" delay={Math.min(24, 9 * stagger * 0.5)} />
