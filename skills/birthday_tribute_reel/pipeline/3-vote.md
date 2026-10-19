@@ -10,7 +10,7 @@ Read `S/critic/critic.md` (the three critics and the seven criteria). Then, as e
 board's `sheet.png` and `storyboard.md` and fill in `build/vote/scores.json`: a whole number 1–5 for each criterion
 on each board, and one paragraph per board (at least 25 words: what works, what fails, what you would change).
 Score honestly; the three boards should not come out equal. The person's critic speaks in the first person from
-`taste.md`.
+`taste.md`, as the one sending the film to the named one.
 
 ```
 python3 S/scripts/vote.py tally

@@ -19,6 +19,8 @@ DEST is a folder (a workspace). It receives:
         your_facebook_activity/posts/your_posts__check_ins__photos_and_videos_1.json
         your_facebook_activity/posts/album/0.json, 1.json
         your_facebook_activity/posts/media/<album>/*.jpg
+    dani.reyes-feed/                         the named friend's own feed as an agent saves it from a browser:
+        items.json (feed_of, handle, name, the posts with captions and comment threads), *.jpg
 
 The person has a clear taste: film-grain travel and food in warm earth tones (terracotta, ochre, olive, cream,
 espresso). About 120 posts (some carousels), 27 reels, 60 stories, 900 likes across 40 accounts whose names share
@@ -27,7 +29,14 @@ clearly the busiest month and February the quietest.
 
 Her nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
 to October, between 291 and 486 likes, while nothing else reaches 225 (the tenth sits at least 66 below the
-ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table). Strings are written the way
+ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table). The friend the film is for is Dani Reyes (@dani.reyes): tagged in more than twenty posts and stories, in most of the
+group photos, a first photo together in January and a latest one in October, more than forty comments traded in two
+distinct voices (hers lowercase and warm, Dani's loud with emoji), two short clips the two shot together
+(media/reels/together*.mp4), and a caption that names the birthday (October 24, Dani turns 30). @theo.makes is the
+account she writes to most, with a much thinner shared history, so the most frequent account is not the named one.
+Dani's own feed is a dozen posts in a cool, bright palette unlike hers.
+
+Strings are written the way
 Meta writes them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic
 name over plain JPEG bytes. Needs Pillow and ffmpeg.
 """

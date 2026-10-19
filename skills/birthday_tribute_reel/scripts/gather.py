@@ -413,20 +413,6 @@ def year_of(ts):
     return dt.datetime.fromtimestamp(int(ts), dt.timezone.utc).year
 
 
-def pick_year(rows, asked):
-    if asked:
-        return asked, f"The year is {asked}, as asked."
-    counts = {}
-    for r in rows:
-        if r.get("ts"):
-            counts[year_of(r["ts"])] = counts.get(year_of(r["ts"]), 0) + 1
-    if not counts:
-        return dt.date.today().year, "No dates in the data; used the current year."
-    full = [y for y, n in counts.items() if n >= 12]
-    y = max(full) if full else max(counts)
-    return y, f"The year is {y}: the latest year with enough posts, reels and stories ({counts[y]})."
-
-
 def write_howto(out):
     out.mkdir(exist_ok=True)
     (out / "brief.md").write_text(f"# Tribute video: no photos found\n\n## Assumptions\n\n- No Instagram export and no folder of "
