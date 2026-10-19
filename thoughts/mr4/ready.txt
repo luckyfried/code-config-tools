@@ -1,0 +1,102 @@
+mr4 ready: month_in_review_stories (Muse social kit 4)
+
+BRANCH
+  month-in-review-stories, base d04ff01, kit tip f88974c before this ready commit.
+  Commits: 0938390 (stats, picks, palette, research), c3568a9 (story card series, diary pages, series mark),
+  ec6b9ec (cards animated and static, the film, template.json, docs), f88974c (headlines settle early and
+  keep their descenders), then this ready commit. No push, no PR.
+
+FILES ADDED (76, all under skills/month_in_review_stories/)
+  SKILL.md; critic/critic.md; design/{easing.json,grade.md,safe-areas.json,standards.md,transitions.json,type.json};
+  evals/blind.md, evals/fixtures/make_person.py; fonts/{Archivo,ArchivoBlack,Fraunces,Inter,JetBrainsMono,
+  SpaceGrotesk}/*.ttf + fonts/LICENSES.md; motion/{.gitignore,.npmrc,package.json,package-lock.json,render.mjs,
+  sample/storyboard.json,public/fonts,public/fx/grain.png,public/graded/sample-1..10.jpg};
+  motion/src/{Beat,Film,Root}.tsx, index.ts, photo.tsx, system.tsx, text.tsx, texture.tsx, transitions.tsx, types.ts;
+  motion/src/components/{ClipShot,Closer,Diary,KineticType,Mosaic,Opener,PhotoLive,SeriesMark,StatCard}.tsx;
+  pipeline/{0-gather,1-research,2-storyboards,3-vote,4-produce,5-clips,6-deliver}.md;
+  scripts/{_env,clips,deliver,film,gather,grade,music,palette,picks,qa,research,setup,stats,storyboard,vote}.py
+
+CHECK 1: compile, help, clean-sandbox npm ci and remotion render
+  Sandbox /mnt/data/scratch/kit-mr4/check1 (tar copy of the kit without node_modules),
+  TMPDIR=/mnt/data/scratch/kit-mr4/tmp, npm_config_cache=/mnt/data/scratch/kit-mr4/npm-cache.
+  python3 -m py_compile scripts/*.py ; for s in scripts/*.py: python3 $s --help
+    -> 30 ok of 30 (15 scripts compiled, 15 --help rc=0); evals/fixtures/make_person.py compile + --help ok
+  cd motion && npm ci --no-audit --no-fund
+    -> rc=0, 3.01 s, 257 packages
+  npx remotion render src/index.ts Film $C/sample-film.mp4 --log=info
+    -> rc=0, 19.98 s (includes the Chrome Headless Shell download into the sandbox)
+    -> ffprobe: stream,h264,1080,1920,30/1,15.000000
+
+CHECK 2: fixture build
+  python3 S/evals/fixtures/make_person.py /mnt/data/scratch/kit-mr4/fx-check2
+    -> rc=0, 1.88 s (limit 90 s), 275 images, 54 MB (Maren Okafor, Instagram + Facebook exports to 2026-10-18;
+       September 2026 in Marrakech, 32 posts, top three at 642 / 597 / 561 likes)
+
+CHECK 3: timed hand run of each movement (fx-check2, log /mnt/data/scratch/kit-mr4/handrun.log)
+  setup 0.07 s | gather --month september (both doors closed) 0.09 s | research 3.05 s | storyboard draft 0.77 s |
+  storyboard check 0.06 s | storyboard sheets 13.45 s | vote ballot 0.05 s | vote tally 0.05 s | clips list 0.04 s |
+  clips normalize 3.22 s | music find rc=3 (no library, by design) 0.05 s | music make 1.00 s | music analyze 0.18 s |
+  film snap 0.06 s | music master 0.36 s | film render 34.64 s | film frames 5.95 s | qa check 3.32 s |
+  vote cut 0.15 s | vote verdict 0.04 s | deliver 2.83 s. All rc=0 except music find.
+  -> GATE GREEN; vote winner 3, totals {1: 80, 2: 78, 3: 94}; clips 0 generated, 1 from their reels, 7 substituted;
+     music 84 bpm, master -14.0 LUFS.
+  After the headline fix (f88974c) fx-check2 re-rendered in 31.3 s and qa check passed.
+  The fx1 hand run proved the generated-clip path (1 generated, a synthetic stand-in at build/clips/01.mp4;
+  render 48.6 s; deliver GATE GREEN).
+
+CHECK 4a: blind run WITH the kit  (/mnt/data/scratch/kit-mr4/blind-with)
+  Command (/mnt/data/scratch/kit-mr4/blind-run.sh):
+    CSC_DISABLE_KEYCHAIN=1 TMPDIR=$D/.tmp npm_config_cache=/mnt/data/scratch/kit-mr4/npm-cache \
+    /home/rib/.local/bin/claude -p "make my september recap stories" --dangerously-skip-permissions \
+      --setting-sources project,local --strict-mcp-config --output-format stream-json --verbose > run.log
+  -> rc=0 wall=410.999739717 s. Skill invoked on the first turn; kit copy left unmodified (diff clean).
+  Deliverables (out/): film.mp4; cards/01-cover, 02-moments, 03-change, 04-voice (.mp4 + .png each);
+    caption.md; template.json; review.html; brief.md; storyboards/.
+  ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv
+    film.mp4 and each of the 4 card .mp4: stream,h264,1080,1920,30/1,15.000000 + stream,aac,0/0,15.000000
+    (all five identical); 4 PNGs at 1080x1920.
+  Gate: GATE GREEN, 14 of 14 PASS: film 15.00 s; cards 4 at 15.00 s; audio aac 191 kbps, -14.0 LUFS, 4 of 4;
+    black 0; frozen 0; safe areas 9 jobs 0 findings; text 128 checks; template names 4 of 4; research; boards 3;
+    vote winner 3; clips 8 of 8; critic round 1 lowest score 4; deliver caption 21 words, 4 hashtags.
+  Style sheets: blind-with/build/storyboards/1/sheet.png, 2/sheet.png, 3/sheet.png
+  Vote (blind-with/build/vote.md): winner board 3 "the diary" 95 of 105; board 2 "the film" 75; board 1 "the series" 66.
+    critic            board1  board2  board3
+    motion designer     23      25      32
+    editor              24      25      31
+    person              19      25      32
+  Cut critics, round 1, verdict SHIP (professional, them, pacing, type, transitions, music, series):
+    motion designer 4 5 4 5 4 4 5 ; person 4 5 5 5 4 4 5
+  Caption: "september, in four pages. mostly clay, some light, a lot of cobalt. which one was your favorite"
+    #pottery #zellige #shotonfilm #monthinreview
+  Frames: blind-with/frames/01-cover.png, 02-moments.png, 03-change.png, 04-voice.png, film-01..06.png, sheet.png;
+    blind-with/frames-sheet.png
+  By eye: a coherent diary-page series (ruled paper, margin rule, 01/04 progress mark, polaroid photo,
+    numbers in the margin). All text settled and unclipped; no frame caught mid-wipe or mid-typing.
+    Card 02 holds several pages: the static PNG shows "no. 1 · september 20" (the tile workshop, 642 likes,
+    9.6x my usual, 58 comments), which is the page the critic described; the extracted animated frame lands
+    on the "no. 3" page. Both read cleanly.
+
+CHECK 4b: blind run WITHOUT the kit  (/mnt/data/scratch/kit-mr4/blind-without)
+  Same command and prompt, kit absent.
+  -> rc=0 wall=330.279543267 s
+  Deliverables (september-recap-stories/): 7 static PNGs 1080x1920 (01_cover, 02_numbers, 03_top_post,
+    04_top_reel, 05_runner_up, 06_also, 07_outro), one 04_top_reel.mp4, render.py. No film, no caption,
+    no template.json, no review.html, no style sheets, no vote, no critics.
+  ffprobe 04_top_reel.mp4: stream,h264,1080,1920,30/1,6.000000 (no audio)
+  Gate: FAILS: 7 cards (limit 3-5); 1 of 7 animated, 6.0 s (needs 15 +/-0.5 s); no film; no template.json.
+  Frames sheet: blind-without/frames-sheet.png
+  By eye: tidy static cards in a tile palette with correct numbers and safe text, but a stat dashboard
+    rather than a story: seven pages, one idea spread thin, no motion, no music. It also skipped three
+    September reels whose export files are shared with other months.
+
+CHECK 5: reruns. None needed; the with-kit run was green on its first attempt.
+
+WHAT I COULD NOT DO, AND WHY
+  - No video model in this environment: clips are substituted (still photos with motion) or taken from the
+    person's own reels. The generated-clip path was proven only by hand on fx1 with a synthetic stand-in.
+  - No music library: the kit makes its own bed (music make); music find returns rc=3 by design.
+  - The blind runs used my own session config with --setting-sources project,local --strict-mcp-config
+    rather than an empty CLAUDE_CONFIG_DIR; the brief allows this when isolation from my settings is not needed.
+  - In the check 3 hand run, taste.md, scores.json and the cut critics were copied from the fx1 hand run,
+    standing in for the agent's own writing; the blind with-run wrote all of them itself.
+  - The fixture's history starts 2026-01-01, so "September against the year" compares against Jan-Aug only.
