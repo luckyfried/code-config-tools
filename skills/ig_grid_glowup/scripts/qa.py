@@ -2,26 +2,30 @@
 """Movement 6: the measurable checks and the gate that refuses delivery.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/qa.py check     # the film, the best-nine image and the story card only (run before the critics watch the cut)
+    python3 S/scripts/qa.py check     # the film, the nine posts and the grid images only (run before the critics look)
     python3 S/scripts/qa.py gate      # everything below; exit 0 only when every check passes
 
 The gate refuses:
-  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 15-30 s
+  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 14.5-15.5 s
   audio     music was found but the film has no AAC track near 192 kbps, or its loudness is off -14 LUFS by more than 1 LU
   black     a black stretch of 0.4 s or more (ffmpeg blackdetect)
   frozen    a frozen stretch of 1.5 s or more (ffmpeg freezedetect): nothing on screen may stand still that long
   safe      text that left its safe box or was cut off (SAFE_BREACH in build/render-report.json), a font that did
             not load, or a render job that failed
-  text      a placeholder string anywhere in the film's words, the caption, the brief or the review page
-  wall      out/best-nine.png is not 1080x1080, build/wall.json does not name nine distinct photos, or the image's
-            nine cells are not nine different pictures (each cell's center, compared with every other)
-  story     out/story.png is not 1080x1920
+  posts     out/posts/01.png to 09.png are not nine 1080x1350 PNGs, or two of them are the same picture
+  grid      out/grid-before.png (their real grid) or out/grid-after.png (the nine in place over it) is missing
+  audit     out/audit.md is missing or names fewer than three findings about their grid
+  plan      build/plan.json fails plan.py check (nine captions in order 1 to 9 on rising dates, in their register,
+            none a copy of an old caption), or out/plan.md does not list the nine
+  text      a placeholder string anywhere in the film's words, the posts' words, the audit, the plan, the brief or
+            the review page
   research  build/taste.md (you are / you like / your style / your voice / avoid) or build/taste.json is missing
-  boards    three storyboards, each with storyboard.md, storyboard.json and six style-sheet frames
+  boards    three grid directions, each with storyboard.md, storyboard.json, its style sheet sheet.png and six frames
   vote      build/vote.md and build/winner.json are missing
   clips     the film's storyboard lists clips and build/clips.json does not account for every one
+  stills    a post that is a generated still has no picture behind it (build/stills.json, build/public/stills/)
   critic    the latest cut round in build/critic/ is not for this film, or scores below 4 with the one fix unspent
-  deliver   out/caption.md, out/review.html or out/brief.md is missing, or the caption is not in their register
+  deliver   out/review.html or out/brief.md is missing
 """
 import argparse
 import hashlib
@@ -33,12 +37,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import plan as plan_check  # noqa: E402
 
 PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|NaN|\bNone\b|@handle\b|your_handle", re.I)
 FILM = Path("out/film.mp4")
-WALL = Path("out/best-nine.png")
-STORY = Path("out/story.png")
-LENGTH = (15, 30)
+POSTS = Path("out/posts")
+BEFORE = Path("out/grid-before.png")
+AFTER = Path("out/grid-after.png")
+LENGTH = (14.5, 15.5)
 
 
 def sha(p):
@@ -105,41 +111,31 @@ def film_checks():
     bad = [f["text"][:160] for f in rep.get("findings", []) if f["text"].startswith(("SAFE_BREACH", "FONT_ERROR", "RENDER_ERROR", "UNKNOWN_KIND"))]
     check("safe", rep and not rep.get("failed") and not bad, f"{rep.get('jobs', 0)} render jobs, {rep.get('failed', '?')} failed, "
           f"{len(bad)} findings" + (f": {bad[0]}" if bad else ""))
-    check("wall", *wall_check())
-    sz = png_size(STORY) if STORY.exists() else None
-    check("story", sz == (1080, 1920), f"out/story.png {'at %dx%d' % sz if sz else 'is missing'}")
+    check("posts", *posts_check())
+    check("grid", BEFORE.exists() and AFTER.exists(), f"grid-before.png {'there' if BEFORE.exists() else 'missing'}, "
+          f"grid-after.png {'at %dx%d' % png_size(AFTER) if AFTER.exists() else 'missing'}")
     return res
 
 
-def wall_check():
-    """The best-nine image: 1080x1080, nine distinct sources, and nine cells that are nine different pictures."""
-    if not WALL.exists():
-        return False, "out/best-nine.png is missing"
-    sz = png_size(WALL)
-    slots = (_env.read_json("build/wall.json") or {}).get("slots") or []
-    srcs = [x.get("photo") for x in slots if x.get("photo")]
+def posts_check():
+    """The nine posts: 1080x1350 each, and nine different pictures (each post's whole frame, compared with every other)."""
+    files = [POSTS / f"{n:02d}.png" for n in range(1, 10)]
+    have = [f for f in files if f.exists()]
+    if len(have) < 9:
+        return False, f"{len(have)} of nine posts in out/posts/ (missing {[f.name for f in files if not f.exists()]})"
+    sizes = {png_size(f) for f in have}
     _env.need("PIL")
-    from PIL import Image, ImageStat
-    im = Image.open(WALL).convert("L")
-    w, h = im.size
-    cells, flat = [], 0
-    for i in range(9):
-        x, y = (i % 3) * w / 3, (i // 3) * h / 3
-        c = im.crop((int(x + w / 6 - w / 16), int(y + h / 6 - h / 16), int(x + w / 6 + w / 16), int(y + h / 6 + h / 16))).resize((16, 16), Image.BILINEAR)
-        if ImageStat.Stat(c).stddev[0] <= 4:
-            flat += 1
-        cells.append(list(c.tobytes()))
-    diffs = [sum(abs(p - q) for p, q in zip(cells[i], cells[j])) / 256 for i in range(9) for j in range(i + 1, 9)]
-    least = min(diffs)
-    ok = sz == (1080, 1080) and len(srcs) == 9 and len(set(srcs)) == 9 and flat == 0 and least > 6
-    return ok, (f"out/best-nine.png at {sz[0]}x{sz[1]}, {len(set(srcs))} distinct photos in build/wall.json, "
-                f"{flat} flat cells, least difference between two cells {least:.1f}")
+    from PIL import Image
+    cells = [list(Image.open(f).convert("L").resize((16, 20), Image.BILINEAR).tobytes()) for f in have]
+    least = min(sum(abs(p - q) for p, q in zip(cells[i], cells[j])) / 320 for i in range(9) for j in range(i + 1, 9))
+    return sizes == {(1080, 1350)} and least > 6, (f"nine posts at {', '.join('%dx%d' % z for z in sorted(sizes))}, "
+                                                   f"least difference between two posts {least:.1f}")
 
 
 def words_in(obj, acc):
     if isinstance(obj, dict):
         for k, v in obj.items():
-            if k in ("kicker", "headline", "line", "text", "meta", "label", "signoff", "name") and isinstance(v, str):
+            if k in ("kicker", "headline", "line", "text", "meta", "label", "signoff", "name", "caption", "bio") and isinstance(v, str):
                 acc.append(v)
             else:
                 words_in(v, acc)
@@ -154,24 +150,41 @@ def gate_checks():
     def check(name, ok, detail):
         res.append((name, bool(ok), detail))
     film = _env.read_json("build/film.json") or {}
-    texts = words_in({"beats": film.get("beats"), "wall": film.get("wall"), "story": film.get("story")}, [])
-    for f in ("out/caption.md", "out/brief.md", "out/review.html"):
+    texts = words_in({"beats": film.get("beats"), "posts": film.get("posts"), "profile": film.get("profile")}, [])
+    for f in ("out/audit.md", "out/plan.md", "out/brief.md", "out/review.html"):
         if Path(f).exists():
             texts.append(Path(f).read_text())
     hits = sorted({m.group(0) for t in texts for m in PLACEHOLDER.finditer(t)})
     check("text", film and not hits, f"{len(texts)} texts scanned" + (f"; placeholders: {hits}" if hits else ""))
+    audit = Path("out/audit.md").read_text() if Path("out/audit.md").exists() else ""
+    part = audit.split("## What your grid is doing", 1)[-1].split("\n## ", 1)[0] if audit else ""
+    found = len(re.findall(r"^\d+\.\s+\S", part, re.M))
+    check("audit", found >= 3, f"out/audit.md {'names %d findings' % found if audit else 'is missing'}")
+    plan = _env.read_json("build/plan.json") or {}
+    bad = plan_check.problems(plan) if plan else ["build/plan.json is missing"]
+    md = Path("out/plan.md").read_text() if Path("out/plan.md").exists() else ""
+    rows = [int(m) for m in re.findall(r"^\| (\d) \|", md, re.M)]
+    check("plan", not bad and rows == list(range(1, 10)), f"{len(plan.get('slots') or [])} slots, out/plan.md lists {rows}"
+          + (f"; {bad[0]}" + (f" (and {len(bad) - 1} more)" if len(bad) > 1 else "") if bad else ""))
     tm = Path("build/taste.md").read_text().lower() if Path("build/taste.md").exists() else ""
     heads = [h for h in ("you are", "you like", "your style", "your voice", "avoid") if h not in tm]
     check("research", tm and not heads and Path("build/taste.json").exists(),
           "taste.md and taste.json" + (f"; taste.md is missing: {heads}" if heads else ""))
     boards = sorted(Path("build/storyboards").glob("*/storyboard.json"))
-    full = [b.parent for b in boards if (b.parent / "storyboard.md").exists() and len(list((b.parent / "frames").glob("0[1-6].png"))) == 6]
-    check("boards", len(boards) == 3 and len(full) == 3, f"{len(boards)} storyboards, {len(full)} with storyboard.md and six frames")
+    full = [b.parent for b in boards if (b.parent / "storyboard.md").exists() and (b.parent / "sheet.png").exists()
+            and len(list((b.parent / "frames").glob("0[1-6]-*.png"))) == 6]
+    check("boards", len(boards) == 3 and len(full) == 3,
+          f"{len(boards)} grid directions, {len(full)} with storyboard.md, sheet.png and six frames")
     win = _env.read_json("build/winner.json") or {}
     check("vote", Path("build/vote.md").exists() and win.get("board"), f"winner {win.get('board')} ({win.get('name')})")
     want = {c["id"] for c in film.get("clips", [])}
     got = set(((_env.read_json("build/clips.json") or {}).get("clips") or {}).keys())
     check("clips", want <= got, f"{len(want)} clips listed, {len(want & got)} accounted for" + (f"; missing {sorted(want - got)}" if want - got else ""))
+    still_ids = [p.get("still_id") for p in film.get("posts", []) if p.get("still")]
+    have = (_env.read_json("build/stills.json") or {}).get("stills", {})
+    ok_stills = [i for i in still_ids if i in have and Path("build/public/stills", f"{i}.jpg").exists()]
+    check("stills", len(ok_stills) == len(still_ids), f"{len(still_ids)} generated stills in the nine, {len(ok_stills)} with a picture"
+          + (" (" + ", ".join(f"{i} {have[i].get('status')}" for i in ok_stills) + ")" if ok_stills else ""))
     rounds = sorted(Path("build/critic").glob("cut-*.json"), key=lambda p: int(p.stem.split("-")[1]))
     if not rounds:
         check("critic", False, "no cut round in build/critic/: run vote.py cut and fill it in")
@@ -182,14 +195,9 @@ def gate_checks():
         done = sc and all(isinstance(x, int) for x in sc)
         ok = same and done and (min(sc) >= 4 or len(rounds) >= 2)
         check("critic", ok, f"round {len(rounds)}, lowest {min(sc) if done else '?'}" + ("" if same else "; the round is not for the current out/film.mp4"))
-    cap = Path("out/caption.md").read_text() if Path("out/caption.md").exists() else ""
-    lower = (_env.read_json("build/taste.json") or {}).get("register", {}).get("lowercase")
-    body = re.sub(r"#\w+", "", cap)
-    tags = re.findall(r"#\w+", cap)
-    reg = cap and (not lower or body == body.lower()) and 1 <= len(tags) <= 10
-    check("deliver", reg and Path("out/review.html").exists() and Path("out/brief.md").exists(),
-          f"caption {len(cap.split())} words, {len(tags)} hashtags" + (", lowercase like theirs" if lower else "") +
-          ("" if Path("out/review.html").exists() else "; review.html missing") + ("" if Path("out/brief.md").exists() else "; brief.md missing"))
+    check("deliver", Path("out/review.html").exists() and Path("out/brief.md").exists(),
+          ("review.html" if Path("out/review.html").exists() else "review.html missing") + ", " +
+          ("brief.md" if Path("out/brief.md").exists() else "brief.md missing"))
     return res
 
 

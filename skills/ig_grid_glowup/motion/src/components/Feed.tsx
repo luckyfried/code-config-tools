@@ -75,7 +75,7 @@ const CellView: React.FC<{cell: Cell; slot: number; dim?: number}> = ({cell, slo
  * land(n) is how far post n has landed, 0 to 1; a slot not landed yet shows as an empty frame.
  */
 export const Profile: React.FC<{posts?: Post[]; land?: (n: number) => number; rows?: number; callouts?: Callout[];
-  show?: (i: number) => number; dimOld?: number; divider?: boolean}> = ({posts, land, rows, callouts, show, dimOld = 0, divider}) => {
+  show?: (i: number) => number; dimOld?: number; divider?: boolean; labels?: boolean}> = ({posts, land, rows, callouts, show, dimOld = 0, divider, labels = true}) => {
   const {board, system} = useSys();
   const shift = posts ? 9 : 0;
   const total = rows ? rows * 3 : shift + board.grid.length;
@@ -128,9 +128,9 @@ export const Profile: React.FC<{posts?: Post[]; land?: (n: number) => number; ro
                   border: `8px solid ${system.colors.accent}`, opacity: a, transform: `scale(${1.08 - 0.08 * a})`}} />
               );
             })}
-            <div style={{position: 'absolute', left: Math.min(x + 18, 1080 - 520), top: y + 22, background: system.colors.accent, color: '#fff', padding: '10px 20px',
+            {labels ? <div style={{position: 'absolute', left: Math.min(x + 18, 1080 - 520), top: y + 22, background: system.colors.accent, color: '#fff', padding: '10px 20px',
               fontFamily: `'${UI}'`, fontSize: 34, fontWeight: 700, whiteSpace: 'nowrap', opacity: a, transform: `translateY(${(1 - a) * 20}px)`,
-              boxShadow: '0 10px 30px rgba(0,0,0,0.35)'}}>{co.label}</div>
+              boxShadow: '0 10px 30px rgba(0,0,0,0.35)'}}>{co.label}</div> : null}
           </React.Fragment>
         );
       })}
@@ -174,11 +174,24 @@ const Before: React.FC<{beat: Beat}> = ({beat}) => {
   const target = Math.max(0, Math.min(cellAt(lowest).y + CH + 60 - view, profileHeight(30) - view));
   const scroll = tween(0, target, Math.round(duration * 0.12), Math.round(duration * 0.7), 'move');
   const step = Math.max(6, Math.round((duration * 0.62) / Math.max(1, callouts.length)));
+  const show = (i: number) => tween(0, 1, 8 + i * step, 8);
+  const s = useSafe();
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       <Panel scroll={scroll} enter={pop(0, {damping: 18})}>
-        <Profile callouts={callouts} show={(i) => tween(0, 1, 8 + i * step, 8)} />
+        <Profile callouts={callouts} show={show} labels={false} />
       </Panel>
+      <div style={{position: 'absolute', left: (s.W - 1080 * K) / 2 + 28, top: PANEL_TOP + 28, display: 'flex', flexDirection: 'column',
+        alignItems: 'flex-start', gap: 14}}>
+        {callouts.map((co, i) => {
+          const a = show(i);
+          return a <= 0 ? null : (
+            <div key={i} style={{background: system.colors.accent, color: '#fff', padding: '12px 24px', borderRadius: 999, fontFamily: `'${UI}'`,
+              fontSize: 36, fontWeight: 700, whiteSpace: 'nowrap', opacity: a, transform: `translateX(${(1 - a) * -40}px)`,
+              boxShadow: '0 12px 34px rgba(0,0,0,0.35)'}}>{co.label}</div>
+          );
+        })}
+      </div>
       <Words beat={beat} name="before" />
     </AbsoluteFill>
   );
@@ -220,7 +233,7 @@ const Posts: React.FC<{beat: Beat}> = ({beat}) => {
         return (
           <Sequence key={n} from={a} durationInFrames={len} layout="none">
             <SubShot frames={len}>
-              <OnePost post={p} width={s.W - 2 * 90} top={PANEL_TOP - 40} label={`post ${n} of 9`} />
+              <OnePost post={p} width={s.W - 2 * 110} top={PANEL_TOP + 20} label={`post ${n} of 9`} />
             </SubShot>
           </Sequence>
         );

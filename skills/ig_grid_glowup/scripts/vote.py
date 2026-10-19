@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Movement 3 (the panel picks a storyboard) and movement 6 (two critics score the finished cut).
+"""Movement 3 (the panel picks a grid direction) and movement 6 (two critics score the finished nine and the film).
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/vote.py ballot     # build/vote/ballot.md + build/vote/scores.json to fill in
@@ -7,10 +7,11 @@ USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/vote.py cut        # build/critic/cut-N.json to fill in for the rendered film (next round N)
     python3 S/scripts/vote.py verdict    # SHIP when every score of the latest round is 4 or more, else the worst thing
 
-The panel (S/critic/critic.md has each critic's brief): a motion designer (craft, pacing, type, transitions), an
-editor (story, emotion, the ending) and the person, modeled from build/taste.md (is this unmistakably me; would I
-post it). Each scores every storyboard 1-5 on the seven criteria below and writes one paragraph per board.
-The finished cut is scored by the motion designer and the person on the same criteria.
+The panel (S/critic/critic.md has each critic's brief): a designer (craft, type, color, the grid as a whole), an
+editor (rhythm, order, the before-and-after story) and the person, modeled from build/taste.md (is this unmistakably
+me; would I post it). Each scores every direction 1-5 on the seven criteria below and writes one paragraph per board,
+looking at its style sheet (the next nine above the real grid) and its film frames. The finished nine and the film are
+scored by the designer and the person on the same criteria.
 """
 import argparse
 import hashlib
@@ -21,16 +22,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 
 CRITERIA = {
-    "professional": "it looks like a professional motion designer made it",
+    "professional": "the nine look like a professional art director designed them, post by post and as a grid",
     "them": "it is unmistakably them (their photos carry it, their colors, their voice)",
-    "pacing": "the pacing holds attention to the end",
-    "type": "type is a system, not a default",
-    "transitions": "every transition is intentional",
-    "music": "the music and the cuts agree",
-    "ending": "the ending makes them want to post it",
+    "rhythm": "the grid reads as one feed: calm and busy alternate, no two near copies sit together",
+    "palette": "the colors hold together across the nine and sit well above their real grid",
+    "type": "where there is type it is a system in their words, never a default or a placeholder",
+    "film": "the before-and-after film shows the change plainly, with cuts that land on the music",
+    "post": "they would post these nine, in this order, next week",
 }
-PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "person": "the person (from taste.md)"}
-CUT_PANEL = {"motion_designer": "the motion designer", "person": "the person (from taste.md)"}
+PANEL = {"designer": "the designer", "editor": "the editor", "person": "the person (from taste.md)"}
+CUT_PANEL = {"designer": "the designer", "person": "the person (from taste.md)"}
 
 
 def boards():
@@ -50,8 +51,9 @@ def cmd_ballot(a):
     bs = boards()
     d = Path("build/vote")
     d.mkdir(parents=True, exist_ok=True)
-    lines = ["# ballot", "", "Score every storyboard 1-5 on each criterion, as each critic, and write one paragraph per board "
-             "(what works, what fails, what you would change). Look at each style sheet before scoring.", "",
+    lines = ["# ballot", "", "Score every grid direction 1-5 on each criterion, as each critic, and write one paragraph per board "
+             "(what works, what fails, what you would change). Open each style sheet (the next nine above the real "
+             "grid) and its film frames before scoring; judge the nine against the real grid below them.", "",
              "## criteria", ""] + [f"- `{k}`: {v}" for k, v in CRITERIA.items()] + ["", "## the panel", ""]
     lines += [f"- `{k}`: {v}" for k, v in PANEL.items()]
     lines += ["", "Briefs: " + str(_env.SKILL / "critic" / "critic.md"), "", "## the boards", ""]
@@ -59,7 +61,7 @@ def cmd_ballot(a):
         sb = Path(f"build/storyboards/{b['id']}")
         lines += [f"### {b['id']}: {b['name']}", "", b.get("idea", ""), "",
                   f"- structure {b.get('structure')}; tone {b.get('tone')}; clips: {b.get('clip_use')}",
-                  f"- storyboard: {sb / 'storyboard.md'}", f"- style sheet: {sb / 'sheet.png'} (frames in {sb / 'frames'}/)", ""]
+                  f"- storyboard: {sb / 'storyboard.md'}", f"- style sheet: {sb / 'sheet.png'}", f"- film frames: {sb / 'frames.png'}", ""]
     lines += ["Fill in build/vote/scores.json, then run vote.py tally.", ""]
     (d / "ballot.md").write_text("\n".join(lines))
     f = d / "scores.json"
@@ -102,10 +104,10 @@ def cmd_tally(a):
     win = order[0]
     tie = [i for i in ids if tot[i] == tot[win]]
     names = {b["id"]: b["name"] for b in bs}
-    lines = ["# the vote", "", f"Winner: storyboard {win}, {names[win]} ({tot[win]} of {len(PANEL) * len(CRITERIA) * 5})."
+    lines = ["# the vote", "", f"Winner: direction {win}, {names[win]} ({tot[win]} of {len(PANEL) * len(CRITERIA) * 5})."
              + (f" Tied on total with {', '.join(i for i in tie if i != win)}; the person's critic broke the tie." if len(tie) > 1 else ""),
              f"Runners-up: " + ", ".join(f"{i} {names[i]} ({tot[i]})" for i in order[1:]) + ". They stay on the review page; "
-             "say \"do the second one\" and the kit renders that storyboard.", "",
+             "say \"do the second one\" and the kit renders that direction.", "",
              "| critic | " + " | ".join(f"board {i}" for i in ids) + " |", "|---|" + "---|" * len(ids)]
     for c in PANEL:
         lines.append(f"| {PANEL[c]} | " + " | ".join(str(sum(data['critics'][c]['boards'][i]['scores'].values())) for i in ids) + " |")
@@ -122,7 +124,7 @@ def cmd_tally(a):
             lines += [f"**{PANEL[c]}.** {data['critics'][c]['boards'][i]['paragraph'].strip()}", ""]
     Path("build/vote.md").write_text("\n".join(lines))
     _env.write_json("build/winner.json", {"board": win, "name": names[win], "totals": tot, "order": order, "tie_broken_by_person": len(tie) > 1})
-    print(f"winner: storyboard {win} ({names[win]}), totals {tot} -> build/vote.md, build/winner.json")
+    print(f"winner: direction {win} ({names[win]}), totals {tot} -> build/vote.md, build/winner.json")
     return 0
 
 
@@ -143,7 +145,8 @@ def cmd_cut(a):
     data["film"] = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: fill in {f} after watching out/film.mp4 and the frames in build/frames/"
+    print(f"round {n}: fill in {f} after looking at out/grid-after.png, out/posts/ and the film out/film.mp4 "
+          "(frames in build/frames/)"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 

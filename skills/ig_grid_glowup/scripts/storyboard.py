@@ -501,25 +501,44 @@ TRANS = {"tonal": ("dip", "wipe", "match", "dip", "fade"),
 AFTER_LINE = {"tonal": "one warm grade, nothing loud", "blocks": "a color a row, light to dark", "alternate": "a photo, then your words"}
 
 
+def full_size(ctx, posts):
+    """The three of the nine the film shows full size: the last to go up, then each time the post least like those
+    already chosen (a type post or a color tile counts as unlike any photo)."""
+    by_n = {p["n"]: p for p in posts}
+    def like(a, b):
+        if a.get("kind") != b.get("kind"):
+            return 0.0
+        if a.get("kind") != "photo" or not a.get("source") or not b.get("source"):
+            return 0.5
+        x, y = ctx.sig({"photo": a["source"]}), ctx.sig({"photo": b["source"]})
+        return sum(i * j for i, j in zip(x, y))
+    chosen = [9] if 9 in by_n else [max(by_n)]
+    while len(chosen) < 3 and len(chosen) < len(by_n):
+        rest = [n for n in sorted(by_n, reverse=True) if n not in chosen]
+        chosen.append(min(rest, key=lambda n: max(like(by_n[n], by_n[c]) for c in chosen)))
+    return chosen
+
+
 def make_board(ctx, look):
     ctx.taken = set()
     L = LOOKS[look]
     d, bid = L["system"], L["id"]
     posts = NINE[look](ctx, bid)
-    first = next((p for p in posts if p.get("photo") and not p.get("still")), None)
+    real = [p for p in posts if p.get("photo") and not p.get("still")]
+    first = real[0] if real else None
+    second = real[len(real) // 2] if len(real) > 1 else first
     callouts = ctx.callouts()
     t = TRANS[look]
-    n_find = len(ctx.audit.get("findings") or [])
-    show = [9, 5, 1]
+    show = full_size(ctx, posts)
     beats = [
         {"id": "opener", "kind": "Opener", "frames": sec(2.0), "transition": None, "clip": "01",
          "photos": [first["photo"]] if first else [], "data": {"word": "grid"},
          "text": {"kicker": f"@{ctx.handle}", "headline": ctx.say("your grid, glowed up"), "line": ctx.say("the next nine posts")}},
         {"id": "before", "kind": "Feed", "frames": sec(3.6), "transition": tr(t[0], d),
          "data": {"mode": "before", "callouts": callouts},
-         "text": {"kicker": ctx.say("your grid now"), "headline": ctx.say(f"{n_find} things pull it apart" if n_find else "your last 30 posts")}},
+         "text": {"kicker": ctx.say("your grid now"), "headline": ctx.say(f"{len(callouts)} things pull it apart" if len(callouts) > 1 else "your last 30 posts")}},
         {"id": "reveal", "kind": "ClipShot", "frames": sec(2.4), "transition": tr(t[1], d, "from-right"), "clip": "02",
-         "photos": [first["photo"]] if first else [], "text": {"kicker": ctx.say("the next nine"), "headline": ctx.say(L["name"])}},
+         "photos": [second["photo"]] if second else [], "text": {"kicker": ctx.say("the next nine"), "headline": ctx.say(L["name"])}},
         {"id": "after", "kind": "Feed", "frames": sec(4.2), "transition": tr(t[2], d),
          "data": {"mode": "after", "weights": [1] * 9 + [3]},
          "text": {"kicker": ctx.say("the next nine"), "headline": ctx.say(L["name"]), "line": ctx.say(AFTER_LINE[look])}},
@@ -531,7 +550,7 @@ def make_board(ctx, look):
     clips = [{"id": "01", "beat": "opener", "role": "the opener: the world the feed lives in",
               "prompt": ctx.prompt(world_subject(ctx), d, 2), "seconds": 2, "image": first["photo"] if first else None},
              {"id": "02", "beat": "reveal", "role": "the reveal: from the grid now to the next nine",
-              "prompt": ctx.prompt(REVEAL[look], d, 3), "seconds": 3, "image": first["photo"] if first else None}]
+              "prompt": ctx.prompt(REVEAL[look], d, 3), "seconds": 3, "image": second["photo"] if second else None}]
     stills = [{"id": p["still_id"], "n": p["n"], "prompt": p["still_prompt"], "color": p["still_color"], "file": p["photo"]}
               for p in posts if p.get("still")]
     board = {"id": bid, "look": look, "name": ctx.say(L["name"]), "direction": d, "structure": L["structure"], "tone": L["tone"],
@@ -797,11 +816,14 @@ def cmd_check(a):
 def sheet_frames(b):
     """Six moments of the film: the opener, the grid with its findings, the reveal, the nine landed, a post, the end."""
     out = []
-    for t in timeline(b["beats"]):
+    tl = timeline(b["beats"])
+    for i, t in enumerate(tl):
         sh = t["shots"]
         lo, hi = (sh[-2], sh[-1]) if t["id"] == "after" else (sh[0], sh[1])
-        lo = max(lo, t["transition"])
-        out.append((t["id"], t["start"] + lo + int((hi - lo) * 0.75)))
+        leave = tl[i + 1]["transition"] if i + 1 < len(tl) else 0
+        lo, hi = max(lo, t["transition"]), min(hi, sh[-1] - leave)
+        at = hi - 4 if t["id"] == "after" else lo + int(max(0, hi - lo) * 0.75)
+        out.append((t["id"], t["start"] + max(lo, at)))
     return out[:6]
 
 

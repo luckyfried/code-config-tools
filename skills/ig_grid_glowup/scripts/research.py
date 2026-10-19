@@ -27,6 +27,7 @@ import argparse
 import collections
 import datetime as dt
 import re
+import shutil
 import statistics
 import subprocess
 import sys
@@ -407,7 +408,7 @@ def hours(rows):
 
 
 def render_audit(audit, handle):
-    """out/audit.md: one page in plain words."""
+    """out/audit.md: one page in plain words, and out/grid-before.png, the numbered grid it refers to."""
     L = [f"# Your grid, read: @{handle}", "",
          f"These are your last {audit['grid_size']} posts as your profile shows them, three across, newest at the top left "
          f"(the picture is `grid-before.png`, numbered from the top left).", "", "## What your grid is doing", ""]
@@ -420,6 +421,8 @@ def render_audit(audit, handle):
           f"## The direction: {DIRECTIONS[audit['recommend']]}", "", audit["why"], ""]
     Path("out").mkdir(exist_ok=True)
     Path("out/audit.md").write_text("\n".join(L))
+    if Path("build/grid-sheet.png").exists():
+        shutil.copyfile("build/grid-sheet.png", "out/grid-before.png")
 
 
 def cmd_audit():

@@ -110,7 +110,7 @@ export const hash = (s: string) => {
 /** Gives a sub-shot its own duration so drift and settle are measured against the sub-shot. */
 export const SubShot: React.FC<{frames: number; children: React.ReactNode}> = ({frames, children}) => {
   const ctx = useSys();
-  const beat = ctx.beat ? {...ctx.beat, frames, settle: Math.floor(frames * 0.5)} : undefined;
+  const beat = ctx.beat ? {...ctx.beat, frames, settle: Math.max(Math.floor(frames * 0.5), Math.min(frames - 2, 30))} : undefined;
   return <SystemContext.Provider value={{...ctx, beat}}>{children}</SystemContext.Provider>;
 };
 
