@@ -1,0 +1,159 @@
+8348b94ac8a17343312b174d2da5410b388572c0
+personal_brand_kit (kit 9), branch personal-brand-kit. The sha above is the kit tip; this file is committed on top of it.
+Six commits on main d04ff01: 7f09e6f fixture, 97120ab research, a7f6337 brand.json + brand.py, eef778f ten guide cards + three
+reveal storyboards + the gate's brand checks, c3dd7ad fixes from the hand run, 8348b94 render from motion/. No attribution lines.
+
+FILES ADDED (75, all under skills/personal_brand_kit/)
+SKILL.md
+critic/critic.md
+design/: brand.schema.json easing.json grade.md safe-areas.json standards.md transitions.json type.json
+evals/: blind.md fixtures/make_person.py
+fonts/: 7 files
+motion/: 34 files (package.json, package-lock.json, render.mjs, sample/, src/ with Film and Card compositions; components
+  Opener, ClipShot, Reveal, Swipe, Poster, GuideCard)
+pipeline/: 0-gather.md 1-research.md 2-storyboards.md 3-vote.md 4-produce.md 5-clips.md 6-deliver.md
+scripts/: _env.py brand.py clips.py deliver.py film.py gather.py grade.py music.py palette.py picks.py qa.py research.py
+  setup.py stats.py storyboard.py vote.py
+
+CHECK 1: COMPILE, HELP, CLEAN-SANDBOX RENDER
+- cd skills/personal_brand_kit && python3 -m py_compile scripts/*.py evals/fixtures/make_person.py
+  -> COMPILE_OK, 17 files (at 8348b94)
+- for f in scripts/*.py evals/fixtures/make_person.py; do python3 $f --help; done -> 17 of 17 rc 0 (at 8348b94)
+- Clean sandbox /mnt/data/scratch/kit-pb9/check1b/kit (git archive of 8348b94 skills/personal_brand_kit), in motion/:
+  npm_config_cache=$C/npm-cache npm ci --no-audit --no-fund -> rc 0, 2.81 s, 257 packages
+  npx remotion render src/index.ts Film $C/sample-film.mp4 --gl=swangle --log=info -> rc 0, 17.44 s (includes the
+    browser download, which went into motion/node_modules/.remotion; nothing under ~), 0 SAFE_BREACH
+    ffprobe: stream,h264,1080,1920,30/1,25.000000
+  npx remotion still src/index.ts Card $C/sample-card.png --gl=swangle -> rc 0, 2.36 s, 1080x1350
+  (The same check at eef778f, /mnt/data/scratch/kit-pb9/check1: npm ci 3.0 s, render 76.99 s under load, still 4.57 s.)
+
+CHECK 2: FIXTURE UNDER 90 S
+- python3 skills/personal_brand_kit/evals/fixtures/make_person.py /mnt/data/scratch/kit-pb9/hand2 -> rc 0, 1.38 s,
+  35M, 277 files (1.73 s inside the hand run). 102 posts, 123 post media, 20 reels, 60 stories, 900 likes, 70 saved,
+  14 Facebook posts.
+
+CHECK 3: HAND RUN BY MOVEMENT (driver /mnt/data/scratch/kit-pb9/runs/hand.zsh a|b|c|d, workspace
+/mnt/data/scratch/kit-pb9/hand1, log hand1/timings.txt; S=skills/personal_brand_kit; final pass)
+  fixture            1.73 s  python3 S/evals/fixtures/make_person.py hand1
+  0 gather           0.14 s  python3 S/scripts/gather.py --door instagram_account="closed: ..." --door browser="closed: ..."
+  1 research         2.74 s  python3 S/scripts/research.py        (5 outliers, type editorial)
+  1 brand edit       0.02 s  (hand: statement, the walk pillar renamed "the walk home", aspire line)
+  1 brand system     0.05 s  python3 S/scripts/brand.py system
+  1 brand plan       0.05 s  python3 S/scripts/brand.py plan --start 2026-10-20   (30 drafts)
+  1 plan review      0.02 s  (hand: captions rewritten, draft false)
+  1 brand plan       0.05 s  python3 S/scripts/brand.py plan --start 2026-10-20   (0 drafts; 13 posts + stories over 30 days)
+  2 storyboard draft 0.71 s  python3 S/scripts/storyboard.py draft
+  2 storyboard check 0.07 s  python3 S/scripts/storyboard.py check
+  2 storyboard sheets 18.48 s python3 S/scripts/storyboard.py sheets           (18 frames, 3 sheets)
+  3 vote ballot      0.07 s  python3 S/scripts/vote.py ballot
+  3 vote tally       0.04 s  python3 S/scripts/vote.py tally   -> winner 2 the swipe, totals {1: 85, 2: 96, 3: 91}
+  5 clips list       0.05 s  python3 S/scripts/clips.py list   -> 2 clips
+  5 clips normalize  1.12 s  python3 S/scripts/clips.py normalize --why "the video model made clip 01 only"
+                             -> 1 generated (a fixture reel stood in for a model clip), 1 substituted from a photo
+  4 music find       0.22 s  python3 S/scripts/music.py find (rc 3 on the first pass: no music; then make)
+  4 music make       1.03 s  python3 S/scripts/music.py make    -> calm, 84 bpm
+  4 music analyze    0.19 s  python3 S/scripts/music.py analyze -> 84 bpm, 70 onsets, 43 beats, 11 downbeats
+  4 storyboard snap  0.05 s  python3 S/scripts/storyboard.py snap -> 5 beats, 4 cuts on the music, 25.1 s
+  4 music master     0.40 s  python3 S/scripts/music.py master  -> -14.0 LUFS
+  4 film render     14.20 s  python3 S/scripts/film.py render   -> 11 of 11 jobs (film + 10 cards)
+  4 film frames      3.56 s  python3 S/scripts/film.py frames
+  6 qa check         0.93 s  python3 S/scripts/qa.py check      -> CHECKS PASS
+  6 vote cut         0.05 s  python3 S/scripts/vote.py cut
+  6 vote verdict     0.05 s  python3 S/scripts/vote.py verdict  -> SHIP, round 1
+  6 deliver          0.96 s  python3 S/scripts/deliver.py       -> GATE GREEN
+  Script time about 47 s in all. Film: stream,h264,1080,1920,30/1,25.133333 / stream,aac,0/0,25.133000.
+  Cut scores (motion designer and person): professional 5, them 5, pacing 4, type 5, transitions 4, music 4, ending 5.
+  The hand run found these defects, fixed in c3dd7ad: one generic stop item (now up to three, each with its own count and
+  example); a renamed pillar lost its plan pieces (now matched by shared words); the swipe closer was illegible over a
+  dark photo (stronger scrim, 3 lines); the swipe froze 1.7 s (every card animates); `film.py render --only film` dropped
+  the guide list (--only removed); deliver.py TypeError on string compositions.
+
+CHECK 4: BLIND RUNS
+Driver: zsh /mnt/data/scratch/kit-pb9/runs/blind.zsh with|without. Fresh sandbox, fixture, the kit copied into
+.claude/skills (with only), then
+  CSC_DISABLE_KEYCHAIN=1 claude -p "what's my style? make me a brand kit from my feed" --dangerously-skip-permissions
+    --setting-sources project,local --strict-mcp-config --output-format stream-json --verbose
+Harness defect found and fixed before the counted runs: the first pair (09:23Z) had the fixture's answer key
+(fixture.log, holding the intended palette and pillars) INSIDE the sandbox, and the without-kit run read it. Both runs
+were moved to /mnt/data/scratch/kit-pb9/runs/contaminated/ and not counted. The log now goes to runs/blind-<mode>.fixture.log.
+In the counted runs, run.log shows no read of fixture.log or of the kit's evals/.
+
+blind-with (/mnt/data/scratch/kit-pb9/blind-with, kit at c3dd7ad)
+- wall: rc=0 wall=234 s (09:29:09Z to 09:33:03Z); result success, 45 turns
+- deliverables, all present: out/film.mp4, out/cards/01-palette..10-week.png (10), out/brand.json, out/plan.md,
+  out/caption.md, out/review.html, out/brief.md, out/storyboards/1.png 2.png 3.png
+- ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv out/film.mp4
+  -> stream,h264,1080,1920,30/1,25.133333 / stream,aac,0/0,25.133000
+- python3 .claude/skills/personal_brand_kit/scripts/qa.py gate -> GATE GREEN, 16 of 16 PASS: film 1080x1920 h264 30 fps
+  25.1 s; audio aac -14.0 LUFS; black 0; frozen 0; safe 11 jobs 0 findings; cards 10 at 1080x1350, 10 distinct;
+  brand valid, pillar shares sum 1.000; plan 30 dated entries; colors 8 names all in brand.json; text 75 scanned;
+  research; boards 3 with six frames; vote winner 2; clips 2 of 2; critic round 1, lowest 4; deliver caption 15 words,
+  2 hashtags, lowercase
+- style sheets: blind-with/out/storyboards/1.png, 2.png, 3.png (build/storyboards/N/sheet.png)
+- vote (build/vote.md): winner storyboard 2 "the swipe", 93 of 105; 3 "the poster" 85; 1 "one card at a time" 66
+    motion designer 23 / 30 / 30; editor 22 / 30 / 27; person 21 / 33 / 28
+- cut critic (build/critic/cut-1.json, round 1, SHIP): motion designer and person both professional 4, them 5,
+  pacing 4, type 5, transitions 4, music 4, ending 5
+- frames: python3 .claude/skills/personal_brand_kit/scripts/film.py frames --out frames -> rc 0, 3.66 s
+  blind-with/frames/01-opener.png 02-swipe-1.png 03-turn.png 04-swipe-2.png 05-closer.png
+  contact sheet: blind-with/frames-sheet.png (copy in blind-with/frames/frames-sheet.png)
+  card sheet: /mnt/data/scratch/kit-pb9/blind-with-cards.png. Looked at both: brand colors throughout, every text legible,
+  ten distinct cards.
+- caption: "my feed, written down: terracotta, cream, the table. / swipe through. what's your color? /
+  #fromthetable #marketmornings"
+- defect found: render.mjs downloaded a second 236 MB browser into the person's folder (.remotion/), because the
+  renderer ran from their folder. Fixed in 8348b94 (cwd = motion/, every job path is already absolute).
+
+found (out/brand.json) vs intended (fixture), blind-with:
+  palette  terracotta #BA5F45 38% lead, cream #DFD4BA 26% ground, olive #72723A 19% accent, chocolate #573A29 13% ink
+           vs terracotta 40%, cream 27%, olive 20%, chocolate 13%    -> 4 of 4, order right, each within 2 points
+  pillars  table 46%, market 25%, walk 16%, coffee 12%  vs table 45%, market 25%, streets 18%, coffee 12%
+           -> 4 of 4; "streets" is called "walk" (the fixture's captions say "the walk home:"), within 2 points
+  cadence  Tue 08:00, Thu 12:35, Sun 18:30  vs Tue 08:00, Thu 12:30, Sun 18:30 -> 3 of 3 (Thursday's median is 5 min later)
+  voice    lowercase; opening label 82%, list of three 70%, question after a blank line 57%
+           vs label-colon opener, list of three, closing question after a blank line -> 3 of 3
+  aspire   ice blue, sky blue, sea blue, slate; "the sea and the coast"  vs sea blue, ice blue, snow white, deep navy;
+           "the sea and the coast" -> subject right; 2 of 4 color names (snow white read as ice blue, deep navy as slate)
+  stop     three items, 5 late posts, 5 off-palette posts, 4 shouting captions, each 0.4x usual likes -> the 5 outliers
+  statement "a warm, slow table: market mornings, the walk home, terracotta and cream."
+
+blind-without (/mnt/data/scratch/kit-pb9/blind-without)
+- wall: rc=0 wall=151 s (09:29:09Z to 09:31:40Z); result success, 20 turns
+- deliverables: brand-kit/index.html only. No film, no cards, no brand.json, no plan, no caption, no storyboards, no
+  vote, nothing for the gate to check (the kit's gate cannot run there)
+- ffprobe: no film to probe
+- found: palette terracotta #BE6346 24%, olive 20%, cocoa 16%, oat 14%, cream 13%, clay 11% (six colors: terracotta
+  split in two, cream split in two); no pillar shares; no cadence; the five loud posts named; coastal likes named; Fraunces
+  plus DM Sans; the voice format right
+- vs intended: palette roughly right but split six ways with wrong shares; pillars and cadence missing
+
+CHECK 5: FIX AND RERUN (1 of 3 used)
+- Fix: 8348b94 (render from motion/). Proved first on a copy (/mnt/data/scratch/kit-pb9/verify-cwd):
+  python3 .claude/skills/personal_brand_kit/scripts/film.py render -> rc 0, 18.32 s, 11 of 11 jobs, no .remotion in the
+  folder, qa.py check -> CHECKS PASS
+- Rerun: zsh runs/blind.zsh with2 (kit at 8348b94) -> /mnt/data/scratch/kit-pb9/blind-with2
+  wall: rc=0 wall=308 s (09:35:12Z to 09:40:20Z); 45 turns. Slower because renders ran under load average 40 (other kit
+  agents): render 21.8 s vs 15.4 s, sheets 19.0 s vs 15.6 s, 30 tool calls vs 27.
+  deliverables all present; no .remotion in the person's folder
+  ffprobe out/film.mp4 -> stream,h264,1080,1920,30/1,25.133333 / stream,aac,0/0,25.133000
+  qa.py gate -> GATE GREEN (16 of 16)
+  style sheets: blind-with2/out/storyboards/1.png 2.png 3.png
+  vote: winner 2 the swipe 94 of 105; 3 the poster 78; 1 one card at a time 72 (motion designer 25/31/26, editor
+    24/30/26, person 23/33/26)
+  cut critic round 1, SHIP: motion designer professional 4, them 5, pacing 4, type 5, transitions 4, music 4, ending 4;
+    person the same with ending 5
+  found: the same palette, pillars, cadence, voice, aspire and three stop items as blind-with; statement "home cooking,
+  market mornings and the walk home, in terracotta and cream, three times a week."
+
+PROCESS
+No batch crossed the one-fifth failure line: every counted run finished rc 0 and every with-kit run was GATE GREEN on
+the first verdict. So no process review or codex conference was triggered. Two defects were found and fixed at their
+source: the harness's answer key in the sandbox (harness), and the browser download into the person's folder (kit).
+
+NOT DONE, AND WHY
+- No real video model and no real music tool in the sandbox. Every run substitutes the clips with photo motion and makes
+  an 84 bpm track; the brief says so in out/brief.md. The hand run's "generated" clip is a fixture reel standing in.
+- The kit ships evals/fixtures/make_person.py, which holds the planted values. The counted runs never opened it (run.log),
+  but a run could. Left in place because the brief puts the fixture in the kit.
+- Aspire color names: 2 of 4 match the fixture (snow white -> ice blue, deep navy -> slate). The colors are the same
+  coastal family; the namer picks the nearest named color, and those two sit between names.
