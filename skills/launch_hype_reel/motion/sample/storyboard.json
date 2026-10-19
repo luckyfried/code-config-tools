@@ -1,0 +1,423 @@
+{
+ "id": "3",
+ "name": "the countdown",
+ "beats": [
+  {
+   "id": "count",
+   "kind": "DateCard",
+   "frames": 164,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "tide table",
+    "headline": "november 14",
+    "line": "26 days to go"
+   },
+   "data": {
+    "date": "2026-11-14",
+    "label": "november 14",
+    "days": 26,
+    "day": 14,
+    "month": "november",
+    "weekday": "saturday",
+    "product": true,
+    "ticks": [
+     26,
+     14,
+     7,
+     3,
+     1
+    ],
+    "weights": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1.6
+    ],
+    "cuts": [
+     20,
+     50,
+     78,
+     98,
+     117
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "world",
+   "kind": "ClipShot",
+   "frames": 93,
+   "transition": {
+    "preset": "iris",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {},
+   "data": {
+    "product": true
+   },
+   "clip": {
+    "id": "01",
+    "file": null,
+    "frames": 0,
+    "image": "graded/sample-2.jpg",
+    "status": "substituted"
+   }
+  },
+  {
+   "id": "words",
+   "kind": "Hook",
+   "frames": 94,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-3.jpg"
+   ],
+   "text": {
+    "kicker": "@sample.person",
+    "headline": "confession: i've been making plates in secret for a year"
+   },
+   "data": {
+    "style": "theirs",
+    "product": false
+   },
+   "clip": null
+  },
+  {
+   "id": "tease",
+   "kind": "Tease",
+   "frames": 93,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "headline": "almost here"
+   },
+   "data": {
+    "from": 0.0,
+    "to": 0.35,
+    "product": true
+   },
+   "clip": null
+  },
+  {
+   "id": "reveal",
+   "kind": "Tease",
+   "frames": 113,
+   "transition": {
+    "preset": "iris",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "introducing",
+    "headline": "tide table"
+   },
+   "data": {
+    "from": 0.35,
+    "to": 1.0,
+    "product": true
+   },
+   "clip": null
+  },
+  {
+   "id": "hero",
+   "kind": "ClipShot",
+   "frames": 112,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {},
+   "data": {
+    "product": true
+   },
+   "clip": {
+    "id": "02",
+    "file": null,
+    "frames": 0,
+    "image": "graded/sample-5.jpg",
+    "status": "substituted"
+   }
+  },
+  {
+   "id": "date",
+   "kind": "DateCard",
+   "frames": 179,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "tide table",
+    "headline": "november 14",
+    "line": "26 days to go"
+   },
+   "data": {
+    "date": "2026-11-14",
+    "label": "november 14",
+    "days": 26,
+    "day": 14,
+    "month": "november",
+    "weekday": "saturday",
+    "product": true
+   },
+   "clip": null
+  }
+ ],
+ "handle": "sample.person",
+ "year": 2026,
+ "product": "Tide Table",
+ "launch": {
+  "date": "2026-11-14",
+  "label": "November 14"
+ },
+ "format": {
+  "width": 1080,
+  "height": 1920,
+  "fps": 30
+ },
+ "system": {
+  "direction": "documentary",
+  "display": {
+   "family": "Space Grotesk",
+   "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf",
+   "weight": 600,
+   "tracking": -0.03,
+   "case": "none",
+   "lineHeight": 0.95
+  },
+  "text": {
+   "family": "JetBrains Mono",
+   "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf",
+   "weight": 500,
+   "tracking": 0.0,
+   "case": "none",
+   "lineHeight": 1.3
+  },
+  "scale": {
+   "hero": 250,
+   "h1": 136,
+   "h2": 96,
+   "h3": 58,
+   "body": 36,
+   "label": 26
+  },
+  "colors": {
+   "bg": "#040710",
+   "ink": "#f4f4f0",
+   "accent": "#d5be49",
+   "accent2": "#916C4B",
+   "muted": "#88898b",
+   "paper": "#efeadc",
+   "swatches": [
+    {
+     "hex": "#EAE9E1",
+     "name": "snow white"
+    },
+    {
+     "hex": "#204499",
+     "name": "cobalt"
+    },
+    {
+     "hex": "#D5BE49",
+     "name": "mustard"
+    },
+    {
+     "hex": "#0F1834",
+     "name": "deep navy"
+    },
+    {
+     "hex": "#828366",
+     "name": "taupe"
+    }
+   ]
+  },
+  "texture": {
+   "grain": 0.16,
+   "vignette": 0.32,
+   "leaks": true
+  },
+  "ease": {
+   "enter": [
+    0.33,
+    0,
+    0.15,
+    1
+   ],
+   "exit": [
+    0.6,
+    0,
+    0.8,
+    0.2
+   ],
+   "move": [
+    0.37,
+    0,
+    0.63,
+    1
+   ],
+   "spring": {
+    "damping": 26,
+    "stiffness": 80,
+    "mass": 1
+   },
+   "stagger": 6
+  },
+  "safe": {
+   "reel": {
+    "top": 270,
+    "bottom": 670,
+    "left": 72,
+    "right": 150
+   },
+   "story": {
+    "top": 250,
+    "bottom": 340,
+    "left": 72,
+    "right": 72
+   },
+   "feed": {
+    "top": 150,
+    "bottom": 150,
+    "left": 80,
+    "right": 80
+   }
+  }
+ },
+ "stories": [
+  {
+   "id": "story-1",
+   "kind": "Tease",
+   "frames": 90,
+   "transition": null,
+   "settle": 0,
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "@sample.person",
+    "headline": "something's coming",
+    "line": "november 14"
+   },
+   "data": {
+    "from": 0.16,
+    "to": 0.16,
+    "product": true,
+    "step": "tease"
+   },
+   "clip": null
+  },
+  {
+   "id": "story-2",
+   "kind": "Tease",
+   "frames": 90,
+   "transition": null,
+   "settle": 0,
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "november 14",
+    "headline": "nearly ready",
+    "line": "26 days to go"
+   },
+   "data": {
+    "from": 0.45,
+    "to": 0.45,
+    "product": true,
+    "step": "tease harder"
+   },
+   "clip": null
+  },
+  {
+   "id": "story-3",
+   "kind": "Tease",
+   "frames": 90,
+   "transition": null,
+   "settle": 0,
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "introducing",
+    "headline": "tide table",
+    "line": "out november 14"
+   },
+   "data": {
+    "from": 1.0,
+    "to": 1.0,
+    "product": true,
+    "step": "reveal"
+   },
+   "clip": null
+  }
+ ],
+ "countdown": {
+  "id": "countdown",
+  "kind": "DateCard",
+  "frames": 90,
+  "transition": null,
+  "settle": 0,
+  "photos": [
+   "graded/sample-2.jpg"
+  ],
+  "text": {
+   "kicker": "tide table",
+   "headline": "november 14",
+   "line": "26 days to go"
+  },
+  "data": {
+   "date": "2026-11-14",
+   "label": "november 14",
+   "days": 26,
+   "day": 14,
+   "month": "november",
+   "weekday": "saturday",
+   "product": true
+  },
+  "clip": null
+ },
+ "feed": {
+  "id": "feed",
+  "kind": "Tease",
+  "frames": 90,
+  "transition": null,
+  "settle": 0,
+  "photos": [
+   "graded/sample-4.jpg"
+  ],
+  "text": {
+   "kicker": "@sample.person",
+   "headline": "tide table",
+   "line": "out november 14"
+  },
+  "data": {
+   "from": 1.0,
+   "to": 1.0,
+   "product": true
+  },
+  "clip": null
+ }
+}

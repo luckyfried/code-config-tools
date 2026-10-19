@@ -1,0 +1,6 @@
+{
+  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); story leaves the top bar and the reply field; feed is the 4:5 feed post: the grid crops it to a square from the center, so type stays clear of the top and bottom 135 px.",
+  "reel": {"width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150},
+  "story": {"width": 1080, "height": 1920, "top": 250, "bottom": 340, "left": 72, "right": 72},
+  "feed": {"width": 1080, "height": 1350, "top": 150, "bottom": 150, "left": 80, "right": 80}
+}
