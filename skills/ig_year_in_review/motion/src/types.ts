@@ -41,6 +41,8 @@ export type BeatText = {kicker?: string; headline?: string; line?: string};
 export type Clip = {
   id: string;
   file: string | null;
+  /** the clip's frame count; its frames are file without .mp4, then /0001.jpg onward */
+  frames?: number;
   image: string | null;
   status: 'generated' | 'their_reel' | 'substituted' | 'pending';
 };

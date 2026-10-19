@@ -20,6 +20,7 @@ import argparse
 import copy
 import datetime as dt
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -99,13 +100,17 @@ class Ctx:
         self.handle = self.stats.get("handle") or self.taste.get("handle") or "you"
         self.year = int(self.stats.get("year") or self.taste.get("year"))
         self.lower = bool(self.taste.get("register", {}).get("lowercase"))
+        endings = (self.research.get("captions") or {}).get("endings") or {}
+        self.no_stop = endings.get(".", 0) <= 0.1 * max(1, sum(endings.values()))
         self.used = set()
         self.said = set()
 
     def say(self, s):
+        """A line in their register: their case, and no closing full stop when they never end on one."""
         if s is None:
             return None
-        return s.lower() if self.lower else s
+        s = s.lower() if self.lower else s
+        return s[:-1] if self.no_stop and s.endswith(".") and not s.endswith("..") else s
 
     def photo(self, src):
         """A library photo as the graded file the renderer reads (relative to build/)."""
@@ -328,7 +333,7 @@ def board_numbers(ctx):
     def chapter(n, title, clip):
         return {"id": f"chapter-{n}", "kind": "ClipShot", "frames": sec(1.8), "transition": tr("bars", d),
                 "text": {"kicker": ctx.say(f"chapter {n}"), "headline": ctx.say(title)}, "clip": clip, "data": {"chapter": f"{n:02d}"},
-                "photos": ctx.chapter("numbers", 1)}
+                "photos": (ctx.chapter("numbers")[-n:] or ctx.chapter("numbers"))[:1]}
     groups = []
     if b:
         groups.append({"label": ctx.say("busiest"), "headline": ctx.say(f"{b['name']}: {b['posts']} posts"), "photos": ctx.chapter("busiest", 12)})
@@ -426,15 +431,24 @@ def board_thread(ctx):
                         "beats": beats, "clips": clips})
 
 
+def words(caption):
+    """A caption's words alone, so two captions that differ only in emoji or punctuation count as the same line."""
+    return " ".join(re.findall(r"[a-z0-9']+", caption.lower()))
+
+
+def unsaid(ctx, caps):
+    return [c for c in caps if words(c) not in ctx.said]
+
+
 def caption_for(ctx, m):
     caps = [(r.get("caption") or "").split("#")[0].strip() for r in ctx.lib.get("posts", [])
             if r.get("ts") and dt.datetime.fromtimestamp(r["ts"], dt.timezone.utc).month == m]
-    caps = [c for c in caps if 8 <= len(c) <= 48 and c.lower() not in ctx.said]
+    caps = unsaid(ctx, [c for c in caps if 8 <= len(c) <= 48])
     plain = [c for c in caps if "@" not in c]
     if not caps:
         return MONTHS[m - 1]
     pick = max(plain or caps, key=len)
-    ctx.said.add(pick.lower())
+    ctx.said.add(words(pick))
     return pick
 
 
@@ -442,13 +456,17 @@ def caption_with(ctx, word):
     if not word:
         return None
     caps = [(r.get("caption") or "").split("#")[0].strip() for r in ctx.lib.get("posts", []) if word in (r.get("caption") or "").lower()]
-    caps = [c for c in caps if 8 <= len(c) <= 48]
+    caps = unsaid(ctx, [c for c in caps if 8 <= len(c) <= 48])
+    if caps:
+        ctx.said.add(words(caps[0]))
     return caps[0] if caps else None
 
 
 def reel_caption(ctx):
     caps = [(r.get("caption") or "").split("#")[0].strip() for r in ctx.lib.get("reels", []) if r.get("caption")]
-    caps = [c for c in caps if 6 <= len(c) <= 44]
+    caps = unsaid(ctx, [c for c in caps if 6 <= len(c) <= 44])
+    if caps:
+        ctx.said.add(words(caps[0]))
     return caps[0] if caps else "in motion"
 
 
@@ -518,8 +536,9 @@ def finish(ctx, board):
          "data": {"groups": [{"label": ctx.say("quietest month"), "headline": ctx.say(f"{q.get('name')}, {q.get('posts')} posts"), "photos": ctx.chapter("quietest", 3)}]}} if q else None,
         card("people"), card("loved"), card("palette"),
         card("closer"),
-        card("closer", id="card-share", text={"kicker": ctx.say("your turn"), "headline": ctx.say("share yours"),
-                                                "line": ctx.say(f"what did your {ctx.year} look like?")}),
+        {"id": "card-share", "kind": "Mosaic", "frames": sec(3), "photos": year_grid(ctx),
+         "data": {"groups": [{"label": ctx.say("your turn"), "headline": ctx.say(f"share yours: what did your {ctx.year} look like?"),
+                              "photos": year_grid(ctx)}]}},
     ]
     cards = [c for c in cards if c]
     for c in cards:
@@ -527,6 +546,18 @@ def finish(ctx, board):
     board["cards"] = cards[:10]
     board["stories"] = [copy.deepcopy(c) for c in cards if c["id"] in ("opener", "top", "closer")][:3]
     return board
+
+
+def year_grid(ctx, n=9):
+    """The best photo of each month, in order, for the share card: the whole year at a glance."""
+    out = []
+    for m in range(1, 13):
+        rows = sorted((r for r in ctx.index if r.get("month") == m and r.get("kind") == "post"), key=lambda r: -r.get("score", 0))
+        p = next((x for x in (ctx.photo(r["src"]) for r in rows[:3]) if x), None)
+        if p and p not in out:
+            out.append(p)
+    step = max(1, len(out) / n)
+    return [out[int(i * step)] for i in range(min(n, len(out)))]
 
 
 def film_seconds(beats):
@@ -578,7 +609,10 @@ def cmd_draft(a):
     g = grade.recipe(ctx.taste)
     _env.write_json("build/grade.json", g)
     grade.grade_photos()
-    boards = [board_monthly(ctx), board_numbers(ctx), board_thread(ctx)]
+    boards = []
+    for make in (board_monthly, board_numbers, board_thread):
+        ctx.said = set()
+        boards.append(make(ctx))
     referenced = sorted({p for b in boards for x in b["beats"] + b["cards"] for p in (x.get("photos") or [])} |
                         {p for b in boards for x in b["beats"] + b["cards"] for s in (x.get("data") or {}).get("swatches", []) if (p := s.get("photo"))} |
                         {p for b in boards for x in b["beats"] + b["cards"] for gr in (x.get("data") or {}).get("groups", []) for p in gr.get("photos", [])} |

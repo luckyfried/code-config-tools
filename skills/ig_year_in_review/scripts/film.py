@@ -37,8 +37,8 @@ def clip_for(beat, clips):
     if isinstance(c, dict):
         return c
     got = clips.get(c) or {}
-    return {"id": c, "file": got.get("file"), "image": got.get("image") or (beat.get("photos") or [None])[0],
-            "status": got.get("status", "pending")}
+    return {"id": c, "file": got.get("file"), "frames": got.get("frames", 0),
+            "image": got.get("image") or (beat.get("photos") or [None])[0], "status": got.get("status", "pending")}
 
 
 def props_for(board):

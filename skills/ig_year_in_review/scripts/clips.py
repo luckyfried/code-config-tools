@@ -13,11 +13,12 @@ it is cut from their footage.
 
 normalize scales and crops each file to 1080x1920, conforms it to 30 fps, trims it to its beat (looping a
 short file), applies the film's grade (build/grade.json, the same filter as the photos) and writes
-build/public/clips/NN.mp4 with no audio. A clip that did not arrive is substituted: the renderer animates the
+build/public/clips/NN.mp4 with no audio, plus its frames in build/public/clips/NN/. A clip that did not arrive is substituted: the renderer animates the
 named photo of theirs (parallax planes, light, dust) in its place. build/clips.json records every clip as
 generated, their_reel or substituted, and brief.md lists them.
 """
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -90,7 +91,23 @@ def conform(src, dst, secs, filt, start=0.0):
     cmd = [_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-ss", f"{start:.2f}", "-i", str(src), "-t", f"{secs:.3f}",
            "-vf", vf, "-an", "-c:v", "libx264", "-profile:v", "high", "-crf", "16", "-preset", "fast", str(dst)]
     r = subprocess.run(cmd, capture_output=True, text=True)
-    return r.returncode == 0 and dst.exists(), r.stderr[-400:]
+    if r.returncode != 0 or not dst.exists():
+        return False, r.stderr[-400:]
+    return frames(dst), ""
+
+
+def frames(clip):
+    """The clip as one JPEG per frame beside it (clips/01/0001.jpg ...), the form the renderer reads.
+
+    Each frame is a plain image request that retries on its own, so a render survives the browser dropping
+    requests when the machine's network interfaces change (containers starting and stopping)."""
+    d = clip.with_suffix("")
+    shutil.rmtree(d, ignore_errors=True)
+    d.mkdir(parents=True)
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-i", str(clip), "-q:v", "2", str(d / "%04d.jpg")],
+                       capture_output=True, text=True)
+    n = len(list(d.glob("*.jpg")))
+    return n if r.returncode == 0 and n else False
 
 
 def cmd_normalize(a):
@@ -99,16 +116,17 @@ def cmd_normalize(a):
     out = {}
     for f in OUT.glob("*.mp4") if OUT.exists() else []:
         f.unlink()
+        shutil.rmtree(f.with_suffix(""), ignore_errors=True)
     for c in b.get("clips", []):
         secs = (beat_seconds(b, c["beat"]) or c.get("seconds") or 4) + 0.6
         rec = {"beat": c["beat"], "role": c["role"], "prompt": c.get("prompt"), "image": c.get("image"), "file": None}
         src = arrived(c["id"])
         if src:
             ok, err = conform(src, OUT / f"{c['id']}.mp4", secs, g["filter"])
-            rec.update({"status": "generated", "from": str(src)} if ok else {"status": "substituted", "why": f"could not read {src.name}: {err}"})
+            rec.update({"status": "generated", "from": str(src), "frames": ok} if ok else {"status": "substituted", "why": f"could not read {src.name}: {err}"})
         elif c.get("source") and Path(c["source"]).exists():
             ok, err = conform(c["source"], OUT / f"{c['id']}.mp4", secs, g["filter"])
-            rec.update({"status": "their_reel", "from": c["source"]} if ok else {"status": "substituted", "why": f"could not read their reel: {err}"})
+            rec.update({"status": "their_reel", "from": c["source"], "frames": ok} if ok else {"status": "substituted", "why": f"could not read their reel: {err}"})
         else:
             rec.update({"status": "substituted", "why": a.why or "the video model did not produce it"})
         if rec["status"] in ("generated", "their_reel"):

@@ -57,7 +57,8 @@ const Bars: React.FC<TransitionPresentationComponentProps<BarProps>> = ({
 
 type DipProps = {color: string};
 
-/** A dip through a color (paper for editorial, black for documentary): out, hold a breath, in. */
+/** A dip through a color (paper for editorial, black for documentary): out, hold a breath, in. The color sits under
+ * the outgoing scene only, because the incoming scene is stacked above it and must stay see-through until it fades in. */
 const Dip: React.FC<TransitionPresentationComponentProps<DipProps>> = ({
   children,
   presentationProgress: p,
@@ -67,7 +68,7 @@ const Dip: React.FC<TransitionPresentationComponentProps<DipProps>> = ({
   const entering = presentationDirection === 'entering';
   const o = entering ? interpolate(p, [0.5, 1], [0, 1], {extrapolateLeft: 'clamp'}) : interpolate(p, [0, 0.5], [1, 0], {extrapolateRight: 'clamp'});
   return (
-    <AbsoluteFill style={{background: passedProps.color}}>
+    <AbsoluteFill style={{background: entering ? undefined : passedProps.color}}>
       <AbsoluteFill style={{opacity: o, transform: `scale(${entering ? 1.04 - 0.04 * p : 1 + 0.02 * p})`}}>{children}</AbsoluteFill>
     </AbsoluteFill>
   );

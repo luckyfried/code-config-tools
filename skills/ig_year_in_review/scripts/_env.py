@@ -114,3 +114,7 @@ def write_json(path, obj):
     tmp = p.with_name(f".{p.name}.part")
     tmp.write_text(json.dumps(obj, indent=2, ensure_ascii=False))
     tmp.replace(p)
+
+
+if __name__ == "__main__":
+    print(__doc__)

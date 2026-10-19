@@ -2,9 +2,13 @@ import React from 'react';
 import {AbsoluteFill, Img} from 'remotion';
 import {hash, src, useMotion, useSys} from './system';
 
+/** Image requests retry with backoff (1 s, 2 s, 4 s ...), so a dropped request costs a pause, never the render. */
+export const RETRIES = 6;
+
 export const Photo: React.FC<{file: string; style?: React.CSSProperties; position?: string}> = ({file, style, position}) => (
   <Img
     src={src(file)}
+    maxRetries={RETRIES}
     style={{width: '100%', height: '100%', objectFit: 'cover', objectPosition: position ?? '50% 45%', display: 'block', ...style}}
   />
 );

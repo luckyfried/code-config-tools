@@ -45,6 +45,7 @@ COLOR_WORDS = {
     "warmtones": "#c9824f", "sunset": "#e9773f", "dusk": "#5a4a73", "salt": "#f1ece2", "bread": "#cf9a5b",
     "crumb": "#c8955f", "kodak": "#e0b23a", "portra": "#d9a27c",
 }
+SPOKEN = {"warmtones": "warm tones", "sunbaked": "sun-baked"}
 THEMES = {
     "film photography": ["35mm", "film", "portra", "kodak", "grain", "analog", "shotonfilm", "filmphotography", "frames", "120"],
     "food": ["eats", "food", "table", "kitchen", "plate", "bread", "mezze", "crumb", "salt", "slowfood", "cook", "cooks",
@@ -98,8 +99,8 @@ def caption_read(rows):
         return t[-1] if t else None
     last = collections.Counter(w for w in map(last_word, caps) if w)
     stripped = [re.sub(r"(#\w+|\s)+$", "", EMOJI.sub("", c)).strip() for c in caps]
-    ends = collections.Counter(("." if s.endswith(".") else "!" if s.endswith("!") else "?" if s.endswith("?") else
-                                "..." if s.endswith("...") else "no mark") for s in stripped if s)
+    ends = collections.Counter(("..." if s.endswith("...") else "." if s.endswith(".") else "!" if s.endswith("!") else
+                                "?" if s.endswith("?") else "no mark") for s in stripped if s)
     tags = collections.Counter(t.lower() for c in caps for t in re.findall(r"#\w+", c))
     emo = collections.Counter(e for c in caps for e in EMOJI.findall(c))
     return {
@@ -135,7 +136,7 @@ def lexicon_palette(texts):
             if tok in COLOR_WORDS:
                 c[tok] += 1
     total = sum(c.values()) or 1
-    return [{"hex": COLOR_WORDS[w], "name": w, "share": round(n / total, 3), "mentions": n} for w, n in c.most_common(6)]
+    return [{"hex": COLOR_WORDS[w], "name": SPOKEN.get(w, w), "share": round(n / total, 3), "mentions": n} for w, n in c.most_common(6)]
 
 
 def image_palette(files):

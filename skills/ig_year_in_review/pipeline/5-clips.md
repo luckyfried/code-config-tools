@@ -29,5 +29,6 @@ python3 S/scripts/clips.py normalize [--why "no video model in this session"]
 ```
 
 `normalize` scales and crops each file to 1080×1920, conforms it to 30 fps, trims or loops it to its beat, grades
-it with the film's grade, and writes `build/public/clips/NN.mp4` and `build/clips.json` (each clip: generated,
-their_reel or substituted, and why). Pass `--why` when clips are missing for a reason you know; `brief.md` quotes it.
+it with the film's grade, and writes `build/public/clips/NN.mp4`, its frames as `build/public/clips/NN/0001.jpg`
+onward (the renderer reads the frames, which retry on their own when a request drops), and `build/clips.json` (each
+clip: generated, their_reel or substituted, and why). Pass `--why` when clips are missing for a reason you know; `brief.md` quotes it.

@@ -1,8 +1,8 @@
 import React from 'react';
-import {AbsoluteFill, OffthreadVideo, random} from 'remotion';
+import {AbsoluteFill, Img, random, useCurrentFrame} from 'remotion';
 import {src, useMotion, useSys} from '../system';
 import {Headline, Kicker, Line, SafeBox} from '../text';
-import {Photo, Scrim} from '../photo';
+import {Photo, RETRIES, Scrim} from '../photo';
 import {Leaks} from '../texture';
 import type {Beat, Clip} from '../types';
 
@@ -41,13 +41,19 @@ export const StillToLife: React.FC<{file: string; seed: string}> = ({file, seed}
   );
 };
 
-/** The clip itself, conformed and graded by clips.py, or its substitute when it did not arrive. */
+/**
+ * The clip itself, conformed and graded by clips.py and read as its frame sequence, or its substitute when it
+ * did not arrive.
+ */
 export const ClipLayer: React.FC<{clip: Clip}> = ({clip}) => {
   const {drift} = useMotion();
-  if (clip.file) {
+  const frame = useCurrentFrame();
+  if (clip.file && clip.frames) {
+    const n = String(Math.min(Math.max(frame, 0), clip.frames - 1) + 1).padStart(4, '0');
     return (
       <AbsoluteFill style={{overflow: 'hidden', transform: `scale(${drift(1.0, 1.05)})`}}>
-        <OffthreadVideo src={src(clip.file)} muted style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+        <Img src={src(`${clip.file.replace(/\.mp4$/, '')}/${n}.jpg`)} maxRetries={RETRIES}
+          style={{width: '100%', height: '100%', objectFit: 'cover'}} />
       </AbsoluteFill>
     );
   }

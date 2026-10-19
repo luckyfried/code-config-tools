@@ -25,12 +25,14 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
 The year: --year when the person named one, else the latest year with at least 12 posts, reels and stories.
-Writes build/library.json and prints a summary; every choice it made is listed under "assumptions".
+Links every media file of the year into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook)
+under its date, writes build/library.json and prints a summary; every choice it made is listed under "assumptions".
 """
 import argparse
 import datetime as dt
 import json
 import re
+import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -383,6 +385,29 @@ def rel(p, root):
     return p.relative_to(root) if p.is_relative_to(root) else p
 
 
+def shelve(lib):
+    """Every media file of the year, linked into build/library/<kind>/ under its date; the rows point at the links."""
+    base = Path("build/library").resolve()
+    for kind in ("posts", "reels", "stories", "likes", "saved", "facebook"):
+        for n, row in enumerate(lib[kind]):
+            media = []
+            for i, m in enumerate(row.get("media") or []):
+                src = Path(m)
+                if not src.is_file() or base in src.resolve().parents:
+                    media.append(m)
+                    continue
+                day = dt.datetime.fromtimestamp(row["ts"], dt.timezone.utc).date().isoformat()
+                dst = base / kind / f"{day}-{n:03d}-{i}{src.suffix.lower()}"
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                if not dst.exists():
+                    try:
+                        dst.symlink_to(src.resolve())
+                    except OSError:
+                        shutil.copy2(src, dst)
+                media.append(str(dst))
+            row["media"] = media
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
@@ -475,6 +500,7 @@ def main():
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
         if not any(p.get("likes") is not None for p in lib["posts"]):
             assumptions.append("The data has no likes per post, so top posts are picked by comments, else spread across the year.")
+    shelve(lib)
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
         assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
