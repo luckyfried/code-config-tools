@@ -385,7 +385,7 @@ def board_words(ctx):
     for k, pr in enumerate(picked):
         r = items_by_id.get(pr["post"]) or ctx.near((pr["first"] or {}).get("ts"), ctx.used)
         ctx.used.add(r["photo"])
-        said = [{"by": me if x["account"] == ctx.handle else them, "text": re.sub(r"\s+", " ", EMOJI.sub("", x["text"])).strip(), "side": "mine" if x["account"] == ctx.handle else "theirs"}
+        said = [{"by": me if x["account"] == ctx.handle else them, "text": re.sub(r"\s+", " ", x["text"]).strip(), "side": "mine" if x["account"] == ctx.handle else "theirs"}
                 for x in (pr["first"], pr["answer"])]
         beats.append({"id": f"words-{k + 1}", "kind": "Exchange", "frames": sec(4.2), "transition": tr("fade" if k % 2 else "iris", d),
                       "photos": [r["photo"]], "text": {"kicker": ctx.say(day_label(r["date"]))}, "data": {"lines": said}})
@@ -399,7 +399,11 @@ def board_words(ctx):
                           "seconds": 4, "image": v["photo"]})
     best = [p for p in ctx.chapter("best") if p not in ctx.used][:4]
     ident = f"{cid:02d}"
-    beats.append(closer(ctx, "closer", best, ctx.say(f"{len(ctx.shared.get('exchanges', []))} comments and counting"), tr("fade", d), clip=ident))
+    shown = {(x or {}).get("text") for pr in picked for x in (pr["first"], pr["answer"])}
+    mine = sorted((x for pr in pairs for x in (pr["first"], pr["answer"]) if x and x["account"] == ctx.handle and x["text"] not in shown),
+                  key=lambda x: x.get("ts") or 0)
+    last = re.sub(r"\s+", " ", mine[-1]["text"]).strip() if mine else "more of this, always"
+    beats.append(closer(ctx, "closer", best, ctx.say(last), tr("fade", d), clip=ident))
     clips.append({"id": ident, "beat": "closer", "role": "the closer, in the palette the two share",
                   "prompt": ctx.prompt("dusk light on a balcony, string lights swaying a little, the city soft behind", d, 4),
                   "seconds": 4, "image": None})

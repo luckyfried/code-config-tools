@@ -21,6 +21,7 @@ import argparse
 import copy
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+
+EMOJI = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2728\uFE0F\u200D]")  # the stills route's fonts carry no emoji
 
 FPS = 30
 PUBLIC = Path("build/public")
@@ -253,7 +256,7 @@ def cmd_stills(a):
         laid = []
         for kind, text, size, color in blocks:
             f = font(kind, size)
-            words, lines, cur = str(text).split(), [], ""
+            words, lines, cur = EMOJI.sub("", str(text)).split(), [], ""
             for wd in words:
                 nxt = (cur + " " + wd).strip()
                 if f.getlength(nxt) <= maxw or not cur:
