@@ -68,7 +68,7 @@ export const Dated: React.FC<{beat: Beat}> = ({beat}) => {
     return (
       <AbsoluteFill style={{background: system.colors.paper}}>
         {beat.clip ? <AbsoluteFill style={{clipPath: `inset(${tween(100, 0, 0, 20)}% 0 0 0)`}}>{bg}</AbsoluteFill> : bg}
-        <SafeBox name="dated" justify="end">
+        <SafeBox name="dated" justify={beat.data?.calm === 'top' ? 'start' : 'end'}>
           <Card>
             {t.kicker ? <Kicker text={t.kicker} delay={6} color={milestone ? system.colors.accent : system.colors.ink} /> : null}
             {t.headline ? <Headline text={t.headline} max="h2" lines={3} delay={8} width={s.width - 2 * CARD_PAD} /> : null}

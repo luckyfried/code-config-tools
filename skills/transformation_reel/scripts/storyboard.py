@@ -296,7 +296,7 @@ def dated(ctx, p, d, seconds, transition, line=None, clip=None, bid=None):
     b = {"id": bid or f"{p['id']}-{p['date']}", "kind": "Dated", "frames": sec(seconds), "transition": transition,
          "post": p["id"], "at": p["date"], "photos": [p["graded"]],
          "text": {"kicker": kicker, "headline": ctx.words(p), "line": line},
-         "data": {"day": day, "month": month, "progress": ctx.progress(p), "milestone": bool(p.get("milestone")),
+         "data": {"day": day, "month": month, "progress": ctx.progress(p), "milestone": bool(p.get("milestone")), "calm": p.get("calm") or "bottom",
                   "ticks": [ctx.progress(q) for q in ctx.seq() if q.get("milestone")],
                   "index": next(i for i, q in enumerate(ctx.seq()) if q["id"] == p["id"]), "of": len(ctx.seq())}}
     if clip:

@@ -105,8 +105,13 @@ def analyse(path):
     cols = sorted(q.getcolors(), reverse=True)
     dom = [{"rgb": pal[3 * i:3 * i + 3], "share": round(n / (sw * sh), 3)} for n, i in cols]
     score = round(0.45 * sat + 0.35 * min(1, contrast) + 0.2 * expo, 3)
+    # the calmer of the photo's upper and lower bands (edge energy once grain is blurred away): where a card of type
+    # can sit over the photo without covering what it shows
+    soft = small.convert("L").filter(ImageFilter.GaussianBlur(1)).filter(ImageFilter.FIND_EDGES)
+    band = lambda a, b: ImageStat.Stat(soft.crop((2, int(sh * a), sw - 2, max(int(sh * a) + 1, int(sh * b))))).mean[0]
+    calm = "top" if band(0.08, 0.45) < band(0.55, 0.92) else "bottom"
     return {"w": w, "h": h, "score": score, "bright": round(bright, 3),
-            "focal": [round(min(0.8, max(0.2, fx)), 2), round(min(0.8, max(0.2, fy)), 2)], "colors": dom}
+            "focal": [round(min(0.8, max(0.2, fx)), 2), round(min(0.8, max(0.2, fy)), 2)], "calm": calm, "colors": dom}
 
 
 def sequence(posts, firsts, n):
@@ -135,7 +140,7 @@ def main():
         sys.exit("build/subject.json is missing: run timeline.py first (research.py runs it)")
     posts = sub["posts"]
     seq = sequence(posts, [m["id"] for m in sub["milestones"]], max(2, a.beats))
-    keys = ("id", "date", "ts", "kind", "photo", "src", "video", "caption", "milestone", "change", "step", "focal", "bright")
+    keys = ("id", "date", "ts", "kind", "photo", "src", "video", "caption", "milestone", "change", "step", "focal", "calm", "bright")
     out = {"subject": sub["subject"], "span": sub["span"], "first": posts[0]["id"], "latest": posts[-1]["id"],
            "sequence": [{k: p.get(k) for k in keys} for p in seq], "focal": {}, "source_of": {}}
     for p in seq:

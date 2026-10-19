@@ -252,7 +252,7 @@ def main():
     for i, p in enumerate(posts):
         an = picks.analyse(p["photo"])
         p.update(change=round(far[i] / top, 3), step=round(dist(sigs[i], sigs[i - 1]) / top, 3) if i else 0.0,
-                 score=an["score"], bright=an["bright"], focal=an["focal"], colors=an["colors"])
+                 score=an["score"], bright=an["bright"], focal=an["focal"], calm=an["calm"], colors=an["colors"])
     first, latest = posts[0], posts[-1]
     said = [p for p in posts[1:-1] if MILESTONE.search(p["caption"])]
     miles = [{"id": p["id"], "date": p["date"], "caption": p["caption"], "label": clean(p["caption"]), "why": "their words"} for p in said]
@@ -277,7 +277,7 @@ def main():
            "steadiness_means": "how steadily the photos move away from the first one as the dates go on (1 is every post further than the last)"}
     _env.write_json("build/subject.json", out)
     index = [{"src": p["src"], "photo": p["photo"], "kind": p["kind"], "ts": p["ts"], "date": p["date"], "id": p["id"],
-              "score": p["score"], "bright": p["bright"], "focal": p["focal"], "colors": p["colors"]} for p in posts]
+              "score": p["score"], "bright": p["bright"], "focal": p["focal"], "calm": p["calm"], "colors": p["colors"]} for p in posts]
     _env.write_json("build/photo_index.json", index)
     print(f"subject: {name}, {chosen_by}")
     print("candidates: " + "; ".join(f"{c['subject']} {c['posts']} posts, longest run {c['run_days']} days ({c['run_posts']} posts)" for c in cands[:5]))
