@@ -1,0 +1,463 @@
+{
+ "id": "sample",
+ "name": "sample: the timeline",
+ "direction": "documentary",
+ "structure": "a straight timeline: every post dated, oldest to latest, a progress rail under it, the milestones marked",
+ "tone": "documentary",
+ "clip_use": "still-first: generated time-lapse bridges across the biggest changes, and a generated opener",
+ "idea": "the plain record: every photo with its date stamped in mono and a rail filling from the first day to the latest, the milestones lit on it; two time-lapse bridges carry the biggest jumps, and the first and the latest meet side by side at the end",
+ "music": {
+  "direction": "cinematic, warm, 92 bpm: a slow pulse, a piano figure, room",
+  "bpm": 92,
+  "mood": "film"
+ },
+ "beats": [
+  {
+   "id": "opener",
+   "kind": "Opener",
+   "frames": 103,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "clip": null,
+   "text": {
+    "kicker": "2025.08.09 \u2192 2026.10.14",
+    "headline": "14 months of my pottery",
+    "line": "26 posts, oldest first"
+   }
+  },
+  {
+   "id": "p01-2025-08-09",
+   "kind": "Dated",
+   "frames": 100,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "post": "p01",
+   "at": "2025-08-09",
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "2025.08.09",
+    "headline": "day one at the wheel",
+    "line": "day 1"
+   },
+   "data": {
+    "day": 1,
+    "month": 0,
+    "progress": 0.0,
+    "milestone": false,
+    "ticks": [
+     0.1624,
+     0.3898,
+     0.6497,
+     0.9258
+    ],
+    "index": 0,
+    "of": 12
+   },
+   "clip": null
+  },
+  {
+   "id": "p03-2025-09-06",
+   "kind": "Dated",
+   "frames": 79,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "post": "p03",
+   "at": "2025-09-06",
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "2025.09.06",
+    "headline": "clay everywhere, bowl nowhere",
+    "line": "day 29"
+   },
+   "data": {
+    "day": 29,
+    "month": 0,
+    "progress": 0.065,
+    "milestone": false,
+    "ticks": [
+     0.1624,
+     0.3898,
+     0.6497,
+     0.9258
+    ],
+    "index": 1,
+    "of": 12
+   },
+   "clip": null
+  },
+  {
+   "id": "chapter-2",
+   "kind": "Chapter",
+   "frames": 131,
+   "transition": {
+    "preset": "bars",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "post": "p06",
+   "at": "2025-10-18",
+   "photos": [
+    "graded/sample-3.jpg"
+   ],
+   "text": {
+    "kicker": "chapter 2 \u00b7 oct 2025",
+    "headline": "the first bowl that stayed in one piece off the wheel. lopsided, and i love it"
+   },
+   "data": {
+    "n": 2,
+    "of": 6,
+    "label": "chapter 2",
+    "progress": 0.1624
+   },
+   "clip": null
+  },
+  {
+   "id": "p08-2025-11-29",
+   "kind": "Dated",
+   "frames": 79,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "post": "p08",
+   "at": "2025-11-29",
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "2025.11.29",
+    "headline": "a shelf of greenware drying by the window",
+    "line": "day 113"
+   },
+   "data": {
+    "day": 113,
+    "month": 3,
+    "progress": 0.2599,
+    "milestone": false,
+    "ticks": [
+     0.1624,
+     0.3898,
+     0.6497,
+     0.9258
+    ],
+    "index": 3,
+    "of": 12
+   },
+   "clip": null
+  },
+  {
+   "id": "p11-2026-01-24",
+   "kind": "Dated",
+   "frames": 100,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "post": "p11",
+   "at": "2026-01-24",
+   "photos": [
+    "graded/sample-5.jpg"
+   ],
+   "text": {
+    "kicker": "2026.01.24 \u00b7 milestone",
+    "headline": "first glaze firing out of the kiln today",
+    "line": "day 169"
+   },
+   "data": {
+    "day": 169,
+    "month": 5,
+    "progress": 0.3898,
+    "milestone": true,
+    "ticks": [
+     0.1624,
+     0.3898,
+     0.6497,
+     0.9258
+    ],
+    "index": 4,
+    "of": 12
+   },
+   "clip": null
+  },
+  {
+   "id": "lapse-02",
+   "kind": "ClipShot",
+   "frames": 52,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "clip": null,
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "42 days later"
+   }
+  },
+  {
+   "id": "p24-2026-09-12",
+   "kind": "Dated",
+   "frames": 100,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "post": "p24",
+   "at": "2026-09-12",
+   "photos": [
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "2026.09.12 \u00b7 milestone",
+    "headline": "sold my first pieces at the saturday market",
+    "line": "day 400"
+   },
+   "data": {
+    "day": 400,
+    "month": 13,
+    "progress": 0.9258,
+    "milestone": true,
+    "ticks": [
+     0.1624,
+     0.3898,
+     0.6497,
+     0.9258
+    ],
+    "index": 10,
+    "of": 12
+   },
+   "clip": null
+  },
+  {
+   "id": "p26-2026-10-14",
+   "kind": "Dated",
+   "frames": 100,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "post": "p26",
+   "at": "2026-10-14",
+   "photos": [
+    "graded/sample-7.jpg"
+   ],
+   "text": {
+    "kicker": "2026.10.14",
+    "headline": "fourteen months in",
+    "line": "day 432"
+   },
+   "data": {
+    "day": 432,
+    "month": 14,
+    "progress": 1.0,
+    "milestone": false,
+    "ticks": [
+     0.1624,
+     0.3898,
+     0.6497,
+     0.9258
+    ],
+    "index": 11,
+    "of": 12
+   },
+   "clip": null
+  },
+  {
+   "id": "then-now",
+   "kind": "Split",
+   "frames": 145,
+   "transition": {
+    "preset": "wipe",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-1.jpg",
+    "graded/sample-7.jpg"
+   ],
+   "posts": [
+    "p01",
+    "p26"
+   ],
+   "at": [
+    "2025-08-09",
+    "2026-10-14"
+   ],
+   "text": {
+    "kicker": "august 2025 to october 2026",
+    "headline": "14 months of my pottery",
+    "line": "@maren.okafor"
+   },
+   "data": {
+    "mode": "split",
+    "layout": "lr",
+    "labels": [
+     "then \u00b7 2025.08.09",
+     "now \u00b7 2026.10.14"
+    ],
+    "span": "14 months"
+   },
+   "clip": null
+  }
+ ],
+ "handle": "maren.okafor",
+ "subject": "pottery",
+ "phrase": "my pottery",
+ "span": {
+  "first": "2025-08-09",
+  "latest": "2026-10-14",
+  "months": 14,
+  "days": 431,
+  "label": "14 months",
+  "from": "August 2025",
+  "to": "October 2026"
+ },
+ "format": {
+  "width": 1080,
+  "height": 1920,
+  "fps": 30
+ },
+ "system": {
+  "direction": "documentary",
+  "display": {
+   "family": "Space Grotesk",
+   "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf",
+   "weight": 600,
+   "tracking": -0.03,
+   "case": "none",
+   "lineHeight": 0.95
+  },
+  "text": {
+   "family": "JetBrains Mono",
+   "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf",
+   "weight": 500,
+   "tracking": 0.0,
+   "case": "none",
+   "lineHeight": 1.3
+  },
+  "scale": {
+   "hero": 250,
+   "h1": 136,
+   "h2": 96,
+   "h3": 58,
+   "body": 36,
+   "label": 26
+  },
+  "colors": {
+   "bg": "#19120b",
+   "ink": "#e6dac2",
+   "accent": "#ccb484",
+   "accent2": "#846c3c",
+   "muted": "#8a8070",
+   "paper": "#e0cfae",
+   "swatches": [
+    {
+     "hex": "#998468",
+     "name": "taupe"
+    },
+    {
+     "hex": "#5B3F2A",
+     "name": "chocolate"
+    },
+    {
+     "hex": "#C2A884",
+     "name": "sand"
+    },
+    {
+     "hex": "#7A5439",
+     "name": "warm chocolate"
+    }
+   ]
+  },
+  "texture": {
+   "grain": 0.16,
+   "vignette": 0.3,
+   "leaks": true
+  },
+  "ease": {
+   "enter": [
+    0.33,
+    0,
+    0.15,
+    1
+   ],
+   "exit": [
+    0.6,
+    0,
+    0.8,
+    0.2
+   ],
+   "move": [
+    0.37,
+    0,
+    0.63,
+    1
+   ],
+   "spring": {
+    "damping": 26,
+    "stiffness": 80,
+    "mass": 1
+   },
+   "stagger": 6
+  },
+  "safe": {
+   "reel": {
+    "top": 270,
+    "bottom": 670,
+    "left": 72,
+    "right": 150
+   },
+   "portrait": {
+    "top": 56,
+    "bottom": 56,
+    "left": 56,
+    "right": 56
+   }
+  }
+ },
+ "card": {
+  "id": "then-now-card",
+  "kind": "Split",
+  "frames": 90,
+  "transition": null,
+  "photos": [
+   "graded/sample-1.jpg",
+   "graded/sample-7.jpg"
+  ],
+  "posts": [
+   "p01",
+   "p26"
+  ],
+  "at": [
+   "2025-08-09",
+   "2026-10-14"
+  ],
+  "text": {
+   "kicker": "@maren.okafor",
+   "headline": "14 months",
+   "line": "august 2025 to october 2026"
+  },
+  "data": {
+   "mode": "card",
+   "layout": "lr",
+   "labels": [
+    "then \u00b7 2025.08.09",
+    "now \u00b7 2026.10.14"
+   ],
+   "span": "14 months"
+  },
+  "settle": 0,
+  "clip": null
+ }
+}
