@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 2: choose the photos for every chapter and prepare them. Writes build/photo_index.json,
+"""Movement 1, research: choose the photos for every chapter and prepare them. Writes build/photo_index.json,
 build/picks.json and build/photos/*.jpg.
 
 USAGE (from the workspace root):
@@ -10,7 +10,8 @@ so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 p
 Picks: the opener (the year's most striking photo), a mosaic for the numbers, the top three posts, the busiest
 month's mosaic and the quietest month's photos, a photo for the people, one for what they loved, the closer, the
 carousel cover and the share card. A photo is used once where the year has enough of them. Videos are skipped.
-To swap a photo, set "photo" on that chapter in build/story.json (step 3); cards.py prepares it the same way.
+To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
+build/storyboards/N/storyboard.json.
 """
 import datetime as dt
 import hashlib

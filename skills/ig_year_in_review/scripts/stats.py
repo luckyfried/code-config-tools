@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 1: the numbers. Reads build/library.json, writes build/stats.json.
+"""Movement 1, research: the numbers. Reads build/library.json, writes build/stats.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/stats.py

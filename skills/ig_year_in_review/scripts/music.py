@@ -2,7 +2,7 @@
 """The film's music: find it, or make a bed, then read its beat grid and master it to -14 LUFS.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/music.py find                 # build/music.json: the track to use and where it came from
+    python3 S/scripts/music.py find [--origin "..."] # build/music.json: the track to use and where it came from
     python3 S/scripts/music.py make [--mood calm|drive|film] [--bpm N] [--seconds S]
                                                     # a bed made here (keys, bass, drums) when no music was found
     python3 S/scripts/music.py analyze              # onsets, tempo, beat grid and downbeats into build/music.json
@@ -53,7 +53,7 @@ def cmd_find(a):
     MUSIC.mkdir(parents=True, exist_ok=True)
     placed = sorted(p for p in MUSIC.glob("source.*") if p.suffix.lower() in AUDIO + (".mp4", ".mov"))
     if placed and has_audio(placed[0]):
-        origin = (_env.read_json("build/music.json") or {}).get("origin") or "placed by the agent in build/music/"
+        origin = a.origin or (_env.read_json("build/music.json") or {}).get("origin") or "placed by the agent in build/music/"
         info = {"file": str(placed[0]), "origin": origin, "seconds": round(duration(placed[0]), 2)}
     else:
         found = []
@@ -273,6 +273,7 @@ def main():
     ap.add_argument("--mood", choices=list(MOODS))
     ap.add_argument("--bpm", type=float)
     ap.add_argument("--seconds", type=float)
+    ap.add_argument("--origin", help="find: where a track placed at build/music/source.<ext> came from, for brief.md")
     a = ap.parse_args()
     return {"find": cmd_find, "make": cmd_make, "analyze": cmd_analyze, "master": cmd_master}[a.cmd](a)
 

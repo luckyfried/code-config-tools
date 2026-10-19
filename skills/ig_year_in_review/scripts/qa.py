@@ -17,7 +17,7 @@ The gate refuses:
   research  build/taste.md (you are / you like / your style / your voice / avoid) or build/taste.json is missing
   boards    three storyboards, each with storyboard.md, storyboard.json and six style-sheet frames
   vote      build/vote.md and build/winner.json are missing
-  clips     the winner lists clips and build/clips.json does not account for every one
+  clips     the film's storyboard lists clips and build/clips.json does not account for every one
   critic    the latest cut round in build/critic/ is not for this film, or scores below 4 with the one fix unspent
   deliver   out/caption.md, out/review.html or out/brief.md is missing, or the caption is not in their register
 """
@@ -142,8 +142,7 @@ def gate_checks():
     check("boards", len(boards) == 3 and len(full) == 3, f"{len(boards)} storyboards, {len(full)} with storyboard.md and six frames")
     win = _env.read_json("build/winner.json") or {}
     check("vote", Path("build/vote.md").exists() and win.get("board"), f"winner {win.get('board')} ({win.get('name')})")
-    wb = _env.read_json(f"build/storyboards/{win.get('board')}/storyboard.json") if win.get("board") else {}
-    want = {c["id"] for c in (wb or {}).get("clips", [])}
+    want = {c["id"] for c in film.get("clips", [])}
     got = set(((_env.read_json("build/clips.json") or {}).get("clips") or {}).keys())
     check("clips", want <= got, f"{len(want)} clips listed, {len(want & got)} accounted for" + (f"; missing {sorted(want - got)}" if want - got else ""))
     rounds = sorted(Path("build/critic").glob("cut-*.json"), key=lambda p: int(p.stem.split("-")[1]))

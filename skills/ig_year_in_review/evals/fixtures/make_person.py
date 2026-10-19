@@ -62,7 +62,7 @@ CAPTIONS = [
     "the market in {p} is my whole personality", "a very good bread day", "lunch that lasted four hours",
     "took the long way through {p}", "found this little place by accident {e}", "shot on film, eaten immediately",
     "back in {p} with @{f}", "dinner with @{f} and @{g}", "terracotta everything", "tomatoes, olive oil, sea salt. done",
-    "cold hands, warm coffee", "a few from the road", "everything is orange in {p} {e}", "the colours here",
+    "cold hands, warm coffee", "a few from the road", "everything is orange in {p} {e}", "the colors here",
     "salt hair, sandy everything", "last light over {p}", "street food tour, round two", "home for a bit",
     "one more espresso and then we go", "can't stop taking pictures of doorways", "postcards from {p}",
 ]
@@ -346,7 +346,7 @@ def main():
         saved.append({"title": acct, "string_map_data": {"Saved on": {
             "href": f"https://www.instagram.com/p/{rng.getrandbits(40):x}/", "timestamp": ts}}})
 
-    comment_lines = ["this is so good", "obsessed", "need to go here", "the colours!!", "ok this light ✨",
+    comment_lines = ["this is so good", "obsessed", "need to go here", "the colors!!", "ok this light ✨",
                      "save me a slice", "when are we going back", "\U0001F525\U0001F525", "that grain", "take me with you"]
     others = rng.sample(ACCOUNTS[6:], 18)
     comments = []

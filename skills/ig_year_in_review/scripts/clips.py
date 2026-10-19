@@ -3,7 +3,8 @@
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/clips.py list [--board N]       # every clip: its prompt, length, source photo, the file to save
-    python3 S/scripts/clips.py normalize [--board N]  # conform what arrived; substitute what did not -> build/clips.json
+    python3 S/scripts/clips.py normalize [--board N] [--why "..."]
+                                                      # conform what arrived; substitute what did not -> build/clips.json
 
 list writes build/clips/requests.json and prints one block per clip. The agent generates each clip with its
 video model (image-to-video from the named photo when the model takes an image) and saves it as
@@ -109,7 +110,7 @@ def cmd_normalize(a):
             ok, err = conform(c["source"], OUT / f"{c['id']}.mp4", secs, g["filter"])
             rec.update({"status": "their_reel", "from": c["source"]} if ok else {"status": "substituted", "why": f"could not read their reel: {err}"})
         else:
-            rec.update({"status": "substituted", "why": "the video model did not produce it"})
+            rec.update({"status": "substituted", "why": a.why or "the video model did not produce it"})
         if rec["status"] in ("generated", "their_reel"):
             rec["file"] = f"clips/{c['id']}.mp4"
         elif not rec["image"]:
@@ -128,6 +129,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["list", "normalize"])
     ap.add_argument("--board")
+    ap.add_argument("--why", help="normalize: why the missing clips did not arrive (for example: no video model in this session)")
     a = ap.parse_args()
     return {"list": cmd_list, "normalize": cmd_normalize}[a.cmd](a)
 

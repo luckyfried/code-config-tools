@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Step 4: the palette, from the person's own photos. Reads build/photo_index.json, writes build/palette.json.
+"""Movement 1, research: the palette, from the person's own photos. Reads build/photo_index.json, writes build/palette.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/palette.py [--accent "#E8743B"]
@@ -20,7 +20,7 @@ import _env  # noqa: E402
 
 NAMES = {
     "snow white": (244, 244, 240), "cream": (240, 228, 200), "sand": (220, 196, 150), "wheat": (232, 210, 160),
-    "stone grey": (150, 150, 145), "slate": (90, 100, 112), "charcoal": (48, 50, 54), "ink black": (20, 20, 24),
+    "stone gray": (150, 150, 145), "slate": (90, 100, 112), "charcoal": (48, 50, 54), "ink black": (20, 20, 24),
     "sky blue": (140, 190, 225), "sea blue": (40, 120, 170), "deep navy": (28, 40, 80), "ice blue": (196, 214, 228),
     "teal": (30, 130, 130), "mint": (170, 220, 190), "sage": (150, 175, 130), "leaf green": (90, 150, 70),
     "forest green": (40, 80, 50), "olive": (120, 120, 60), "mustard": (210, 170, 50), "sunshine yellow": (250, 215, 80),
@@ -104,7 +104,7 @@ def main():
     a = ap.parse_args()
     idx = _env.read_json("build/photo_index.json")
     if not idx:
-        sys.exit("build/photo_index.json missing: run picks.py first (step 2)")
+        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
     # weighted color samples: each photo's dominant colors by the share of the photo they cover
     samples = [(tuple(c["rgb"]), c["share"]) for e in idx for c in e["colors"]]
     clusters = []  # [rgb_sum, weight]

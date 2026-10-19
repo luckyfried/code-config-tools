@@ -33,7 +33,7 @@ def hex_rgb(h):
 
 
 def lean(rgb, k):
-    """How far a color sits from grey on each channel, scaled to a colorbalance amount."""
+    """How far a color sits from gray on each channel, scaled to a colorbalance amount."""
     m = sum(rgb) / 3
     return [max(-0.2, min(0.2, round((c - m) / 255 * k, 3))) for c in rgb]
 

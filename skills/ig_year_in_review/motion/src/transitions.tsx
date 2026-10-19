@@ -75,7 +75,7 @@ const Dip: React.FC<TransitionPresentationComponentProps<DipProps>> = ({
 
 type MatchProps = Record<string, never>;
 
-/** A match cut on scale: the outgoing frame pushes into the centre, the incoming frame lands from the same point. */
+/** A match cut on scale: the outgoing frame pushes into the center, the incoming frame lands from the same point. */
 const Match: React.FC<TransitionPresentationComponentProps<MatchProps>> = ({children, presentationProgress: p, presentationDirection}) => {
   const entering = presentationDirection === 'entering';
   const s = entering ? interpolate(p, [0, 1], [1.35, 1], {easing: Easing.bezier(0.16, 1, 0.3, 1)}) : interpolate(p, [0, 1], [1, 1.6], {easing: Easing.bezier(0.7, 0, 0.84, 0)});

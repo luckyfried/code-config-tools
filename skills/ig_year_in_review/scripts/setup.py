@@ -17,6 +17,7 @@ the engine is then "remotion". Without node the engine is "stills" (film.py's fa
 YIR_NODE=portable skips the system node; YIR_NODE=none forces the stills route; YIR_NODE=/path/to/node picks one.
 Re-running when everything is present does no network work and returns in about a second.
 """
+import argparse
 import json
 import os
 import platform
@@ -210,6 +211,7 @@ def ensure_ffmpeg(py):
 
 
 def main():
+    argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
     py = ensure_python()
     ffmpeg, ffprobe = ensure_ffmpeg(py)
     node = ensure_node()
