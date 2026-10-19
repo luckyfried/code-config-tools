@@ -248,7 +248,8 @@ class Ctx:
             bg = mix(darkest, "#000000", 0.45)
             ink = mix(lightest, "#ffffff", 0.6)
             paper = ink
-            accent = vivid[0]
+            # the accent draws the route and the bars on the dark ground and carries light type: it reads on both
+            accent = readable(vivid[0], bg, 2.6)
             accent2 = vivid[1] if len(vivid) > 1 else trip[0]
             if contrast(ink, accent) < 2.2:
                 accent = mix(accent, "#000000", 0.25)

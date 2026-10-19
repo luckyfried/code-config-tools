@@ -28,9 +28,13 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
   const {tween, pop, frame} = useMotion();
   const t = beat.text ?? {};
   const name = board.trip?.name ?? '';
-  const word = (name.split(/\s+/)[0] || name).slice(0, 10);
-  // the big letters carry the name's first word; the headline under them carries the rest, never the name twice
-  const rest = t.headline && t.headline.toLowerCase() !== name.toLowerCase() ? t.headline : name.split(/\s+/).slice(1).join(' ');
+  // the big letters carry the name's first word past any article ("the amalfi coast" gives AMALFI); the headline
+  // under them carries the rest, never the name twice
+  const words = name.split(/\s+/).filter(Boolean);
+  const lead = words.findIndex((w) => !/^(the|a|an|our|my|this)$/i.test(w));
+  const at = lead < 0 ? 0 : lead;
+  const word = (words[at] ?? name).slice(0, 10);
+  const rest = t.headline && t.headline.toLowerCase() !== name.toLowerCase() ? t.headline : words.slice(at + 1).join(' ');
   const d = system.direction;
 
   if (d === 'kinetic') {
