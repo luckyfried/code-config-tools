@@ -21,6 +21,31 @@ const Pane: React.FC<{file: string; box: Box; enter?: number; from?: 'left' | 'r
   );
 };
 
+/**
+ * One half of the side-by-side pair on the 9:16 frame. A 4:5 photo cropped to a half-width, full-height strip loses
+ * two thirds of its width, so the photo sits whole in its slot of the pair (placed in frame coordinates, so a moving
+ * divider reveals it rather than squeezing it) and its own blurred copy fills the rest of the half.
+ */
+const Half: React.FC<{file: string; clip: Box; slot: Box; enter?: number; from?: 'left' | 'right'}> = ({file, clip, slot, enter = 1, from}) => {
+  const {drift} = useMotion();
+  const off = (1 - enter) * slot.width * (from === 'left' ? -1 : 1);
+  return (
+    <div style={{position: 'absolute', ...clip, overflow: 'hidden'}}>
+      <div style={{position: 'absolute', left: -clip.left, top: -clip.top, width: slot.width * 2, height: '100%'}}>
+        <div style={{position: 'absolute', left: slot.left - slot.width * 0.25, top: 0, width: slot.width * 1.5, height: '100%',
+          transform: `translateX(${off}px) scale(1.15)`, filter: 'blur(26px) brightness(0.7) saturate(1.05)'}}>
+          <Photo file={file} />
+        </div>
+        <div style={{position: 'absolute', ...slot, overflow: 'hidden', transform: `translateX(${off}px)`}}>
+          <div style={{width: '100%', height: '100%', transform: `scale(${drift(1.02, 1.08)})`}}>
+            <Photo file={file} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /** "then · august 9, 2025" set as a tracked word over its date. */
 const Label: React.FC<{text: string; delay: number; align?: 'left' | 'right'}> = ({text, delay, align = 'left'}) => {
   const {system} = useSys();
@@ -91,6 +116,35 @@ export const Split: React.FC<{beat: Beat}> = ({beat}) => {
   const line = wipe ? 1 : tween(0, 1, 8, 16);
   const W = s.W;
   const H = s.H;
+  if (!tb) {
+    // side by side: the pair runs from the top edge (the header zone carries no type) to a half-width square into the
+    // safe area, the labels on chips inside it, the type under it
+    const slotH = s.top + Math.round(W / 2);
+    const slots: Box[] = [{left: 0, top: 0, width: W / 2, height: slotH}, {left: W / 2, top: 0, width: W / 2, height: slotH}];
+    const at = W * pos;
+    const after = wipe ? Math.round(duration * 0.35) : 10;
+    const chip = (text: string, slot: Box, delay: number, key: string) => (
+      <div key={key} style={{position: 'absolute', left: slot.left + 24, top: slot.top + slot.height - 24, transform: 'translateY(-100%)',
+        background: system.colors.bg, padding: '14px 18px 12px', opacity: tween(0, 1, delay, 8)}}>
+        <Label text={text} delay={delay} />
+      </div>
+    );
+    return (
+      <AbsoluteFill style={{background: system.colors.bg}}>
+        <Half file={b} clip={{left: at, top: 0, width: W - at, height: H}} slot={slots[1]} enter={eb} from="right" />
+        <Half file={a} clip={{left: 0, top: 0, width: at, height: H}} slot={slots[0]} enter={ea} from="left" />
+        <div style={{position: 'absolute', left: 0, right: 0, top: slotH, bottom: 0, background: system.colors.bg, opacity: 0.84}} />
+        <div style={{position: 'absolute', background: system.colors.accent, top: 0, height: slotH, left: at - 3, width: 6, transform: `scaleY(${line})`, transformOrigin: '50% 0%'}} />
+        {labels[0] ? chip(labels[0], slots[0], after, 'a') : null}
+        {labels[1] ? chip(labels[1], slots[1], after + 4, 'b') : null}
+        <SafeBox name="split" justify="start" top={slotH + 32}>
+          {t.kicker ? <Kicker text={t.kicker} delay={after + 4} color={system.colors.ink} /> : null}
+          {t.headline ? <Headline text={t.headline} max="h2" lines={2} delay={after + 6} /> : null}
+          {t.line ? <Line text={t.line} delay={after + 14} /> : null}
+        </SafeBox>
+      </AbsoluteFill>
+    );
+  }
   const first: Box = tb ? {left: 0, top: 0, width: W, height: H * pos} : {left: 0, top: 0, width: W * pos, height: H};
   const second: Box = tb ? {left: 0, top: H * pos, width: W, height: H * (1 - pos)} : {left: W * pos, top: 0, width: W * (1 - pos), height: H};
   const after = wipe ? Math.round(duration * 0.35) : 10;
