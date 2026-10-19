@@ -180,9 +180,12 @@ def cmd_frames(a):
         subprocess.run([ff, "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", str(film), "-frames:v", "1", str(dst)], check=True)
 
     shots = 0
-    for i, b in enumerate(tl["beats"], 1):
-        # the settled moment of the beat's longest shot: past its entrance, before the next cut or transition
-        edges = b.get("shots") or [0, b["frames"]]
+    beats = tl["beats"]
+    for i, b in enumerate(beats, 1):
+        # the settled moment of the beat's longest shot: past its entrance, before the next cut or transition (the next
+        # beat's transition plays over this beat's last frames, so a shot ends where it starts)
+        out_at = b["frames"] - (beats[i]["transition"] if i < len(beats) else 0)
+        edges = [min(e, out_at) for e in (b.get("shots") or [0, b["frames"]])]
         spans = [(edges[k], edges[k + 1]) for k in range(len(edges) - 1)]
         lo, hi = max(spans, key=lambda e: e[1] - e[0])
         lo = max(lo, b["transition"])

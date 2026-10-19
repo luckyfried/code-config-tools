@@ -37,6 +37,18 @@ const Band: React.FC<{children: React.ReactNode; strength?: number}> = ({childre
   );
 };
 
+/**
+ * A display numeral's size and padding: as large as `max`, never wider than `width`. Each digit takes DIGIT em (tabular
+ * figures), and the inline padding holds the glyphs' ink, the outline stroke, and the tight tracking inside the numeral's
+ * own box, so no container cuts a digit.
+ */
+const DIGIT = 0.62;
+const NUMERAL_PAD = 0.1;
+const numeral = (n: number, width: number, max: number): React.CSSProperties => ({
+  fontSize: Math.min(max, width / (String(n).length * DIGIT + 2 * NUMERAL_PAD)),
+  padding: `0 ${NUMERAL_PAD}em`,
+});
+
 /** One count: the number of days left, large, and the words under it. */
 const Tick: React.FC<{beat: Beat; days: number; label: string}> = ({beat, days, label}) => {
   const {system} = useSys();
@@ -49,7 +61,7 @@ const Tick: React.FC<{beat: Beat; days: number; label: string}> = ({beat, days, 
       <SafeBox name="tick" justify="center" align="center" style={FEATHER}>
         <Band strength={TICK_BAND}>
           <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', textShadow: '0 4px 30px rgba(0,0,0,0.55)'}}>
-            <div style={{...faceStyle(system.display), fontSize: Math.min(s.width / (String(days).length * 0.62), system.scale.hero * 2.4), lineHeight: 0.85,
+            <div style={{...faceStyle(system.display), ...numeral(days, s.width, system.scale.hero * 2.4), lineHeight: 0.85,
               color: system.direction === 'kinetic' ? system.colors.accent : system.colors.ink, transform: `scale(${0.75 + 0.25 * p})`, opacity: tween(0, 1, 0, 5)}}>
               {days}
             </div>
@@ -84,7 +96,7 @@ const Day: React.FC<{beat: Beat}> = ({beat}) => {
       {/* The outlined day carries a thin halo of the background, so its line reads on a white plate and on a dark field alike. */}
       {day !== undefined ? (
         <SafeBox name="date-day" justify="start" align={d === 'kinetic' ? 'center' : 'end'}>
-          <div style={{...faceStyle(system.display), fontSize: system.scale.hero * 2.2, lineHeight: 0.8, color: 'transparent',
+          <div style={{...faceStyle(system.display), ...numeral(day, s.width, system.scale.hero * 2.2), lineHeight: 0.8, color: 'transparent',
             WebkitTextStroke: `3px ${system.colors.ink}`, opacity: 0.9 * p, transform: `translateY(${(1 - p) * 20}%)`,
             filter: `drop-shadow(0 0 1.5px ${system.colors.bg}) drop-shadow(0 0 1.5px ${system.colors.bg}) drop-shadow(0 6px 22px rgba(0,0,0,0.45))`}}>
             {day}
