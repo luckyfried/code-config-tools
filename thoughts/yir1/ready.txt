@@ -1,0 +1,150 @@
+yir1 ready: skills/ig_year_in_review (second writing), branch ig-year-in-review
+
+BRANCH TIP
+  kit code: 87aba87 "Render clips from retrying frame sequences, keep captions unique per board, fix the dip transition"
+  this file is committed on top of it (see git log -1); not pushed, no PR.
+  commits on the branch over 731b89a: 27f3c8b, bf4ebcb, 0a5c9f2, 87aba87, and the ready commit.
+
+FILES ADDED (69, all under skills/ig_year_in_review/)
+  SKILL.md
+  pipeline/: 0-gather.md 1-research.md 2-storyboards.md 3-vote.md 4-produce.md 5-clips.md 6-deliver.md
+  scripts/: _env.py setup.py gather.py research.py stats.py picks.py palette.py grade.py storyboard.py vote.py
+            clips.py music.py film.py qa.py deliver.py
+  critic/critic.md
+  design/: standards.md grade.md easing.json safe-areas.json transitions.json type.json
+  evals/: blind.md fixtures/make_person.py
+  fonts/: Archivo, Archivo Black, Fraunces, Inter, JetBrains Mono, Space Grotesk (.ttf) and LICENSES.md
+  motion/ (Remotion 4.0.536 project): package.json package-lock.json .npmrc .gitignore render.mjs storyboard.json
+          public samples (sample-1..5.jpg, grain.png, fonts), src/: index.ts Root.tsx Film.tsx Beat.tsx system.tsx
+          text.tsx photo.tsx texture.tsx transitions.tsx types.ts, components/: Opener Closer PhotoLive StatCard
+          Mosaic KineticType ClipShot (.tsx)
+
+CHECK 1: compile, help, clean npm ci and render (re-run on the committed tree, exported to scratch)
+  python3 -m py_compile scripts/*.py evals/fixtures/make_person.py     -> ok, 16 files
+  python3 <each of the 16> --help                                       -> 16 of 16 answer
+  cd /mnt/data/scratch/kit-yir/check1b/kit/motion && npm_config_cache=/mnt/data/scratch/kit-yir/check1b/npm-cache \
+    npm ci --no-audit --no-fund                                         -> rc 0, 3.16 s, 257 packages
+  npx remotion render src/index.ts Film /mnt/data/scratch/kit-yir/check1b/sample-film.mp4 --gl=swangle --log=info
+                                                                        -> rc 0, 29.14 s (includes the Chrome Headless
+                                                                           Shell download into motion/node_modules/.remotion)
+  ffprobe ... sample-film.mp4                                           -> stream,h264,1080,1920,30/1,8.700000
+  (first pass, before the clip change: npm ci 4.05 s, render 22.29 s, same probe)
+
+CHECK 2: fixture
+  python3 skills/ig_year_in_review/evals/fixtures/make_person.py /mnt/data/scratch/kit-yir/check2
+                                                                        -> 1.73 s; 47M, 261 files, 243 images
+  (2.36 s inside the hand run below; the blind sandboxes built it the same way)
+
+CHECK 3: hand run, every movement, final code
+  script: /mnt/data/scratch/kit-yir/runs/hand4.zsh, workspace /mnt/data/scratch/kit-yir/hand4, timings in hand4/timings.txt
+  Agent-written files (taste.md and taste.json, vote/scores.json, critic/cut-1.json scores, caption.md) are the ones
+  I wrote by hand in hand3 and are copied in; every script runs live. S = skills/ig_year_in_review.
+    fixture    python3 S/evals/fixtures/make_person.py hand4                      2.36 s
+    0 gather   python3 S/scripts/gather.py --door instagram_account="closed: no Instagram tool in this session"
+               --door browser="closed: no signed-in browser in this session"      0.10 s  (export door open; FB export read)
+    1 research python3 S/scripts/research.py                                      3.34 s
+    2 boards   storyboard.py draft 1.36 s, check 0.07 s, sheets 14.75 s          16.18 s
+    3 vote     vote.py ballot 0.05 s, tally 0.05 s                                0.10 s  winner 1 (88), 3 (86), 2 (70)
+    5 clips    clips.py list 0.05 s; two fixture reels copied to build/clips/01.mp4 and 02.mp4 as stand-ins for
+               the model's output; clips.py normalize 7.73 s -> "2 generated"     7.78 s
+    4 produce  music.py find 0.06 s (exit 3, no music), make --mood calm 1.08 s, analyze 0.24 s,
+               storyboard.py snap 0.05 s, music.py master 0.53 s, film.py render 65.49 s (14 of 14 jobs),
+               film.py frames 5.44 s                                             72.89 s
+    6 deliver  qa.py check 3.67 s, vote.py cut 0.23 s, vote.py verdict 0.05 s (SHIP round 1),
+               deliver.py 4.98 s -> GATE GREEN                                    8.93 s
+    total scripted time about 112 s.
+  ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv out/film.mp4
+    stream,h264,1080,1920,30/1,60.500000
+    stream,aac,0/0,60.500000
+  Root causes found and fixed during the hand runs (never the fixture):
+    - render failed 1 of 14 jobs after 3 attempts (206.9 s): the browser dropped localhost video-frame fetches with
+      ERR_NETWORK_CHANGED; this machine had 607 network-interface events a minute from gate containers. The
+      video element path has no retry. Clips are now conformed to a JPEG frame sequence and read through image
+      requests that retry with backoff; the same render then took 55 s, 14 of 14, 0 retries.
+    - the dip transition cut hard to paper (the entering wrapper painted over the exiting scene); now transparent.
+    - two months showed the same caption differing only in emoji; captions are compared by their words, per board.
+    - the share card looked the same as the closer; it is now a year grid of the best photo of each month.
+    - "that was 2026." carried a full stop the person never uses; boards drop it when under 10% of captions end in one.
+    - loudness came out at -15.5 LUFS (loudnorm fell back to dynamic mode); mastering is gain, limiter, trim: -14.0.
+    - frames for the eye caught entrances and dips; film.py frames takes the settled point of the longest shot.
+    - duplicate palette names, the "..." caption ending never counted, setup.py ran instead of printing help,
+      and build/library was empty; all fixed.
+
+CHECK 4: blind runs (one pass; no fix loop needed)
+  script: /mnt/data/scratch/kit-yir/runs/blind.zsh with|without; the kit placed from git archive of HEAD (no
+  node_modules, no venv), so first-run setup ran inside the blind run.
+  command in both sandboxes:
+    CSC_DISABLE_KEYCHAIN=1 TMPDIR=/mnt/data/scratch/kit-yir/tmp /home/rib/.local/bin/claude -p "make my instagram year in review" \
+      --dangerously-skip-permissions --setting-sources project,local --strict-mcp-config \
+      --output-format stream-json --verbose > run.log 2>&1
+  (own login; no CLAUDE_CONFIG_DIR override was needed for isolation)
+
+  blind-with (/mnt/data/scratch/kit-yir/blind-with)
+    wall time: 231 s (05:51:05Z to 05:54:56Z), rc 0; the agent's own duration 222.97 s
+    triggered: first tool call was Skill ig_year_in_review, then setup, gather, research, taste.md written by the
+      agent, draft, its own voice fix on board 2's closer, sheets read by eye, ballot, scores, tally, clips list and
+      normalize --why, music find or make, analyze, snap, master, render, frames, cut, scores, verdict, deliver.
+    deliverables: out/film.mp4 yes; out/carousel 10; out/stories 3; out/caption.md yes; out/review.html yes;
+      out/brief.md yes
+    ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv out/film.mp4
+      stream,h264,1080,1920,30/1,60.500000
+      stream,aac,0/0,60.500000
+    python3 .claude/skills/ig_year_in_review/scripts/qa.py gate -> GATE GREEN (13 of 13: film, audio aac 191 kbps
+      -14.0 LUFS, black 0, frozen 0, safe 14 jobs 0 failed, cards 10 at 1080x1350 and 3 at 1080x1920, text 170,
+      research, boards 3, vote, clips 2 of 2 accounted for, critic round 1 lowest 4, deliver caption lowercase)
+    render report: 44.5 s, 14 jobs, 0 failed, 0 retries
+    clips: 01 (opener) and 02 (closer) substituted, "no video model in this session", animated from their photos;
+      brief.md says so.
+    music: made by music.py, a calm bed at 84 bpm, because no music was found; brief.md names it.
+    caption: "lisbon, porto, oaxaca, sicily, marrakech, home. a lot of bread. that was 2026"
+             #filmphotography #slowtravel #foodtravel #yearinreview
+    style sheets:
+      /mnt/data/scratch/kit-yir/blind-with/build/storyboards/1/sheet.png
+      /mnt/data/scratch/kit-yir/blind-with/build/storyboards/2/sheet.png
+      /mnt/data/scratch/kit-yir/blind-with/build/storyboards/3/sheet.png
+    vote (build/vote.md): winner storyboard 1, month by month, 90 of 105; runners-up 3 one thread: sicily, july (84),
+      2 by the numbers (60)
+      critic                      board 1  board 2  board 3
+      the motion designer           30       21       28
+      the editor                    28       21       28
+      the person (from taste.md)    32       18       28
+      total                         90       60       84
+    cut critics (build/critic/cut-1.json, round 1, SHIP):
+      motion designer: professional 4, them 5, pacing 4, type 5, transitions 4, music 4, ending 4
+      person:          professional 4, them 5, pacing 4, type 5, transitions 4, music 4, ending 5
+    frames, one per beat (python3 S/scripts/film.py frames --out frames), named NN-<beat>.png:
+      /mnt/data/scratch/kit-yir/blind-with/frames/01-opener.png 02-months-1.png 03-numbers.png 04-months-2.png
+      05-busiest.png 06-months-3.png 07-top.png 08-people.png 09-loved.png 10-palette.png 11-closer.png
+      tiled: /mnt/data/scratch/kit-yir/blind-with/frames-sheet.png
+
+  blind-without (/mnt/data/scratch/kit-yir/blind-without)
+    wall time: 369 s (05:51:06Z to 05:57:15Z), rc 0; the agent's own duration 360.96 s
+    what it made: instagram-year-in-review-2026/ with slide01..slide10.png (all 1080x1920) and
+      year-in-review-2026.mp4 (crossfades between the slides)
+    deliverables: out/film.mp4, out/carousel, out/stories, out/caption.md, out/review.html, out/brief.md all MISSING
+      (no 1080x1350 carousel, no caption, no review page, no brief, no storyboards, no vote)
+    ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv \
+      instagram-year-in-review-2026/year-in-review-2026.mp4
+      stream,h264,1080,1920,30/1,30.533333      (no audio stream; 30.5 s, under the 45 s floor)
+    qa.py gate (the kit's gate run in that folder): GATE RED (7 failing: film, text, research, boards, vote, critic,
+      deliver); it wrote build/qa/gate.json there.
+    style sheets, vote, critic scores: none exist.
+
+CHECK 5: not needed; the with-run ended with every deliverable and a green gate on the first attempt.
+
+WHAT COULD NOT BE DONE, AND WHY
+  - No real video model is reachable from here, so the generated-clip path is proven only by conforming the fixture's
+    own reels as stand-ins (hand run: "2 generated"); the blind run proves the substitution path.
+  - No connected Instagram or Facebook account and no signed-in browser in either sandbox, so those doors are recorded
+    closed and the export door carries the run. The pulled-material door (items.json) is written and documented but
+    exercised by no fixture.
+  - No music source exists in the sandbox, so every film here uses the bed music.py makes; a real track goes through
+    the same analyze and master steps.
+  - The critics' scores in both runs are the agent's own judgment by eye; nothing scores them independently.
+  - Stills fallback deviation: film.py's fallback when Remotion cannot render builds the film from stills with PIL
+    and ffmpeg (graded photo, eased push-in, crossfades, music), not from social's HTML-per-frame motion.py. It
+    keeps the kit to one browser path (Remotion) and the fallback to tools always present; it is plainer motion
+    and the qa gate's critic step judges it like any other cut. It did not trigger in any run here.
+  - Remotion's render on a machine with heavy container churn drops browser requests; the frame-sequence change makes
+    clips survive it, and photos and frames retry 6 times with backoff (1 s, 2 s, 4 s ...), but a request dropped
+    seven times in a row still fails that job, and render.mjs then retries the job up to 3 times.
