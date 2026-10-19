@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Movement 0, gather: every door to the person's own material, merged into build/library.json.
+"""Movement 0, gather: every door to the person's own material, with every geotag and place name, into build/library.json.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
@@ -12,17 +12,21 @@ Doors, in order of preference (every one tried is recorded in library.json and i
      unpacked into build/export/): posts, reels, stories, likes, saves, comments, followers, following, per-post
      and per-reel likes and comments (past_instagram_insights), the username. Missing files are tolerated.
   3. Facebook "Download your information" exports under --root: posts, photos, albums.
-  4. --photos DIR, else the largest folder of photos under --root (dates from EXIF, else the file time).
+  4. --photos DIR, else the largest folder of photos under --root (dates and GPS from EXIF, else the file time; the
+     folder each photo sits in is kept, since a folder named "Porto 2026" names the place).
 With every door closed it writes out/brief.md with the one sentence on how to open one and exits 3: tell the
 person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
 
 items.json (every key optional; ts is a unix timestamp; media are paths relative to items.json):
   {"source": "instagram account", "handle": "...", "name": "...",
-   "posts": [{"ts": 0, "caption": "", "media": ["a.jpg"], "likes": 0, "comments": 0, "place": ""}],
-   "reels": [...same...], "stories": [{"ts": 0, "media": ["s.jpg"]}],
+   "posts": [{"ts": 0, "caption": "", "media": ["a.jpg"], "likes": 0, "comments": 0, "place": "", "lat": 0, "lon": 0}],
+   "reels": [...same...], "stories": [{"ts": 0, "media": ["s.jpg"], "place": "", "lat": 0, "lon": 0}],
    "likes": [{"account": "", "ts": 0, "caption": "", "media": ["liked.jpg"]}], "saved": [...same as likes...],
    "comments": [{"account": "", "text": "", "ts": 0}], "followers": [{"account": "", "ts": 0}],
-   "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
+   "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": "", "place": ""}],
+   "bio": ""}
+Every row keeps the geotag it carries (lat, lon: from media_metadata exif_data, a check-in, or photo EXIF) and any
+place name the data attaches to it (place, album, folder); movement 1 turns them into the year's places.
 
 The year: --year when the person named one, else the latest year with at least 12 posts, reels and stories.
 Links every media file of the year into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook)
@@ -43,9 +47,9 @@ import _env  # noqa: E402
 SKIP = {"out", "build", ".claude", ".git", "node_modules", ".venv", "venv", "__pycache__", ".cache", "custom-skills"}
 IMG = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 VID = {".mp4", ".mov", ".m4v"}
-HOWTO = ("To make your best nine I need your Instagram: connect your Instagram account here, or in the Instagram "
-         "app go to Your activity, then Download your information, choose JSON, and put the folder or zip it sends you "
-         "in this workspace.")
+HOWTO = ("To map your year of places I need your Instagram or your photos: connect your Instagram account here, or in "
+         "the Instagram app go to Your activity, then Download your information, choose JSON, and put the folder or zip "
+         "it sends you in this workspace. A folder of your phone's photos works too, since they carry where they were taken.")
 
 
 def fix(s):
@@ -55,6 +59,65 @@ def fix(s):
         return s.encode("latin-1").decode("utf-8")
     except (UnicodeEncodeError, UnicodeDecodeError):
         return s
+
+
+def geo_of(x, depth=0):
+    """The first latitude and longitude pair anywhere inside a row (exif_data, place, location, coordinate)."""
+    if depth > 6:
+        return None
+    if isinstance(x, dict):
+        lat, lon = x.get("latitude", x.get("lat")), x.get("longitude", x.get("lon", x.get("lng")))
+        try:
+            lat, lon = float(lat), float(lon)
+            if -90 <= lat <= 90 and -180 <= lon <= 180 and (lat, lon) != (0.0, 0.0):
+                return round(lat, 6), round(lon, 6)
+        except (TypeError, ValueError):
+            pass
+        for v in x.values():
+            g = geo_of(v, depth + 1)
+            if g:
+                return g
+    elif isinstance(x, list):
+        for v in x:
+            g = geo_of(v, depth + 1)
+            if g:
+                return g
+    return None
+
+
+def place_of(x, depth=0):
+    """A place name the data attaches to a row: a place, location, or check-in's name."""
+    if depth > 6:
+        return ""
+    if isinstance(x, dict):
+        for k in ("place", "location", "check_in", "checkin"):
+            v = x.get(k)
+            if isinstance(v, str) and v.strip():
+                return fix(v.strip())
+            if isinstance(v, dict) and isinstance(v.get("name"), str) and v["name"].strip():
+                return fix(v["name"].strip())
+        for v in x.values():
+            if isinstance(v, (dict, list)):
+                n = place_of(v, depth + 1)
+                if n:
+                    return n
+    elif isinstance(x, list):
+        for v in x:
+            n = place_of(v, depth + 1)
+            if n:
+                return n
+    return ""
+
+
+def located(row, src):
+    """The row with the geotag and place name its source carries (a row's own values win)."""
+    g = geo_of(src)
+    if g and row.get("lat") is None:
+        row["lat"], row["lon"] = g
+    n = place_of(src)
+    if n and not row.get("place"):
+        row["place"] = n
+    return row
 
 
 def walk(root, depth=6):
@@ -187,8 +250,8 @@ def read_export(root):
             cap = fix(e.get("title") or items[0][2])
             paths = [md.resolve(u) for u, _, _ in items]
             ins = insights_ts.get(int(ts or 0)) or next((insights[Path(u).name] for u, _, _ in items if Path(u).name in insights), {})
-            posts.append({"ts": ts, "caption": cap, "media": [p for p in paths if p],
-                          "likes": ins.get("likes"), "comments": ins.get("comments")})
+            posts.append(located({"ts": ts, "caption": cap, "media": [p for p in paths if p],
+                                  "likes": ins.get("likes"), "comments": ins.get("comments")}, e))
     reels = []
     rf = first(root, "content/reels.json")
     found["reels"] = [str(f) for f in rf]
@@ -200,8 +263,8 @@ def read_export(root):
             if items:
                 ts = items[0][1]
                 ins = insights_ts.get(int(ts or 0)) or {}
-                reels.append({"ts": ts, "caption": fix(items[0][2]), "media": [p for p in (md.resolve(u) for u, _, _ in items) if p],
-                              "likes": ins.get("likes"), "comments": ins.get("comments")})
+                reels.append(located({"ts": ts, "caption": fix(items[0][2]), "media": [p for p in (md.resolve(u) for u, _, _ in items) if p],
+                                      "likes": ins.get("likes"), "comments": ins.get("comments")}, e))
     stories = []
     sf = first(root, "content/stories.json")
     found["stories"] = [str(f) for f in sf]
@@ -210,7 +273,7 @@ def read_export(root):
         rows = data.get("ig_stories", []) if isinstance(data, dict) else data
         for e in rows or []:
             for u, ts, t in media_items(e):
-                stories.append({"ts": ts, "media": [p for p in [md.resolve(u)] if p]})
+                stories.append(located({"ts": ts, "media": [p for p in [md.resolve(u)] if p]}, e))
     likes = []
     lf = first(root, "likes/liked_posts.json")
     found["likes"] = [str(f) for f in lf]
@@ -262,7 +325,7 @@ def read_export(root):
                 acct = fix(e.get("title") or s_.get("value") or "")
                 if acct:
                     following.append({"account": acct, "ts": s_.get("timestamp")})
-    handle, name = None, None
+    handle, name, bio = None, None, ""
     for f in first(root, "../personal_information/personal_information/personal_information.json",
                    "personal_information/personal_information/personal_information.json", "account_information/personal_information.json"):
         data = load(f) or {}
@@ -270,6 +333,7 @@ def read_export(root):
             smd = u.get("string_map_data") or {}
             handle = handle or fix((smd.get("Username") or {}).get("value", "")) or None
             name = name or fix((smd.get("Name") or {}).get("value", "")) or None
+            bio = bio or fix((smd.get("Bio") or {}).get("value", ""))
     if not handle:
         m = re.match(r"instagram-([A-Za-z0-9._]+?)-\d{4}-\d{2}-\d{2}", root.name)
         if m:
@@ -277,7 +341,7 @@ def read_export(root):
             notes.append(f"Username taken from the export's folder name ({root.name}).")
     return {"posts": posts, "reels": reels, "stories": stories, "likes": likes, "comments": comments,
             "followers": followers, "saved": saved, "following": following, "handle": handle, "name": name,
-            "found": found, "notes": notes}
+            "bio": bio, "found": found, "notes": notes}
 
 
 def is_fb_export(d):
@@ -299,14 +363,14 @@ def read_facebook(root):
                     uri = ((x or {}).get("media") or {}).get("uri")
                     if uri and (root / uri).exists():
                         media.append(str((root / uri).resolve()))
-            rows.append({"ts": e.get("timestamp"), "caption": text, "media": media, "album": ""})
+            rows.append(located({"ts": e.get("timestamp"), "caption": text, "media": media, "album": ""}, e))
     for f in sorted((act / "album").glob("*.json")):
         a = load(f) or {}
         for ph in a.get("photos") or []:
             uri = ph.get("uri")
             if uri and (root / uri).exists():
-                rows.append({"ts": ph.get("creation_timestamp"), "caption": fix(ph.get("title") or ""),
-                             "media": [str((root / uri).resolve())], "album": fix(a.get("name") or "")})
+                rows.append(located({"ts": ph.get("creation_timestamp"), "caption": fix(ph.get("title") or ""),
+                                     "media": [str((root / uri).resolve())], "album": fix(a.get("name") or "")}, ph))
     return rows
 
 
@@ -327,27 +391,45 @@ def read_pulled(folder):
         return dict(row, media=out)
     keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
     d = {k: [media(r) if isinstance(r, dict) else r for r in data.get(k) or []] for k in keys}
-    d.update(handle=data.get("handle"), name=data.get("name"), source=data.get("source") or "connected account",
+    d.update(handle=data.get("handle"), name=data.get("name"), bio=data.get("bio") or "",
+             source=data.get("source") or "connected account",
              found={k: [str(f)] for k in keys if d[k]})
     return d
 
 
-def photo_date(p):
+def photo_facts(p):
+    """(unix time, (lat, lon) or None) from a photo's EXIF, else the file time and no geotag."""
+    ts, g = None, None
     try:
         from PIL import Image
         ex = Image.open(p).getexif()
         v = ex.get(36867) or ex.get(306) or (ex.get_ifd(0x8769) or {}).get(36867)
         if v:
-            return int(dt.datetime.strptime(str(v)[:19], "%Y:%m:%d %H:%M:%S").replace(tzinfo=dt.timezone.utc).timestamp())
+            ts = int(dt.datetime.strptime(str(v)[:19], "%Y:%m:%d %H:%M:%S").replace(tzinfo=dt.timezone.utc).timestamp())
+        gps = ex.get_ifd(0x8825) or {}
+        if gps.get(2) and gps.get(4):
+            deg = lambda t: float(t[0]) + float(t[1]) / 60 + float(t[2]) / 3600
+            lat, lon = deg(gps[2]), deg(gps[4])
+            lat = -lat if str(gps.get(1, "N")).upper().startswith("S") else lat
+            lon = -lon if str(gps.get(3, "E")).upper().startswith("W") else lon
+            g = (round(lat, 6), round(lon, 6))
     except Exception:
         pass
-    return int(Path(p).stat().st_mtime)
+    return ts or int(Path(p).stat().st_mtime), g
 
 
 def read_photos(folder):
-    files = sorted(f for f in Path(folder).rglob("*") if f.suffix.lower() in IMG and f.is_file())
-    posts = [{"ts": photo_date(f), "caption": "", "media": [str(f.resolve())], "likes": None, "comments": None} for f in files]
-    vids = [{"ts": int(f.stat().st_mtime), "caption": "", "media": [str(f.resolve())]}
+    folder = Path(folder)
+    files = sorted(f for f in folder.rglob("*") if f.suffix.lower() in IMG and f.is_file())
+    posts = []
+    for f in files:
+        ts, g = photo_facts(f)
+        row = {"ts": ts, "caption": "", "media": [str(f.resolve())], "likes": None, "comments": None,
+               "folder": f.parent.name if f.parent != folder else folder.name}
+        if g:
+            row["lat"], row["lon"] = g
+        posts.append(row)
+    vids = [{"ts": int(f.stat().st_mtime), "caption": "", "media": [str(f.resolve())], "folder": f.parent.name}
             for f in sorted(Path(folder).rglob("*")) if f.suffix.lower() in VID]
     return posts, vids
 
@@ -381,7 +463,7 @@ def pick_year(rows, asked):
 
 def write_howto(out):
     out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
+    (out / "brief.md").write_text(f"# A year of places: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
                                   f"photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
@@ -435,7 +517,7 @@ def main():
         doors[k.strip()] = v.strip() or "tried"
     keys = ("posts", "reels", "stories", "likes", "saved", "comments", "followers", "following", "facebook")
     d = {k: [] for k in keys}
-    d.update(handle=None, name=None, found={}, notes=[])
+    d.update(handle=None, name=None, bio="", found={}, notes=[])
     sources = []
     pulled = a.pulled or (["build/library/pulled"] if Path("build/library/pulled/items.json").exists() else [])
     for folder in pulled:
@@ -445,7 +527,7 @@ def main():
             continue
         for k in keys:
             d[k] = merge(d[k], p[k])
-        d["handle"], d["name"] = d["handle"] or p["handle"], d["name"] or p["name"]
+        d["handle"], d["name"], d["bio"] = d["handle"] or p["handle"], d["name"] or p["name"], d["bio"] or p["bio"]
         d["found"].update(p["found"])
         sources.append(p["source"])
         doors.setdefault(p["source"], f"open: {len(p['posts'])} posts, {len(p['likes'])} likes pulled")
@@ -458,7 +540,7 @@ def main():
         for k in keys:
             if k in x:
                 d[k] = merge(d[k], x[k])
-        d["handle"], d["name"] = d["handle"] or x["handle"], d["name"] or x["name"]
+        d["handle"], d["name"], d["bio"] = d["handle"] or x["handle"], d["name"] or x["name"], d["bio"] or x["bio"]
         for k, v in x["found"].items():
             d["found"].setdefault(k, v)
         d["notes"] += x["notes"]
@@ -513,18 +595,22 @@ def main():
         if missing:
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
         if not any(p.get("likes") is not None for p in lib["posts"] + lib["reels"]):
-            assumptions.append("The data has no likes per post, so the nine are picked by comments, else spread across the year.")
+            assumptions.append("The data has no likes per post, so each place's photos are picked by comments, else spread across the visit.")
     shelve(lib)
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
         assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
+    tagged = sum(1 for k in ("posts", "reels", "stories", "facebook") for r in lib[k] if r.get("lat") is not None)
+    total = sum(len(lib[k]) for k in ("posts", "reels", "stories", "facebook"))
     out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
+           "bio": d["bio"], "geotagged": tagged,
            "year": year, "range": span, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
     _env.write_json("build/library.json", out)
     print(f"source: {source}   handle: @{handle}   year: {year}   range: {span['first']} to {span['last']}")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
                                                    "following", "facebook")))
+    print(f"geotagged rows: {tagged} of {total}")
     for k, v in doors.items():
         print(f"door {k}: {v}")
     for x in out["assumptions"]:

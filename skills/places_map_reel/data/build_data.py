@@ -8,9 +8,10 @@ NE_DIR holds ne_50m_land.geojson and ne_10m_populated_places_simple.geojson as p
 github.com/nvkelso/natural-earth-vector (geojson/). Writes, beside this file:
     land.json    every land ring of the 50 m land layer, simplified (Douglas-Peucker, 0.02 degrees) and rounded
                  to 0.01 degree, as flat [lon, lat, lon, lat, ...] lists with their bounding boxes
-    places.tsv   the populated places layer: name, plain name, country, region, lat, lon, population, and
-                 whether the plain name is also a common English word (such a name counts from a caption only
-                 after "in", "to", "from" and the like, or as a hashtag)
+    places.tsv   the populated places layer: name, plain name, country, region, lat, lon, population, whether
+                 the plain name is also a common English word (such a name counts from a caption only after "in",
+                 "to", "from" and the like, or as a hashtag), and the place's other plain names (local or
+                 longer forms such as "lisboa" or "oaxaca de juarez"), separated by "|"
 The kit reads only these two files; nothing is fetched when it runs.
 """
 import json
@@ -101,15 +102,18 @@ def main():
         "source": "Natural Earth 1:50m land (public domain), simplified to 0.02 degrees",
         "rings": rings}, separators=(",", ":")))
     pp = json.loads((ne / "ne_10m_populated_places_simple.geojson").read_text())
-    rows = ["# Natural Earth 1:10m populated places (public domain). name\tplain\tcountry\tregion\tlat\tlon\tpop\tcommon"]
+    rows = ["# Natural Earth 1:10m populated places (public domain). name\tplain\tcountry\tregion\tlat\tlon\tpop\tcommon\talt"]
     for f in pp["features"]:
         p = f["properties"]
         name = (p.get("name") or "").replace("‎", "").replace("‏", "").strip()
         if not name:
             continue
         pl = plain(p.get("nameascii") or name)
+        alt = sorted({plain(v) for v in (name, p.get("namepar"), p.get("namealt"))
+                      if v and len(plain(v)) >= 4 and plain(v) != pl and "?" not in v})
         rows.append("\t".join([name, pl, p.get("adm0name") or "", p.get("adm1name") or "", f"{p['latitude']:.4f}",
-                               f"{p['longitude']:.4f}", str(int(p.get("pop_max") or 0)), "1" if pl in COMMON else "0"]))
+                               f"{p['longitude']:.4f}", str(int(p.get("pop_max") or 0)), "1" if pl in COMMON else "0",
+                               "|".join(alt)]))
     (HERE / "places.tsv").write_text("\n".join(rows) + "\n")
     print(f"land.json: {len(rings)} rings; places.tsv: {len(rows) - 1} places")
 

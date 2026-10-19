@@ -5,13 +5,10 @@ USAGE (from the workspace root):
     python3 S/scripts/stats.py
 
 Counts (posts, reels, stories, likes given, comments written, new followers; each null when the data lacks
-it), the best nine: the nine most-liked posts and reels of the year, ranked by likes, ties broken by comments,
-then by the more recent (by comments alone, or spread across the year, when the data has no likes per post; with
-fewer than nine posts and reels, their stories fill the wall, newest first), the likes of the tenth and the gap
-to it, the median post's likes, every month's activity with the busiest and the quietest, the people (accounts
-commented on and @mentioned most), the accounts liked most, and the person's caption register (lowercase,
-emoji, length, hashtags, sample captions) for writing copy in their voice. Every number a card shows comes
-from this file.
+it), every month's activity with the busiest and the quietest, the people (accounts commented on and @mentioned
+most), the accounts liked most, and the person's caption register (lowercase, emoji, length, hashtags, sample
+captions) for writing copy in their voice. The places, their visits and distances are places.py's
+(build/places.json); every other number the film shows comes from this file.
 """
 import calendar
 import datetime as dt
@@ -63,31 +60,6 @@ def main():
     if src == "photos":
         numbers = [("posts", counts["posts"], "photos")] + ([("reels", counts["reels"], "videos")] if counts["reels"] else [])
 
-    ranked_rows = [dict(p, kind="post") for p in posts if p["media"]] + [dict(r, kind="reel") for r in reels if r["media"]]
-    if any(p.get("likes") is not None for p in ranked_rows):
-        ranked = sorted(ranked_rows, key=lambda p: (-(p.get("likes") or 0), -(p.get("comments") or 0), -p["ts"]))
-        by = "likes"
-    elif any(p.get("comments") for p in ranked_rows):
-        ranked = sorted(ranked_rows, key=lambda p: (-(p.get("comments") or 0), -p["ts"]))
-        by = "comments"
-    else:
-        rows = sorted(ranked_rows, key=lambda p: p["ts"])
-        step = max(1, len(rows) / 9)
-        ranked = [rows[int(i * step)] for i in range(min(9, len(rows)))]
-        by = "spread"
-    nine = ranked[:9]
-    if len(nine) < 9:
-        fill = sorted((dict(st, kind="story", caption="") for st in stories if st.get("media")), key=lambda r: -r["ts"])
-        nine += fill[:9 - len(nine)]
-    top = [{"rank": i + 1, "kind": p["kind"], "ts": p["ts"], "date": when(p["ts"]).date().isoformat(), "date_label": label(p["ts"]),
-            "month": when(p["ts"]).month, "likes": p.get("likes"), "comments": p.get("comments"), "caption": p.get("caption") or "",
-            "media": p["media"][0], "video": p["media"][0] if Path(p["media"][0]).suffix.lower() in (".mp4", ".mov", ".m4v") else None}
-           for i, p in enumerate(nine)]
-    tenth = ranked[9] if len(ranked) > 9 else None
-    like_counts = sorted(p["likes"] for p in ranked_rows if p.get("likes") is not None)
-    tenth_info = {"likes": tenth.get("likes"), "comments": tenth.get("comments"),
-                  "gap": (top[8]["likes"] - (tenth.get("likes") or 0)) if top[8:] and top[8]["likes"] is not None and tenth.get("likes") is not None else None} if tenth else None
-
     last_month = when(max([p["ts"] for p in posts + reels + stories] or [dt.datetime(year, 12, 31).timestamp()])).month
     months = []
     for m in range(1, last_month + 1):
@@ -130,14 +102,10 @@ def main():
     }
     out = {"handle": d["handle"], "name": d.get("name"), "year": year, "source": src, "range": d["range"],
            "counts": counts, "numbers": [{"key": k, "value": v, "label": lab} for k, v, lab in numbers],
-           "top_nine": top, "top_ranked_by": by, "tenth": tenth_info,
-           "median_likes": like_counts[len(like_counts) // 2] if like_counts else None, "months": months, "busiest": busiest, "quietest": quietest,
+           "months": months, "busiest": busiest, "quietest": quietest,
            "people": people[:5], "loved": loved, "register": register}
     _env.write_json("build/stats.json", out)
     print(f"@{d['handle']} {year}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
-    print("best nine (by %s): " % by + "; ".join(f"{t['rank']}. {t['date_label']} {t['kind']} {t['likes'] if t['likes'] is not None else ''}" for t in top))
-    if tenth_info:
-        print(f"tenth: {tenth_info['likes']} likes, {tenth_info['gap']} below the ninth")
     if busiest:
         print(f"busiest {busiest['name']} ({busiest['posts']} posts), quietest {quietest['name']} ({quietest['posts']} posts)")
     print("people: " + ", ".join(f"@{p['account']} {p['total']}" for p in people[:5]))

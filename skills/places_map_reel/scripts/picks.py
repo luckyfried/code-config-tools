@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the nine and the photos around them. Writes build/photo_index.json,
-build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: each place's photos. Reads build/library.json and build/places.json; writes
+build/photo_index.json, build/picks.json and build/photos/*.jpg.
 
 USAGE (from the workspace root):
-    python3 S/scripts/picks.py
+    python3 S/scripts/picks.py [--per-place 6]
 
 Scores every photo of the year (color, contrast, exposure), finds each one's focal point (where the detail is,
 so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in build/photos/.
-A reel among the nine gets a poster frame (ffmpeg, 40% of the way in) that stands for it on the wall; the reel
-itself stays available as footage. picks.json carries the nine in rank order (each with its photo, its library
-source, its reel when it is one, its score, brightness, focal point and colors) and two chapters around them:
-"opener", the year's most striking photo outside the nine (the wall's world), and "nine", the nine stills.
-To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
+Every photo carries the place places.py gave its post or story. picks.json carries, per place, its best photos
+(the hero first, one from each visit of a place visited twice, then by score and likes), its own reels with a
+poster frame each (ffmpeg, 40% of the way in), and the "opener" chapter: the year's most striking photo taken
+away from home. To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
 build/storyboards/N/storyboard.json.
 """
+import collections
 import datetime as dt
 import hashlib
 import subprocess
@@ -113,53 +113,86 @@ def analyse(path):
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
+    ap.add_argument("--per-place", type=int, default=6)
+    a = ap.parse_args()
     d = _env.read_json("build/library.json")
-    s = _env.read_json("build/stats.json")
-    if not d or not s:
-        sys.exit("run gather.py and stats.py first")
+    pl = _env.read_json("build/places.json")
+    if not d or not pl:
+        sys.exit("run gather.py and places.py first")
+    rowmap = pl.get("rows") or {}
     index, skipped = [], 0
-    for kind, rows in (("post", d["posts"]), ("story", d["stories"])):
-        for r in rows:
-            for m in r["media"]:
+    for kind in ("posts", "stories", "facebook"):
+        for i, r in enumerate(d.get(kind) or []):
+            for m in r.get("media") or []:
                 if Path(m).suffix.lower() in VIDEO:
                     continue
                 try:
-                    a = analyse(m)
+                    an = analyse(m)
                 except Exception:
                     skipped += 1
                     continue
                 month = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month
-                index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"), **a})
+                index.append({"src": m, "kind": kind.rstrip("s") if kind != "facebook" else "facebook", "ts": r["ts"], "month": month,
+                              "likes": r.get("likes"), "place": rowmap.get(f"{kind}:{i}"), **an})
     if not index:
-        sys.exit("no photos could be opened; the video needs at least one photo")
+        sys.exit("no photos could be opened; the film needs at least one photo")
     _env.write_json("build/photo_index.json", index)
-    nine, chosen = [], set()
-    for t in s["top_nine"]:
-        still = poster(t["media"]) if t.get("video") else prepare(t["media"])
-        if not still:
-            print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
-            continue
-        a = analyse(still)
-        chosen.add(t["media"])
-        nine.append({"rank": t["rank"], "kind": t["kind"], "photo": still, "src": t["media"], "video": t.get("video"), **a})
-    feed = [e for e in index if e["kind"] == "post" and e["src"] not in chosen] or [e for e in index if e["src"] not in chosen] or index
-    opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
-    out = {"nine": nine, "chapters": {"nine": [n["photo"] for n in nine]}, "focal": {}, "source_of": {}}
-    op = prepare(opener["src"])
+    visits = collections.defaultdict(list)
+    for v in pl.get("visits") or []:
+        visits[v["place"]].append(v)
+    likes = sorted(e["likes"] for e in index if e.get("likes") is not None)
+    usual = likes[len(likes) // 2] if likes else 0
+    out = {"places": {}, "chapters": {}, "focal": {}, "source_of": {}}
+
+    def keep(e):
+        ph = prepare(e["src"])
+        if ph:
+            out["focal"][ph] = f"{e['focal'][0] * 100:.0f}% {e['focal'][1] * 100:.0f}%"
+            out["source_of"][ph] = e["src"]
+        return ph
+
+    def worth(e):
+        bonus = 0.15 * min(2.0, (e["likes"] or 0) / usual) if usual and e.get("likes") is not None else 0
+        return e["score"] + bonus + (0.05 if e["kind"] == "post" else 0) - (0.3 if e["bright"] < 0.18 else 0)
+
+    for p in pl["places"]:
+        mine = sorted((e for e in index if e.get("place") == p["id"]), key=lambda e: -worth(e))
+        chosen = []
+        for v in visits.get(p["id"], []) if p["visits"] > 1 and not p["home"] else []:
+            lo, hi = v["from"], v["to"]
+            first = next((e for e in mine if lo <= dt.datetime.fromtimestamp(int(e["ts"]), dt.timezone.utc).date().isoformat() <= hi
+                          and e not in chosen), None)
+            if first:
+                chosen.append(first)
+        for e in mine:
+            if len(chosen) >= a.per_place:
+                break
+            if e not in chosen:
+                chosen.append(e)
+        chosen.sort(key=lambda e: -worth(e))
+        photos = [ph for ph in (keep(e) for e in chosen) if ph]
+        clips = []
+        for c in p.get("clips") or []:
+            still = poster(c)
+            if still:
+                clips.append({"video": c, "poster": still})
+                out["source_of"][still] = c
+        out["places"][p["id"]] = {"photos": photos, "clips": clips,
+                                  "bright": [e["bright"] for e in chosen], "colors": [e["colors"] for e in chosen[:3]]}
+    away = [e for e in index if e.get("place") and e["place"] != pl.get("home") and e["bright"] > 0.25] or index
+    opener = max(away, key=worth)
+    op = keep(opener)
     out["chapters"]["opener"] = [op] if op else []
-    if op:
-        out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
-        out["source_of"][op] = opener["src"]
-    for n in nine:
-        out["focal"][n["photo"]] = f"{n['focal'][0] * 100:.0f}% {n['focal'][1] * 100:.0f}%"
-        out["source_of"][n["photo"]] = n["src"]
     _env.write_json("build/picks.json", out)
+    empty = [p["name"] for p in pl["places"] if not out["places"][p["id"]]["photos"]]
     print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
-    for n in nine:
-        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}  bright {n['bright']}")
+    for p in pl["places"]:
+        got = out["places"][p["id"]]
+        print(f"  {p['name']:<14} {len(got['photos'])} photos, {len(got['clips'])} of their reels")
+    if empty:
+        print("no photo at: " + ", ".join(empty) + " (their beat uses the map alone)")
     print("wrote build/picks.json and build/photo_index.json")
-    return 0 if len(nine) == 9 else 1
+    return 0
 
 
 if __name__ == "__main__":
