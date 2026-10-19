@@ -1,0 +1,18 @@
+{
+  "about": "The three type systems a storyboard picks from. Two faces each: display for headlines and numbers, text for kickers, labels and lines. Sizes are px at 1080 wide; the renderer fits each headline to its box on balanced lines and never goes above the step named.",
+  "editorial": {
+    "display": {"family": "Fraunces", "file": "fonts/Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf", "weight": 500, "tracking": -0.025, "case": "none", "lineHeight": 0.98},
+    "text": {"family": "Inter", "file": "fonts/Inter/Inter[opsz,wght].ttf", "weight": 500, "tracking": 0.0, "case": "none", "lineHeight": 1.25},
+    "scale": {"hero": 270, "h1": 150, "h2": 104, "h3": 62, "body": 40, "label": 28}
+  },
+  "kinetic": {
+    "display": {"family": "Archivo Black", "file": "fonts/ArchivoBlack/ArchivoBlack-Regular.ttf", "weight": 400, "tracking": -0.02, "case": "uppercase", "lineHeight": 0.9},
+    "text": {"family": "Archivo", "file": "fonts/Archivo/Archivo[wdth,wght].ttf", "weight": 600, "tracking": 0.0, "case": "none", "lineHeight": 1.2},
+    "scale": {"hero": 330, "h1": 168, "h2": 116, "h3": 70, "body": 42, "label": 30}
+  },
+  "documentary": {
+    "display": {"family": "Space Grotesk", "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf", "weight": 600, "tracking": -0.03, "case": "none", "lineHeight": 0.95},
+    "text": {"family": "JetBrains Mono", "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf", "weight": 500, "tracking": 0.0, "case": "none", "lineHeight": 1.3},
+    "scale": {"hero": 250, "h1": 136, "h2": 96, "h3": 58, "body": 36, "label": 26}
+  }
+}
