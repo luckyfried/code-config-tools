@@ -8,7 +8,7 @@ USAGE (from the workspace root):
 
 The recipe (design/grade.md has the reasoning):
   shadows lean toward the hue of their darkest color, highlights toward their lightest, midtones toward the
-  year's average hue; saturation follows how saturated their palette is; a film taste lifts the blacks and
+  average hue of their travel palette (taste.palette.direction names it); saturation follows how saturated their palette is; a film taste lifts the blacks and
   rolls off the whites. One ffmpeg filter string carries all of it, so a photo and a generated clip get the
   identical grade. Also writes build/public/fx/grain.png, the grain tile the renderer overlays when taste asks.
 """
@@ -39,7 +39,8 @@ def lean(rgb, k):
 
 
 def recipe(taste):
-    sw = [s for s in (taste.get("palette", {}).get("year") or []) if s.get("hex")]
+    pal = taste.get("palette", {})
+    sw = [s for s in (pal.get(pal.get("direction") or "travel") or pal.get("year") or []) if s.get("hex")]
     if not sw:
         sw = [{"hex": "#8a7560", "share": 1}]
     rgbs = [hex_rgb(s["hex"]) for s in sw]

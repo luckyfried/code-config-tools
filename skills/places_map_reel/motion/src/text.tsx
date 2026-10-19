@@ -197,6 +197,7 @@ export const Line: React.FC<{text: string; delay?: number; color?: string; size?
         transform: `translateY(${tween(24, 0, delay, 16)}px)`,
         marginTop: '0.7em',
         maxWidth: '100%',
+        ...style,
       }}
     >
       {text}

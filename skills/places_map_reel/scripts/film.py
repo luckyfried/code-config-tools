@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Movement 4: the film, the best-nine image and the story card, rendered from build/film.json.
+"""Movement 4: the film and the map poster, rendered from build/film.json.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/film.py render            # out/film.mp4 + out/best-nine.png (1080x1080) + out/story.png (1080x1920)
+    python3 S/scripts/film.py render            # out/film.mp4 (1080x1920) + out/poster.png (1080x1350)
     python3 S/scripts/film.py render --only film|cards
     python3 S/scripts/film.py frames            # one frame per beat of out/film.mp4 into build/frames/NN-<beat>.png
                                                 # (and every shot of a many-shot beat into build/frames/NN-<beat>/)
@@ -12,8 +12,8 @@ The engine is the Remotion project in S/motion (setup.py installs it). render wr
 build/film.silent.mp4 (1080x1920, 30 fps, H.264 high, CRF 18), then lays the mastered music under it
 (build/music/master.wav from music.py, AAC 192 kbps) into out/film.mp4. Every SAFE_BREACH (text that left its
 safe box), FONT_ERROR and render error lands in build/render-report.json, which qa.py gate reads.
-build/timeline.json carries each beat's start and length for qa.py and the frame extraction.
-build/wall.json names the nine photos the best-nine image is made of, slot by slot, for qa.py.
+build/timeline.json carries each beat's start, length and the places it shows (focus) for qa.py and the frame
+extraction.
 When setup.py reports engine "stills", render runs the stills route instead and build/engine.json says so.
 """
 import argparse
@@ -45,22 +45,15 @@ def clip_for(beat, clips):
 
 
 def props_for(board):
-    """The composition props: the board with every clip reference, a beat's or a tile's, resolved to a file or its substitute."""
+    """The composition props: the board with every beat's clip reference resolved to a file or its substitute."""
     b = copy.deepcopy(board)
     clips = (_env.read_json("build/clips.json") or {}).get("clips", {})
     for bt in b["beats"]:
         bt["clip"] = clip_for(bt, clips)
         if bt["clip"] and bt["clip"].get("image") is None and bt.get("photos"):
             bt["clip"]["image"] = bt["photos"][0]
-        for tl in (bt.get("data") or {}).get("tiles") or []:
-            tl["clip"] = clip_for(tl, clips) if tl.get("clip") else None
-            if tl["clip"] and tl["clip"].get("image") is None:
-                tl["clip"]["image"] = tl.get("photo")
-    for k in ("wall", "story"):
-        if b.get(k):
-            b[k]["clip"] = None
-            for tl in (b[k].get("data") or {}).get("tiles") or []:
-                tl["clip"] = None
+    if b.get("poster"):
+        b["poster"]["clip"] = None
     for k in ("timeline", "clips", "idea", "music", "structure", "tone", "clip_use", "direction", "seconds"):
         b.pop(k, None)
     return {"board": b}
@@ -71,7 +64,7 @@ def render_jobs(jobs, report, concurrency=None):
     if t.get("engine") != "remotion":
         sys.exit("the motion engine is not installed (setup.py reports engine 'stills'); run film.py stills")
     spec = {"publicDir": str(PUBLIC.resolve()), "report": str(Path(report).resolve()), "jobs": jobs,
-            "bundleDir": str(Path(os.environ.get("TMPDIR") or Path("build/.bundle").resolve()) / "bn-bundle")}
+            "bundleDir": str(Path(os.environ.get("TMPDIR") or Path("build/.bundle").resolve()) / "pm-bundle")}
     if concurrency:
         spec["concurrency"] = concurrency
     jf = Path("build/render") / f"{Path(report).stem}.jobs.json"
@@ -90,12 +83,13 @@ def timeline(beats):
         start = start - t if i else 0
         out.append({"id": b["id"], "kind": b["kind"], "start": start, "frames": b["frames"], "transition": t,
                     "start_s": round(start / FPS, 3), "seconds": round(b["frames"] / FPS, 3),
-                    "shots": [0] + list((b.get("data") or {}).get("cuts") or []) + [b["frames"]]})
+                    "shots": [0] + list((b.get("data") or {}).get("cuts") or []) + [b["frames"]],
+                    "focus": list((b.get("data") or {}).get("focus") or [])})
         start += b["frames"]
     return out
 
 
-CARDS = (("wall", "square", "out/best-nine.png"), ("story", "story", "out/story.png"))
+CARDS = (("poster", "poster", "out/poster.png"),)
 
 
 def card_jobs(board, props):
@@ -107,15 +101,6 @@ def card_jobs(board, props):
                          "props": {"board": props["board"], "beat": c, "format": fmt},
                          "out": str(Path(out).resolve())})
     return jobs
-
-
-def write_wall(board):
-    """The nine sources of the best-nine image, slot by slot (top left to bottom right)."""
-    w = board.get("wall") or {}
-    data = w.get("data") or {}
-    by = {t["rank"]: t for t in data.get("tiles", [])}
-    slots = [{"slot": i, "rank": r, "photo": (by.get(r) or {}).get("photo")} for i, r in enumerate(data.get("order") or [])]
-    _env.write_json("build/wall.json", {"image": "out/best-nine.png", "size": [1080, 1080], "slots": slots})
 
 
 def mux(silent, out, seconds):
@@ -141,7 +126,6 @@ def cmd_render(a):
     if a.only in (None, "cards"):
         for _, _, f in CARDS:
             Path(f).unlink(missing_ok=True)
-        write_wall(board)
     props = props_for(board)
     jobs = []
     silent = Path("build/film.silent.mp4").resolve()

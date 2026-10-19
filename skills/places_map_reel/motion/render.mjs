@@ -1,11 +1,11 @@
-// Renders a list of jobs with one bundle and one browser: the film, the cards, the style-sheet frames.
+// Renders a list of jobs with one bundle and one browser: the film, the poster, the style-sheet frames.
 //
 // node render.mjs JOBS.json
 //
 // JOBS.json: {"publicDir": "/abs/build", "report": "/abs/build/render-report.json",
 //             "jobs": [{"type": "video", "composition": "Film", "props": {...}, "out": "/abs/film.mp4"},
 //                      {"type": "still", "composition": "Film", "props": {...}, "frame": 120, "scale": 0.5, "out": "/abs/01.png"}]}
-// Every console line a composition prints that starts with SAFE_BREACH, FONT_ERROR or UNKNOWN_KIND is
+// Every console line a composition prints that starts with SAFE_BREACH, FONT_ERROR, UNKNOWN_KIND or MAP_ERROR is
 // collected into the report with the job it came from.
 import {bundle} from '@remotion/bundler';
 import {ensureBrowser, openBrowser, renderMedia, renderStill, selectComposition} from '@remotion/renderer';
@@ -22,14 +22,14 @@ const timings = [];
 
 const onBrowserLog = (job) => (log) => {
   const text = String(log.text ?? '');
-  if (/^(SAFE_BREACH|FONT_ERROR|UNKNOWN_KIND)/.test(text)) findings.push({job: job.out, text});
+  if (/^(SAFE_BREACH|FONT_ERROR|UNKNOWN_KIND|MAP_ERROR)/.test(text)) findings.push({job: job.out, text});
 };
 
 await ensureBrowser();
 const serveUrl = await bundle({
   entryPoint: path.join(here, 'src', 'index.ts'),
   publicDir: spec.publicDir,
-  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'bn-bundle'), String(process.pid)),
+  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'pm-bundle'), String(process.pid)),
 });
 const bundled = Date.now();
 const browser = await openBrowser('chrome', {chromiumOptions: {gl: spec.gl ?? 'swangle'}});
