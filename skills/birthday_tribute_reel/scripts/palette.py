@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the palette, from the person's own photos. Reads build/photo_index.json, writes build/palette.json.
+"""Movement 1, research: the palettes, from the photos. Reads build/photo_index.json, writes build/palette.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/palette.py [--accent "#E8743B"]
 
-The year's five dominant colors (weighted by how much of each photo they cover, kept distinct from each
-other), each with a plain name ("sea blue", "sunset orange") and the photo that shows it best, and the card
-roles drawn from them: bg (a deep tone of their darkest color), ink (warm white), accent (their most vivid
-color, lifted until it reads on bg at 3:1 or more) and accent2. --accent overrides the accent role.
+Three palettes of five colors each (weighted by how much of each photo they cover, kept distinct from each other,
+each with a plain name such as "sea blue" and the photo that shows it best): "mine" from the person's own photos,
+"theirs" from the named one's saved feed (when it was reachable), and "together", the palette the two share: the
+colors of the photos of the two of them, from both feeds, with each side weighing the same. The film is graded and
+set in "together". The card roles: bg (a deep tone of the darkest together color), ink (warm white), accent (the
+most vivid color of theirs, else of together, lifted until it reads on bg at 3:1 or more) and accent2 (the most
+vivid color of mine). --accent overrides the accent role.
 """
 import argparse
 import colorsys
@@ -98,15 +101,11 @@ def hex_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--accent")
-    a = ap.parse_args()
-    idx = _env.read_json("build/photo_index.json")
-    if not idx:
-        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
-    # weighted color samples: each photo's dominant colors by the share of the photo they cover
-    samples = [(tuple(c["rgb"]), c["share"]) for e in idx for c in e["colors"]]
+def swatches(entries, weight=lambda e: 1.0):
+    """Five distinct dominant colors of these photos, each with its share, name and the photo that shows it."""
+    if not entries:
+        return []
+    samples = [(tuple(c["rgb"]), c["share"] * weight(e)) for e in entries for c in e["colors"]]
     clusters = []  # [rgb_sum, weight]
     for rgb, w in sorted(samples, key=lambda s: -s[1]):
         best = min(clusters, key=lambda c: dist(tuple(v / c[1] for v in c[0]), rgb), default=None)
@@ -125,33 +124,55 @@ def main():
             break
     total = sum(w for _, w in chosen) or 1
     import picks  # noqa: E402  (same folder; prepares photos the same way)
-    year, names = [], set()
+    out, names = [], set()
     for rgb, w in chosen:
         nm = unique_name(rgb, names)
         names.add(nm)
-        ex = min(idx, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
-        year.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": picks.prepare(ex["src"])})
-    year.sort(key=lambda c: -c["share"])
+        ex = min(entries, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
+        out.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": picks.prepare(ex["src"])})
+    return sorted(out, key=lambda c: -c["share"])
 
-    rgbs = [hex_rgb(c["hex"]) for c in year]
+
+def vivid_of(rgbs):
+    return sorted(rgbs, key=lambda c: -(hls(c)[2] * (1 - abs(hls(c)[1] - 0.55))))
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--accent")
+    a = ap.parse_args()
+    idx = _env.read_json("build/photo_index.json")
+    if not idx:
+        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
+    mine = [e for e in idx if e["set"] == "mine"]
+    theirs = [e for e in idx if e["set"] == "theirs"]
+    both = [e for e in idx if e["shared"]]
+    sides = {s: sum(1 for e in both if e["set"] == s) or 1 for s in ("mine", "theirs")}
+    together = swatches(both, lambda e: 1 / sides[e["set"]]) or swatches(mine)
+    pal = {"mine": swatches(mine), "theirs": swatches(theirs), "together": together}
+
+    rgbs = [hex_rgb(c["hex"]) for c in together]
     darkest = min(rgbs, key=lum)
     h, l, s = hls(darkest)
     bg = from_hls(h, min(l, 0.11), min(s, 0.45))
     ink = (250, 246, 238)
-    vivid = sorted(rgbs, key=lambda c: -(hls(c)[2] * (1 - abs(hls(c)[1] - 0.55))))
     def lift(c):
         hh, ll, ss = hls(c)
         while contrast(from_hls(hh, ll, ss), bg) < 3.2 and ll < 0.92:
             ll += 0.03
         return from_hls(hh, ll, max(ss, 0.45))
-    accent = hex_rgb(a.accent) if a.accent else lift(vivid[0])
-    accent2 = lift(next((c for c in vivid[1:] if dist(c, vivid[0]) > 25), vivid[-1]))
+    first = vivid_of([hex_rgb(c["hex"]) for c in pal["theirs"]] or rgbs)[0]
+    second = next((c for c in vivid_of([hex_rgb(c["hex"]) for c in pal["mine"]] or rgbs) if dist(c, first) > 25), vivid_of(rgbs)[-1])
+    accent = hex_rgb(a.accent) if a.accent else lift(first)
+    accent2 = lift(second)
     roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
              "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
-    _env.write_json("build/palette.json", {"year": year, "roles": roles,
+    _env.write_json("build/palette.json", {**pal, "roles": roles,
+                                            "from": {"mine": len(mine), "theirs": len(theirs), "together": len(both)},
                                             "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
                                                       "ink_on_bg": round(contrast(ink, bg), 2)}})
-    print("year palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in year))
+    for k in ("mine", "theirs", "together"):
+        print(f"{k} palette: " + (", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in pal[k]) or "none (no photos)"))
     print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
     print(f"accent on bg {contrast(accent, bg):.1f}:1, ink on bg {contrast(ink, bg):.1f}:1")
     print("wrote build/palette.json")

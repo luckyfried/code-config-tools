@@ -445,13 +445,13 @@ def write_feed(dest, end, jobs, feed):
     for i, f in enumerate(feed):
         name = f"media/{i + 1:02d}.jpg"
         jobs.append((str(base / name), 1080, 1350, f["scene"], [COOL[c] for c in f["colors"]], random.Random(i).random(), f["figures"], "clean"))
-        posts.append({"ts": f["ts"], "caption": f["caption"], "media": [name], "tagged": f["tagged"], "comments": f["comments"]})
+        posts.append({"ts": f["ts"], "caption": f["caption"], "media": [name], "tagged": f["tagged"], "thread": f["comments"]})
     (base).mkdir(parents=True, exist_ok=True)
     (base / "items.json").write_text(json.dumps({"source": f"browser: instagram.com/{FRIEND}", "feed_of": FRIEND,
                                                  "handle": FRIEND, "name": FRIEND_NAME, "saved": end.isoformat(),
                                                  "posts": posts}, indent=2, ensure_ascii=False))
     return {"folder": base.name, "posts": len(posts), "tag_her": sum(1 for p in posts if p["tagged"]),
-            "comments": sum(len(p["comments"]) for p in posts)}
+            "comments": sum(len(p["thread"]) for p in posts)}
 
 
 def main():
