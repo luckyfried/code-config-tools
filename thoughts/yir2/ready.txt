@@ -1,0 +1,61 @@
+yir2 ready: kit 1 clips play in the film, branch yir-clips-play
+
+BRANCH
+  cut from 404c4d8 (merge of PR #10). Fix commit c03f5bd "Play clips in the film: snap keeps each beat's clip id";
+  this file is committed on top of it (see git log -1). Not pushed, no PR. Branch ig-best-nine untouched.
+
+FILES CHANGED
+  skills/ig_year_in_review/scripts/storyboard.py (cmd_snap: 1 + 4 lines removed, nothing added)
+    - snap no longer replaces bt["clip"] with {"id","file","image","status"} (no "frames"), and no longer reads
+      build/clips.json. build/film.json keeps the clip id string; film.py props_for -> clip_for resolves it from
+      build/clips.json with file, frames, image (the clip's, else the beat's first photo) and status. Same as kit 2
+      (ig-best-nine 8e1359b): its snap leaves the id and props_for resolves it. Both film.py render and film.py
+      stills read the board through props_for, so the stills fallback still gets the clip image.
+
+COMMANDS AND RESULTS (TMPDIR=/mnt/data/scratch/kit-yir2/tmp, CSC_DISABLE_KEYCHAIN=1)
+  before run, unchanged code at 404c4d8: /mnt/data/scratch/kit-yir2/runs/before.zsh  (kit 1's hand4 steps
+  through the render; taste.md/taste.json and vote/scores.json copied from kit 1's hand3 as hand4 does;
+  workspace /mnt/data/scratch/kit-yir2/before, timings in before/timings.txt)
+    fixture make_person.py                  rc 0   2.34 s  (243 images)
+    gather.py --door ... --door ...         rc 0   0.09 s
+    research.py                             rc 0   2.83 s
+    storyboard.py draft / check / sheets    rc 0   1.12 s / 0.06 s / 17.47 s
+    vote.py ballot / tally                  rc 0   0.04 s / 0.04 s   winner storyboard 1 (88), 3 (86), 2 (70)
+    clips.py list                           rc 0   0.05 s   2 clips
+    (fixture reels copied to build/clips/01.mp4, 02.mp4 as hand4 does)
+    clips.py normalize                      rc 0  14.86 s   "2 generated"; clips.json 01 frames 199, 02 frames 214
+    music.py find / make --mood calm / analyze   rc 3 (no music, expected) / 0 / 0
+    storyboard.py snap                      rc 0   0.05 s   11 beats, 60.5 s
+    music.py master                         rc 0   0.49 s   -14.0 LUFS
+    film.py render                          rc 0  31.31 s   14 of 14 jobs
+    python3 runs/probe.py before            rc 1   film.json clip = dict without frames; props clip
+        {'id': '01', 'file': 'clips/01.mp4', 'image': ..., 'status': 'generated'}  -> 0 clip beats with file and frames
+  after run, fixed code: cp -a before after, then in after/: storyboard.py snap rc 0 0.05 s, music.py master rc 0
+  0.54 s, film.py render rc 0 37.82 s (14 of 14 jobs)
+    python3 runs/probe.py after             rc 0   film.json clip = '01' / '02'; props clip
+        opener {'id': '01', 'file': 'clips/01.mp4', 'frames': 199, 'image': 'graded/1dc2d1bb4edb.jpg', 'status': 'generated'}
+        closer {'id': '02', 'file': 'clips/02.mp4', 'frames': 214, 'image': 'graded/3763bedf1787.jpg', 'status': 'generated'}
+        -> 2 clip beats with file and frames
+  ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv <film>
+    before/out/film.mp4: stream,h264,1080,1920,30/1,60.500000 / stream,aac,0/0,60.500000
+    after/out/film.mp4:  stream,h264,1080,1920,30/1,60.500000 / stream,aac,0/0,60.500000
+  ffmpeg -ss {1.5,4.5,53.5,57.0} -frames:v 1 -> /mnt/data/scratch/kit-yir2/frames/{before,after}-<t>.png
+  by eye (tile /mnt/data/scratch/kit-yir2/frames/compare.png: before | after | clip frame | still image):
+    opener at 1.5 s: before shows the graded still (olive sky, sun left, StillToLife); after shows clip 01
+      (orange sky, sun right), matching clips/01/0046.jpg.
+    closer at 57.0 s: before shows the still behind the cards; after shows clip 02's drifting bokeh.
+  measured: mean abs difference, bottom of frame clear of type, opener 1.5 s vs clip frame 01/0046:
+    before 17.7, after 4.4.
+  python3 -m py_compile skills/ig_year_in_review/scripts/storyboard.py   rc 0
+  python3 skills/ig_year_in_review/scripts/storyboard.py --help           rc 0
+  kit tests: none exist (no test files under skills/ig_year_in_review outside .venv and node_modules, no npm test
+    script), so none run.
+
+FRAME PATHS
+  before: /mnt/data/scratch/kit-yir2/frames/before-1.5.png  (also before-57.0.png for the closer)
+  after:  /mnt/data/scratch/kit-yir2/frames/after-1.5.png   (also after-57.0.png for the closer)
+  side by side: /mnt/data/scratch/kit-yir2/frames/compare.png
+
+NOT DONE
+  qa.py, vote.py cut and deliver.py were not rerun; the change touches only what snap writes to film.json, and qa.py
+  reads film.json's "clips" list (unchanged), never the beat clip shape.

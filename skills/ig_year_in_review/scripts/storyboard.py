@@ -770,7 +770,6 @@ def cmd_snap(a):
         sys.exit("no winner: run vote.py tally first (or pass --board N)")
     b = _env.read_json(BOARDS / str(bid) / "storyboard.json")
     music = _env.read_json("build/music.json") or {}
-    clips = (_env.read_json("build/clips.json") or {}).get("clips", {})
     grid = music.get("beats") or []
     down = music.get("downbeats") or grid
     beats = b["beats"]
@@ -808,10 +807,6 @@ def cmd_snap(a):
             cuts = sorted(set(max(sec(0.8), min(bt["frames"] - sec(0.8), c)) for c in cuts))
             if len(cuts) == n - 1:
                 bt.setdefault("data", {})["cuts"] = cuts
-        if bt.get("clip"):
-            c = clips.get(bt["clip"]) or {}
-            bt["clip"] = {"id": bt["clip"], "file": c.get("file"), "image": c.get("image") or (bt.get("photos") or [None])[0],
-                          "status": c.get("status", "substituted")}
     b["beats"] = beats
     b["timeline"] = timeline(beats)
     b["seconds"] = film_seconds(beats)
