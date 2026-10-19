@@ -100,6 +100,20 @@ def readable(c, bg, need=3.0):
     return target
 
 
+def luma(h):
+    r, g, b = hex_rgb(h)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def lift(sea, land, floor=46):
+    """A dark sea moved toward the land until its luma reaches the floor (0-255), so a frame that is mostly open water
+    never reads as black."""
+    t = 0.0
+    while luma(mix(sea, land, t)) < floor and t < 1:
+        t += 0.05
+    return mix(sea, land, min(t, 1))
+
+
 def merc(lat, lon):
     lat = max(-85.0, min(85.0, lat))
     x = (lon + 180) / 360 * 1000
@@ -327,7 +341,8 @@ class Ctx:
             if contrast(ink, accent2) < 2.2:
                 accent2 = mix(accent2, "#000000", 0.35)
             texture = {"grain": round(tex.get("grain", 0) * 0.5, 3), "vignette": 0, "leaks": False}
-            sea, land = mix(bg, "#000000", 0.35), mix(bg, warm, 0.28)
+            land = mix(bg, warm, 0.28)
+            sea = lift(mix(bg, land, 0.3), land)
         else:
             bg = mix(darkest, "#000000", 0.7)
             ink = mix(lightest, "#ffffff", 0.5)
@@ -335,9 +350,12 @@ class Ctx:
             accent = readable(vivid[0], bg, 4)
             accent2 = vivid[1] if len(vivid) > 1 else year[0]
             texture = {"grain": tex.get("grain", 0), "vignette": tex.get("vignette", 0), "leaks": bool(tex.get("leaks"))}
-            sea, land = bg, mix(bg, warm, 0.5)
+            land = mix(bg, warm, 0.5)
+            sea = lift(bg, land)
         swatches = [{"hex": s["hex"], "name": self.say(s.get("name") or "")} for s in self.pal()][:5]
-        route = readable(accent, land, 2.0)
+        if luma(sea) < 110 and luma(land) - luma(sea) < 24:
+            land = lift(land, mix(warm, ink, 0.3), luma(sea) + 24)
+        route = readable(accent, mix(sea, land, 0.5), 2.4)
         return {
             "direction": direction, "display": types["display"], "text": types["text"], "scale": types["scale"],
             "colors": {"bg": bg, "ink": ink, "accent": accent, "accent2": accent2, "muted": mix(ink, bg, 0.45), "paper": paper,
@@ -394,7 +412,7 @@ class Ctx:
         strip on one side of the map (the side that leaves the region largest), and the region's pins are fitted to
         the rest, so no pin sits under the inset."""
         W, H = POSTER if fmt == "poster" else REEL
-        rect = [0, 250, W, 900] if fmt == "poster" else [0, 230, W, 800]
+        rect = [0, 250, W, 900] if fmt == "poster" else [0, 210, W, 870]
         sa = design("safe-areas.json")[fmt]
         lo, hi = sa["left"] + 20, W - sa["right"] - 20
         near = self.near_ids()
@@ -528,7 +546,8 @@ def board_route(ctx):
             beats.append({"id": f"fly-{to}", "kind": "ClipShot", "frames": sec(2.0), "transition": tr("dip", d), "clip": "02",
                           "photos": ctx.photos_of(to, 1), "text": {"kicker": ctx.say(f"{last['km']:,} km"), "headline": ctx.say(f"to {ctx.by[to]['name']}")},
                           "data": {"focus": [to]}})
-        cam1 = ctx.cam([frm] + [legs[i]["to"] for i in g], W, H, 0.45 if far else 0.6, 13)
+        back = frm in ctx.far and to not in ctx.far
+        cam1 = ctx.cam(ctx.near_ids(), W, H, 0.3, 13) if back else ctx.cam([frm] + [legs[i]["to"] for i in g], W, H, 0.45 if far else 0.6, 13)
         ph = ctx.photos_of(to, 1, start=k)
         home = to == ctx.home
         again = k > 0

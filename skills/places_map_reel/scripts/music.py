@@ -10,7 +10,7 @@ USAGE (from the workspace root; S = this skill's folder):
 
 The music comes from whatever the person or the agent has: a track the agent fetched or generated saved as
 build/music/source.<ext> (any audio ffmpeg reads), else the longest audio file under the workspace that is
-30 s or longer (their own library), else `make`, which writes a warm bed in the winning storyboard's tempo and
+30 s or longer (their own library; master loops it to the film length), else `make`, which writes a warm bed in the winning storyboard's tempo and
 mood. brief.md names the origin either way. analyze reads the energy envelope (ffmpeg decodes to mono PCM),
 picks onsets as peaks of its rise, takes the tempo by autocorrelation and lays a beat grid on the strongest
 phase; storyboard.py snap cuts the film on that grid.
@@ -243,7 +243,7 @@ def cmd_master(a):
     fade = min(2.0, seconds * 0.05)
     pre = f"atrim=0:{seconds:.3f},asetpts=PTS-STARTPTS,afade=t=out:st={seconds - fade:.3f}:d={fade:.3f}"
     def integrated(chain):
-        r = subprocess.run([ff, "-hide_banner", "-nostats", "-i", info["file"], "-af", f"{chain},ebur128=framelog=quiet",
+        r = subprocess.run([ff, "-hide_banner", "-nostats", "-stream_loop", "-1", "-i", info["file"], "-af", f"{chain},ebur128=framelog=quiet",
                             "-f", "null", "-"], capture_output=True, text=True)
         found = re.findall(r"I:\s+(-?[\d.]+) LUFS", r.stderr)
         if not found:
@@ -257,7 +257,7 @@ def cmd_master(a):
     trim = TARGET_LUFS - integrated(limited)
     flt = f"{limited},volume={trim:.2f}dB,aformat=sample_rates=48000:channel_layouts=stereo"
     out = MUSIC / "master.wav"
-    subprocess.run([ff, "-y", "-v", "error", "-i", info["file"], "-af", flt, "-ar", "48000", str(out)], check=True)
+    subprocess.run([ff, "-y", "-v", "error", "-stream_loop", "-1", "-i", info["file"], "-af", flt, "-ar", "48000", str(out)], check=True)
     info["master"] = str(out)
     info["master_seconds"] = round(seconds, 3)
     _env.write_json("build/music.json", info)

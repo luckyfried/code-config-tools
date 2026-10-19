@@ -91,7 +91,7 @@ export const Headline: React.FC<{
   const fit = fitTextOnNLines({
     text,
     maxLines: lines,
-    maxBoxWidth: w * 0.98,
+    maxBoxWidth: w * 0.94,
     fontFamily: `'${f.family}'`,
     fontWeight: f.weight,
     letterSpacing: `${f.tracking}em`,

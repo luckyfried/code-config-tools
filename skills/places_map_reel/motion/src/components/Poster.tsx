@@ -32,7 +32,7 @@ const Dot: React.FC<{at: [number, number]; r: number; color: string; halo: strin
  * in and the places land one by one; as the poster (1080x1350) it is the settled frame. Far places sit in an inset
  * with the distance; the night version lights every place on a dark map.
  */
-/** The reel's map rect melts into the background at its top and bottom edges. */
+/** The map rect melts into the background at its top and bottom edges. */
 const FADE = 'linear-gradient(to bottom, transparent 0, black 70px, black calc(100% - 70px), transparent 100%)';
 
 export const Poster: React.FC<{beat: Beat}> = ({beat}) => {
@@ -84,7 +84,7 @@ export const Poster: React.FC<{beat: Beat}> = ({beat}) => {
   const drawn = new Set<string>();
   return (
     <AbsoluteFill style={{background: night ? sea : system.colors.bg}}>
-      <div style={{position: 'absolute', left: rx, top: ry, width: rw, height: rh, overflow: 'hidden', ...(poster ? {} : {maskImage: FADE, WebkitMaskImage: FADE})}}>
+      <div style={{position: 'absolute', left: rx, top: ry, width: rw, height: rh, overflow: 'hidden', maskImage: FADE, WebkitMaskImage: FADE}}>
         <MapCanvas view={view} sea={sea} land={land} coast={night ? alpha(light, 0.18) : m.coast} graticule={alpha(night ? light : m.coast, night ? 0.07 : 0.16)}>
           {glow}
           {legs.map((l, i) => {
@@ -136,7 +136,7 @@ export const Poster: React.FC<{beat: Beat}> = ({beat}) => {
               ))}
             </MapCanvas>
             {inset.ids.length === 1 && farKm(inset.ids[0]) ? (
-              <div style={{position: 'absolute', left: 14, bottom: 10, ...faceStyle(system.text), fontSize: Math.round(L.size * 0.7),
+              <div style={{position: 'absolute', left: 14, bottom: 10, ...faceStyle(system.text), fontSize: Math.round(L.size * 0.6),
                 fontWeight: 600, color: night ? light : m.label, textShadow: `0 0 6px ${night ? sea : m.halo}`, letterSpacing: '0.04em'}}>
                 {`${farKm(inset.ids[0])!.toLocaleString('en-US')} km from home`}
               </div>
