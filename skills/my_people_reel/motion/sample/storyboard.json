@@ -1,0 +1,761 @@
+{
+ "id": "1",
+ "name": "the board",
+ "beats": [
+  {
+   "id": "opener",
+   "kind": "Opener",
+   "frames": 93,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "my people",
+    "line": "the 5 who made my 2026"
+   }
+  },
+  {
+   "id": "bridge-1",
+   "kind": "ClipShot",
+   "frames": 54,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-right"
+   },
+   "clip": {
+    "id": "01",
+    "file": null,
+    "frames": 0,
+    "image": "graded/sample-2.jpg",
+    "status": "substituted"
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "headline": "counted by every tag and every comment"
+   }
+  },
+  {
+   "id": "no-5",
+   "kind": "Leaderboard",
+   "frames": 96,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "no. 5 \u00b7 @kofi.cooks",
+    "headline": "that bread still lives in my head rent free",
+    "line": "19 photos together"
+   },
+   "data": {
+    "rows": [
+     {
+      "rank": 1,
+      "handle": "dani.reyes",
+      "photo": "graded/sample-3.jpg",
+      "score": 158.0,
+      "stretch": "july and august"
+     },
+     {
+      "rank": 2,
+      "handle": "theo.makes",
+      "photo": "graded/sample-4.jpg",
+      "score": 109.5,
+      "stretch": "march and april"
+     },
+     {
+      "rank": 3,
+      "handle": "ines.walks",
+      "photo": "graded/sample-5.jpg",
+      "score": 100.0,
+      "stretch": "may and june"
+     },
+     {
+      "rank": 4,
+      "handle": "liv.outside",
+      "photo": "graded/sample-6.jpg",
+      "score": 79,
+      "stretch": "january"
+     },
+     {
+      "rank": 5,
+      "handle": "kofi.cooks",
+      "photo": "graded/sample-2.jpg",
+      "score": 61.0,
+      "stretch": "september and october"
+     }
+    ],
+    "shown": [
+     5
+    ],
+    "me": 5
+   }
+  },
+  {
+   "id": "no-4",
+   "kind": "Leaderboard",
+   "frames": 96,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-left"
+   },
+   "photos": [
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "no. 4 \u00b7 @liv.outside",
+    "headline": "in lisbon, the first good day of the year",
+    "line": "40 photos together"
+   },
+   "data": {
+    "rows": [
+     {
+      "rank": 1,
+      "handle": "dani.reyes",
+      "photo": "graded/sample-3.jpg",
+      "score": 158.0,
+      "stretch": "july and august"
+     },
+     {
+      "rank": 2,
+      "handle": "theo.makes",
+      "photo": "graded/sample-4.jpg",
+      "score": 109.5,
+      "stretch": "march and april"
+     },
+     {
+      "rank": 3,
+      "handle": "ines.walks",
+      "photo": "graded/sample-5.jpg",
+      "score": 100.0,
+      "stretch": "may and june"
+     },
+     {
+      "rank": 4,
+      "handle": "liv.outside",
+      "photo": "graded/sample-6.jpg",
+      "score": 79,
+      "stretch": "january"
+     },
+     {
+      "rank": 5,
+      "handle": "kofi.cooks",
+      "photo": "graded/sample-2.jpg",
+      "score": 61.0,
+      "stretch": "september and october"
+     }
+    ],
+    "shown": [
+     5,
+     4
+    ],
+    "me": 4
+   }
+  },
+  {
+   "id": "no-3",
+   "kind": "Leaderboard",
+   "frames": 96,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-right"
+   },
+   "photos": [
+    "graded/sample-5.jpg"
+   ],
+   "text": {
+    "kicker": "no. 3 \u00b7 @ines.walks",
+    "headline": "remember the walk up there, the dust on our shoes and the whole valley going gold",
+    "line": "23 photos together"
+   },
+   "data": {
+    "rows": [
+     {
+      "rank": 1,
+      "handle": "dani.reyes",
+      "photo": "graded/sample-3.jpg",
+      "score": 158.0,
+      "stretch": "july and august"
+     },
+     {
+      "rank": 2,
+      "handle": "theo.makes",
+      "photo": "graded/sample-4.jpg",
+      "score": 109.5,
+      "stretch": "march and april"
+     },
+     {
+      "rank": 3,
+      "handle": "ines.walks",
+      "photo": "graded/sample-5.jpg",
+      "score": 100.0,
+      "stretch": "may and june"
+     },
+     {
+      "rank": 4,
+      "handle": "liv.outside",
+      "photo": "graded/sample-6.jpg",
+      "score": 79,
+      "stretch": "january"
+     },
+     {
+      "rank": 5,
+      "handle": "kofi.cooks",
+      "photo": "graded/sample-2.jpg",
+      "score": 61.0,
+      "stretch": "september and october"
+     }
+    ],
+    "shown": [
+     5,
+     4,
+     3
+    ],
+    "me": 3
+   }
+  },
+  {
+   "id": "no-2",
+   "kind": "Leaderboard",
+   "frames": 96,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-left"
+   },
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "no. 2 \u00b7 @theo.makes",
+    "headline": "porto in april has a light i keep trying to mix and never get right",
+    "line": "22 photos together"
+   },
+   "data": {
+    "rows": [
+     {
+      "rank": 1,
+      "handle": "dani.reyes",
+      "photo": "graded/sample-3.jpg",
+      "score": 158.0,
+      "stretch": "july and august"
+     },
+     {
+      "rank": 2,
+      "handle": "theo.makes",
+      "photo": "graded/sample-4.jpg",
+      "score": 109.5,
+      "stretch": "march and april"
+     },
+     {
+      "rank": 3,
+      "handle": "ines.walks",
+      "photo": "graded/sample-5.jpg",
+      "score": 100.0,
+      "stretch": "may and june"
+     },
+     {
+      "rank": 4,
+      "handle": "liv.outside",
+      "photo": "graded/sample-6.jpg",
+      "score": 79,
+      "stretch": "january"
+     },
+     {
+      "rank": 5,
+      "handle": "kofi.cooks",
+      "photo": "graded/sample-2.jpg",
+      "score": 61.0,
+      "stretch": "september and october"
+     }
+    ],
+    "shown": [
+     5,
+     4,
+     3,
+     2
+    ],
+    "me": 2
+   }
+  },
+  {
+   "id": "bridge-2",
+   "kind": "ClipShot",
+   "frames": 47,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-right"
+   },
+   "clip": {
+    "id": "02",
+    "file": null,
+    "frames": 0,
+    "image": "graded/sample-3.jpg",
+    "status": "substituted"
+   },
+   "photos": [
+    "graded/sample-3.jpg"
+   ],
+   "text": {
+    "headline": "and number one"
+   }
+  },
+  {
+   "id": "no-1",
+   "kind": "Leaderboard",
+   "frames": 96,
+   "transition": {
+    "preset": "bars",
+    "frames": 9
+   },
+   "photos": [
+    "graded/sample-3.jpg"
+   ],
+   "text": {
+    "kicker": "no. 1 \u00b7 @dani.reyes",
+    "headline": "remember when we missed the last ferry and it turned into the best night of the whole summer",
+    "line": "38 photos together"
+   },
+   "data": {
+    "rows": [
+     {
+      "rank": 1,
+      "handle": "dani.reyes",
+      "photo": "graded/sample-3.jpg",
+      "score": 158.0,
+      "stretch": "july and august"
+     },
+     {
+      "rank": 2,
+      "handle": "theo.makes",
+      "photo": "graded/sample-4.jpg",
+      "score": 109.5,
+      "stretch": "march and april"
+     },
+     {
+      "rank": 3,
+      "handle": "ines.walks",
+      "photo": "graded/sample-5.jpg",
+      "score": 100.0,
+      "stretch": "may and june"
+     },
+     {
+      "rank": 4,
+      "handle": "liv.outside",
+      "photo": "graded/sample-6.jpg",
+      "score": 79,
+      "stretch": "january"
+     },
+     {
+      "rank": 5,
+      "handle": "kofi.cooks",
+      "photo": "graded/sample-2.jpg",
+      "score": 61.0,
+      "stretch": "september and october"
+     }
+    ],
+    "shown": [
+     5,
+     4,
+     3,
+     2,
+     1
+    ],
+    "me": 1
+   }
+  },
+  {
+   "id": "wall",
+   "kind": "Grid",
+   "frames": 96,
+   "transition": {
+    "preset": "slide",
+    "frames": 9,
+    "direction": "from-bottom"
+   },
+   "text": {
+    "kicker": "my people 2026",
+    "headline": "@dani.reyes @theo.makes @ines.walks @liv.outside @kofi.cooks"
+   },
+   "photos": [
+    "graded/sample-7.jpg",
+    "graded/sample-8.jpg",
+    "graded/sample-9.jpg",
+    "graded/sample-10.jpg",
+    "graded/sample-11.jpg",
+    "graded/sample-12.jpg",
+    "graded/sample-13.jpg",
+    "graded/sample-14.jpg",
+    "graded/sample-15.jpg"
+   ],
+   "data": {
+    "mode": "reveal",
+    "tiles": [
+     {
+      "rank": 1,
+      "photo": "graded/sample-7.jpg",
+      "people": [
+       "dani.reyes",
+       "theo.makes",
+       "ines.walks",
+       "liv.outside"
+      ],
+      "label": "april 13 \u00b7 porto",
+      "caption": "@dani.reyes @theo.makes @ines.walks @liv.outside",
+      "line": null,
+      "kind": "photo"
+     },
+     {
+      "rank": 2,
+      "photo": "graded/sample-8.jpg",
+      "people": [
+       "theo.makes",
+       "ines.walks",
+       "liv.outside",
+       "kofi.cooks"
+      ],
+      "label": "april 28 \u00b7 porto",
+      "caption": "@theo.makes @ines.walks @liv.outside @kofi.cooks",
+      "line": "the crew, round two",
+      "kind": "photo"
+     },
+     {
+      "rank": 3,
+      "photo": "graded/sample-9.jpg",
+      "people": [
+       "dani.reyes",
+       "ines.walks",
+       "liv.outside"
+      ],
+      "label": "may 15 \u00b7 oaxaca",
+      "caption": "@dani.reyes @ines.walks @liv.outside",
+      "line": "a long lunch with the good ones",
+      "kind": "photo"
+     },
+     {
+      "rank": 4,
+      "photo": "graded/sample-10.jpg",
+      "people": [
+       "theo.makes",
+       "ines.walks",
+       "kofi.cooks"
+      ],
+      "label": "june 1 \u00b7 oaxaca",
+      "caption": "@theo.makes @ines.walks @kofi.cooks",
+      "line": "nobody blinked, a miracle",
+      "kind": "photo"
+     },
+     {
+      "rank": 5,
+      "photo": "graded/sample-11.jpg",
+      "people": [
+       "dani.reyes",
+       "theo.makes",
+       "ines.walks",
+       "liv.outside",
+       "kofi.cooks"
+      ],
+      "label": "july 18 \u00b7 sicily",
+      "caption": "@dani.reyes @theo.makes @ines.walks @liv.outside @kofi.cooks",
+      "line": "last night of the trip with these ones",
+      "kind": "photo"
+     },
+     {
+      "rank": 6,
+      "photo": "graded/sample-12.jpg",
+      "people": [
+       "dani.reyes",
+       "theo.makes",
+       "ines.walks",
+       "liv.outside"
+      ],
+      "label": "july 28 \u00b7 sicily",
+      "caption": "@dani.reyes @theo.makes @ines.walks @liv.outside",
+      "line": "a long lunch with the good ones",
+      "kind": "reel"
+     },
+     {
+      "rank": 7,
+      "photo": "graded/sample-13.jpg",
+      "people": [
+       "dani.reyes",
+       "liv.outside",
+       "kofi.cooks"
+      ],
+      "label": "september 24 \u00b7 marrakech",
+      "caption": "@dani.reyes @liv.outside @kofi.cooks",
+      "line": "nobody blinked, a miracle",
+      "kind": "reel"
+     },
+     {
+      "rank": 8,
+      "photo": "graded/sample-14.jpg",
+      "people": [
+       "dani.reyes",
+       "liv.outside",
+       "kofi.cooks"
+      ],
+      "label": "september 26 \u00b7 marrakech",
+      "caption": "@dani.reyes @liv.outside @kofi.cooks",
+      "line": "found them all at the market",
+      "kind": "photo"
+     },
+     {
+      "rank": 9,
+      "photo": "graded/sample-15.jpg",
+      "people": [
+       "dani.reyes",
+       "theo.makes",
+       "liv.outside",
+       "kofi.cooks"
+      ],
+      "label": "october 16 \u00b7 marrakech",
+      "caption": "@dani.reyes @theo.makes @liv.outside @kofi.cooks",
+      "line": "dinner ran until two again",
+      "kind": "photo"
+     }
+    ],
+    "order": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9
+    ],
+    "weights": [
+     1
+    ],
+    "shots": 1,
+    "stagger": 4
+   }
+  }
+ ],
+ "handle": "maren.okafor",
+ "year": 2026,
+ "format": {
+  "width": 1080,
+  "height": 1920,
+  "fps": 30
+ },
+ "system": {
+  "direction": "kinetic",
+  "display": {
+   "family": "Archivo Black",
+   "file": "fonts/ArchivoBlack/ArchivoBlack-Regular.ttf",
+   "weight": 400,
+   "tracking": -0.02,
+   "case": "uppercase",
+   "lineHeight": 0.9
+  },
+  "text": {
+   "family": "Archivo",
+   "file": "fonts/Archivo/Archivo[wdth,wght].ttf",
+   "weight": 600,
+   "tracking": 0.0,
+   "case": "none",
+   "lineHeight": 1.2
+  },
+  "scale": {
+   "hero": 330,
+   "h1": 168,
+   "h2": 116,
+   "h3": 70,
+   "body": 42,
+   "label": 30
+  },
+  "colors": {
+   "bg": "#291a15",
+   "ink": "#f6f1e8",
+   "accent": "#a87824",
+   "accent2": "#978945",
+   "muted": "#9a9089",
+   "paper": "#f6f1e8",
+   "swatches": [
+    {
+     "hex": "#8A6C4E",
+     "name": "taupe"
+    },
+    {
+     "hex": "#62422B",
+     "name": "light chocolate"
+    },
+    {
+     "hex": "#4A3026",
+     "name": "chocolate"
+    },
+    {
+     "hex": "#713E2C",
+     "name": "warm chocolate"
+    },
+    {
+     "hex": "#BFA988",
+     "name": "sand"
+    }
+   ]
+  },
+  "texture": {
+   "grain": 0.08,
+   "vignette": 0,
+   "leaks": false
+  },
+  "ease": {
+   "enter": [
+    0.22,
+    1.2,
+    0.36,
+    1
+   ],
+   "exit": [
+    0.8,
+    0,
+    0.9,
+    0.3
+   ],
+   "move": [
+    0.7,
+    0,
+    0.2,
+    1
+   ],
+   "spring": {
+    "damping": 13,
+    "stiffness": 190,
+    "mass": 0.6
+   },
+   "stagger": 3
+  },
+  "safe": {
+   "reel": {
+    "top": 270,
+    "bottom": 670,
+    "left": 72,
+    "right": 150
+   },
+   "story": {
+    "top": 250,
+    "bottom": 340,
+    "left": 72,
+    "right": 72
+   },
+   "square": {
+    "top": 40,
+    "bottom": 40,
+    "left": 40,
+    "right": 40
+   }
+  }
+ },
+ "cards": [
+  {
+   "id": "card-01-dani.reyes",
+   "kind": "Portrait",
+   "frames": 90,
+   "transition": null,
+   "photos": [
+    "graded/sample-3.jpg"
+   ],
+   "text": {
+    "kicker": "no. 1 \u00b7 @dani.reyes",
+    "headline": "remember when we missed the last ferry and it turned into the best night of the whole summer",
+    "line": "@dani.reyes \u00b7 july and august"
+   },
+   "data": {
+    "rank": 1,
+    "handle": "dani.reyes"
+   },
+   "settle": 0
+  },
+  {
+   "id": "card-02-theo.makes",
+   "kind": "Portrait",
+   "frames": 90,
+   "transition": null,
+   "photos": [
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "no. 2 \u00b7 @theo.makes",
+    "headline": "porto in april has a light i keep trying to mix and never get right",
+    "line": "@theo.makes \u00b7 march and april"
+   },
+   "data": {
+    "rank": 2,
+    "handle": "theo.makes"
+   },
+   "settle": 0
+  },
+  {
+   "id": "card-03-ines.walks",
+   "kind": "Portrait",
+   "frames": 90,
+   "transition": null,
+   "photos": [
+    "graded/sample-5.jpg"
+   ],
+   "text": {
+    "kicker": "no. 3 \u00b7 @ines.walks",
+    "headline": "remember the walk up there, the dust on our shoes and the whole valley going gold",
+    "line": "@ines.walks \u00b7 may and june"
+   },
+   "data": {
+    "rank": 3,
+    "handle": "ines.walks"
+   },
+   "settle": 0
+  },
+  {
+   "id": "card-04-liv.outside",
+   "kind": "Portrait",
+   "frames": 90,
+   "transition": null,
+   "photos": [
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "no. 4 \u00b7 @liv.outside",
+    "headline": "in lisbon, the first good day of the year",
+    "line": "me, about @liv.outside \u00b7 january"
+   },
+   "data": {
+    "rank": 4,
+    "handle": "liv.outside"
+   },
+   "settle": 0
+  },
+  {
+   "id": "card-05-kofi.cooks",
+   "kind": "Portrait",
+   "frames": 90,
+   "transition": null,
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "no. 5 \u00b7 @kofi.cooks",
+    "headline": "that bread still lives in my head rent free",
+    "line": "@kofi.cooks \u00b7 september and october"
+   },
+   "data": {
+    "rank": 5,
+    "handle": "kofi.cooks"
+   },
+   "settle": 0
+  }
+ ]
+}
