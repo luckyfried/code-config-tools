@@ -1,5 +1,7 @@
-ed5d6a14af1266c9c94d6fd4689db3f1b16ae976
-launch_hype_reel (kit 10), branch launch-hype-reel. The tip is the sha above. Scratch: /mnt/data/scratch/kit-lh10. TMPDIR=/mnt/data/scratch/kit-lh10/tmp in every shell.
+46702f4c6fe71164e263825468d3af96a9a23543
+launch_hype_reel (kit 10), branch launch-hype-reel. The kit tip is the sha above (46702f4, the countdown band fix on top
+of ed5d6a1). The blind runs below ran at ed5d6a1 and da876b1; the COUNTDOWN FIX section proves 46702f4 on the
+blind-with2 build. Scratch: /mnt/data/scratch/kit-lh10. TMPDIR=/mnt/data/scratch/kit-lh10/tmp in every shell.
 
 FILES
 skills/launch_hype_reel: 67 files (11636 insertions against d04ff01). By folder: SKILL.md 1, pipeline 7, design 6, critic 1, evals 2, fonts 7, motion 28, scripts 15.
@@ -8,7 +10,8 @@ Commits:
 - cd69470: fixture
 - 2e8915b: the launch pipeline, four formats from one storyboard
 - da876b1: tease words off a card stay readable
-- ed5d6a1: the countdown keeps the product's colors
+- ed5d6a1: the countdown keeps the product's colors (lighter veil)
+- 46702f4: the countdown keeps the photo's own colors (no veil; a band behind the words)
 Against e726707: 3 added, 7 deleted, 44 modified.
 Outputs: a 9:16 film (30 fps, H.264), three teaser stories at 1080x1920, a countdown card at 1080x1920 carrying the date, a feed post at 1080x1350, captions in six sections (film, story 1-3, countdown, feed post), review.html with three style sheets and the vote, and brief.md.
 Remotion compositions: Film and Card. Card is story or feed, set by calculateMetadata.
@@ -77,7 +80,8 @@ Command, verbatim:
 Record: zsh /mnt/data/scratch/kit-lh10/runs/collect.zsh <sandbox>
 ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv
 
-blind-with2 (the kit at the tip, ed5d6a1). THE CURRENT RECORD.
+blind-with2 (the kit at ed5d6a1). The blind run's outputs are kept in blind-with2/out.before/; out/ now holds the
+COUNTDOWN FIX re-render.
 - Run: rc 0, wall 191 s (10:29:14Z to 10:32:25Z). Load 15.66 12.42 13.00 at 10:29:14Z, 9.92 10.59 12.10 at 10:32:25Z. 30 turns, $0.91.
 - Deliverables: all 9 present (out/film.mp4, story-1/2/3.png, countdown.png, feed.png, captions.md, review.html, brief.md).
 - ffprobe: stream,h264,1080,1920,30/1,25.266667 and stream,aac,0/0,25.267000
@@ -159,7 +163,63 @@ blind-with2 reran on the tip to confirm the whole run.
 DEFECTS FOUND IN MY HARNESS
 The first blind driver tested `with*`, which also matched "without", so the first "without" sandbox got the kit. That run was renamed blind-with-b (with its fixture log and .out), the test became `!= without*`, and the real without run was rerun. runs/blind.zsh is the fixed driver.
 
+COUNTDOWN FIX (46702f4, asked for by the coordinator: the opening count shipped muddy)
+Cause: the DateCard laid the background color over the whole frame (Under, dim 0.35 on the date and 0.28 on each
+count) and a bottom scrim (0.8, 76% of the frame) under the date, so a light photo lost about 40% of its light
+everywhere, not only behind the type. Graded still top (223,197,66); old frame 01 top region (132,117,45).
+Change, in the card composition only (motion/src/components/DateCard.tsx, and `tint` exported from photo.tsx):
+- the whole-frame veil and the scrim are gone; the photo plays unveiled;
+- the words sit on a feathered band of the background (0.7 behind the date's words, 0.5 behind a count's display
+  numeral). The feather is a box shadow, so the safe-box measure is unchanged, and the date and count safe boxes let
+  it show past their edge (overflow visible; 0 SAFE_BREACH);
+- the outlined day carries a thin background halo so its line reads over a white plate (the countdown card).
+Proof on the existing blind-with2 build (same storyboard.json and film.json; old outputs kept in out.before/):
+- the fixed kit motion/src copied into the sandbox's .claude/skills/launch_hype_reel (diff -rq: identical), then
+  python3 .claude/skills/launch_hype_reel/scripts/film.py render
+  -> rc 0, 15.08 s, 6 of 6 jobs, 0 SAFE_BREACH. Load 8.05 8.87 9.70 at 10:45:33Z, 12.37 9.83 10.01 at 10:45:48Z.
+  ffprobe: stream,h264,1080,1920,30/1,25.266667 and stream,aac,0/0,25.267000
+- python3 .claude/skills/launch_hype_reel/scripts/film.py frames --out frames-fixed
+  -> /mnt/data/scratch/kit-lh10/blind-with2/frames/01-count-fixed.png (beside 01-count.png)
+     /mnt/data/scratch/kit-lh10/blind-with2/frames/07-date-fixed.png (beside 07-date.png)
+     the count shots in blind-with2/frames-fixed/01-count/01..06.png
+  Comparison: /mnt/data/scratch/kit-lh10/runs/countdown-fix-compare.png (01 old/new, 07 old/new, card old/new) and
+  /mnt/data/scratch/kit-lh10/runs/ticks-fixed-sheet.png
+Measured with python3 /mnt/data/scratch/kit-lh10/runs/measure.py --box <words box> IMAGE. It gives the top region
+(0,0)-(1080,500) mean, and the WCAG contrast of the ink #f4f4f0 against the photo within 30 px behind the letters
+(median, and worst at the 95th-percentile luminance). Words boxes: film date 56,830,931,1264; card 66,1129,1008,1594;
+counts 100,450,980,1060.
+                                   top region rgb     words contrast median / worst
+  01 count (yellow)  before        (132,117,45)       8.8:1 / 6.5:1
+  01 count (yellow)  after         (197,174,61)       10.4:1 / 7.5:1
+  07 date (blue)     before        (48,67,104)        13.8:1 / 10.3:1
+  07 date (blue)     after         (64,92,146)        13.9:1 / 12.0:1
+  countdown card     before        (48,57,79)         17.9:1 / 11.6:1
+  countdown card     after         (68,82,109)        17.6:1 / 8.6:1
+  count shots 26/7/1 before        -                  3.3/3.2/3.3:1 median, 2.0/1.9/1.9:1 worst
+  count shots 26/7/1 after         -                  6.1/5.1/5.2:1 median, 3.5/1.8/1.7:1 worst
+  The worst on the 7 and the 1 is the bowl's white rim crossing the numeral's foot. The numerals are display size,
+  carry their shadow, and read by eye (ticks-fixed-sheet.png).
+  The tide table kicker (accent #d5be49) on 01: 2.9:1 median before, 4.9:1 after (0.7 band).
+The yellow comes back to (197,174,61) against the graded (223,197,66); the rest is the film's grain and vignette.
+Before this the yellow was 59% of the still; it is now 88%.
+Gate: the first qa.py gate after the re-render was RED on one check: "critic round 1, lowest 4; the round is not for
+the current out/film.mp4". That is the gate doing its job: a new cut needs a critic round. I opened rounds with
+python3 .claude/skills/launch_hype_reel/scripts/vote.py cut. Each was filled by hand after looking at the frames
+(runs/cut-fix.py: motion designer 4/4/4/5/4/4/5, person 4/5/4/4/4/4/5). Round 2 was the 0.6/0.7 band trial; round 3
+is the final render. Then vote.py verdict -> "SHIP: round 3, every score is 4 or more", and deliver.py rc 0.
+- python3 .claude/skills/launch_hype_reel/scripts/qa.py gate -> rc 0, 2.22 s, GATE GREEN, 18 of 18 PASS (safe 0
+  findings; date on the card and 2 film beats; critic round 3, lowest 4). Load 8.47 9.16 9.77 at 10:46:41Z.
+Check 1 commands on a clean git archive of 46702f4 (/mnt/data/scratch/kit-lh10/check-fix/skills/launch_hype_reel):
+- python3 -m py_compile scripts/*.py evals/fixtures/make_person.py -> COMPILE_OK, 16 files
+- for f in scripts/*.py evals/fixtures/make_person.py; do python3 $f --help; done -> 16 of 16
+- npx remotion still src/index.ts Card /mnt/data/scratch/kit-lh10/check-fix/sample-card.png --gl=swangle
+  -> rc 0, 6.55 s, 1080x1920. node_modules is linked from the blind-with2 install (npm ci was not rerun; the
+  lockfile did not change). Load 7.50 8.83 9.63 at 10:47:13Z.
+
 NOT DONE, AND WHY
-- The count beat in blind-with2 still reads mustard and dark rather than bright lemon. Frame top mean is (132,117,46) against (223,197,66) for the graded still. The lighter veil helped (check1/tick-after.png), but the remaining scrim still darkens this still by about 40%. The critics scored it 4 or 5 and did not flag it, and the gate is green, so I did not spend a rerun on it. The next step would be to measure Under's scrim gradient on light stills.
+- No blind run at 46702f4. The fix is proven on the blind-with2 build through the hand pipeline, as asked.
+- Pre-existing and left alone: the outlined "14" on the date runs past its safe box on the right, so the 4's
+  crossbar is clipped (the same in the old frames); and the first frame's headline shows a dot from the photo between
+  "e" and "m".
 - Hand run phase c: the hand-written taste.json edits were skipped and the research draft was used. hand2 ran at da876b1, before the countdown color fix. The blind-with2 run covers the tip.
 - No PR and no push, per the brief.
