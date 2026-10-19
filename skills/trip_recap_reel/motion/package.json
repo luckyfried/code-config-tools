@@ -1,8 +1,8 @@
 {
-  "name": "ig-best-nine-motion",
+  "name": "trip-recap-reel-motion",
   "private": true,
   "version": "1.0.0",
-  "description": "The best-nine film, the best-nine wall and the story card, rendered by Remotion from storyboard.json",
+  "description": "The trip film at 9:16 and 16:9 and the five story cards, rendered by Remotion from storyboard.json",
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts Film out/film.mp4"

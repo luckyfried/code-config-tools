@@ -1,4 +1,4 @@
-// Renders a list of jobs with one bundle and one browser: the film, the cards, the style-sheet frames.
+// Renders a list of jobs with one bundle and one browser: both films, the story cards, the style-sheet frames.
 //
 // node render.mjs JOBS.json
 //
@@ -29,7 +29,7 @@ await ensureBrowser();
 const serveUrl = await bundle({
   entryPoint: path.join(here, 'src', 'index.ts'),
   publicDir: spec.publicDir,
-  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'bn-bundle'), String(process.pid)),
+  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'tr-bundle'), String(process.pid)),
 });
 const bundled = Date.now();
 const browser = await openBrowser('chrome', {chromiumOptions: {gl: spec.gl ?? 'swangle'}});

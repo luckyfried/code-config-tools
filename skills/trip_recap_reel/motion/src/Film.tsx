@@ -11,7 +11,7 @@ import type {Board, CardProps, FilmProps} from './types';
 export const filmFrames = (board: Board) =>
   board.beats.reduce((n, b, i) => n + b.frames - (i > 0 && b.transition ? b.transition.frames : 0), 0);
 
-export const Film: React.FC<FilmProps> = ({board}) => {
+export const Film: React.FC<FilmProps> = ({board, format = 'reel'}) => {
   const {width, height} = useVideoConfig();
   const items: React.ReactNode[] = [];
   board.beats.forEach((b, i) => {
@@ -28,7 +28,7 @@ export const Film: React.FC<FilmProps> = ({board}) => {
     );
   });
   return (
-    <SystemProvider value={{system: board.system, board, format: 'reel', still: false}}>
+    <SystemProvider value={{system: board.system, board, format, still: false}}>
       <FontGate system={board.system}>
         <AbsoluteFill style={{background: board.system.colors.bg}}>
           <TransitionSeries>{items}</TransitionSeries>
@@ -39,7 +39,7 @@ export const Film: React.FC<FilmProps> = ({board}) => {
   );
 };
 
-/** The best-nine image or the story card: a beat at its settled frame, laid out for that format. */
+/** A story card: a beat at its settled frame, laid out for that format. */
 export const Card: React.FC<CardProps> = ({board, beat, format}) => (
   <SystemProvider value={{system: board.system, board, format, still: true, beat}}>
     <FontGate system={board.system}>

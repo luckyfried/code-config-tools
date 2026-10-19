@@ -47,23 +47,14 @@ export type Clip = {
   status: 'generated' | 'their_reel' | 'substituted' | 'pending';
 };
 
-/** One of the nine: rank 1 is the most liked. */
-export type Tile = {
-  rank: number;
-  photo: string;
-  likes?: number | null;
-  comments?: number | null;
-  label?: string;
-  caption?: string;
-  kind?: string;
-  clip?: Clip | null;
-};
-
 export type Transition = {preset: string; frames: number; direction?: string};
+
+/** A point of the trip's route: their own coordinates, never a map service's. */
+export type RoutePoint = {lat: number; lon: number; place?: string; day?: string};
 
 export type Beat = {
   id: string;
-  kind: 'Opener' | 'ClipShot' | 'Countdown' | 'Grid';
+  kind: 'Opener' | 'Route' | 'Day' | 'Montage' | 'Postcard' | 'ClipShot' | 'Closer';
   frames: number;
   transition?: Transition | null;
   treatment?: 'push' | 'parallax' | 'mask' | 'split';
@@ -78,15 +69,14 @@ export type Board = {
   id: string;
   name: string;
   handle: string;
-  year: number;
+  trip: {name: string; from: string; to: string; days: number; places: string[]};
   format: {width: number; height: number; fps: number};
   system: System;
   beats: Beat[];
-  /** the best-nine image (1080x1080) */
-  wall?: Beat;
-  /** the story card (1080x1920) */
-  story?: Beat;
+  /** the five story cards (1080x1920) */
+  stories?: Beat[];
 };
 
-export type FilmProps = {board: Board};
-export type CardProps = {board: Board; beat: Beat; format: 'square' | 'story'};
+/** reel is the 9:16 film, landscape the 16:9 film of the same board. */
+export type FilmProps = {board: Board; format?: 'reel' | 'landscape'};
+export type CardProps = {board: Board; beat: Beat; format: 'story' | 'square'};

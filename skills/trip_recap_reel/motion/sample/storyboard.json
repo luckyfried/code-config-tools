@@ -1,562 +1,468 @@
 {
- "id": "sample",
- "name": "on the beat",
- "direction": "kinetic",
- "structure": "the wall assembles tile by tile on the beat, then the top three",
- "tone": "kinetic",
- "clip_use": "still-first: short generated bridges in their colors are the transitions between tiles",
- "idea": "the nine land one per beat, from nine to one, until the wall is whole; then the top three hit full frame in heavy type and the wall comes back to close",
- "music": {
-  "direction": "driving, bright, 118 bpm: four-on-the-floor, claps, a hook",
-  "bpm": 84,
-  "mood": "drive"
- },
+ "id": "1",
+ "name": "the route",
  "beats": [
   {
    "id": "opener",
    "kind": "Opener",
-   "frames": 57,
+   "frames": 96,
    "transition": null,
    "photos": [
     "graded/sample-1.jpg"
    ],
    "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine"
-   }
+    "kicker": "october 3 to 8, 2026",
+    "headline": "amalfi coast",
+    "line": "6 days, 4 places"
+   },
+   "clip": null
   },
   {
-   "id": "wall-build",
-   "kind": "Grid",
-   "frames": 181,
+   "id": "route",
+   "kind": "Route",
+   "frames": 134,
    "transition": {
-    "preset": "bars",
-    "frames": 9
+    "preset": "iris",
+    "frames": 15
    },
+   "photos": [],
    "text": {
-    "kicker": "best nine 2026",
-    "headline": "the nine you loved most"
+    "kicker": "the route",
+    "headline": "napoli to amalfi"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     4
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "flyover",
+   "kind": "ClipShot",
+   "frames": 70,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
    },
    "photos": [
-    "graded/sample-2.jpg",
+    "graded/sample-2.jpg"
+   ],
+   "text": {},
+   "clip": null
+  },
+  {
+   "id": "day-1",
+   "kind": "Day",
+   "frames": 134,
+   "transition": {
+    "preset": "wipe",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "photos": [
     "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
+    "graded/sample-4.jpg"
+   ],
+   "text": {
+    "kicker": "day 1 \u00b7 sat, oct 3",
+    "headline": "napoli",
+    "line": "first night in napoli and the pizza was everything"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     0
+    ],
+    "day": 1,
+    "of": 6,
+    "weights": [
+     1,
+     1
+    ],
+    "cuts": [
+     67
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "day-2",
+   "kind": "Day",
+   "frames": 134,
+   "transition": {
+    "preset": "wipe",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "photos": [
     "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
+    "graded/sample-6.jpg"
+   ],
+   "text": {
+    "kicker": "day 2 \u00b7 sun, oct 4",
+    "headline": "capri",
+    "line": "the ferry to capri at 8am, worth every minute"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     1
+    ],
+    "day": 2,
+    "of": 6,
+    "weights": [
+     1,
+     1
+    ],
+    "cuts": [
+     67
+    ]
+   },
+   "clip": null
+  },
+  {
+   "id": "place-1",
+   "kind": "Montage",
+   "frames": 168,
+   "transition": {
+    "preset": "whip",
+    "frames": 9,
+    "direction": "from-right"
+   },
+   "photos": [
     "graded/sample-7.jpg",
     "graded/sample-8.jpg",
     "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
-   ],
-   "data": {
-    "mode": "fly",
-    "tiles": [
-     {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
-     },
-     {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
-     },
-     {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
-     },
-     {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
-     },
-     {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
-     }
-    ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     1,
-     5
-    ],
-    "shots": 10,
-    "cuts": [
-     13,
-     26,
-     39,
-     48,
-     69,
-     78,
-     91,
-     103,
-     112
-    ]
-   }
-  },
-  {
-   "id": "bridge-1",
-   "kind": "ClipShot",
-   "frames": 30,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
-   },
-   "clip": null,
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
-   "text": {
-    "kicker": "and the top three"
-   }
-  },
-  {
-   "id": "no-3",
-   "kind": "Countdown",
-   "frames": 52,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-right"
-   },
-   "photos": [
-    "graded/sample-4.jpg"
-   ],
-   "text": {
-    "kicker": "january 8",
-    "headline": "first coffee of the year in lisbon, one cup by one window",
-    "line": "418 likes"
-   },
-   "data": {
-    "rank": 3,
-    "of": 9,
-    "slot": 8,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     8
-    ]
-   }
-  },
-  {
-   "id": "no-2",
-   "kind": "Countdown",
-   "frames": 52,
-   "transition": {
-    "preset": "whip",
-    "frames": 9,
-    "direction": "from-left"
-   },
-   "photos": [
+    "graded/sample-10.jpg",
+    "graded/sample-1.jpg",
     "graded/sample-3.jpg"
    ],
    "text": {
-    "kicker": "may 16",
-    "headline": "forty seconds of the oaxaca market at opening time",
-    "line": "451 likes"
+    "headline": "napoli"
    },
    "data": {
-    "rank": 2,
-    "of": 9,
-    "slot": 7,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
+    "weights": [
      1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "place": "napoli",
+    "cuts": [
+     28,
+     56,
+     84,
+     112,
+     140
     ]
-   }
+   },
+   "clip": null
   },
   {
-   "id": "bridge-2",
-   "kind": "ClipShot",
-   "frames": 30,
+   "id": "postcard-1",
+   "kind": "Postcard",
+   "frames": 206,
    "transition": {
-    "preset": "whip",
-    "frames": 9,
+    "preset": "slide",
+    "frames": 18,
     "direction": "from-right"
    },
-   "clip": null,
    "photos": [
-    "graded/sample-2.jpg"
+    "graded/sample-7.jpg"
    ],
    "text": {
-    "kicker": "number one"
-   }
-  },
-  {
-   "id": "no-1",
-   "kind": "Countdown",
-   "frames": 74,
-   "transition": {
-    "preset": "bars",
-    "frames": 9
-   },
-   "photos": [
-    "graded/sample-2.jpg"
-   ],
-   "text": {
-    "kicker": "july 15",
-    "headline": "the light did all the work here",
-    "line": "486 likes"
+    "kicker": "napoli",
+    "headline": "six days on the amalfi coast with my two favorite people",
+    "line": "sat, oct 3"
    },
    "data": {
-    "rank": 1,
-    "of": 9,
-    "slot": 0,
-    "wall": [
-     "graded/sample-2.jpg",
-     "graded/sample-8.jpg",
-     "graded/sample-6.jpg",
-     "graded/sample-9.jpg",
-     "graded/sample-5.jpg",
-     "graded/sample-10.jpg",
-     "graded/sample-7.jpg",
-     "graded/sample-3.jpg",
-     "graded/sample-4.jpg"
-    ],
-    "shown": [
-     0,
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8
-    ]
-   }
+    "stamp": {
+     "place": "napoli",
+     "date": "sat, oct 3"
+    },
+    "no": 1,
+    "of": 4
+   },
+   "clip": null
+  },
+  {
+   "id": "clip-05",
+   "kind": "ClipShot",
+   "frames": 83,
+   "transition": {
+    "preset": "dip",
+    "frames": 15
+   },
+   "photos": [
+    "graded/sample-2.jpg"
+   ],
+   "text": {
+    "kicker": "capri",
+    "headline": "the capri boat, the whole way round"
+   },
+   "clip": null
   },
   {
    "id": "closer",
-   "kind": "Grid",
-   "frames": 169,
+   "kind": "Closer",
+   "frames": 140,
    "transition": {
-    "preset": "slide",
-    "frames": 9,
-    "direction": "from-bottom"
-   },
-   "text": {
-    "kicker": "@maren.okafor",
-    "headline": "best nine 2026",
-    "line": "3,395 likes across these nine"
+    "preset": "iris",
+    "frames": 15
    },
    "photos": [
-    "graded/sample-2.jpg",
-    "graded/sample-3.jpg",
-    "graded/sample-4.jpg",
-    "graded/sample-5.jpg",
-    "graded/sample-6.jpg",
-    "graded/sample-7.jpg",
-    "graded/sample-8.jpg",
-    "graded/sample-9.jpg",
-    "graded/sample-10.jpg"
+    "graded/sample-7.jpg"
    ],
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "amalfi coast",
+    "line": "with @theo.makes and @dani.reyes"
+   },
    "data": {
-    "mode": "reveal",
-    "tiles": [
+    "points": [
      {
-      "rank": 1,
-      "photo": "graded/sample-2.jpg",
-      "likes": 486,
-      "comments": 41,
-      "label": "july 15",
-      "caption": "the light did all the work here",
-      "kind": "post"
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
      },
      {
-      "rank": 2,
-      "photo": "graded/sample-3.jpg",
-      "likes": 451,
-      "comments": 52,
-      "label": "may 16",
-      "caption": "forty seconds of the oaxaca market at opening time",
-      "kind": "reel"
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
      },
      {
-      "rank": 3,
-      "photo": "graded/sample-4.jpg",
-      "likes": 418,
-      "comments": 33,
-      "label": "january 8",
-      "caption": "first coffee of the year in lisbon, one cup by one window",
-      "kind": "post"
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
      },
      {
-      "rank": 4,
-      "photo": "graded/sample-5.jpg",
-      "likes": 392,
-      "comments": 29,
-      "label": "september 13",
-      "caption": "every door in marrakech is terracotta",
-      "kind": "post"
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
      },
      {
-      "rank": 5,
-      "photo": "graded/sample-6.jpg",
-      "likes": 371,
-      "comments": 38,
-      "label": "march 6",
-      "caption": "the porto lunch that lasted four hours",
-      "kind": "post"
-     },
-     {
-      "rank": 6,
-      "photo": "graded/sample-7.jpg",
-      "likes": 349,
-      "comments": 44,
-      "label": "august 16",
-      "caption": "a slow walk into the sea at golden hour",
-      "kind": "reel"
-     },
-     {
-      "rank": 7,
-      "photo": "graded/sample-8.jpg",
-      "likes": 328,
-      "comments": 24,
-      "label": "june 7",
-      "caption": "6am on the ridge above oaxaca",
-      "kind": "post"
-     },
-     {
-      "rank": 8,
-      "photo": "graded/sample-9.jpg",
-      "likes": 309,
-      "comments": 27,
-      "label": "october 18",
-      "caption": "back home and still cooking like it's sicily",
-      "kind": "post"
-     },
-     {
-      "rank": 9,
-      "photo": "graded/sample-10.jpg",
-      "likes": 291,
-      "comments": 22,
-      "label": "april 22",
-      "caption": "the porto market in april",
-      "kind": "post"
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
      }
     ],
-    "order": [
-     1,
-     7,
-     5,
-     8,
-     4,
-     9,
-     6,
-     2,
-     3
-    ],
-    "weights": [
-     1
-    ],
-    "shots": 1,
-    "stagger": 2
-   }
+    "upto": [
+     0,
+     4
+    ]
+   },
+   "clip": null
   }
  ],
  "handle": "maren.okafor",
- "year": 2026,
+ "trip": {
+  "name": "amalfi coast",
+  "from": "2026-10-03",
+  "to": "2026-10-08",
+  "days": 6,
+  "places": [
+   "napoli",
+   "capri",
+   "positano",
+   "amalfi"
+  ]
+ },
  "format": {
   "width": 1080,
   "height": 1920,
   "fps": 30
  },
  "system": {
-  "direction": "kinetic",
+  "direction": "documentary",
   "display": {
-   "family": "Archivo Black",
-   "file": "fonts/ArchivoBlack/ArchivoBlack-Regular.ttf",
-   "weight": 400,
-   "tracking": -0.02,
-   "case": "uppercase",
-   "lineHeight": 0.9
+   "family": "Space Grotesk",
+   "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf",
+   "weight": 600,
+   "tracking": -0.03,
+   "case": "none",
+   "lineHeight": 0.95
   },
   "text": {
-   "family": "Archivo",
-   "file": "fonts/Archivo/Archivo[wdth,wght].ttf",
-   "weight": 600,
+   "family": "JetBrains Mono",
+   "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf",
+   "weight": 500,
    "tracking": 0.0,
    "case": "none",
-   "lineHeight": 1.2
+   "lineHeight": 1.3
   },
   "scale": {
-   "hero": 330,
-   "h1": 168,
-   "h2": 116,
-   "h3": 70,
-   "body": 42,
-   "label": 30
+   "hero": 250,
+   "h1": 136,
+   "h2": 96,
+   "h3": 58,
+   "body": 36,
+   "label": 26
   },
   "colors": {
-   "bg": "#20140d",
-   "ink": "#f0e6d7",
-   "accent": "#a87824",
-   "accent2": "#8d5e1f",
-   "muted": "#92887c",
-   "paper": "#f0e6d7",
+   "bg": "#0c121f",
+   "ink": "#d8dad5",
+   "accent": "#687695",
+   "accent2": "#ABA579",
+   "muted": "#7c8083",
+   "paper": "#d3d0c2",
    "swatches": [
     {
-     "hex": "#624229",
-     "name": "chocolate"
+     "hex": "#728295",
+     "name": "slate"
     },
     {
-     "hex": "#906B4C",
-     "name": "caramel"
+     "hex": "#84565B",
+     "name": "dusty mauve"
     },
     {
-     "hex": "#4B3525",
-     "name": "warm chocolate"
+     "hex": "#B2B5AB",
+     "name": "stone gray"
     },
     {
-     "hex": "#735B3E",
-     "name": "olive"
+     "hex": "#273C67",
+     "name": "deep navy"
     },
     {
-     "hex": "#B29A79",
-     "name": "taupe"
+     "hex": "#ABA579",
+     "name": "sage"
     }
    ]
   },
   "texture": {
-   "grain": 0.08,
-   "vignette": 0,
-   "leaks": false
+   "grain": 0.16,
+   "vignette": 0.32,
+   "leaks": true
   },
   "ease": {
    "enter": [
-    0.22,
-    1.2,
-    0.36,
+    0.33,
+    0,
+    0.15,
     1
    ],
    "exit": [
-    0.8,
+    0.6,
     0,
-    0.9,
-    0.3
+    0.8,
+    0.2
    ],
    "move": [
-    0.7,
+    0.37,
     0,
-    0.2,
+    0.63,
     1
    ],
    "spring": {
-    "damping": 13,
-    "stiffness": 190,
-    "mass": 0.6
+    "damping": 26,
+    "stiffness": 80,
+    "mass": 1
    },
-   "stagger": 3
+   "stagger": 6
   },
   "safe": {
    "reel": {
@@ -579,252 +485,259 @@
    }
   }
  },
- "wall": {
-  "id": "best-nine",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "best nine 2026"
+ "stories": [
+  {
+   "id": "story-1",
+   "kind": "Opener",
+   "frames": 96,
+   "transition": null,
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "october 3 to 8, 2026",
+    "headline": "amalfi coast",
+    "line": "6 days, 4 places"
+   },
+   "settle": 0,
+   "clip": null
   },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
-    {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
-    },
-    {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
-    },
-    {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
-    }
+  {
+   "id": "story-2",
+   "kind": "Day",
+   "frames": 134,
+   "transition": null,
+   "photos": [
+    "graded/sample-3.jpg",
+    "graded/sample-4.jpg"
    ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
-   ],
-   "weights": [
-    1
-   ],
-   "shots": 1
-  }
- },
- "story": {
-  "id": "story",
-  "kind": "Grid",
-  "frames": 90,
-  "transition": null,
-  "settle": 0,
-  "photos": [
-   "graded/sample-2.jpg",
-   "graded/sample-3.jpg",
-   "graded/sample-4.jpg",
-   "graded/sample-5.jpg",
-   "graded/sample-6.jpg",
-   "graded/sample-7.jpg",
-   "graded/sample-8.jpg",
-   "graded/sample-9.jpg",
-   "graded/sample-10.jpg"
-  ],
-  "text": {
-   "kicker": "@maren.okafor",
-   "headline": "my best nine of 2026",
-   "line": "which one is your favorite?"
+   "text": {
+    "kicker": "day 1 \u00b7 sat, oct 3",
+    "headline": "napoli",
+    "line": "first night in napoli and the pizza was everything"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     0
+    ],
+    "day": 1,
+    "of": 6,
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
   },
-  "data": {
-   "mode": "reveal",
-   "tiles": [
-    {
-     "rank": 1,
-     "photo": "graded/sample-2.jpg",
-     "likes": 486,
-     "comments": 41,
-     "label": "july 15",
-     "caption": "the light did all the work here",
-     "kind": "post"
-    },
-    {
-     "rank": 2,
-     "photo": "graded/sample-3.jpg",
-     "likes": 451,
-     "comments": 52,
-     "label": "may 16",
-     "caption": "forty seconds of the oaxaca market at opening time",
-     "kind": "reel"
-    },
-    {
-     "rank": 3,
-     "photo": "graded/sample-4.jpg",
-     "likes": 418,
-     "comments": 33,
-     "label": "january 8",
-     "caption": "first coffee of the year in lisbon, one cup by one window",
-     "kind": "post"
-    },
-    {
-     "rank": 4,
-     "photo": "graded/sample-5.jpg",
-     "likes": 392,
-     "comments": 29,
-     "label": "september 13",
-     "caption": "every door in marrakech is terracotta",
-     "kind": "post"
-    },
-    {
-     "rank": 5,
-     "photo": "graded/sample-6.jpg",
-     "likes": 371,
-     "comments": 38,
-     "label": "march 6",
-     "caption": "the porto lunch that lasted four hours",
-     "kind": "post"
-    },
-    {
-     "rank": 6,
-     "photo": "graded/sample-7.jpg",
-     "likes": 349,
-     "comments": 44,
-     "label": "august 16",
-     "caption": "a slow walk into the sea at golden hour",
-     "kind": "reel"
-    },
-    {
-     "rank": 7,
-     "photo": "graded/sample-8.jpg",
-     "likes": 328,
-     "comments": 24,
-     "label": "june 7",
-     "caption": "6am on the ridge above oaxaca",
-     "kind": "post"
-    },
-    {
-     "rank": 8,
-     "photo": "graded/sample-9.jpg",
-     "likes": 309,
-     "comments": 27,
-     "label": "october 18",
-     "caption": "back home and still cooking like it's sicily",
-     "kind": "post"
-    },
-    {
-     "rank": 9,
-     "photo": "graded/sample-10.jpg",
-     "likes": 291,
-     "comments": 22,
-     "label": "april 22",
-     "caption": "the porto market in april",
-     "kind": "post"
-    }
+  {
+   "id": "story-3",
+   "kind": "Day",
+   "frames": 134,
+   "transition": null,
+   "photos": [
+    "graded/sample-3.jpg",
+    "graded/sample-4.jpg"
    ],
-   "order": [
-    1,
-    7,
-    5,
-    8,
-    4,
-    9,
-    6,
-    2,
-    3
+   "text": {
+    "kicker": "day 3 \u00b7 mon, oct 5",
+    "headline": "positano",
+    "line": "lemons the size of my head in positano"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     2
+    ],
+    "day": 3,
+    "of": 6,
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
+  },
+  {
+   "id": "story-4",
+   "kind": "Day",
+   "frames": 134,
+   "transition": null,
+   "photos": [
+    "graded/sample-5.jpg",
+    "graded/sample-6.jpg"
    ],
-   "weights": [
-    1
+   "text": {
+    "kicker": "day 5 \u00b7 wed, oct 7",
+    "headline": "amalfi",
+    "line": "the road into amalfi, eyes closed for most"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     3
+    ],
+    "day": 5,
+    "of": 6,
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
+  },
+  {
+   "id": "story-5",
+   "kind": "Closer",
+   "frames": 140,
+   "transition": null,
+   "photos": [
+    "graded/sample-7.jpg"
    ],
-   "shots": 1
+   "text": {
+    "kicker": "@maren.okafor",
+    "headline": "amalfi coast",
+    "line": "with @theo.makes and @dani.reyes"
+   },
+   "data": {
+    "points": [
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-03"
+     },
+     {
+      "lat": 40.5558,
+      "lon": 14.22003,
+      "place": "capri",
+      "day": "2026-10-04"
+     },
+     {
+      "lat": 40.62775,
+      "lon": 14.48376,
+      "place": "positano",
+      "day": "2026-10-05"
+     },
+     {
+      "lat": 40.63411,
+      "lon": 14.60316,
+      "place": "amalfi",
+      "day": "2026-10-07"
+     },
+     {
+      "lat": 40.85047,
+      "lon": 14.26758,
+      "place": "napoli",
+      "day": "2026-10-08"
+     }
+    ],
+    "upto": [
+     0,
+     4
+    ],
+    "weights": [
+     1
+    ]
+   },
+   "settle": 0,
+   "clip": null
   }
- },
- "seconds": 19.4
+ ]
 }

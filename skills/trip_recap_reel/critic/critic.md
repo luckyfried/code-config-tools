@@ -10,8 +10,8 @@ layered or does it slide; does every photo move; is the type a system (two faces
 or a default; does each transition carry meaning; does the grade hold the film together; does anything collide,
 crop badly or sit outside the safe area.
 
-**The editor.** Cuts documentaries and social films. Looks at story: does the build to number one land; is there a
-turn, a peak and a release; does each beat earn its time; do the cuts land on the music; does the ending make you
+**The editor.** Cuts documentaries and social films. Looks at story: does the trip unfold (arrival, the days, the way
+home) or just list places; is there a turn, a peak and a release; does each beat earn its time; do the cuts land on the music; does the ending make you
 feel something and want to share it.
 
 **The person.** Speaks in the first person, from `build/taste.md` and their captions: "is this me?" Their photos,
@@ -23,12 +23,12 @@ thing? The person breaks a tie in the storyboard vote.
 | key | criterion | a 5 | a 3 or lower |
 |---|---|---|---|
 | `professional` | it looks like a professional motion designer made it | studio-grade: eased, layered, a held grade, nothing collides | template feel, linear slides, text over busy photo, a crop that loses the subject |
-| `them` | it is unmistakably them | their nine carry it whole and uncropped where it counts, their palette, their words, the numbers that made these nine | generic stock mood, a voice that is not theirs, something from their avoid list |
+| `them` | it is unmistakably them | their trip: their places in their order, their people, their own clips and captions, the colors they travel in | generic stock mood, a voice that is not theirs, something from their avoid list |
 | `pacing` | the pacing holds attention to the end | a rhythm with variation; quiet beats earn the loud ones; no beat outstays itself | uniform beats, a slow middle, a 5-second card with one word |
 | `type` | type is a system, not a default | two faces, a scale, the same placement logic everywhere | mixed alignments, a stray size, headlines that wrap badly |
 | `transitions` | every transition is intentional | each cut's preset means something (a page turn, a breath, a match) | the same crossfade everywhere, or flashy wipes with no reason |
 | `music` | the music and the cuts agree | cuts on downbeats, the energy of the track matches the film's | cuts that ignore the beat, a track at odds with the tone |
-| `ending` | the ending makes them want to post it | the whole wall lands as the last image, one they would screenshot; the story card invites a reply | an ending that just stops, a wall that never resolves, a generic sign-off |
+| `ending` | the ending makes them want to post it | the whole route lands as the last image with the people who were there, one they would screenshot; the story cards make a set | an ending that just stops, a route that never resolves, a generic sign-off |
 
 ## The storyboards (movement 3)
 
@@ -43,8 +43,9 @@ scores should show which difference suits this person.
 The motion designer and the person score the rendered film. Look, actually look:
 
 - every `build/frames/NN-*.png` full size with the Read tool, one per beat;
-- `out/best-nine.png` (the 3x3 wall, 1080x1080: nine distinct photos, nothing cropped badly, the order reads) and
-  `out/story.png`;
+- a few frames of `out/film-16x9.mp4` (the same beats laid out wide: the words clear of the map, their clips whole
+  over their blurred fill) and the five `out/story-N.png` cards (a set that reads in order);
+- the route on the map: every place labeled once, no two labels on top of each other;
 - `build/qa/check.json` (the measured checks) and `build/render-report.json`.
 
 Never score from memory of the storyboard; the cut is what ships. Fill in `build/critic/cut-N.json` and run

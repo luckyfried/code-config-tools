@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Img, random, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Img, random, useCurrentFrame, useVideoConfig} from 'remotion';
 import {src, useMotion, useSys} from '../system';
 import {Headline, Kicker, Line, SafeBox} from '../text';
 import {Photo, RETRIES, Scrim} from '../photo';
@@ -43,17 +43,29 @@ export const StillToLife: React.FC<{file: string; seed: string}> = ({file, seed}
 
 /**
  * The clip itself, conformed and graded by clips.py and read as its frame sequence, or its substitute when it
- * did not arrive.
+ * did not arrive. A wide frame holds the tall clip whole over a blurred fill of itself.
  */
 export const ClipLayer: React.FC<{clip: Clip}> = ({clip}) => {
   const {drift} = useMotion();
   const frame = useCurrentFrame();
+  const {width, height} = useVideoConfig();
+  const wide = width > height;
   if (clip.file && clip.frames) {
     const n = String(Math.min(Math.max(frame, 0), clip.frames - 1) + 1).padStart(4, '0');
+    const file = src(`${clip.file.replace(/\.mp4$/, '')}/${n}.jpg`);
+    if (wide) {
+      return (
+        <AbsoluteFill style={{overflow: 'hidden', background: '#000'}}>
+          <Img src={file} maxRetries={RETRIES} style={{width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(40px) brightness(0.6)', transform: 'scale(1.2)'}} />
+          <AbsoluteFill style={{transform: `scale(${drift(1.0, 1.04)})`}}>
+            <Img src={file} maxRetries={RETRIES} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+          </AbsoluteFill>
+        </AbsoluteFill>
+      );
+    }
     return (
       <AbsoluteFill style={{overflow: 'hidden', transform: `scale(${drift(1.0, 1.05)})`}}>
-        <Img src={src(`${clip.file.replace(/\.mp4$/, '')}/${n}.jpg`)} maxRetries={RETRIES}
-          style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+        <Img src={file} maxRetries={RETRIES} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
       </AbsoluteFill>
     );
   }

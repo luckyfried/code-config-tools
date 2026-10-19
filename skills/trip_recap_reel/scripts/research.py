@@ -3,31 +3,26 @@
 a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
 turns into build/taste.md).
 
-USAGE (from the workspace root):
-    python3 S/scripts/research.py
+USAGE (from the workspace root; S = this skill's folder):
+    python3 S/scripts/research.py [--place "lisbon"] [--from 2026-10-03 --to 2026-10-08] [--album "..."] [--folder DIR]
 
-It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's palette), then reads:
-  palette   the year's colors versus the colors of what they like and save (from the liked media when the
-            library has it, else from the color words in the names and captions of the accounts they like,
-            save and follow)
-  captions  length, case, emoji, punctuation, hashtags, how they open and close, sample lines
+Pass what the person named; it goes to trip.py unchanged, and their words win over anything inferred. It runs
+trip.py, picks.py and palette.py first (which trip, its days, places, people and clips; the photos; the trip and
+everyday palettes), then reads:
+  trip      the dates, the days and what each one holds, the places in route order, who was there
+  travel    how the trip looked and sounded against every other week: palette, brightness and saturation, how
+            long their captions run, how often they posted, how fast their travel reels cut against their others
+  palette   the trip's colors, their everyday colors, and the colors of what they like and save
+  captions  length, case, emoji, punctuation, hashtags, how they open and close, sample lines from the trip
   likes     the like-graph: who gets their likes, how concentrated, the themes those accounts share
-  cadence   posts per month and weekday, streaks and gaps
-  reels     how long their reels run and how fast they cut (ffmpeg scene changes)
-  people    who they talk to most; places from captions, albums and check-ins
-  moments   the busiest and quietest month, the top post, the post that changed their numbers, the trip, the eras
-  nine      why each of the nine worked: how many times their usual likes it got, its subject (from the caption,
-            the places and the themes), its two strongest colors by name, what its caption says; and what the nine
-            share that the rest of the year does not
-  rhythm    the wall's rhythm: each tile's brightness and color in its slot, how many of the twelve neighbor pairs
-            contrast, and the arrangement that alternates best with their number one kept top left (taste.json
-            "wall.order" takes it when it reads clearly better than rank order, else rank order)
-taste.json also carries the type direction, pacing, register, texture, the wall order and the grade inputs; the
-agent edits it freely before storyboards are drafted.
+  music     the tracks on their travel posts when the data has them, else the pace of their travel reels
+  moments   each day's line (its strongest caption) and the trip's most-liked post
+taste.json also carries the type direction, pacing, register, texture and the grade inputs; the agent edits it
+freely before storyboards are drafted.
 """
+import argparse
 import collections
 import datetime as dt
-import itertools
 import re
 import statistics
 import subprocess
@@ -67,32 +62,7 @@ THEMES = {
     "fashion": ["outfit", "ootd", "style", "fit", "wear", "thrift"],
     "design": ["design", "type", "studio", "poster", "print"],
 }
-PLACES = ["lisbon", "porto", "oaxaca", "sicily", "palermo", "marrakech", "paris", "rome", "london", "tokyo", "mexico city",
-          "new york", "berlin", "barcelona", "madrid", "naples", "athens", "istanbul", "kyoto", "seoul", "bali", "cdmx",
-          "los angeles", "san francisco", "chicago", "amsterdam", "copenhagen", "vienna", "prague", "budapest", "home"]
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
-FILM = {"film photography"}
-
-
-def run(script):
-    p = subprocess.run([sys.executable, str(S / script)], capture_output=True, text=True)
-    if p.returncode:
-        sys.exit(f"{script} failed:\n{p.stdout[-1500:]}\n{p.stderr[-1500:]}")
-    return p.stdout
-
-
-def tokens(text):
-    return [t for t in re.split(r"[^a-z0-9]+", (text or "").lower()) if t]
-
-
-def month(ts):
-    return dt.datetime.fromtimestamp(ts, dt.timezone.utc).month
-
-
-MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-          "November", "December"]
-
-
 def caption_read(rows):
     caps = [r.get("caption") or "" for r in rows if (r.get("caption") or "").strip()]
     if not caps:
@@ -184,171 +154,42 @@ def reel_pacing(reels):
     }
 
 
-def places_in(rows, facebook):
-    c = collections.Counter()
-    by_month = collections.defaultdict(collections.Counter)
-    for r in rows + facebook:
-        text = " ".join([r.get("caption") or "", r.get("album") or "", r.get("place") or ""]).lower()
-        for p in PLACES:
-            if re.search(rf"\b{re.escape(p)}\b", text):
-                c[p] += 1
-                if r.get("ts"):
-                    by_month[month(r["ts"])][p] += 1
-    return c, by_month
 
 
-def cadence(rows):
-    by_m = collections.Counter(month(r["ts"]) for r in rows if r.get("ts"))
-    days = sorted({dt.datetime.fromtimestamp(r["ts"], dt.timezone.utc).date() for r in rows if r.get("ts")})
-    wd = collections.Counter(d.strftime("%A") for d in days)
-    gaps = [(b - a).days for a, b in zip(days, days[1:])]
-    streak = best = 1
-    for g in gaps:
-        streak = streak + 1 if g == 1 else 1
-        best = max(best, streak)
-    return {
-        "per_month": {MONTHS[m - 1]: by_m.get(m, 0) for m in range(1, 13) if m <= max(by_m or [1])},
-        "top_weekday": wd.most_common(1)[0][0] if wd else None,
-        "longest_streak_days": best if days else 0,
-        "longest_gap_days": max(gaps) if gaps else 0,
-        "posting_days": len(days),
-    }
+def run(script, args=()):
+    p = subprocess.run([sys.executable, str(S / script), *args], capture_output=True, text=True)
+    if p.returncode:
+        sys.exit(f"{script} failed:\n{p.stdout[-1500:]}\n{p.stderr[-1500:]}")
+    return p.stdout
 
 
-def moments(posts, stats, place_by_month):
-    out = []
-    b, q = stats.get("busiest") or {}, stats.get("quietest") or {}
-    if b:
-        out.append({"kind": "busiest month", "month": b.get("name"), "posts": b.get("posts"), "total": b.get("total")})
-    if q:
-        out.append({"kind": "quietest month", "month": q.get("name"), "posts": q.get("posts")})
-    tops = stats.get("top_nine") or []
-    if tops:
-        t = tops[0]
-        out.append({"kind": "top post", "date": t.get("date"), "likes": t.get("likes"), "caption": t.get("caption")})
-    liked = [p for p in posts if p.get("likes") is not None]
-    jump = None
-    for i in range(6, len(liked)):
-        base = statistics.mean(p["likes"] for p in liked[i - 6:i]) or 1
-        ratio = liked[i]["likes"] / base
-        if not jump or ratio > jump[0]:
-            jump = (ratio, liked[i])
-    if jump and jump[0] >= 1.6:
-        p = jump[1]
-        out.append({"kind": "the post that changed the numbers", "date": dt.datetime.fromtimestamp(p["ts"], dt.timezone.utc).date().isoformat(),
-                    "likes": p["likes"], "times_usual": round(jump[0], 1), "caption": p.get("caption")})
-    trips = [(m, c.most_common(1)[0]) for m, c in sorted(place_by_month.items()) if c and c.most_common(1)[0][0] != "home"]
-    if trips:
-        m, (place, n) = max(trips, key=lambda x: x[1][1])
-        out.append({"kind": "the trip", "month": MONTHS[m - 1], "place": place, "posts": n})
-    eras, cur = [], None
-    for m in sorted(place_by_month):
-        top = place_by_month[m].most_common(1)[0][0]
-        if cur and cur["place"] == top:
-            cur["to"] = MONTHS[m - 1]
-        else:
-            cur = {"place": top, "from": MONTHS[m - 1], "to": MONTHS[m - 1]}
-            eras.append(cur)
-    return out, eras
+def tokens(text):
+    return [t for t in re.split(r"[^a-z0-9]+", (text or "").lower()) if t]
 
 
-def color_name(rgb):
-    """The nearest of the named colors, by distance in RGB."""
-    def dist(h):
-        c = tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
-        return sum((a - b) ** 2 for a, b in zip(rgb, c))
-    w = min(COLOR_WORDS, key=lambda k: dist(COLOR_WORDS[k]))
-    return SPOKEN.get(w, w)
+def day_of(ts):
+    return dt.datetime.fromtimestamp(int(ts), dt.timezone.utc).date().isoformat()
 
 
-def nine_read(stats, picks):
-    """Why each of the nine worked, from their own numbers, the photo and the caption."""
-    usual = stats.get("median_likes") or 0
-    info = {n["rank"]: n for n in picks.get("nine", [])}
-    out = []
-    for t in stats.get("top_nine", []):
-        n = info.get(t["rank"], {})
-        cap = re.sub(r"#\w+", "", t.get("caption") or "").strip()
-        toks = set(tokens(cap))
-        subject = [th for th, ws in THEMES.items() if toks & set(ws)]
-        place = next((pl for pl in PLACES if re.search(rf"\b{re.escape(pl)}\b", cap.lower()) and pl != "home"), None)
-        colors = []
-        for c in sorted(n.get("colors", []), key=lambda c: -c["share"]):
-            nm = color_name(c["rgb"])
-            if nm not in colors:
-                colors.append(nm)
-        times = round(t["likes"] / usual, 1) if usual and t.get("likes") is not None else None
-        why = []
-        if times:
-            why.append(f"{times}x your usual likes")
-        if t.get("kind") == "reel":
-            why.append("a reel")
-        if subject or place:
-            why.append(" and ".join(([place] if place else []) + subject[:2]))
-        if colors:
-            why.append(" and ".join(colors[:2]))
-        out.append({"rank": t["rank"], "kind": t["kind"], "date": t["date"], "month": t["month"], "likes": t.get("likes"),
-                    "comments": t.get("comments"), "times_usual": times, "subject": subject, "place": place,
-                    "colors": colors[:3], "bright": n.get("bright"), "caption": cap, "why": "; ".join(why)})
-    return out
+WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
 
-def shared(nine, posts):
-    """What the nine have in common, set against the rest of the year's posts."""
-    rest = [p for p in posts if (p.get("caption") or "") not in {x["caption"] for x in nine}]
-    lines = []
-    for th in THEMES:
-        a = sum(1 for x in nine if th in x["subject"])
-        b = sum(1 for p in rest if set(tokens(p.get("caption"))) & set(THEMES[th]))
-        if a >= 3 and a / max(1, len(nine)) > 1.3 * b / max(1, len(rest)):
-            lines.append(f"{th}: {a} of the nine, {round(100 * b / max(1, len(rest)))}% of the rest")
-    cols = collections.Counter(c for x in nine for c in x["colors"][:2])
-    if cols:
-        lines.append("colors of the nine: " + ", ".join(f"{c} ({n})" for c, n in cols.most_common(4)))
-    reels = sum(1 for x in nine if x["kind"] == "reel")
-    if reels:
-        lines.append(f"{reels} of the nine are reels")
-    months = sorted({x["month"] for x in nine})
-    lines.append(f"the nine come from {len(months)} months: " + ", ".join(MONTHS[m - 1] for m in months))
-    return lines
+def date_label(iso):
+    d = dt.date.fromisoformat(iso)
+    return f"{WEEKDAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}"
 
 
-PAIRS = [(a, a + 1) for a in range(9) if a % 3 < 2] + [(a, a + 3) for a in range(6)]
+def clean(cap):
+    return re.sub(r"\s+", " ", EMOJI.sub("", re.sub(r"[#@][\w.]+", "", cap or ""))).strip(" ,.-")
 
 
-def wall_score(order, tone):
-    """How much neighbors differ: brightness steps and color steps across the twelve neighbor pairs."""
-    return sum(abs(tone[order[a]][0] - tone[order[b]][0]) + 0.004 * tone_dist(tone[order[a]][1], tone[order[b]][1]) for a, b in PAIRS)
-
-
-def tone_dist(x, y):
-    return sum((p - q) ** 2 for p, q in zip(x, y)) ** 0.5
-
-
-def rhythm(picks):
-    """The wall's rhythm in rank order and the arrangement (number one kept top left) whose neighbors differ most."""
-    nine = sorted(picks.get("nine", []), key=lambda n: n["rank"])
-    if len(nine) != 9:
-        return {"order": [n["rank"] for n in nine], "why": "fewer than nine tiles; rank order"}
-    tone = {n["rank"]: (n["bright"], (n.get("colors") or [{"rgb": [128, 128, 128]}])[0]["rgb"]) for n in nine}
-    ranks = [n["rank"] for n in nine]
-    base = wall_score(ranks, tone)
-    best = max(([ranks[0], *rest] for rest in itertools.permutations(ranks[1:])), key=lambda o: wall_score(o, tone))
-    top = wall_score(best, tone)
-    med = sorted(t[0] for t in tone.values())[4]
-    def pattern(order):
-        return ["".join("L" if tone[order[r * 3 + c]][0] >= med else "d" for c in range(3)) for r in range(3)]
-    def contrasting(order):
-        return sum(1 for a, b in PAIRS if abs(tone[order[a]][0] - tone[order[b]][0]) >= 0.06)
-    take = top >= base * 1.15
-    return {"rank_order": ranks, "rank_pattern": pattern(ranks), "rank_contrasting_pairs": contrasting(ranks),
-            "suggested": best, "suggested_pattern": pattern(best), "suggested_contrasting_pairs": contrasting(best),
-            "gain": round(top / base, 2) if base else None,
-            "order": best if take else ranks,
-            "why": (f"in rank order the neighbors are close in light and color; this arrangement, with number one kept top left, "
-                    f"sets lighter beside darker and one color beside another so each tile stands apart ({top / base:.2f}x the difference "
-                    f"between neighbors)") if take else
-                   f"rank order already sets each tile apart from its neighbors, so the wall keeps it"}
+def per_day(rows, lo, hi):
+    days = {day_of(r["ts"]) for r in rows if r.get("ts")}
+    if not days:
+        return 0
+    span = (dt.date.fromisoformat(max(days)) - dt.date.fromisoformat(min(days))).days + 1
+    return round(len([r for r in rows if r.get("ts")]) / max(1, span), 2)
 
 
 def type_direction(themes, register, pacing):
@@ -365,123 +206,171 @@ def type_direction(themes, register, pacing):
 
 
 def main():
-    import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
+    ap.add_argument("--place")
+    ap.add_argument("--from", dest="date_from")
+    ap.add_argument("--to", dest="date_to")
+    ap.add_argument("--album")
+    ap.add_argument("--folder")
+    a = ap.parse_args()
     lib = _env.read_json("build/library.json")
     if not lib:
         sys.exit("build/library.json is missing: run gather.py first")
-    for s in ("stats.py", "picks.py", "palette.py"):
+    named = []
+    for flag, v in (("--place", a.place), ("--from", a.date_from), ("--to", a.date_to), ("--album", a.album), ("--folder", a.folder)):
+        if v:
+            named += [flag, v]
+    print(run("trip.py", named).strip().splitlines()[0])
+    for s in ("picks.py", "palette.py"):
         print(run(s).strip().splitlines()[-1])
-    stats = _env.read_json("build/stats.json")
+    trip = _env.read_json("build/trip.json")
     pal = _env.read_json("build/palette.json") or {}
-    posts = lib["posts"]
-    captioned = posts + lib["reels"] + lib.get("facebook", [])
+    lo, hi = trip["from"], trip["to"]
+    spans = [(lo, hi)] + [(o["from"], o["to"]) for o in trip.get("others") or []]
+    def on_trip(r):
+        return r.get("ts") and lo <= day_of(r["ts"]) <= hi
+    def away(r):
+        return r.get("ts") and any(x <= day_of(r["ts"]) <= y for x, y in spans)
+    posts, reels, fb = lib.get("posts") or [], lib.get("reels") or [], lib.get("facebook") or []
+    captioned = posts + reels + fb
+    trip_rows = [r for r in captioned if on_trip(r)]
+    every_rows = [r for r in captioned if not away(r)]
     caps = caption_read(captioned)
-    like_accounts = collections.Counter(r.get("account") for r in lib["likes"] if r.get("account"))
-    saved_accounts = collections.Counter(r.get("account") for r in lib.get("saved", []) if r.get("account"))
-    follow = [r.get("account") for r in lib.get("following", []) if r.get("account")]
-    liked_text = [a for a in like_accounts.elements()] + [a for a in saved_accounts.elements()] + follow + \
-                 [r.get("caption") or "" for r in lib["likes"] + lib.get("saved", [])]
-    liked_media = [m for r in lib["likes"] + lib.get("saved", []) for m in (r.get("media") or []) if Path(m).exists()]
+    trip_caps, every_caps = caption_read(trip_rows), caption_read(every_rows)
+    like_accounts = collections.Counter(r.get("account") for r in lib.get("likes") or [] if r.get("account"))
+    saved_accounts = collections.Counter(r.get("account") for r in lib.get("saved") or [] if r.get("account"))
+    follow = [r.get("account") for r in lib.get("following") or [] if r.get("account")]
+    liked_text = list(like_accounts.elements()) + list(saved_accounts.elements()) + follow + \
+        [r.get("caption") or "" for r in (lib.get("likes") or []) + (lib.get("saved") or [])]
+    liked_media = [m for r in (lib.get("likes") or []) + (lib.get("saved") or []) for m in (r.get("media") or []) if Path(m).exists()]
     likes_palette = image_palette(liked_media) if len(liked_media) >= 8 else lexicon_palette(liked_text)
-    likes_palette_from = "the photos they liked and saved" if len(liked_media) >= 8 else \
+    likes_from = "the photos they liked and saved" if len(liked_media) >= 8 else \
         "the color words in the names and captions of the accounts they like, save and follow"
-    own_themes = theme_counts([p.get("caption") or "" for p in captioned])
+    own_themes = theme_counts([r.get("caption") or "" for r in captioned])
+    trip_themes = theme_counts([r.get("caption") or "" for r in trip_rows])
     liked_themes = theme_counts(list(like_accounts.elements()) + list(saved_accounts.elements()) + follow)
     top10 = sum(n for _, n in like_accounts.most_common(10))
-    pacing = reel_pacing(lib["reels"])
-    places, place_by_month = places_in(posts + lib["reels"], lib.get("facebook", []))
-    mom, eras = moments(posts, stats, place_by_month)
-    picks = _env.read_json("build/picks.json") or {}
-    nine = nine_read(stats, picks)
-    nine_shared = shared(nine, posts + lib["reels"])
-    wall = rhythm(picks)
-    td = type_direction(own_themes + liked_themes, caps, pacing)
-    year_palette = [{"hex": s["hex"], "name": s.get("name"), "share": s.get("share"), "photo": s.get("photo")}
-                    for s in (pal.get("year") or [])]
+    travel_reels = [r for r in reels if away(r)]
+    trip_pacing = reel_pacing([r for r in reels if on_trip(r)] or travel_reels)
+    every_pacing = reel_pacing([r for r in reels if not away(r)])
+    shift = pal.get("shift") or {}
+    style = {
+        "palette_trip": [c["name"] for c in pal.get("trip") or []],
+        "palette_everyday": [c["name"] for c in pal.get("everyday") or []],
+        "trip_only_colors": shift.get("trip_only") or [],
+        "brightness": {"trip": (shift.get("bright") or [None])[0], "everyday": (shift.get("bright") or [None, None])[1]},
+        "saturation": {"trip": (shift.get("saturation") or [None])[0], "everyday": (shift.get("saturation") or [None, None])[1]},
+        "caption_words": {"trip": trip_caps.get("avg_words"), "everyday": every_caps.get("avg_words")},
+        "posts_per_day": {"trip": per_day([r for r in posts + reels + (lib.get("stories") or []) if on_trip(r)], lo, hi),
+                          "everyday": per_day([r for r in posts + reels if not away(r)], None, None)},
+        "reel_shot_seconds": {"trip": trip_pacing.get("avg_shot_seconds"), "everyday": every_pacing.get("avg_shot_seconds")},
+        "themes": {"trip": dict(trip_themes.most_common(4)), "everyday": dict(own_themes.most_common(4))},
+    }
+    days = []
+    for d in trip["days"]:
+        lines = [clean(c) for c in d.get("captions") or [] if clean(c)]
+        best = max(lines, key=lambda c: (4 <= len(c.split()) <= 12, len(c)), default="")
+        days.append({"date": d["date"], "label": date_label(d["date"]), "places": d["places"], "items": d["n"], "line": best})
+    liked = [r for r in trip_rows if r.get("likes") is not None]
+    top = max(liked, key=lambda r: r["likes"], default=None)
+    moments = [{"kind": "the day", "date": x["date"], "places": x["places"], "line": x["line"]} for x in days]
+    if top:
+        moments.append({"kind": "the trip's most-liked post", "date": day_of(top["ts"]), "likes": top["likes"], "caption": clean(top.get("caption"))})
+    music = trip.get("music") or {}
+    music_note = ({"seen": music.get("seen"), "direction": "the tracks on their travel posts"} if music.get("seen") else
+                  {"seen": [], "direction": "not in the data: the bed follows the pace of their travel reels"})
+    td = type_direction(own_themes + liked_themes + trip_themes, caps, trip_pacing)
+    trip_palette = [{"hex": c["hex"], "name": c.get("name"), "share": c.get("share"), "photo": c.get("photo")} for c in pal.get("trip") or []]
+    every_palette = [{"hex": c["hex"], "name": c.get("name"), "share": c.get("share")} for c in pal.get("everyday") or []]
     film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
     warm_light = (own_themes.get("light", 0) + liked_themes.get("light", 0)) >= 4
+    places = [p["name"] for p in trip["places"]]
+    people = [p["handle"] for p in trip.get("people") or []]
     research = {
-        "handle": lib["handle"], "year": lib["year"], "source": lib["source"], "doors": lib.get("doors", {}),
-        "counts": stats.get("counts"),
-        "palette": {"year": year_palette, "likes": likes_palette, "likes_from": likes_palette_from, "roles": pal.get("roles")},
-        "captions": caps,
-        "likes": {"accounts": len(like_accounts), "top": [{"account": a, "likes": n} for a, n in like_accounts.most_common(10)],
+        "handle": lib["handle"], "source": lib["source"], "doors": lib.get("doors", {}),
+        "trip": {k: trip.get(k) for k in ("name", "from", "to", "days_count", "chosen_by", "found_by", "items", "geotagged")},
+        "places": trip["places"], "route": trip.get("route"), "people": trip.get("people"), "days": days,
+        "clips": [{k: c.get(k) for k in ("file", "day", "place", "seconds", "caption")} for c in trip.get("clips") or []],
+        "others": trip.get("others"), "travel_vs_everyday": style,
+        "palette": {"trip": trip_palette, "everyday": every_palette, "likes": likes_palette, "likes_from": likes_from, "roles": pal.get("roles")},
+        "captions": caps, "captions_trip": trip_caps, "captions_everyday": every_caps,
+        "likes": {"accounts": len(like_accounts), "top": [{"account": x, "likes": n} for x, n in like_accounts.most_common(10)],
                   "top10_share": round(top10 / max(1, sum(like_accounts.values())), 2),
-                  "saved_top": [{"account": a, "saves": n} for a, n in saved_accounts.most_common(5)],
+                  "saved_top": [{"account": x, "saves": n} for x, n in saved_accounts.most_common(5)],
                   "themes": dict(liked_themes.most_common())},
-        "posts_themes": dict(own_themes.most_common()),
-        "cadence": cadence(posts + lib["reels"]),
-        "reels": pacing,
-        "people": stats.get("people", [])[:8],
-        "places": [{"place": p, "posts": n} for p, n in places.most_common(8)],
-        "moments": mom, "eras": eras,
-        "nine": nine, "nine_shared": nine_shared, "tenth": stats.get("tenth"), "median_likes": stats.get("median_likes"),
-        "ranked_by": stats.get("top_ranked_by"), "rhythm": wall,
-        "type": td,
+        "reels_trip": trip_pacing, "reels_everyday": every_pacing, "music": music_note, "moments": moments, "type": td,
+        "assumptions": trip.get("assumptions"),
     }
     _env.write_json("build/research.json", research)
-    shot = pacing.get("avg_shot_seconds")
+    shot = trip_pacing.get("avg_shot_seconds") or every_pacing.get("avg_shot_seconds")
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
-        "handle": lib["handle"], "year": lib["year"],
-        "palette": {"year": year_palette, "likes": likes_palette,
-                    "direction": "toward their likes" if likes_palette else "their year"},
+        "handle": lib["handle"],
+        "trip": {"name": trip["name"], "from": lo, "to": hi, "days": len(days)},
+        "palette": {"trip": trip_palette, "everyday": every_palette, "likes": likes_palette,
+                    "direction": "the trip's own colors" + (f", led by {', '.join(style['trip_only_colors'][:2])}" if style["trip_only_colors"] else "")},
         "type": td,
-        "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
+        "pacing": {"reel_seconds": trip_pacing.get("avg_seconds"), "shot_seconds": shot,
                    "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
                    "energy": "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"},
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
-                     "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
-                     "samples": caps.get("samples", [])[:4]},
-        "pillars": [t for t, _ in (own_themes + liked_themes).most_common(4)],
-        "people": [p["account"] for p in stats.get("people", [])[:5]],
-        "places": [p for p, _ in places.most_common(5) if p != "home"],
-        "moments": mom,
-        "nine": [{"rank": x["rank"], "why": x["why"]} for x in nine],
-        "wall": {"order": wall["order"], "why": wall["why"]},
+                     "avg_words": caps.get("avg_words"), "hashtags": (trip_caps.get("top_hashtags") or caps.get("top_hashtags") or [])[:3],
+                     "samples": (trip_caps.get("samples") or caps.get("samples") or [])[:4]},
+        "pillars": [t for t, _ in (trip_themes + own_themes + liked_themes).most_common(4)],
+        "people": people[:5],
+        "places": places,
+        "days": [{"date": x["date"], "label": x["label"], "places": x["places"], "line": x["line"]} for x in days],
+        "moments": moments,
         "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
-        "avoid": ["cold blue grading", "neon", "stock-photo gloss"] if film else ["muddy grading"],
+        "avoid": ["digital sharpness and gloss", "neon", "stock travel footage", "a map that is not their route"] if film else
+                 ["muddy grading", "stock travel footage", "a map that is not their route"],
+        "music": music_note,
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
+    old = _env.read_json("build/taste.json") or {}
+    stale = (old.get("trip") or {}).get("from") != lo or (old.get("trip") or {}).get("to") != hi
+    if not old or stale or "research.py draft" in old.get("written_by", ""):
         _env.write_json("build/taste.json", taste)
-    lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
+    def pair(k, unit=""):
+        v = style[k]
+        return f"{v['trip']}{unit} on the trip, {v['everyday']}{unit} on other days"
+    lines = [f"# taste draft for @{lib['handle']}: {trip['name']}, {lo} to {hi}", "",
              "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
-             "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
-             f"- places: {', '.join(f'{p} ({n})' for p, n in places.most_common(6))}",
-             f"- eras: {'; '.join(e['place'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') for e in eras)}",
-             f"- moments: {'; '.join(m['kind'] + ': ' + ', '.join(str(v) for k, v in m.items() if k != 'kind') for m in mom)}",
-             "- the nine (rank, kind, likes, why it worked; caption):"]
-    lines += [f"  {x['rank']}. {x['kind']} {x['date']}, {x['likes']} likes, {x['comments']} comments: {x['why']}; \"{x['caption']}\"" for x in nine]
-    lines += [f"- what the nine share: {'; '.join(nine_shared)}",
-             f"- the tenth: {(stats.get('tenth') or {}).get('likes')} likes, {(stats.get('tenth') or {}).get('gap')} below the ninth; ranked by {stats.get('top_ranked_by')}",
-             f"- the wall: rank order {wall.get('rank_pattern')}, suggested {wall.get('suggested_pattern')} (L light, d dark); {wall['why']}",
-             "", "## you like",
-             f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
-             f"- most liked: {', '.join(a for a, _ in like_accounts.most_common(6))}",
-             f"- what those accounts share: {', '.join(f'{k} ({v})' for k, v in liked_themes.most_common(5))}",
-             f"- palette of the year: {', '.join((s.get('name') or '') + ' ' + s['hex'] for s in year_palette)}",
-             f"- palette of their likes ({likes_palette_from}): {', '.join(s['name'] + ' ' + s['hex'] for s in likes_palette)}",
-             "", "## your style is",
-             f"- reels: {pacing.get('avg_seconds')} s on average, a cut every {shot} s" if shot else "- no reels to measure",
-             f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
-             "", "## your voice is",
-             f"- {caps.get('avg_words')} words a caption, {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
-             f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
-             f"- opens with: {', '.join(caps.get('opens_with', []))}; closes with: {', '.join(caps.get('closes_with', []))}",
-             f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
-             f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
-             "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
+             "## you are",
+             f"- the trip: {trip['name']}, {len(days)} days ({trip['chosen_by']}; found by {trip['found_by']})",
+             f"- the route: {' -> '.join(r['place'] for r in trip.get('route') or []) or ', '.join(places)}",
+             f"- with: {', '.join('@' + h for h in people) or 'nobody tagged'}",
+             "- day by day:"]
+    lines += [f"  {x['label']}: {', '.join(x['places']) or '-'}, {x['items']} posts and stories; \"{x['line']}\"" for x in days]
+    lines += [f"- their clips from the trip: {len(research['clips'])} ("
+              + ", ".join(f"{c['day']} {c['place']} {c['seconds']} s" for c in research["clips"]) + ")",
+              f"- other trips in the data: {'; '.join(o['from'] + ' to ' + o['to'] for o in trip.get('others') or []) or 'none'}",
+              "", "## you like",
+              f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
+              f"- most liked: {', '.join(x for x, _ in like_accounts.most_common(6))}",
+              f"- what those accounts share: {', '.join(f'{k} ({v})' for k, v in liked_themes.most_common(5))}",
+              f"- palette of their likes ({likes_from}): {', '.join(c['name'] + ' ' + c['hex'] for c in likes_palette)}",
+              "", "## your style is",
+              f"- the trip's palette: {', '.join((c.get('name') or '') + ' ' + c['hex'] for c in trip_palette)}",
+              f"- their everyday palette: {', '.join((c.get('name') or '') + ' ' + c['hex'] for c in every_palette)}",
+              f"- only on the trip: {', '.join(style['trip_only_colors']) or 'no new colors'}",
+              f"- brightness {pair('brightness')}; saturation {pair('saturation')}",
+              f"- posts a day: {pair('posts_per_day')}; a reel cut every {pair('reel_shot_seconds', ' s')}",
+              f"- themes on the trip: {style['themes']['trip']}; on other days: {style['themes']['everyday']}",
+              f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+              f"- music: {music_note['direction']}" + (f": {', '.join(music_note['seen'])}" if music_note["seen"] else ""),
+              "", "## your voice is",
+              f"- {caps.get('avg_words')} words a caption ({pair('caption_words')}), {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
+              f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
+              f"- opens with: {', '.join(caps.get('opens_with', []))}; closes with: {', '.join(caps.get('closes_with', []))}",
+              f"- hashtags on the trip: {', '.join(trip_caps.get('top_hashtags', []))}",
+              f"- lines from the trip: {' / '.join(trip_caps.get('samples', [])[:4])}",
+              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
     Path("build/taste.draft.md").write_text("\n".join(lines))
-    print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
-    print(f"year palette: {[s['hex'] for s in year_palette]}; likes palette: {[s['hex'] + ' ' + s['name'] for s in likes_palette]}")
-    print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
-    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; type lead {td['lead']}")
-    print(f"moments: {[m['kind'] for m in mom]}; eras: {len(eras)}")
-    for x in nine:
-        print(f"  {x['rank']}. {x['kind']:<5} {x['likes']} likes: {x['why']}")
-    print(f"wall: order {wall['order']} ({wall['why']})")
+    print(f"trip: {trip['name']} {lo} to {hi}, {len(days)} days; places {places}; people {people}")
+    print(f"travel vs everyday: palette {style['palette_trip'][:3]} vs {style['palette_everyday'][:3]}; "
+          f"brightness {style['brightness']}; captions {style['caption_words']}; reel cuts {style['reel_shot_seconds']}")
+    print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}; type lead {td['lead']}")
+    print(f"music: {music_note['direction']}")
     print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
     return 0
 
