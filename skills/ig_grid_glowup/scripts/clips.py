@@ -13,7 +13,7 @@ USAGE (from the workspace root; S = this skill's folder):
 list writes build/clips/requests.json and prints one block per clip. The agent generates each clip with its
 video model (image-to-video from the named photo when the model takes an image) and saves it as
 build/clips/NN.mp4 (.mov and .webm are read too). A clip whose role is "their own reel" needs no generation:
-it is cut from their footage. A clip that plays inside one tile of the wall (it names a tile) is square.
+it is cut from their footage.
 
 A stand-in still is a post of the nine that no library photo fits (storyboard.py names each one, with its prompt
 and its color). The agent makes each with its image model (4:5, 1080x1350) and saves it as build/stills/<id>.png
@@ -21,7 +21,7 @@ and its color). The agent makes each with its image model (4:5, 1080x1350) and s
 through a window falling across a plain wall in the slot's color, with film grain, so the grid still reads as one
 palette. build/stills.json records each as generated or painted, and the plan says which posts they are.
 
-normalize scales and crops each file to 1080x1920 (1080x1080 for a tile), conforms it to 30 fps, trims it to its beat (looping a
+normalize scales and crops each file to 1080x1920, conforms it to 30 fps, trims it to its beat (looping a
 short file), applies the film's grade (build/grade.json, the same filter as the photos) and writes
 build/public/clips/NN.mp4 with no audio, plus its frames in build/public/clips/NN/. A clip that did not arrive is substituted: the renderer animates the
 named photo of theirs (parallax planes, light, dust) in its place. build/clips.json records every clip as
@@ -53,14 +53,12 @@ def board_for(a):
 
 
 def clip_seconds(b, c):
-    """A tile's clip runs for its own length; every other clip runs for its whole beat."""
-    if c.get("tile"):
-        return c.get("seconds") or 3
+    """A clip runs for its whole beat."""
     return max(c.get("seconds") or 0, beat_seconds(b, c["beat"]) or 0)
 
 
 def size_of(c):
-    return (W, W) if c.get("tile") else (W, H)
+    return (W, H)
 
 
 def beat_seconds(b, beat_id):
@@ -85,10 +83,8 @@ def cmd_list(a):
     for c in b.get("clips", []):
         secs = round(clip_seconds(b, c), 1)
         w, h = size_of(c)
-        r = {"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "aspect": "1:1" if c.get("tile") else "9:16",
+        r = {"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "aspect": "9:16",
              "size": f"{w}x{h}", "save_as": str((CLIPS / f"{c['id']}.mp4").resolve())}
-        if c.get("tile"):
-            r["tile"] = c["tile"]
         if c.get("source"):
             r["their_footage"] = c["source"]
         else:
@@ -98,7 +94,7 @@ def cmd_list(a):
         reqs.append(r)
     _env.write_json(CLIPS / "requests.json", {"board": b["id"], "clips": reqs})
     for r in reqs:
-        print(f"clip {r['id']} for {r['beat']}{' tile ' + str(r['tile']) if r.get('tile') else ''} ({r['role']}), {r['seconds']} s, {r['aspect']} -> {r['save_as']}")
+        print(f"clip {r['id']} for {r['beat']} ({r['role']}), {r['seconds']} s, {r['aspect']} -> {r['save_as']}")
         if r.get("their_footage"):
             print(f"  no generation: cut from their reel {r['their_footage']}")
         else:
@@ -144,8 +140,7 @@ def cmd_normalize(a):
         shutil.rmtree(f.with_suffix(""), ignore_errors=True)
     for c in b.get("clips", []):
         secs = (clip_seconds(b, c) or 4) + 0.6
-        rec = {"beat": c["beat"], "role": c["role"], "prompt": c.get("prompt"), "image": c.get("image"), "file": None,
-               **({"tile": c["tile"]} if c.get("tile") else {})}
+        rec = {"beat": c["beat"], "role": c["role"], "prompt": c.get("prompt"), "image": c.get("image"), "file": None}
         src = arrived(c["id"])
         if src:
             ok, err = conform(src, OUT / f"{c['id']}.mp4", secs, g["filter"], size_of(c))
@@ -161,7 +156,7 @@ def cmd_normalize(a):
             beat = next((x for x in b["beats"] if x["id"] == c["beat"]), {})
             rec["image"] = (beat.get("photos") or [None])[0]
         out[c["id"]] = rec
-        print(f"clip {c['id']} ({c['beat']}{' tile ' + str(c['tile']) if c.get('tile') else ''}): {rec['status']}" + (f", {rec.get('why')}" if rec.get("why") else "") +
+        print(f"clip {c['id']} ({c['beat']}): {rec['status']}" + (f", {rec.get('why')}" if rec.get("why") else "") +
               (f" -> build/public/{rec['file']}" if rec["file"] else f", animated from their photo {rec['image']}"))
     _env.write_json("build/clips.json", {"board": b["id"], "clips": out})
     n = {s: sum(1 for r in out.values() if r["status"] == s) for s in ("generated", "their_reel", "substituted")}
@@ -197,20 +192,10 @@ def paint_still(color, seed, path):
         for k in range(2):
             ya, yb = 160 + top * 760, 160 + bot * 760
             xa = x0 + k * 330
-            d.polygon([(xa, ya), (xa + 300, ya), (xa + 300 + slant * (yb - ya), yb), (xa + slant * (yb - ya), yb)], fill=255)
-    light = light.filter(ImageFilter.GaussianBlur(26))
-    warm = Image.new("RGB", (W, H), (min(255, int(r * 1.35 + 40)), min(255, int(g * 1.3 + 30)), min(255, int(b * 1.15 + 14))))
-    im = Image.composite(warm, im, light.point(lambda v: int(v * 0.75)))
-    leaf = Image.new("L", (W, H), 0)
-    d = ImageDraw.Draw(leaf)
-    cx, cy = rnd.randint(620, 860), rnd.randint(180, 420)
-    for i in range(7):
-        ang = -0.9 + i * 0.3
-        ex, ey = cx + int(260 * __import__("math").cos(ang)), cy + int(260 * __import__("math").sin(ang))
-        d.line([(cx, cy), (ex, ey)], fill=150, width=10)
-        d.ellipse([ex - 60, ey - 26, ex + 60, ey + 26], fill=150)
-    leaf = leaf.filter(ImageFilter.GaussianBlur(14))
-    im = Image.composite(Image.new("RGB", (W, H), (int(r * 0.7), int(g * 0.66), int(b * 0.62))), im, ImageChops.multiply(leaf, light))
+            d.polygon([(xa, ya), (xa + 310, ya), (xa + 310 + slant * (yb - ya), yb), (xa + slant * (yb - ya), yb)], fill=255)
+    light = light.filter(ImageFilter.GaussianBlur(30))
+    warm = Image.new("RGB", (W, H), tuple(int(c + (w - c) * 0.42) for c, w in zip((r, g, b), (255, 238, 205))))
+    im = Image.composite(warm, im, light.point(lambda v: int(v * 0.85)))
     noise = Image.effect_noise((W, H), 22).convert("RGB")
     im = ImageChops.add(ImageChops.multiply(im, Image.new("RGB", (W, H), (236, 236, 236))), ImageChops.multiply(noise, Image.new("RGB", (W, H), (20, 20, 20))))
     path.parent.mkdir(parents=True, exist_ok=True)

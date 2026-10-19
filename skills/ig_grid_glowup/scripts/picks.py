@@ -22,7 +22,7 @@ build/photo_index.json: every photo measured, with its kind (grid, post, carouse
 and saves when it is a post's cover. build/picks.json: "pool", the photos the next nine are drawn from (everything
 not on the grid and not posted before: carousel slides, stories, Facebook photos, the photo folder; older posts
 only when that pool is under 18), ranked by how well they read as a post (exposure, detail, not text).
-To swap a photo, run `grade.py photos FILE` and name the build/photos file in build/plan.json.
+To swap a photo into a post, run `grade.py photos FILE` and name the graded file in that post of the storyboard.json.
 """
 import datetime as dt
 import hashlib

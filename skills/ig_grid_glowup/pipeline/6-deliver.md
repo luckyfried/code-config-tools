@@ -1,24 +1,25 @@
 # 6. Critic, gate, deliver
 
-Goal: a cut both critics score 4 or better on every criterion (or the one fix spent), a green `qa.py gate`, and
-`out/` complete: `film.mp4`, `best-nine.png`, `story.png`, `caption.md`, `review.html`, `brief.md`.
+Goal: a finished nine and film both critics score 4 or better on every criterion (or the one fix spent), a green
+`qa.py gate`, and `out/` complete: `audit.md`, `grid-before.png`, `posts/01..09.png`, `grid-after.png`, `plan.md`,
+`film.mp4`, `review.html`, `brief.md`.
 
-## Measure, then watch
+## Measure, then look
 
 ```
 python3 S/scripts/qa.py check
 ```
 
-`check` measures the film and the stills (size, codec, fps, a length of 15–30 s, audio and loudness, black and
-frozen stretches, safe areas; the best-nine image at 1080×1080 with nine distinct photos, the story card at
-1080×1920). Fix anything it fails before the critics watch. Then:
+`check` measures the film (size, codec, fps, 15 s ±0.5 s, audio and loudness, black and frozen stretches, safe
+areas), the nine posts (1080×1350 each, nine different pictures) and the two grid images. Fix anything it fails
+before the critics look. Then:
 
 ```
 python3 S/scripts/vote.py cut
 ```
 
-Read `S/critic/critic.md` section "The cut". As the motion designer, then as the person, open every
-`build/frames/NN-*.png`, `out/best-nine.png` and `out/story.png`, and fill in the round file it names
+Read `S/critic/critic.md` section "The cut". As the designer, then as the person, open `out/grid-after.png`, every
+`out/posts/NN.png`, `out/plan.md` and every `build/frames/NN-*.png`, and fill in the round file it names
 (`build/critic/cut-1.json`): a score 1–5 per criterion and a paragraph each.
 
 ```
@@ -26,16 +27,10 @@ python3 S/scripts/vote.py verdict
 ```
 
 - `SHIP`: go on.
-- `FIX ONCE`: it names the worst thing. Fix that one thing in the storyboard (or the music, or a clip), run
-  `storyboard.py snap`, `music.py master`, `film.py render`, `film.py frames`, then `vote.py cut` for round 2 (say
-  in `fixed` what changed) and score again. After round 2 the fix is spent: ship, and brief.md names what is still
-  below 4.
-
-## Caption
-
-Write `build/caption.md` in their voice: their case, their length, their kind of emoji (or none), two to four of
-their own hashtags plus #bestnine. Ask which one is their followers' favorite the way they would. Read their captions in `build/taste.md` first. When you do not write one,
-deliver.py drafts a short one from `taste.json`.
+- `FIX ONCE`: it names the worst thing. Fix that one thing (a post, a caption, the order, the music, a clip), run
+  `plan.py check` if the plan changed, then `storyboard.py snap`, `music.py master`, `film.py render`,
+  `film.py frames`, then `vote.py cut` for round 2 (say in `fixed` what changed) and score again. After round 2 the
+  fix is spent: ship, and brief.md names what is still below 4.
 
 ## Deliver
 
@@ -43,12 +38,13 @@ deliver.py drafts a short one from `taste.json`.
 python3 S/scripts/deliver.py
 ```
 
-It writes `out/caption.md`, `out/brief.md` (every door, every assumption, the vote, every clip and every
-substitution, the music's origin, the engine, the critics' scores) and `out/review.html` (the film, the best-nine
-image, the story card, the caption, the three style sheets and the vote, with the runners-up), then runs `qa.py gate`. On a red gate it
-names each failing check: fix the cause, then run deliver.py again.
+It writes `out/brief.md` (every door, every assumption, what each of the nine is made from, every generated still
+and clip and how it arrived, the vote, the music's origin, the engine, the critics' scores) and `out/review.html`
+(the audit, the grid after, the nine, the plan, the film, the three style sheets and the vote, with the
+runners-up), then runs `qa.py gate`. On a red gate it names each failing check: fix the cause, then run deliver.py
+again.
 
 ## Tell the person
 
-Three or four plain lines: where the film, the best-nine image and the story card are (`out/review.html` opens everything), the idea of the
-film in one sentence, and that they can say "do the second one" for the runner-up.
+Three or four plain lines: where everything is (`out/review.html` opens it all), the direction in one sentence,
+when the first post goes up, and that they can say "do the second one" for the runner-up direction.
