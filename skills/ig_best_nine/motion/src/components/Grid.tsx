@@ -19,7 +19,7 @@ type Cam = {cx: number; cy: number; k: number; ay: number};
 const useWallBox = () => {
   const {format} = useSys();
   const s = useSafe();
-  if (format === 'square') return {size: s.W, top: 0};
+  if (format === 'square') return {size: s.W - 2 * 72, top: s.top};
   if (format === 'story') return {size: s.W - 2 * 72, top: s.top + 380};
   return {size: s.W - 2 * 48, top: s.top + 380};
 };
@@ -83,13 +83,17 @@ const Words: React.FC<{text: BeatText; name: string; delay?: number; numeral?: s
   const {tween} = useMotion();
   const box = useWallBox();
   if (format === 'square') {
-    const chip = [text.kicker, text.headline].filter(Boolean).join(' · ');
     return (
-      <SafeBox name={name} justify="end" align="start">
-        <div style={{background: system.colors.bg, padding: '12px 20px', ...faceStyle(system.text), fontSize: 30, fontWeight: 600,
-          letterSpacing: '0.06em', textTransform: 'none', color: system.colors.ink, whiteSpace: 'nowrap', borderLeft: `6px solid ${system.colors.accent}`}}>
-          {chip}
-        </div>
+      <SafeBox name={name} justify="center" top={box.top + box.size + 8}
+        style={{left: (s.W - box.size) / 2, right: (s.W - box.size) / 2, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+        {text.headline ? (
+          <div style={{...faceStyle(system.display), fontSize: 40, lineHeight: 1, color: system.colors.ink, whiteSpace: 'nowrap'}}>{text.headline}</div>
+        ) : <div />}
+        {text.kicker ? (
+          <div style={{...faceStyle(system.text), fontSize: 26, fontWeight: 600, letterSpacing: '0.06em', color: system.colors.accent, whiteSpace: 'nowrap'}}>
+            {text.kicker}
+          </div>
+        ) : null}
       </SafeBox>
     );
   }

@@ -125,7 +125,7 @@ def wall_check():
     cells, flat = [], 0
     for i in range(9):
         x, y = (i % 3) * w / 3, (i // 3) * h / 3
-        c = im.crop((int(x + w / 12), int(y + h / 12), int(x + w / 4), int(y + h / 4))).resize((16, 16), Image.BILINEAR)
+        c = im.crop((int(x + w / 6 - w / 16), int(y + h / 6 - h / 16), int(x + w / 6 + w / 16), int(y + h / 6 + h / 16))).resize((16, 16), Image.BILINEAR)
         if ImageStat.Stat(c).stddev[0] <= 4:
             flat += 1
         cells.append(list(c.tobytes()))

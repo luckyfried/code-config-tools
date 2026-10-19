@@ -1,5 +1,5 @@
 {
-  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); story leaves the top bar and the reply field; square is the best-nine image, a margin so nothing touches the grid's crop.",
+  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); story leaves the top bar and the reply field; square is the best-nine image: the wall sits inside the margin with the title band under it, so no word covers a photo.",
   "reel": {"width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150},
   "story": {"width": 1080, "height": 1920, "top": 250, "bottom": 340, "left": 72, "right": 72},
   "square": {"width": 1080, "height": 1080, "top": 40, "bottom": 40, "left": 40, "right": 40}

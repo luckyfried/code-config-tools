@@ -162,8 +162,8 @@ def cmd_render(a):
         music = mux(silent, Path("out/film.mp4"), secs)
     for f in rep.get("findings", []):
         print("finding:", f["text"][:400])
-    print(f"rendered {len(jobs) - rep.get('failed', 0)} of {len(jobs)} jobs in {time.time() - t0:.1f} s; "
-          f"film {secs:.1f} s{' with music' if music else ' (no music track)'} -> out/film.mp4")
+    film = f"; film {secs:.1f} s{' with music' if music else ' (no music track)'} -> out/film.mp4" if a.only in (None, "film") else ""
+    print(f"rendered {len(jobs) - rep.get('failed', 0)} of {len(jobs)} jobs in {time.time() - t0:.1f} s{film}")
     return 1 if rep.get("failed") else 0
 
 
@@ -223,12 +223,12 @@ def cmd_stills(a):
         im = Image.open(PUBLIC / p).convert("RGB")
         return ImageOps.fit(im, (w, h), Image.LANCZOS)
 
-    def wall(bt, w, h, top):
-        """The nine as a 3x3 wall, slot by slot, filling the width at the given top."""
+    def wall(bt, w, h, top, side=None):
+        """The nine as a 3x3 wall, slot by slot, centered at the given top (filling the width unless a side is given)."""
         data = bt.get("data") or {}
         by = {t["rank"]: t for t in data.get("tiles", [])}
         gap = max(6, w // 120)
-        side = min(w - 2 * gap, h - top - gap)
+        side = side or min(w - 2 * gap, h - top - gap)
         tile = (side - 2 * gap) // 3
         x0 = (w - (3 * tile + 2 * gap)) // 2
         im = Image.new("RGB", (w, h), s["colors"]["bg"])
@@ -242,11 +242,19 @@ def cmd_stills(a):
         sa = s["safe"].get(fmt) or safe
         bg = Image.new("RGB", (w, h), s["colors"]["bg"])
         t = dict(bt.get("text") or {})
+        if bt["kind"] == "Grid" and fmt == "square":
+            side = w - 2 * 72
+            bg = wall(bt, w, h, sa["top"], side)
+            d = ImageDraw.Draw(bg)
+            band = (sa["top"] + side + 8 + h - sa["bottom"]) // 2
+            x0 = (w - side) // 2
+            if t.get("headline"):
+                d.text((x0, band), str(t["headline"]), font=font("display", 40), fill=s["colors"]["ink"], anchor="lm")
+            if t.get("kicker"):
+                d.text((w - x0, band), str(t["kicker"]), font=font("text", 26), fill=s["colors"]["accent"], anchor="rm")
+            return bg
         if bt["kind"] == "Grid":
-            top = sa["top"] if fmt == "square" else int(h * 0.31)
-            bg = wall(bt, w, h, int(sa["top"] * 0.0) if fmt == "square" else top)
-            if fmt == "square":
-                t = {"kicker": " · ".join(v for v in (t.get("kicker"), t.get("headline")) if v)}
+            bg = wall(bt, w, h, int(h * 0.31))
         else:
             ph = (bt.get("photos") or [])
             if bt.get("clip") and isinstance(bt["clip"], dict) and bt["clip"].get("image"):
@@ -262,7 +270,7 @@ def cmd_stills(a):
             r = str((bt.get("data") or {}).get("rank", ""))
             d.text((int(sa["left"] * sf), int(sa["top"] * sf)), r, font=font("display", int(s["scale"]["hero"] * 1.4 * sf)), fill=s["colors"]["accent"])
         left, maxw = int(sa["left"] * sf), int(w - (sa["left"] + sa["right"]) * sf)
-        grid_top = bt["kind"] == "Grid" and fmt != "square"
+        grid_top = bt["kind"] == "Grid"
         blocks = []
         if t.get("kicker"):
             blocks.append(("text", str(t["kicker"]).upper(), int(s["scale"]["label"] * sf), s["colors"]["accent"]))
@@ -287,12 +295,7 @@ def cmd_stills(a):
             lines.append(cur)
             laid.append((f, lines, size, color))
         height = sum(len(ln) * int(sz * 1.08) + int(sz * 0.4) for _, ln, sz, _ in laid)
-        if fmt == "square":
-            y = h - int(sa["bottom"] * sf) - height
-            if laid:
-                d.rectangle((left - 16, y - 12, left + max(f.getlength(x) for f, ln, _, _ in laid for x in ln) + 16, h - int(sa["bottom"] * sf)),
-                            fill=s["colors"]["bg"])
-        elif grid_top:
+        if grid_top:
             y = int(sa["top"] * sf)
         else:
             y = int(h - sa["bottom"] * sf) - height
