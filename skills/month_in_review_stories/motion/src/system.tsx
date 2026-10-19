@@ -52,11 +52,22 @@ export const FontGate: React.FC<{system: System; children: React.ReactNode}> = (
   return ready ? <>{children}</> : null;
 };
 
+/** Height the series mark takes at the top of the safe area on a card of the series. */
+export const MARK = 92;
+
+/** The format's safe area; on a card of the series it starts below the series mark. */
 export const useSafe = (): Safe & {width: number; height: number; W: number; H: number} => {
-  const {system, format} = useSys();
+  const {system, format, board} = useSys();
   const {width, height} = useVideoConfig();
-  const s = system.safe[format] ?? system.safe.reel;
+  const base = system.safe[format] ?? system.safe.story;
+  const s = board.series ? {...base, top: base.top + MARK} : base;
   return {...s, W: width, H: height, width: width - s.left - s.right, height: height - s.top - s.bottom};
+};
+
+/** The safe area without the series mark: where the mark itself sits. */
+export const useFrameSafe = (): Safe => {
+  const {system, format} = useSys();
+  return system.safe[format] ?? system.safe.story;
 };
 
 /** Eased value between two numbers over [start, start + dur] frames, clamped. */

@@ -4,6 +4,7 @@ import {TransitionSeries} from '@remotion/transitions';
 import {BeatView} from './Beat';
 import {BeatProvider, FontGate, SystemProvider} from './system';
 import {Finish} from './texture';
+import {SeriesMark} from './components/SeriesMark';
 import {transitionFor} from './transitions';
 import type {Board, CardProps, FilmProps} from './types';
 
@@ -28,24 +29,26 @@ export const Film: React.FC<FilmProps> = ({board}) => {
     );
   });
   return (
-    <SystemProvider value={{system: board.system, board, format: 'reel', still: false}}>
+    <SystemProvider value={{system: board.system, board, format: 'story', still: false}}>
       <FontGate system={board.system}>
         <AbsoluteFill style={{background: board.system.colors.bg}}>
           <TransitionSeries>{items}</TransitionSeries>
           <Finish />
+          {board.series ? <SeriesMark /> : null}
         </AbsoluteFill>
       </FontGate>
     </SystemProvider>
   );
 };
 
-/** The best-nine image or the story card: a beat at its settled frame, laid out for that format. */
+/** A card's static version: its still beat at its settled frame, with the series mark. */
 export const Card: React.FC<CardProps> = ({board, beat, format}) => (
   <SystemProvider value={{system: board.system, board, format, still: true, beat}}>
     <FontGate system={board.system}>
       <AbsoluteFill style={{background: board.system.colors.bg}}>
         <BeatView beat={beat} />
         <Finish />
+        {board.series ? <SeriesMark /> : null}
       </AbsoluteFill>
     </FontGate>
   </SystemProvider>
