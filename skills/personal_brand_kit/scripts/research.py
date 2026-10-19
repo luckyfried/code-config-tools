@@ -488,12 +488,18 @@ def main():
     cnames = [c["name"] for c in feed]
     days = [s["day"] for s in cad["slots"]]
     stop = []
-    if outliers:
-        lows = [o["times_usual"] for o in outliers if o["times_usual"] is not None]
-        stop.append({"line": f"the {len(outliers)} posts outside your system", "why":
-                     f"they break your {', '.join(sorted({b for o in outliers for b in o['breaks']}))}" +
-                     (f" and got {statistics.mean(lows):.1f}x your usual likes" if lows else ""),
-                     "example": outliers[0]["caption"]})
+    said = {"cadence": "posting late at night, off your days",
+            "palette": "colors outside your palette",
+            "voice": "shouting captions",
+            "pillar": "posts outside what you post about"}
+    for brk in sorted(said, key=lambda x: -sum(1 for o in outliers if x in o["breaks"])):
+        hit = [o for o in outliers if brk in o["breaks"]]
+        lows = [o["times_usual"] for o in hit if o["times_usual"] is not None]
+        if len(stop) < 3 and len(hit) >= 2:
+            used = {x["example"] for x in stop}
+            stop.append({"line": said[brk], "why": f"{len(hit)} posts did" +
+                         (f", and they got {statistics.mean(lows):.1f}x your usual likes" if lows else ""),
+                         "example": next((o["caption"] for o in hit if o["caption"] not in used), hit[0]["caption"])})
     if cad["on_rhythm"] is not None and cad["on_rhythm"] < 0.8:
         stop.append({"line": "posting off your rhythm", "why": f"only {cad['on_rhythm']:.0%} of posts land on your days and times"})
     if vc.get("hashtags_per_caption", 0) > 4:

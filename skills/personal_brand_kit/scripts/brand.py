@@ -179,10 +179,13 @@ def deal(pillars, n):
 
 
 def pieces(research, brand):
-    """Per pillar: their labels, their questions and their words, taken from their own captions."""
+    """Per pillar: their labels, their questions and their words, taken from their own captions. A pillar the agent
+    renamed is matched to its measured pillar by the words they share."""
     out = {}
     for p in brand["pillars"]:
-        rp = next((x for x in research.get("pillars") or [] if x["name"] == p["name"]), {})
+        rs = research.get("pillars") or []
+        rp = next((x for x in rs if x["name"] == p["name"]), None) or max(
+            rs, key=lambda x: len(set(x.get("words", [])) & set(p.get("words", []))), default={})
         caps = list(dict.fromkeys((rp.get("examples") or []) + [rp.get("example") or p.get("example") or ""]))
         labels = [m.group(1) for c in caps for m in [re.match(r"^\s*([^:\n#]{2,28}):\s", c)] if m]
         questions = [m.group(0).strip() for c in caps for m in re.finditer(r"[^.!?\n]*\?", c)]

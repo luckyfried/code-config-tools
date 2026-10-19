@@ -68,7 +68,7 @@ export const ClipShot: React.FC<{beat: Beat}> = ({beat}) => {
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       {beat.clip ? <ClipLayer clip={beat.clip} /> : <StillToLife file={beat.photos?.[0] ?? ''} seed={beat.id} />}
-      {t.headline || t.kicker ? <Scrim side="bottom" strength={0.7} /> : null}
+      {t.headline || t.kicker ? <Scrim side="bottom" strength={0.9} /> : null}
       {chapter ? (
         <SafeBox name="chapter" justify="center" align="center">
           <div style={{fontFamily: `'${system.display.family}'`, fontWeight: system.display.weight, fontSize: system.scale.hero * 1.2, lineHeight: 0.85,
@@ -80,7 +80,7 @@ export const ClipShot: React.FC<{beat: Beat}> = ({beat}) => {
       {t.headline || t.kicker ? (
         <SafeBox name="clip" justify="end">
           {t.kicker ? <Kicker text={t.kicker} delay={6} /> : null}
-          {t.headline ? <Headline text={t.headline} max="h1" lines={2} delay={10} /> : null}
+          {t.headline ? <Headline text={t.headline} max="h1" lines={3} delay={10} /> : null}
           {t.line ? <Line text={t.line} delay={20} /> : null}
         </SafeBox>
       ) : null}

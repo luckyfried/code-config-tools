@@ -3,7 +3,6 @@
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/film.py render            # out/film.mp4 (1080x1920) + out/cards/01-palette.png .. 10-week.png (1080x1350)
-    python3 S/scripts/film.py render --only film|cards
     python3 S/scripts/film.py frames            # one frame per beat of out/film.mp4 into build/frames/NN-<beat>.png
                                                 # (and every shot of a many-shot beat into build/frames/NN-<beat>/)
     python3 S/scripts/film.py stills            # the stills route (no node): the same film.json as stills under motion
@@ -121,17 +120,13 @@ def cmd_render(a):
     if _env.tools().get("engine") != "remotion":
         return cmd_stills(a)
     Path("out").mkdir(exist_ok=True)
-    if a.only in (None, "cards"):
-        shutil.rmtree(CARDS, ignore_errors=True)
-        CARDS.mkdir(parents=True)
-        write_cards(board)
+    shutil.rmtree(CARDS, ignore_errors=True)
+    CARDS.mkdir(parents=True)
+    write_cards(board)
     props = props_for(board)
-    jobs = []
     silent = Path("build/film.silent.mp4").resolve()
-    if a.only in (None, "film"):
-        jobs.append({"type": "video", "composition": "Film", "props": props, "out": str(silent), "crf": 18, "preset": "medium"})
-    if a.only in (None, "cards"):
-        jobs += card_jobs(board, props)
+    jobs = [{"type": "video", "composition": "Film", "props": props, "out": str(silent), "crf": 18, "preset": "medium"}]
+    jobs += card_jobs(board, props)
     t0 = time.time()
     rep = render_jobs(jobs, "build/render-report.json")
     tl = timeline(board["beats"])
@@ -140,12 +135,12 @@ def cmd_render(a):
     _env.write_json("build/engine.json", {"engine": "remotion", "node": _env.tools().get("node"),
                                           "seconds": round(time.time() - t0, 1), "jobs": len(jobs)})
     music = False
-    if a.only in (None, "film") and silent.exists():
+    if silent.exists():
         Path("out").mkdir(exist_ok=True)
         music = mux(silent, Path("out/film.mp4"), secs)
     for f in rep.get("findings", []):
         print("finding:", f["text"][:400])
-    film = f"; film {secs:.1f} s{' with music' if music else ' (no music track)'} -> out/film.mp4" if a.only in (None, "film") else ""
+    film = f"; film {secs:.1f} s{' with music' if music else ' (no music track)'} -> out/film.mp4"
     print(f"rendered {len(jobs) - rep.get('failed', 0)} of {len(jobs)} jobs in {time.time() - t0:.1f} s{film}")
     return 1 if rep.get("failed") else 0
 
@@ -327,7 +322,6 @@ def cmd_stills(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["render", "frames", "stills"])
-    ap.add_argument("--only", choices=["film", "cards"])
     ap.add_argument("--film", default="out/film.mp4")
     ap.add_argument("--out", default="build/frames")
     a = ap.parse_args()

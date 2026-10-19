@@ -5,7 +5,10 @@ import {CH, CW, PlacedCard} from './GuideCard';
 import {Field, fitCard} from './Reveal';
 import type {Beat, GuideCardData} from '../types';
 
-/** A run of cards on one grid, swiped in one after another: the next card peeks from the right edge until its turn. */
+/**
+ * A run of cards on one grid, swiped in one after another: the next card peeks from the right edge until its turn,
+ * and its contents arrive as it lands, so every shot moves.
+ */
 export const Swipe: React.FC<{beat: Beat}> = ({beat}) => {
   const {system, board} = useSys();
   const s = useSafe();
@@ -33,7 +36,7 @@ export const Swipe: React.FC<{beat: Beat}> = ({beat}) => {
         if (x > s.W + 40 || x + w < -40) return null;
         const near = 1 - Math.min(1, Math.abs(i - pos));
         return (
-          <PlacedCard key={c.n} card={c} x={x} y={y} scale={k} delay={i === 0 ? 4 : shots[i][0]} settled={i !== 0}
+          <PlacedCard key={c.n} card={c} x={x} y={y} scale={k} delay={i === 0 ? 4 : shots[i][0] - 2}
             style={{opacity: 0.55 + 0.45 * near, transform: `scale(${k * (0.92 + 0.08 * near)})`, transformOrigin: '50% 50%',
               left: x - (CW - w) / 2, top: y - (CH - CH * k) / 2}} />
         );

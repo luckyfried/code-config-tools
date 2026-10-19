@@ -66,8 +66,8 @@ def found_rows(brand):
     voice = brand.get("voice") or {}
     L = [f"- Statement: {brand.get('statement')}",
          f"- Palette: {pal}.",
-         f"- Type: {ty.get('display')} for headlines, {ty.get('text')} for text. {ty.get('why') or ''}".rstrip(),
-         "- Compositions: " + ", ".join(f"{c['name']} {pct(c.get('share'))}" for c in brand.get("compositions") or []) + ".",
+         f"- Type: {ty.get('display')} for headlines, {ty.get('text')} for text" + (f": {ty['why']}." if ty.get('why') else "."),
+         "- Compositions: " + ", ".join(brand.get("compositions") or []) + ".",
          "- Pillars: " + ", ".join(f"{p['name']} {pct(p.get('share'))}" for p in brand.get("pillars") or []) + ".",
          f"- Cadence: {cad.get('per_week')} posts a week; best slots {slots} ({cad.get('timezone')}).",
          f"- Voice: {voice.get('case')}, about {voice.get('avg_words')} words a caption; "
