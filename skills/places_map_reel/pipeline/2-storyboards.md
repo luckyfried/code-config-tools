@@ -15,7 +15,7 @@ places are shown, on tone and on clip use:
 
 | board | how the places are shown | tone | still or clip first | generated clips |
 |---|---|---|---|---|
-| 1 the route | a map in their colors; the route draws itself leg by leg, a photo of theirs pinned at each arrival with the dates and the distance, then the whole map | documentary (near-black, mono labels) | still-first | an aerial opener over the first place, a flyover on the far leg |
+| 1 the route | a map in their colors; the route draws itself leg by leg, a photo of theirs pinned at each arrival with the dates, the distance and their own line about the place (a line that says "again" only on a return), the leg's places framed beside the photo and above the type, then the whole map | documentary (near-black, mono labels) | still-first | an aerial opener over the first place, a flyover on the far leg |
 | 2 passport | a passport page filling up: one inked stamp per place, built from that place's photos, then the full page | quiet editorial (paper, soft serif) | still-first | establishing shots of the far place and the busiest place |
 | 3 day to night | the year as one long day: dawn over the first place, night near the last, then the map with every place lit | kinetic type, bold fields | clip-first (their own reels play where they were shot) | a dawn opener |
 

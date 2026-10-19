@@ -76,7 +76,8 @@ export const MapJourney: React.FC<{beat: Beat}> = ({beat}) => {
   const card = d.card;
   const target = arrive && pins[arrive] ? project({cam: d.cam1, w: W, h: H}, pins[arrive].x, pins[arrive].y) : [W / 2, H / 2];
   const cardW = 430;
-  const cardLeft = target[0] < W / 2 ? W - s.right - cardW + 30 : s.left - 10;
+  const side: string = card?.side ?? (target[0] < W / 2 ? 'right' : 'left');
+  const cardLeft = side === 'right' ? W - s.right - cardW + 30 : s.left - 10;
   const cardTop = s.top + 20;
   const c = pop(landAt + 4);
   const tilt = (hash(beat.id) - 0.5) * 7;

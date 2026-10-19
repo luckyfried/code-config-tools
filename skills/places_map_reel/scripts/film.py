@@ -373,7 +373,8 @@ def cmd_stills(a):
                 ph = photo(card["photo"], 400, 400)
                 frame = Image.new("RGB", (430, 500), c["paper"])
                 frame.paste(ph, (15, 15))
-                im.paste(frame, (sa["left"] + 20, sa["top"] + 20))
+                x = W - sa["right"] - 430 + 30 if card.get("side") == "right" else sa["left"] - 10
+                im.paste(frame, (x, sa["top"] + 20))
             return text_block(shade(im), bt.get("text") or {}, sa)
         im = Image.new("RGB", (W, H), c["bg"])
         ph = list(bt.get("photos") or [])

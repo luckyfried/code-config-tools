@@ -48,6 +48,9 @@ LENGTH = (30, 60)
 MAX_LEG_BEATS = 16
 REEL = (1080, 1920)
 POSTER = (1080, 1350)
+CARD_W = 430      # MapJourney's photo card width in px; the card hangs from the top of the safe area on one side
+RETURN = re.compile(r"\b(again|back in|back to|returned|return)\b", re.I)
+TEXT_H = 330      # the kicker, a two-line headline and the line, stacked up from the bottom of the safe area
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF\u2B50\u2728\uFE0F\u200D]")
 STOP = {"and", "i", "the", "a", "an", "to", "of", "be", "will", "not", "in", "on", "at", "with", "for", "is", "it", "my",
         "but", "so", "just", "then", "that", "this", "all", "you", "we", "or", "by", "from", "like"}
@@ -128,6 +131,15 @@ def fit(points, w, h, pad=0.3, min_span=8.0):
     bw, bh = max(xs) - min(xs), max(ys) - min(ys)
     span = max(bw * (1 + 2 * pad), bh * (1 + 2 * pad) * w / h, min_span)
     return [round((max(xs) + min(xs)) / 2, 3), round((max(ys) + min(ys)) / 2, 3), round(span, 3)]
+
+
+def fit_box(points, w, h, box, pad=0.3, min_span=8.0):
+    """A camera for a w x h frame that holds every point inside box [x, y, bw, bh] (px) instead of the whole frame."""
+    bx, by, bw, bh = box
+    cx, cy, span = fit(points, bw, bh, pad, min_span * bw / w)
+    per = span / bw
+    span_full = per * w
+    return [round(cx - (bx + bw / 2 - w / 2) * per, 3), round(cy - (by + bh / 2 - h / 2) * per, 3), round(span_full, 3)]
 
 
 def arc(a, b, n=28, bend=0.16):
@@ -244,7 +256,7 @@ class Ctx:
             t = names.get(p["id"]) or {}
             if t.get("name"):
                 p["name"] = t["name"]
-            p["their_words"] = t.get("words") or p.get("words") or []
+            p["their_words"] = list(dict.fromkeys((t.get("words") or []) + (p.get("words") or [])))
         self.home = self.pl.get("home")
         self.far = set(self.pl.get("far") or [])
         self.km = int(self.pl.get("total_km") or 0)
@@ -284,13 +296,14 @@ class Ctx:
         c = (self.place_picks.get(pid) or {}).get("clips") or []
         return c[0] if c else None
 
-    def words(self, pid):
-        """Their own line about the place, for the screen: the first caption that names it, cleaned."""
-        for w in self.by[pid].get("their_words") or []:
-            s = short(w, 48)
-            if len(s) >= 6:
-                return self.say(s)
-        return None
+    def words(self, pid, again=None):
+        """Their own line about the place, for the screen: the first caption that names it, cleaned. A line that reads
+        as a return ("again", "back in") goes only on a return visit (again=True), any other line only on a first
+        visit (again=False); with again=None a first-visit line is preferred and any line will do."""
+        lines = [x for x in (short(w, 48) for w in self.by[pid].get("their_words") or []) if len(x) >= 6]
+        fit = [x for x in lines if bool(RETURN.search(x)) == bool(again)]
+        pick = fit or (lines if again is None else [])
+        return self.say(pick[0]) if pick else None
 
     def opener_photo(self):
         o = self.picks.get("opener") or []
@@ -402,6 +415,27 @@ class Ctx:
         at = {q["id"]: (q["x"], q["y"]) for q in self.map_data()["pins"]}
         pts = [at[i] for i in ids if i in at] or list(at.values())
         return fit(pts, w, h, pad, min_span)
+
+    def leg_box(self, side):
+        """Where a leg's places sit in the reel: beside the photo card (side is the card's side) and above the type."""
+        sa = design("safe-areas.json")["reel"]
+        W, H = REEL
+        top, bottom = sa["top"] + 30, H - sa["bottom"] - TEXT_H - 30
+        if side == "left":
+            x0, x1 = sa["left"] + CARD_W + 20, W - sa["right"]
+        else:
+            x0, x1 = sa["left"], W - sa["right"] - CARD_W + 10
+        return [x0, top, x1 - x0, bottom - top]
+
+    def leg_cam(self, ids, side, pad, min_span):
+        at = {q["id"]: (q["x"], q["y"]) for q in self.map_data()["pins"]}
+        pts = [at[i] for i in ids if i in at] or list(at.values())
+        return fit_box(pts, REEL[0], REEL[1], self.leg_box(side), pad, min_span)
+
+    def card_side(self, frm, to):
+        """The card hangs on the side away from the arrival, so the new pin and the route stay in view."""
+        at = {q["id"]: q["x"] for q in self.map_data()["pins"]}
+        return "left" if at.get(to, 0) >= at.get(frm, 0) else "right"
 
     def near_ids(self):
         return [p["id"] for p in self.places if p["id"] not in self.far] or [p["id"] for p in self.places]
@@ -521,7 +555,8 @@ def board_route(ctx):
     stops = ctx.pl.get("route_visits") or []
     W, H = REEL
     everyone = [p["id"] for p in ctx.places]
-    first_cam = ctx.cam([legs[0]["from"], legs[0]["to"]], W, H, 0.6, 13) if legs else ctx.cam(everyone, W, H)
+    first_cam = (ctx.leg_cam([legs[0]["from"], legs[0]["to"]], ctx.card_side(legs[0]["from"], legs[0]["to"]), 0.3, 13)
+                 if legs else ctx.cam(everyone, W, H))
     beats = [opener(ctx, ctx.say("where the year went"), ctx.count_line()),
              {"id": "overview", "kind": "MapJourney", "frames": sec(2.6), "transition": tr("iris", d), "photos": [],
               "text": {"kicker": ctx.say(f"{ctx.year}"), "headline": ctx.say(f"{ctx.n} places on one map")},
@@ -547,18 +582,24 @@ def board_route(ctx):
                           "photos": ctx.photos_of(to, 1), "text": {"kicker": ctx.say(f"{last['km']:,} km"), "headline": ctx.say(f"to {ctx.by[to]['name']}")},
                           "data": {"focus": [to]}})
         back = frm in ctx.far and to not in ctx.far
-        cam1 = ctx.cam(ctx.near_ids(), W, H, 0.3, 13) if back else ctx.cam([frm] + [legs[i]["to"] for i in g], W, H, 0.45 if far else 0.6, 13)
+        side = ctx.card_side(last["from"], to)
+        cam1 = (ctx.leg_cam(ctx.near_ids(), side, 0.12, 13) if back
+                else ctx.leg_cam([frm] + [legs[i]["to"] for i in g], side, 0.2 if far else 0.3, 13))
         ph = ctx.photos_of(to, 1, start=k)
         home = to == ctx.home
         again = k > 0
         lab = place_label(ctx, to, visit)
         kicker = ctx.say(("home, " if home else "again, " if again else "") + (lab["when"] or ""))
-        line = ctx.say(f"{'back home, ' if home else ''}{last['km']:,} km from {ctx.by[last['from']]['name']}")
+        km = ctx.say(f"{'back home, ' if home else ''}{last['km']:,} km from {ctx.by[last['from']]['name']}")
+        said = None if home else ctx.words(to, again)
+        if said:
+            kicker = ctx.say(f"{kicker} · {last['km']:,} km") if kicker else ctx.say(f"{last['km']:,} km")
+        line = said or km
         beats.append({"id": f"leg-{g[-1] + 1:02d}-{to}", "kind": "MapJourney", "frames": sec(2.9 if far else 2.3),
                       "transition": tr("fade", d), "photos": ph,
                       "text": {"kicker": kicker, "headline": ctx.name(to), "line": line},
                       "data": {"mode": "leg", "legs": g, "done": g[0], "cam0": cam0, "cam1": cam1, "arrive": to,
-                               "card": {"photo": ph[0] if ph else None, "again": again, **lab},
+                               "card": {"photo": ph[0] if ph else None, "again": again, "side": side, **lab},
                                "pinned": list(pinned), "focus": sorted({legs[i]["to"] for i in g})}})
         if ph and to not in {x["id"] for x in pinned}:
             pinned.append({"id": to, "photo": ph[0]})
