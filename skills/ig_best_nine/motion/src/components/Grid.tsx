@@ -76,7 +76,8 @@ const TileView: React.FC<{tile: Tile; slot: number; arrive: number; enter: numbe
   );
 };
 
-const Words: React.FC<{text: BeatText; name: string; delay?: number; numeral?: string}> = ({text, name, delay = 0, numeral}) => {
+/** kickerDelay: when the kicker wipes in; a negative value shows it already in place (it carries over from the shot before). */
+const Words: React.FC<{text: BeatText; name: string; delay?: number; numeral?: string; kickerDelay?: number}> = ({text, name, delay = 0, numeral, kickerDelay}) => {
   const {system, format} = useSys();
   const s = useSafe();
   const {tween} = useMotion();
@@ -101,7 +102,7 @@ const Words: React.FC<{text: BeatText; name: string; delay?: number; numeral?: s
           {numeral}
         </div>
       ) : null}
-      {text.kicker ? <Kicker text={text.kicker} delay={delay} /> : null}
+      {text.kicker ? <Kicker text={text.kicker} delay={kickerDelay ?? delay} /> : null}
       {text.headline && !numeral ? <Headline text={text.headline} max="h2" lines={2} delay={delay + 4} /> : null}
       {text.line && !numeral ? <Line text={text.line} delay={delay + 12} size={format === 'story' ? system.scale.body : system.scale.label} /> : null}
     </SafeBox>
@@ -138,13 +139,13 @@ const Fly: React.FC<{beat: Beat}> = ({beat}) => {
       {landing !== null ? (
         <Sequence key={landing} from={spans[9 - landing][0]} durationInFrames={spans[9 - landing][1]} layout="none">
           <SubShot frames={spans[9 - landing][1]}>
-            <Words text={{kicker: beat.text?.kicker}} name={`no-${landing}`} numeral={String(landing)} />
+            <Words text={{kicker: beat.text?.kicker}} name={`no-${landing}`} numeral={String(landing)} kickerDelay={landing === 9 ? 0 : -20} />
           </SubShot>
         </Sequence>
       ) : (
         <Sequence from={hold} durationInFrames={spans[9][1]} layout="none">
           <SubShot frames={spans[9][1]}>
-            <Words text={beat.text ?? {}} name="hold" delay={2} />
+            <Words text={beat.text ?? {}} name="hold" delay={2} kickerDelay={-20} />
           </SubShot>
         </Sequence>
       )}
