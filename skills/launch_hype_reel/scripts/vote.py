@@ -22,12 +22,12 @@ import _env  # noqa: E402
 
 CRITERIA = {
     "professional": "it looks like a professional motion designer made it",
-    "them": "it is unmistakably them (their photos carry it, their colors, their voice)",
+    "them": "it is unmistakably them and unmistakably the product (their voice and hook, the product's own assets, the two palettes meeting)",
     "pacing": "the pacing holds attention to the end",
     "type": "type is a system, not a default",
     "transitions": "every transition is intentional",
     "music": "the music and the cuts agree",
-    "ending": "the ending makes them want to post it",
+    "ending": "the reveal lands and the date sticks",
 }
 PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "person": "the person (from taste.md)"}
 CUT_PANEL = {"motion_designer": "the motion designer", "person": "the person (from taste.md)"}

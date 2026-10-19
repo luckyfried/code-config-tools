@@ -1,33 +1,32 @@
 #!/usr/bin/env python3
 """Movement 1: the counting behind the taste profile. Reads build/library.json; writes build/research.json,
-a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
+a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the six headings the agent
 turns into build/taste.md).
 
 USAGE (from the workspace root):
     python3 S/scripts/research.py
 
-It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's palette), then reads:
-  palette   the year's colors versus the colors of what they like and save (from the liked media when the
-            library has it, else from the color words in the names and captions of the accounts they like,
-            save and follow)
+It runs stats.py, picks.py and palette.py first (counts and response, the product's assets and the photos, the two
+palettes), then reads:
+  response  which posts drew the most comments and saves, how many times their usual response each drew, and what
+            those posts share that the rest do not (hook style, subject, place, kind, whether they name the product)
+  hooks     the openers of those posts ranked by response, and the hook styles (question, confession, list,
+            statement) ranked by the mean response of the top posts in each; the best hook leads the hype cut
+  launch    the product, the date as they wrote it and as a day (the days to go), the assets (their own folder, a
+            link, or only their posts), and the posts already about it
+  palette   their colors against the product's and where the two meet (palette.py), and the colors of what they like
   captions  length, case, emoji, punctuation, hashtags, how they open and close, sample lines
   likes     the like-graph: who gets their likes, how concentrated, the themes those accounts share
   cadence   posts per month and weekday, streaks and gaps
   reels     how long their reels run and how fast they cut (ffmpeg scene changes)
   people    who they talk to most; places from captions, albums and check-ins
-  moments   the busiest and quietest month, the top post, the post that changed their numbers, the trip, the eras
-  nine      why each of the nine worked: how many times their usual likes it got, its subject (from the caption,
-            the places and the themes), its two strongest colors by name, what its caption says; and what the nine
-            share that the rest of the year does not
-  rhythm    the wall's rhythm: each tile's brightness and color in its slot, how many of the twelve neighbor pairs
-            contrast, and the arrangement that alternates best with their number one kept top left (taste.json
-            "wall.order" takes it when it reads clearly better than rank order, else rank order)
-taste.json also carries the type direction, pacing, register, texture, the wall order and the grade inputs; the
-agent edits it freely before storyboards are drafted.
+taste.json also carries the type direction, pacing, register, texture and the grade inputs, and the launch as given;
+the agent edits it freely before storyboards are drafted, and the person's own words about the product or their
+audience replace anything inferred here.
 """
 import collections
+import colorsys
 import datetime as dt
-import itertools
 import re
 import statistics
 import subprocess
@@ -222,10 +221,10 @@ def moments(posts, stats, place_by_month):
         out.append({"kind": "busiest month", "month": b.get("name"), "posts": b.get("posts"), "total": b.get("total")})
     if q:
         out.append({"kind": "quietest month", "month": q.get("name"), "posts": q.get("posts")})
-    tops = stats.get("top_nine") or []
+    tops = stats.get("top") or []
     if tops:
         t = tops[0]
-        out.append({"kind": "top post", "date": t.get("date"), "likes": t.get("likes"), "caption": t.get("caption")})
+        out.append({"kind": "the post that drew the most", "date": t.get("date"), "response": t.get("response"), "caption": t.get("caption")})
     liked = [p for p in posts if p.get("likes") is not None]
     jump = None
     for i in range(6, len(liked)):
@@ -261,94 +260,74 @@ def color_name(rgb):
     return SPOKEN.get(w, w)
 
 
-def nine_read(stats, picks):
-    """Why each of the nine worked, from their own numbers, the photo and the caption."""
-    usual = stats.get("median_likes") or 0
-    info = {n["rank"]: n for n in picks.get("nine", [])}
+def hooks_read(stats):
+    """The posts that drew the most response, each with its hook, its style and why it drew."""
+    usual = stats.get("median_response") or 0
     out = []
-    for t in stats.get("top_nine", []):
-        n = info.get(t["rank"], {})
+    for t in stats.get("top", []):
         cap = re.sub(r"#\w+", "", t.get("caption") or "").strip()
         toks = set(tokens(cap))
         subject = [th for th, ws in THEMES.items() if toks & set(ws)]
         place = next((pl for pl in PLACES if re.search(rf"\b{re.escape(pl)}\b", cap.lower()) and pl != "home"), None)
-        colors = []
-        for c in sorted(n.get("colors", []), key=lambda c: -c["share"]):
-            nm = color_name(c["rgb"])
-            if nm not in colors:
-                colors.append(nm)
-        times = round(t["likes"] / usual, 1) if usual and t.get("likes") is not None else None
-        why = []
+        times = round(t["response"] / usual, 1) if usual else None
+        why = [f"{t['style']} hook"]
         if times:
-            why.append(f"{times}x your usual likes")
+            why.append(f"{times}x your usual response")
+        if t.get("mentions_product"):
+            why.append("names the product")
         if t.get("kind") == "reel":
             why.append("a reel")
         if subject or place:
             why.append(" and ".join(([place] if place else []) + subject[:2]))
-        if colors:
-            why.append(" and ".join(colors[:2]))
-        out.append({"rank": t["rank"], "kind": t["kind"], "date": t["date"], "month": t["month"], "likes": t.get("likes"),
-                    "comments": t.get("comments"), "times_usual": times, "subject": subject, "place": place,
-                    "colors": colors[:3], "bright": n.get("bright"), "caption": cap, "why": "; ".join(why)})
+        out.append({"rank": t["rank"], "kind": t["kind"], "date": t["date"], "response": t["response"], "likes": t.get("likes"),
+                    "comments": t.get("comments"), "saves": t.get("saves"), "hook": t["hook"], "style": t["style"],
+                    "times_usual": times, "subject": subject, "place": place, "mentions_product": t.get("mentions_product"),
+                    "caption": cap, "why": "; ".join(why)})
     return out
 
 
-def shared(nine, posts):
-    """What the nine have in common, set against the rest of the year's posts."""
-    rest = [p for p in posts if (p.get("caption") or "") not in {x["caption"] for x in nine}]
+def response_shared(top, rows, stats):
+    """What the posts that drew the most share, set against the rest of the window's posts."""
+    caps = {x["caption"] for x in top}
+    rest = [p for p in rows if re.sub(r"#\w+", "", p.get("caption") or "").strip() not in caps]
     lines = []
+    for h in stats.get("hook_styles") or []:
+        lines.append(f"{h['style']} hooks: {h['in_top']} of the top {len(top)}, mean response {h['mean_response']} "
+                     f"(across all {h['posts']} posts in that style, {h['mean_response_all']})")
     for th in THEMES:
-        a = sum(1 for x in nine if th in x["subject"])
+        a = sum(1 for x in top if th in x["subject"])
         b = sum(1 for p in rest if set(tokens(p.get("caption"))) & set(THEMES[th]))
-        if a >= 3 and a / max(1, len(nine)) > 1.3 * b / max(1, len(rest)):
-            lines.append(f"{th}: {a} of the nine, {round(100 * b / max(1, len(rest)))}% of the rest")
-    cols = collections.Counter(c for x in nine for c in x["colors"][:2])
-    if cols:
-        lines.append("colors of the nine: " + ", ".join(f"{c} ({n})" for c, n in cols.most_common(4)))
-    reels = sum(1 for x in nine if x["kind"] == "reel")
+        if a >= 3 and a / max(1, len(top)) > 1.3 * b / max(1, len(rest)):
+            lines.append(f"{th}: {a} of the top {len(top)}, {round(100 * b / max(1, len(rest)))}% of the rest")
+    named = sum(1 for x in top if x.get("mentions_product"))
+    if named:
+        lines.append(f"{named} of the top {len(top)} already name the product")
+    reels = sum(1 for x in top if x["kind"] == "reel")
     if reels:
-        lines.append(f"{reels} of the nine are reels")
-    months = sorted({x["month"] for x in nine})
-    lines.append(f"the nine come from {len(months)} months: " + ", ".join(MONTHS[m - 1] for m in months))
+        lines.append(f"{reels} of the top {len(top)} are reels")
+    liked = sorted((p for p in rows if p.get("likes") is not None), key=lambda p: -p["likes"])
+    if liked and top:
+        first = re.sub(r"#\w+", "", liked[0].get("caption") or "").strip()
+        at = next((x["rank"] for x in top if x["caption"] == first), None)
+        lines.append(f"their most-liked post ({liked[0]['likes']} likes) is " +
+                     (f"number {at} by response" if at else "outside the top by response") + ": likes and response differ")
     return lines
 
 
-PAIRS = [(a, a + 1) for a in range(9) if a % 3 < 2] + [(a, a + 3) for a in range(6)]
+def is_cool(hex_):
+    """A saturated blue or teal: a color the product owns that a 'cold blue' avoid rule would grade away."""
+    r, g, b = (int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    h, l, sat = colorsys.rgb_to_hls(r, g, b)
+    return 0.45 <= h <= 0.72 and sat >= 0.3 and 0.08 <= l <= 0.85
 
 
-def wall_score(order, tone):
-    """How much neighbors differ: brightness steps and color steps across the twelve neighbor pairs."""
-    return sum(abs(tone[order[a]][0] - tone[order[b]][0]) + 0.004 * tone_dist(tone[order[a]][1], tone[order[b]][1]) for a, b in PAIRS)
-
-
-def tone_dist(x, y):
-    return sum((p - q) ** 2 for p, q in zip(x, y)) ** 0.5
-
-
-def rhythm(picks):
-    """The wall's rhythm in rank order and the arrangement (number one kept top left) whose neighbors differ most."""
-    nine = sorted(picks.get("nine", []), key=lambda n: n["rank"])
-    if len(nine) != 9:
-        return {"order": [n["rank"] for n in nine], "why": "fewer than nine tiles; rank order"}
-    tone = {n["rank"]: (n["bright"], (n.get("colors") or [{"rgb": [128, 128, 128]}])[0]["rgb"]) for n in nine}
-    ranks = [n["rank"] for n in nine]
-    base = wall_score(ranks, tone)
-    best = max(([ranks[0], *rest] for rest in itertools.permutations(ranks[1:])), key=lambda o: wall_score(o, tone))
-    top = wall_score(best, tone)
-    med = sorted(t[0] for t in tone.values())[4]
-    def pattern(order):
-        return ["".join("L" if tone[order[r * 3 + c]][0] >= med else "d" for c in range(3)) for r in range(3)]
-    def contrasting(order):
-        return sum(1 for a, b in PAIRS if abs(tone[order[a]][0] - tone[order[b]][0]) >= 0.06)
-    take = top >= base * 1.15
-    return {"rank_order": ranks, "rank_pattern": pattern(ranks), "rank_contrasting_pairs": contrasting(ranks),
-            "suggested": best, "suggested_pattern": pattern(best), "suggested_contrasting_pairs": contrasting(best),
-            "gain": round(top / base, 2) if base else None,
-            "order": best if take else ranks,
-            "why": (f"in rank order the neighbors are close in light and color; this arrangement, with number one kept top left, "
-                    f"sets lighter beside darker and one color beside another so each tile stands apart ({top / base:.2f}x the difference "
-                    f"between neighbors)") if take else
-                   f"rank order already sets each tile apart from its neighbors, so the wall keeps it"}
+def launch_read(lib, stats, pal):
+    la = lib.get("launch") or {}
+    return {"product": la.get("product"), "date": la.get("date"), "date_text": la.get("date_text"),
+            "date_label": la.get("date_label"), "days_to_go": la.get("days_to_go"), "assets_kind": la.get("assets_kind"),
+            "assets": la.get("assets"), "stills": len(la.get("stills") or []), "footage": len(la.get("footage") or []),
+            "posts_about_it": [{"date": p["date"], "response": p["response"], "caption": p["caption"]} for p in stats.get("product_posts") or []],
+            "palette": pal.get("product") or [], "meet": pal.get("meet") or []}
 
 
 def type_direction(themes, register, pacing):
@@ -393,19 +372,23 @@ def main():
     pacing = reel_pacing(lib["reels"])
     places, place_by_month = places_in(posts + lib["reels"], lib.get("facebook", []))
     mom, eras = moments(posts, stats, place_by_month)
-    picks = _env.read_json("build/picks.json") or {}
-    nine = nine_read(stats, picks)
-    nine_shared = shared(nine, posts + lib["reels"])
-    wall = rhythm(picks)
+    hooks = hooks_read(stats)
+    hooks_shared = response_shared(hooks, posts + lib["reels"], stats)
+    launch = launch_read(lib, stats, pal)
+    product_palette = [{"hex": c["hex"], "name": c.get("name"), "share": c.get("share"), "photo": c.get("photo")}
+                       for c in (pal.get("product") or [])]
     td = type_direction(own_themes + liked_themes, caps, pacing)
     year_palette = [{"hex": s["hex"], "name": s.get("name"), "share": s.get("share"), "photo": s.get("photo")}
                     for s in (pal.get("year") or [])]
+    cool_product = any(is_cool(c["hex"]) for c in product_palette)
     film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
     warm_light = (own_themes.get("light", 0) + liked_themes.get("light", 0)) >= 4
     research = {
         "handle": lib["handle"], "year": lib["year"], "source": lib["source"], "doors": lib.get("doors", {}),
         "counts": stats.get("counts"),
-        "palette": {"year": year_palette, "likes": likes_palette, "likes_from": likes_palette_from, "roles": pal.get("roles")},
+        "palette": {"year": year_palette, "product": product_palette, "meet": pal.get("meet") or [], "likes": likes_palette,
+                    "likes_from": likes_palette_from, "roles": pal.get("roles")},
+        "launch": launch,
         "captions": caps,
         "likes": {"accounts": len(like_accounts), "top": [{"account": a, "likes": n} for a, n in like_accounts.most_common(10)],
                   "top10_share": round(top10 / max(1, sum(like_accounts.values())), 2),
@@ -417,8 +400,9 @@ def main():
         "people": stats.get("people", [])[:8],
         "places": [{"place": p, "posts": n} for p, n in places.most_common(8)],
         "moments": mom, "eras": eras,
-        "nine": nine, "nine_shared": nine_shared, "tenth": stats.get("tenth"), "median_likes": stats.get("median_likes"),
-        "ranked_by": stats.get("top_ranked_by"), "rhythm": wall,
+        "hooks": hooks, "response_shared": hooks_shared, "hook_styles": stats.get("hook_styles"),
+        "median_response": stats.get("median_response"), "median_likes": stats.get("median_likes"),
+        "ranked_by": stats.get("ranked_by"),
         "type": td,
     }
     _env.write_json("build/research.json", research)
@@ -426,8 +410,13 @@ def main():
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "year": lib["year"],
-        "palette": {"year": year_palette, "likes": likes_palette,
-                    "direction": "toward their likes" if likes_palette else "their year"},
+        "palette": {"year": year_palette, "product": product_palette, "meet": pal.get("meet") or [], "likes": likes_palette,
+                    "direction": "where the product's colors meet theirs" if product_palette else "their year"},
+        "launch": {k: launch[k] for k in ("product", "date", "date_text", "date_label", "days_to_go", "assets_kind")},
+        "said": {"product": None, "audience": None},
+        "hooks": [{"rank": x["rank"], "hook": x["hook"], "style": x["style"], "response": x["response"]} for x in hooks],
+        "best_hook": ({"hook": hooks[0]["hook"], "style": hooks[0]["style"], "response": hooks[0]["response"]} if hooks else None),
+        "hook_styles": [h["style"] for h in stats.get("hook_styles") or []],
         "type": td,
         "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
                    "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
@@ -439,24 +428,21 @@ def main():
         "people": [p["account"] for p in stats.get("people", [])[:5]],
         "places": [p for p, _ in places.most_common(5) if p != "home"],
         "moments": mom,
-        "nine": [{"rank": x["rank"], "why": x["why"]} for x in nine],
-        "wall": {"order": wall["order"], "why": wall["why"]},
         "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
-        "avoid": ["cold blue grading", "neon", "stock-photo gloss"] if film else ["muddy grading"],
+        "avoid": ([] if cool_product else ["cold blue grading"]) + ["neon", "stock-photo gloss"] if film else ["muddy grading"],
     }
     if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
         _env.write_json("build/taste.json", taste)
     lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
+             "The agent writes build/taste.md from this: one page, six paragraphs that start with the six headings below.", "",
              "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
              f"- places: {', '.join(f'{p} ({n})' for p, n in places.most_common(6))}",
              f"- eras: {'; '.join(e['place'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') for e in eras)}",
              f"- moments: {'; '.join(m['kind'] + ': ' + ', '.join(str(v) for k, v in m.items() if k != 'kind') for m in mom)}",
-             "- the nine (rank, kind, likes, why it worked; caption):"]
-    lines += [f"  {x['rank']}. {x['kind']} {x['date']}, {x['likes']} likes, {x['comments']} comments: {x['why']}; \"{x['caption']}\"" for x in nine]
-    lines += [f"- what the nine share: {'; '.join(nine_shared)}",
-             f"- the tenth: {(stats.get('tenth') or {}).get('likes')} likes, {(stats.get('tenth') or {}).get('gap')} below the ninth; ranked by {stats.get('top_ranked_by')}",
-             f"- the wall: rank order {wall.get('rank_pattern')}, suggested {wall.get('suggested_pattern')} (L light, d dark); {wall['why']}",
+             f"- the posts that drew the most response (ranked by {stats.get('ranked_by')}; their usual is {stats.get('median_response')}):"]
+    lines += [f"  {x['rank']}. {x['kind']} {x['date']}, response {x['response']} ({x['comments']} comments, {x['saves']} saves, "
+              f"{x['likes']} likes): {x['why']}; hook \"{x['hook']}\"" for x in hooks]
+    lines += [f"- what they share: {'; '.join(hooks_shared)}",
              "", "## you like",
              f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
              f"- most liked: {', '.join(a for a, _ in like_accounts.most_common(6))}",
@@ -472,6 +458,15 @@ def main():
              f"- opens with: {', '.join(caps.get('opens_with', []))}; closes with: {', '.join(caps.get('closes_with', []))}",
              f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
              f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
+             "", "## the launch",
+             f"- {launch['product']}, {launch['date_label'] or launch['date_text'] or 'no date given'}"
+             + (f" ({launch['days_to_go']} days to go)" if launch.get("days_to_go") is not None else ""),
+             f"- assets: {launch['assets_kind']} ({launch['stills']} stills, {launch['footage']} clips) {launch.get('assets') or ''}",
+             f"- product palette: {', '.join((c.get('name') or '') + ' ' + c['hex'] for c in product_palette) or 'none'}",
+             f"- where it meets theirs: {'; '.join(m['product_name'] + ' / ' + m['theirs_name'] + ' (' + m['reads'] + ')' for m in launch['meet'])}",
+             f"- posts already about it: {'; '.join(str(p['response']) + ' ' + p['caption'][:70] for p in launch['posts_about_it']) or 'none'}",
+             f"- best hook: \"{hooks[0]['hook']}\" ({hooks[0]['style']}, response {hooks[0]['response']})" if hooks else "- no hooks: no captions",
+             "- what they said about the product and their audience (their words win; put them in taste.json \"said\"):",
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
     Path("build/taste.draft.md").write_text("\n".join(lines))
     print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
@@ -479,9 +474,10 @@ def main():
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
     print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; type lead {td['lead']}")
     print(f"moments: {[m['kind'] for m in mom]}; eras: {len(eras)}")
-    for x in nine:
-        print(f"  {x['rank']}. {x['kind']:<5} {x['likes']} likes: {x['why']}")
-    print(f"wall: order {wall['order']} ({wall['why']})")
+    print(f"launch: {launch['product']} on {launch['date_label'] or launch['date_text']}, assets {launch['assets_kind']} "
+          f"({launch['stills']} stills, {launch['footage']} clips)")
+    for x in hooks:
+        print(f"  {x['rank']}. {x['style']:<10} {x['response']:>4}: {x['hook']}")
     print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
     return 0
 

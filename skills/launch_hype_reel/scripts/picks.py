@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the nine and the photos around them. Writes build/photo_index.json,
-build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: prepare the product's assets, the posts that drew the most response, and the photos around
+them. Writes build/photo_index.json, build/picks.json and build/photos/*.jpg.
 
 USAGE (from the workspace root):
     python3 S/scripts/picks.py
 
-Scores every photo of the year (color, contrast, exposure), finds each one's focal point (where the detail is,
-so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in build/photos/.
-A reel among the nine gets a poster frame (ffmpeg, 40% of the way in) that stands for it on the wall; the reel
-itself stays available as footage. picks.json carries the nine in rank order (each with its photo, its library
-source, its reel when it is one, its score, brightness, focal point and colors) and two chapters around them:
-"opener", the year's most striking photo outside the nine (the wall's world), and "nine", the nine stills.
-To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json.
+Scores every photo of the person's window (color, contrast, exposure), finds each one's focal point (where the
+detail is, so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in
+build/photos/. picks.json carries:
+  product   the product's own stills (build/library/product/stills, from the asset folder or link), each prepared
+            and scored, best first; when there are none, the person's posts that mention the product stand in
+  footage   the product's own clips, each with a poster frame (40% of the way in)
+  top       the nine posts that drew the most comments and saves, in rank order, each with its photo (a reel's poster frame)
+  chapters  "product" (the stills, best first), "top" (those posts' photos), "feed" (the person's most striking
+            photos outside both, for teases and the world around the product)
+source_of maps every prepared photo back to its library file, which qa.py gate reads to prove a product beat uses
+the product's own asset. To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's
+"photos" in build/storyboards/N/storyboard.json.
 """
 import datetime as dt
 import hashlib
@@ -110,6 +114,10 @@ def analyse(path):
             "focal": [round(min(0.8, max(0.2, fx)), 2), round(min(0.8, max(0.2, fy)), 2)], "colors": dom}
 
 
+def still_of(path):
+    return poster(path) if Path(path).suffix.lower() in VIDEO else prepare(path)
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -118,6 +126,7 @@ def main():
     s = _env.read_json("build/stats.json")
     if not d or not s:
         sys.exit("run gather.py and stats.py first")
+    launch = d.get("launch") or {}
     index, skipped = [], 0
     for kind, rows in (("post", d["posts"]), ("story", d["stories"])):
         for r in rows:
@@ -131,35 +140,62 @@ def main():
                     continue
                 month = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month
                 index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"), **a})
-    if not index:
-        sys.exit("no photos could be opened; the video needs at least one photo")
-    _env.write_json("build/photo_index.json", index)
-    nine, chosen = [], set()
-    for t in s["top_nine"]:
-        still = poster(t["media"]) if t.get("video") else prepare(t["media"])
-        if not still:
+    out = {"product": [], "footage": [], "top": [], "chapters": {}, "focal": {}, "source_of": {}}
+
+    def keep(photo, src, a):
+        out["focal"][photo] = f"{a['focal'][0] * 100:.0f}% {a['focal'][1] * 100:.0f}%"
+        out["source_of"][photo] = src
+
+    for src in launch.get("stills") or []:
+        ph = prepare(src)
+        if ph:
+            a = analyse(ph)
+            out["product"].append({"photo": ph, "src": src, "own": True, **a})
+            keep(ph, src, a)
+    for src in launch.get("footage") or []:
+        ph = poster(src)
+        if ph:
+            a = analyse(ph)
+            out["footage"].append({"file": src, "poster": ph, **a})
+            keep(ph, src, a)
+    if not out["product"]:
+        for p in s.get("product_posts") or []:
+            ph = still_of(p["media"])
+            if ph:
+                a = analyse(ph)
+                out["product"].append({"photo": ph, "src": p["media"], "own": False, **a})
+                keep(ph, p["media"], a)
+    out["product"].sort(key=lambda e: -e["score"])
+    for t in s.get("top") or []:
+        ph = still_of(t["media"])
+        if not ph:
             print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
             continue
-        a = analyse(still)
-        chosen.add(t["media"])
-        nine.append({"rank": t["rank"], "kind": t["kind"], "photo": still, "src": t["media"], "video": t.get("video"), **a})
-    feed = [e for e in index if e["kind"] == "post" and e["src"] not in chosen] or [e for e in index if e["src"] not in chosen] or index
-    opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
-    out = {"nine": nine, "chapters": {"nine": [n["photo"] for n in nine]}, "focal": {}, "source_of": {}}
-    op = prepare(opener["src"])
-    out["chapters"]["opener"] = [op] if op else []
-    if op:
-        out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
-        out["source_of"][op] = opener["src"]
-    for n in nine:
-        out["focal"][n["photo"]] = f"{n['focal'][0] * 100:.0f}% {n['focal'][1] * 100:.0f}%"
-        out["source_of"][n["photo"]] = n["src"]
+        a = analyse(ph)
+        out["top"].append({"rank": t["rank"], "kind": t["kind"], "photo": ph, "src": t["media"], "video": t.get("video"), **a})
+        keep(ph, t["media"], a)
+    if not index and not out["product"]:
+        sys.exit("no photos could be opened; the film needs at least one photo of theirs or of the product")
+    _env.write_json("build/photo_index.json", index)
+    taken = {e["src"] for e in out["top"]} | {e["src"] for e in out["product"]}
+    feed = sorted((e for e in index if e["kind"] == "post" and e["src"] not in taken and e["bright"] > 0.22), key=lambda e: -e["score"])
+    chosen = []
+    for e in feed[:12]:
+        ph = prepare(e["src"])
+        if ph:
+            chosen.append(ph)
+            keep(ph, e["src"], e)
+    out["chapters"] = {"product": [e["photo"] for e in out["product"]], "top": [e["photo"] for e in out["top"]], "feed": chosen}
     _env.write_json("build/picks.json", out)
     print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
-    for n in nine:
-        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}  bright {n['bright']}")
+    print(f"product: {len(out['product'])} stills ({'their own asset folder' if any(e['own'] for e in out['product']) else 'posts that mention it'}), "
+          f"{len(out['footage'])} clips")
+    for e in out["product"]:
+        print(f"  {Path(e['src']).name}  score {e['score']}  bright {e['bright']}")
+    for n in out["top"]:
+        print(f"  top {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}")
     print("wrote build/picks.json and build/photo_index.json")
-    return 0 if len(nine) == 9 else 1
+    return 0 if out["product"] or out["top"] else 1
 
 
 if __name__ == "__main__":

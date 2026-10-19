@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Movement 4: the film, the best-nine image and the story card, rendered from build/film.json.
+"""Movement 4: the reveal film and the four still formats, rendered from build/film.json.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/film.py render            # out/film.mp4 + out/best-nine.png (1080x1080) + out/story.png (1080x1920)
+    python3 S/scripts/film.py render            # out/film.mp4 (1080x1920) + out/story-1.png, story-2.png, story-3.png
+                                                # and out/countdown.png (1080x1920) + out/feed.png (1080x1350)
     python3 S/scripts/film.py render --only film|cards
     python3 S/scripts/film.py frames            # one frame per beat of out/film.mp4 into build/frames/NN-<beat>.png
                                                 # (and every shot of a many-shot beat into build/frames/NN-<beat>/)
@@ -13,7 +14,7 @@ build/film.silent.mp4 (1080x1920, 30 fps, H.264 high, CRF 18), then lays the mas
 (build/music/master.wav from music.py, AAC 192 kbps) into out/film.mp4. Every SAFE_BREACH (text that left its
 safe box), FONT_ERROR and render error lands in build/render-report.json, which qa.py gate reads.
 build/timeline.json carries each beat's start and length for qa.py and the frame extraction.
-build/wall.json names the nine photos the best-nine image is made of, slot by slot, for qa.py.
+build/cards.json names each still file, its format, size and the beat it was rendered from, for qa.py.
 When setup.py reports engine "stills", render runs the stills route instead and build/engine.json says so.
 """
 import argparse
@@ -45,22 +46,16 @@ def clip_for(beat, clips):
 
 
 def props_for(board):
-    """The composition props: the board with every clip reference, a beat's or a tile's, resolved to a file or its substitute."""
+    """The composition props: the board with every beat's clip reference resolved to a file or its substitute."""
     b = copy.deepcopy(board)
     clips = (_env.read_json("build/clips.json") or {}).get("clips", {})
     for bt in b["beats"]:
         bt["clip"] = clip_for(bt, clips)
         if bt["clip"] and bt["clip"].get("image") is None and bt.get("photos"):
             bt["clip"]["image"] = bt["photos"][0]
-        for tl in (bt.get("data") or {}).get("tiles") or []:
-            tl["clip"] = clip_for(tl, clips) if tl.get("clip") else None
-            if tl["clip"] and tl["clip"].get("image") is None:
-                tl["clip"]["image"] = tl.get("photo")
-    for k in ("wall", "story"):
-        if b.get(k):
-            b[k]["clip"] = None
-            for tl in (b[k].get("data") or {}).get("tiles") or []:
-                tl["clip"] = None
+    for c in [*(b.get("stories") or []), b.get("countdown"), b.get("feed")]:
+        if c:
+            c["clip"] = None
     for k in ("timeline", "clips", "idea", "music", "structure", "tone", "clip_use", "direction", "seconds"):
         b.pop(k, None)
     return {"board": b}
@@ -71,14 +66,14 @@ def render_jobs(jobs, report, concurrency=None):
     if t.get("engine") != "remotion":
         sys.exit("the motion engine is not installed (setup.py reports engine 'stills'); run film.py stills")
     spec = {"publicDir": str(PUBLIC.resolve()), "report": str(Path(report).resolve()), "jobs": jobs,
-            "bundleDir": str(Path(os.environ.get("TMPDIR") or Path("build/.bundle").resolve()) / "bn-bundle")}
+            "bundleDir": str(Path(os.environ.get("TMPDIR") or Path("build/.bundle").resolve()) / "lh-bundle")}
     if concurrency:
         spec["concurrency"] = concurrency
     jf = Path("build/render") / f"{Path(report).stem}.jobs.json"
     _env.write_json(jf, spec)
     node = t["node"]
     env = dict(os.environ, PATH=f"{Path(node).parent}{os.pathsep}{os.environ.get('PATH', '')}")
-    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env)
+    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env, cwd=t["motion"])
     rep = _env.read_json(report) or {"failed": len(jobs), "findings": [{"text": f"render.mjs exited {r.returncode}"}]}
     return rep
 
@@ -95,27 +90,28 @@ def timeline(beats):
     return out
 
 
-CARDS = (("wall", "square", "out/best-nine.png"), ("story", "story", "out/story.png"))
+SIZES = {"story": (1080, 1920), "feed": (1080, 1350)}
 
 
-def card_jobs(board, props):
-    jobs = []
-    for key, fmt, out in CARDS:
-        c = props["board"].get(key)
-        if c:
-            jobs.append({"type": "still", "composition": "Card", "frame": 0, "scale": 1,
-                         "props": {"board": props["board"], "beat": c, "format": fmt},
-                         "out": str(Path(out).resolve())})
-    return jobs
+def cards_of(board):
+    """Each still the person gets: (beat, format, file)."""
+    out = [(c, "story", f"out/story-{i}.png") for i, c in enumerate(board.get("stories") or [], 1)]
+    if board.get("countdown"):
+        out.append((board["countdown"], "story", "out/countdown.png"))
+    if board.get("feed"):
+        out.append((board["feed"], "feed", "out/feed.png"))
+    return out
 
 
-def write_wall(board):
-    """The nine sources of the best-nine image, slot by slot (top left to bottom right)."""
-    w = board.get("wall") or {}
-    data = w.get("data") or {}
-    by = {t["rank"]: t for t in data.get("tiles", [])}
-    slots = [{"slot": i, "rank": r, "photo": (by.get(r) or {}).get("photo")} for i, r in enumerate(data.get("order") or [])]
-    _env.write_json("build/wall.json", {"image": "out/best-nine.png", "size": [1080, 1080], "slots": slots})
+def card_jobs(props):
+    return [{"type": "still", "composition": "Card", "frame": 0, "scale": 1,
+             "props": {"board": props["board"], "beat": c, "format": fmt}, "out": str(Path(out).resolve())}
+            for c, fmt, out in cards_of(props["board"])]
+
+
+def write_cards(board):
+    _env.write_json("build/cards.json", {"cards": [{"file": out, "format": fmt, "size": list(SIZES[fmt]), "beat": c["id"], "kind": c["kind"]}
+                                                    for c, fmt, out in cards_of(board)]})
 
 
 def mux(silent, out, seconds):
@@ -139,16 +135,16 @@ def cmd_render(a):
         return cmd_stills(a)
     Path("out").mkdir(exist_ok=True)
     if a.only in (None, "cards"):
-        for _, _, f in CARDS:
+        for _, _, f in cards_of(board):
             Path(f).unlink(missing_ok=True)
-        write_wall(board)
+        write_cards(board)
     props = props_for(board)
     jobs = []
     silent = Path("build/film.silent.mp4").resolve()
     if a.only in (None, "film"):
         jobs.append({"type": "video", "composition": "Film", "props": props, "out": str(silent), "crf": 18, "preset": "medium"})
     if a.only in (None, "cards"):
-        jobs += card_jobs(board, props)
+        jobs += card_jobs(props)
     t0 = time.time()
     rep = render_jobs(jobs, "build/render-report.json")
     tl = timeline(board["beats"])
@@ -192,7 +188,7 @@ def cmd_frames(a):
         lo = max(lo, b["transition"])
         grab((b["start"] + lo + (hi - lo) * 0.7) / FPS, out / f"{i:02d}-{b['id']}.png")
         if len(spans) >= 4:
-            # a beat cut into many shots (the wall assembling, the camera moving tile to tile) also gets every shot
+            # a beat cut into many shots (the hype cuts, the countdown ticks) also gets every shot
             sub = out / f"{i:02d}-{b['id']}"
             sub.mkdir(exist_ok=True)
             for k, (a_, z) in enumerate(spans, 1):
@@ -223,59 +219,37 @@ def cmd_stills(a):
         im = Image.open(PUBLIC / p).convert("RGB")
         return ImageOps.fit(im, (w, h), Image.LANCZOS)
 
-    def wall(bt, w, h, top, side=None):
-        """The nine as a 3x3 wall, slot by slot, centered at the given top (filling the width unless a side is given)."""
-        data = bt.get("data") or {}
-        by = {t["rank"]: t for t in data.get("tiles", [])}
-        gap = max(6, w // 120)
-        side = side or min(w - 2 * gap, h - top - gap)
-        tile = (side - 2 * gap) // 3
-        x0 = (w - (3 * tile + 2 * gap)) // 2
-        im = Image.new("RGB", (w, h), s["colors"]["bg"])
-        for i, r in enumerate(data.get("order") or []):
-            t = by.get(r)
-            if t:
-                im.paste(photo(t["photo"], tile, tile), (x0 + (i % 3) * (tile + gap), top + (i // 3) * (tile + gap)))
-        return im
-
     def compose(bt, w, h, sf, fmt="reel"):
         sa = s["safe"].get(fmt) or safe
         bg = Image.new("RGB", (w, h), s["colors"]["bg"])
         t = dict(bt.get("text") or {})
-        if bt["kind"] == "Grid" and fmt == "square":
-            side = w - 2 * 72
-            bg = wall(bt, w, h, sa["top"], side)
-            d = ImageDraw.Draw(bg)
-            band = (sa["top"] + side + 8 + h - sa["bottom"]) // 2
-            x0 = (w - side) // 2
-            if t.get("headline"):
-                d.text((x0, band), str(t["headline"]), font=font("display", 40), fill=s["colors"]["ink"], anchor="lm")
-            if t.get("kicker"):
-                d.text((w - x0, band), str(t["kicker"]), font=font("text", 26), fill=s["colors"]["accent"], anchor="rm")
-            return bg
-        if bt["kind"] == "Grid":
-            bg = wall(bt, w, h, int(h * 0.31))
-        else:
-            ph = (bt.get("photos") or [])
-            if bt.get("clip") and isinstance(bt["clip"], dict) and bt["clip"].get("image"):
-                ph = [bt["clip"]["image"]] + ph
-            if ph:
-                bg.paste(photo(ph[0], w, h))
-                shade = Image.new("L", (1, 256))
-                for y in range(256):
-                    shade.putpixel((0, y), int(max(0, (y - 90) / 166) * 200))
-                bg = Image.composite(Image.new("RGB", (w, h), s["colors"]["bg"]), bg, shade.resize((w, h)))
+        ph = (bt.get("photos") or [])
+        if bt.get("clip") and isinstance(bt["clip"], dict) and bt["clip"].get("image"):
+            ph = [bt["clip"]["image"]] + ph
+        if ph:
+            im = photo(ph[0], w, h)
+            level = (bt.get("data") or {}).get("to", 1) if bt["kind"] == "Tease" else 1
+            if level < 1:
+                im = im.filter(ImageFilter.GaussianBlur(max(0, 0.6 - level) * 40))
+                keep = int(h * level / 2)
+                mask = Image.new("L", (w, h), 0)
+                ImageDraw.Draw(mask).rectangle((0, h // 2 - keep, w, h // 2 + keep), fill=255)
+                im = Image.composite(im, Image.new("RGB", (w, h), s["colors"]["bg"]), mask)
+            bg.paste(im)
+            shade = Image.new("L", (1, 256))
+            for y in range(256):
+                shade.putpixel((0, y), int(max(0, (y - 90) / 166) * 200))
+            bg = Image.composite(Image.new("RGB", (w, h), s["colors"]["bg"]), bg, shade.resize((w, h)))
         d = ImageDraw.Draw(bg)
-        if bt["kind"] == "Countdown":
-            r = str((bt.get("data") or {}).get("rank", ""))
+        if bt["kind"] == "DateCard":
+            r = str((bt.get("data") or {}).get("day", ""))
             d.text((int(sa["left"] * sf), int(sa["top"] * sf)), r, font=font("display", int(s["scale"]["hero"] * 1.4 * sf)), fill=s["colors"]["accent"])
         left, maxw = int(sa["left"] * sf), int(w - (sa["left"] + sa["right"]) * sf)
-        grid_top = bt["kind"] == "Grid"
         blocks = []
         if t.get("kicker"):
             blocks.append(("text", str(t["kicker"]).upper(), int(s["scale"]["label"] * sf), s["colors"]["accent"]))
         if t.get("headline"):
-            size = int((s["scale"]["h2"] if grid_top else s["scale"]["h1"]) * sf)
+            size = int(s["scale"]["h1"] * sf)
             while size > 20 and font("display", size).getlength(str(t["headline"])) > maxw * 1.9:
                 size -= 4
             blocks.append(("display", t["headline"], size, s["colors"]["ink"]))
@@ -295,10 +269,7 @@ def cmd_stills(a):
             lines.append(cur)
             laid.append((f, lines, size, color))
         height = sum(len(ln) * int(sz * 1.08) + int(sz * 0.4) for _, ln, sz, _ in laid)
-        if grid_top:
-            y = int(sa["top"] * sf)
-        else:
-            y = int(h - sa["bottom"] * sf) - height
+        y = int(h - sa["bottom"] * sf) - height
         for f, lines, size, color in laid:
             for ln in lines:
                 d.text((left, y), ln, font=f, fill=color)
@@ -340,14 +311,12 @@ def cmd_stills(a):
     _env.write_json("build/timeline.json", {"fps": FPS, "seconds": secs, "beats": tl})
     Path("out").mkdir(exist_ok=True)
     music = mux(silent, Path("out/film.mp4"), secs)
-    write_wall(board)
-    for key, fmt, out in CARDS:
-        c = props.get(key)
-        if c:
-            compose(c, 1080, 1080 if fmt == "square" else 1920, 1, fmt).save(out)
+    write_cards(board)
+    for c, fmt, out in cards_of(props):
+        compose(c, *SIZES[fmt], 1, fmt).save(out)
     _env.write_json("build/engine.json", {"engine": "stills", "why": "node could not be installed on this machine"})
     _env.write_json("build/render-report.json", {"failed": 0, "findings": [], "engine": "stills"})
-    print(f"stills route: film {secs:.1f} s{' with music' if music else ''} -> out/film.mp4; out/best-nine.png, out/story.png")
+    print(f"stills route: film {secs:.1f} s{' with music' if music else ''} -> out/film.mp4; {len(cards_of(props))} cards in out/")
     return 0
 
 

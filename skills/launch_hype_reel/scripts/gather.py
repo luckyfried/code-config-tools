@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
-"""Movement 0, gather: every door to the person's own material, merged into build/library.json.
+"""Movement 0, gather: the launch (product, date, assets) and every door to the person's own material, merged into
+build/library.json.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
+    python3 S/scripts/gather.py --product "Tide Table" --date 2026-11-14 --assets tide-table-launch/ \
+        [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
         [--door browser="closed: no signed-in session"] [--year 2026] [--photos DIR] [--root .]
+
+The launch, in the person's own words (they win over anything inferred):
+  --product NAME   what is launching (a product, a drop, an event). Without it the name is inferred from the feed
+                   (the capitalized name its recent posts repeat most) and the inference is listed as an assumption.
+  --date TEXT      when: 2026-11-14, "November 14", "Nov 14 2026", "14/11"; a date with no year is the next one to
+                   come. A date that cannot be read is kept as written and shown as written.
+  --assets WHERE   a folder of product stills and clips, or a link to the product's page (its og:image and large
+                   images are downloaded, at most 8). Without it: a workspace folder named like the product, else the
+                   person's own posts that mention the product.
+Stills are linked into build/library/product/stills/, clips into build/library/product/footage/; the asset folder
+never counts as the person's photo folder.
 
 Doors, in order of preference (every one tried is recorded in library.json and in out/brief.md):
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
@@ -24,9 +37,9 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
    "comments": [{"account": "", "text": "", "ts": 0}], "followers": [{"account": "", "ts": 0}],
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
-The year: --year when the person named one, else the latest year with at least 12 posts, reels and stories.
-Links every media file of the year into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook)
-under its date, writes build/library.json and prints a summary; every choice it made is listed under "assumptions".
+The window: the 365 days ending at the latest post (or the calendar year given with --year). Links every media file
+of the window into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook) under its date, writes
+build/library.json (with a "launch" block) and prints a summary; every choice it made is listed under "assumptions".
 """
 import argparse
 import datetime as dt
@@ -34,6 +47,8 @@ import json
 import re
 import shutil
 import sys
+import urllib.parse
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -43,9 +58,11 @@ import _env  # noqa: E402
 SKIP = {"out", "build", ".claude", ".git", "node_modules", ".venv", "venv", "__pycache__", ".cache", "custom-skills"}
 IMG = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 VID = {".mp4", ".mov", ".m4v"}
-HOWTO = ("To make your best nine I need your Instagram: connect your Instagram account here, or in the Instagram "
-         "app go to Your activity, then Download your information, choose JSON, and put the folder or zip it sends you "
-         "in this workspace.")
+HOWTO = ("To make your launch film I need your Instagram, or at least your product's photos: connect your Instagram "
+         "account here, or in the Instagram app go to Your activity, then Download your information, choose JSON, and put "
+         "the folder or zip it sends you in this workspace, along with a folder of your product's photos.")
+MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november",
+          "december"]
 
 
 def fix(s):
@@ -171,7 +188,7 @@ def read_export(root):
                         except ValueError:
                             return None
                 return None
-            rec = {"likes": num("like"), "comments": num("comment")}
+            rec = {"likes": num("like"), "comments": num("comment"), "saves": num("save")}
             if thumb.get("uri"):
                 insights.setdefault(Path(thumb["uri"]).name, rec)
             if thumb.get("creation_timestamp"):
@@ -188,7 +205,7 @@ def read_export(root):
             paths = [md.resolve(u) for u, _, _ in items]
             ins = insights_ts.get(int(ts or 0)) or next((insights[Path(u).name] for u, _, _ in items if Path(u).name in insights), {})
             posts.append({"ts": ts, "caption": cap, "media": [p for p in paths if p],
-                          "likes": ins.get("likes"), "comments": ins.get("comments")})
+                          "likes": ins.get("likes"), "comments": ins.get("comments"), "saves": ins.get("saves")})
     reels = []
     rf = first(root, "content/reels.json")
     found["reels"] = [str(f) for f in rf]
@@ -201,7 +218,7 @@ def read_export(root):
                 ts = items[0][1]
                 ins = insights_ts.get(int(ts or 0)) or {}
                 reels.append({"ts": ts, "caption": fix(items[0][2]), "media": [p for p in (md.resolve(u) for u, _, _ in items) if p],
-                              "likes": ins.get("likes"), "comments": ins.get("comments")})
+                              "likes": ins.get("likes"), "comments": ins.get("comments"), "saves": ins.get("saves")})
     stories = []
     sf = first(root, "content/stories.json")
     found["stories"] = [str(f) for f in sf]
@@ -352,9 +369,11 @@ def read_photos(folder):
     return posts, vids
 
 
-def largest_photo_folder(root):
+def largest_photo_folder(root, skip=None):
     best = (0, None)
     for d, kids in walk(root):
+        if skip and (d == skip or skip in d.parents):
+            continue
         n = sum(1 for k in kids if k.suffix.lower() in IMG)
         if n > best[0]:
             best = (n, d)
@@ -365,24 +384,181 @@ def year_of(ts):
     return dt.datetime.fromtimestamp(int(ts), dt.timezone.utc).year
 
 
-def pick_year(rows, asked):
+def pick_window(rows, asked):
+    """(first ts, last ts, the end year, why): a named calendar year, else the 365 days ending at the latest post."""
     if asked:
-        return asked, f"The year is {asked}, as asked."
+        lo = dt.datetime(asked, 1, 1, tzinfo=dt.timezone.utc).timestamp()
+        hi = dt.datetime(asked + 1, 1, 1, tzinfo=dt.timezone.utc).timestamp() - 1
+        return lo, hi, asked, f"The window is {asked}, as asked."
+    stamps = [int(r["ts"]) for r in rows if r.get("ts")]
+    if not stamps:
+        now = dt.datetime.now(dt.timezone.utc).timestamp()
+        return now - 365 * 86400, now, dt.date.today().year, "No dates in the data; used the last 365 days."
+    hi = max(stamps)
+    end = dt.datetime.fromtimestamp(hi, dt.timezone.utc).date()
+    return hi - 365 * 86400, hi, end.year, f"The window is the 365 days up to the latest post ({end.isoformat()})."
+
+
+def parse_date(text, today=None):
+    """(iso or None, label): ISO, 'November 14', 'Nov 14 2026', '14 Nov', '11/14', '14/11/2026'; no year means the next one."""
+    today = today or dt.date.today()
+    t = (text or "").strip()
+    if not t:
+        return None, ""
+    low = t.lower().replace(",", " ")
+    y = m = d = None
+    if re.match(r"^\d{4}-\d{1,2}-\d{1,2}", low):
+        y, m, d = (int(x) for x in re.findall(r"\d+", low)[:3])
+    else:
+        mon = next((i + 1 for i, n in enumerate(MONTHS) for w in re.findall(r"[a-z]+", low) if len(w) >= 3 and n.startswith(w)), None)
+        nums = [int(x) for x in re.findall(r"\d+", low)]
+        yrs = [n for n in nums if n > 31]
+        days = [n for n in nums if n <= 31]
+        if mon and days:
+            m, d, y = mon, days[0], (yrs[0] if yrs else None)
+        elif len(days) >= 2:
+            a, b = days[0], days[1]
+            m, d = (a, b) if a <= 12 and (b > 12 or "/" in low and not low.startswith(str(b))) else (b, a)
+            y = yrs[0] if yrs else (days[2] + 2000 if len(days) > 2 and days[2] < 100 else None)
+    try:
+        if y is None:
+            when = dt.date(today.year, m, d)
+            when = when if when >= today else dt.date(today.year + 1, m, d)
+        else:
+            when = dt.date(y, m, d)
+    except (TypeError, ValueError):
+        return None, t
+    return when.isoformat(), f"{MONTHS[when.month - 1].capitalize()} {when.day}"
+
+
+def slug(s):
+    return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
+
+
+def mentions(text, product):
+    """Whether a caption names the product (spacing, hyphens and case ignored)."""
+    return bool(product) and slug(product) in slug(text)
+
+
+def infer_product(rows):
+    """The capitalized name the latest posts repeat most (two words or one), or None."""
     counts = {}
-    for r in rows:
-        if r.get("ts"):
-            counts[year_of(r["ts"])] = counts.get(year_of(r["ts"]), 0) + 1
-    if not counts:
-        return dt.date.today().year, "No dates in the data; used the current year."
-    full = [y for y, n in counts.items() if n >= 12]
-    y = max(full) if full else max(counts)
-    return y, f"The year is {y}: the latest year with enough posts, reels and stories ({counts[y]})."
+    for r in sorted(rows, key=lambda r: -(r.get("ts") or 0))[:60]:
+        for name in re.findall(r"\b([A-Z][a-z]+(?: [A-Z][a-z]+)?)\b", r.get("caption") or ""):
+            counts[name] = counts.get(name, 0) + 1
+    best = max(counts.items(), key=lambda kv: (kv[1], len(kv[0])), default=(None, 0))
+    return best[0] if best[1] >= 2 else None
+
+
+def fetch_link(url, dest, limit=8):
+    """Download the page's og:image and its large images into dest; returns (paths, note)."""
+    dest.mkdir(parents=True, exist_ok=True)
+    hdr = {"User-Agent": "Mozilla/5.0 (launch-hype-reel)"}
+    try:
+        html = urllib.request.urlopen(urllib.request.Request(url, headers=hdr), timeout=15).read(3_000_000).decode("utf-8", "replace")
+    except Exception as e:
+        return [], f"The link {url} did not open ({type(e).__name__})."
+    srcs = re.findall(r'<meta[^>]+property=["\']og:image(?::url)?["\'][^>]+content=["\']([^"\']+)', html, re.I)
+    srcs += re.findall(r'<img[^>]+src=["\']([^"\']+)', html, re.I)
+    got, seen = [], set()
+    for src in srcs:
+        u = urllib.parse.urljoin(url, src)
+        if u in seen or u.startswith("data:") or re.search(r"\.(svg|gif)(\?|$)", u, re.I):
+            continue
+        seen.add(u)
+        try:
+            data = urllib.request.urlopen(urllib.request.Request(u, headers=hdr), timeout=15).read(20_000_000)
+        except Exception:
+            continue
+        if len(data) < 20_000:
+            continue
+        ext = Path(urllib.parse.urlparse(u).path).suffix.lower()
+        f = dest / f"link-{len(got) + 1:02d}{ext if ext in IMG else '.jpg'}"
+        f.write_bytes(data)
+        got.append(f)
+        if len(got) >= limit:
+            break
+    return got, (f"Downloaded {len(got)} images from {url}." if got else f"The link {url} had no large images.")
+
+
+def find_asset_folder(root, product):
+    """A workspace folder whose name carries the product's name and that holds images or clips."""
+    key = slug(product)
+    best = None
+    for d, kids in walk(root):
+        if d == root or not key or key not in slug(d.name):
+            continue
+        n = sum(1 for k in kids if k.suffix.lower() in IMG | VID)
+        if n and (best is None or n > best[0]):
+            best = (n, d)
+    return best[1] if best else None
+
+
+def launch_block(a, root, lib, assumptions):
+    """The launch: product, date and the product's own assets, linked under build/library/product/."""
+    rows = lib["posts"] + lib["reels"]
+    product = (a.product or "").strip()
+    if not product:
+        product = infer_product(rows) or ""
+        assumptions.append(f"No product name was given; the feed's most repeated name is {product!r}." if product
+                           else "No product name was given and the feed names none; the film says 'something new'.")
+    iso, label = parse_date(a.date)
+    if a.date and not iso:
+        assumptions.append(f"The date {a.date!r} could not be read as a calendar day; it is shown as written.")
+    elif not a.date:
+        assumptions.append("No launch date was given; the countdown card says 'soon'.")
+    days = (dt.date.fromisoformat(iso) - dt.date.today()).days if iso else None
+    base = Path("build/library/product").resolve()
+    if base.exists():
+        shutil.rmtree(base)
+    stills_dir, footage_dir = base / "stills", base / "footage"
+    stills_dir.mkdir(parents=True)
+    footage_dir.mkdir(parents=True)
+    kind, where, notes, files = None, None, [], []
+    if a.assets and re.match(r"^https?://", a.assets):
+        files, note = fetch_link(a.assets, base / "link")
+        notes.append(note)
+        kind, where = ("link", a.assets) if files else (None, None)
+    elif a.assets:
+        folder = Path(a.assets) if Path(a.assets).is_absolute() else root / a.assets
+        if folder.is_dir():
+            kind, where = "folder", folder
+        else:
+            notes.append(f"The asset folder {a.assets} is not there.")
+    if not kind:
+        folder = find_asset_folder(root, product)
+        if folder:
+            kind, where = "folder", folder
+            notes.append(f"No assets were named; used {rel(folder, root)}, the folder named like the product.")
+    if kind == "folder":
+        files = sorted(f for f in where.rglob("*") if f.is_file() and f.suffix.lower() in IMG | VID)
+    feed = [r for r in rows if mentions(r.get("caption"), product)]
+    if not files and feed:
+        kind, where = "feed", None
+        files = [Path(m) for r in sorted(feed, key=lambda r: -(r.get("ts") or 0)) for m in r.get("media") or []
+                 if Path(m).suffix.lower() in IMG][:12]
+        notes.append(f"No product folder or link; the product's pictures are the {len(feed)} posts that mention {product}.")
+    stills, footage = [], []
+    for f in files:
+        vid = f.suffix.lower() in VID
+        dst = (footage_dir if vid else stills_dir) / f"{len(footage if vid else stills) + 1:02d}{f.suffix.lower()}"
+        try:
+            dst.symlink_to(Path(f).resolve())
+        except OSError:
+            shutil.copy2(f, dst)
+        (footage if vid else stills).append(str(dst))
+    if not files:
+        notes.append("No product pictures anywhere; product beats use type, color and generated clips.")
+    assumptions += notes
+    return {"product": product, "date": iso, "date_text": a.date or "", "date_label": label or (a.date or "soon"),
+            "days_to_go": days, "assets": str(where) if where else None, "assets_kind": kind or "none",
+            "stills": stills, "footage": footage, "feed_posts": len(feed), "notes": notes}
 
 
 def write_howto(out):
     out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
-                                  f"photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
+    (out / "brief.md").write_text(f"# Launch film: no material found\n\n## Assumptions\n\n- No Instagram export, product "
+                                  f"folder or folder of photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
 def merge(base, extra):
@@ -422,7 +598,10 @@ def shelve(lib):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
-    ap.add_argument("--year", type=int)
+    ap.add_argument("--year", type=int, help="a calendar year the person named instead of the last 365 days")
+    ap.add_argument("--product", help="what is launching, in the person's words")
+    ap.add_argument("--date", help="when it launches, as the person wrote it")
+    ap.add_argument("--assets", help="a folder or link with the product's photos and clips")
     ap.add_argument("--photos", help="a folder of photos the person named")
     ap.add_argument("--pulled", action="append", default=[], help="a folder holding items.json the agent pulled")
     ap.add_argument("--door", action="append", default=[], help='name="open: ..." or name="closed: why"')
@@ -480,7 +659,8 @@ def main():
     source = ("accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
     if not d["posts"] and not d["reels"]:
         _env.need("PIL")
-        folder = Path(a.photos) if a.photos else largest_photo_folder(root)
+        skip = (root / a.assets).resolve() if a.assets and not re.match(r"^https?://", a.assets) else None
+        folder = Path(a.photos) if a.photos else largest_photo_folder(root, skip)
         if folder:
             posts, vids = read_photos(folder)
             d["posts"], d["reels"] = posts, vids
@@ -493,36 +673,44 @@ def main():
             source = "facebook"
             d["posts"] = [dict(r, likes=None, comments=None) for r in d["facebook"]]
             assumptions.append("Only a Facebook download was found, so the film is made from its posts and photos.")
+        elif a.assets or a.product:
+            source = "product"
+            assumptions.append("No Instagram account, download or photo folder was reachable, so the film is made from the "
+                               "product's own assets alone; hooks and their palette need the account or the download.")
         else:
             write_howto(Path("out"))
             print(HOWTO)
             return 3
-    year, why = pick_year(d["posts"] + d["reels"] + d["stories"], a.year)
+    lo, hi, year, why = pick_window(d["posts"] + d["reels"] + d["stories"], a.year)
     assumptions.append(why)
     handle = d["handle"] or "you"
     assumptions.append(f"Handle: @{handle}." if d["handle"] else "No username in the data; the cards say 'you'.")
-    inyear = lambda rows: sorted((r for r in rows if r.get("ts") and year_of(r["ts"]) == year), key=lambda r: r["ts"])
+    inyear = lambda rows: sorted((r for r in rows if r.get("ts") and lo <= int(r["ts"]) <= hi), key=lambda r: r["ts"])
     lib = {k: inyear(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
     dates = [r["ts"] for r in lib["posts"] + lib["reels"] + lib["stories"]]
     span = {"first": dt.datetime.fromtimestamp(min(dates), dt.timezone.utc).date().isoformat() if dates else None,
             "last": dt.datetime.fromtimestamp(max(dates), dt.timezone.utc).date().isoformat() if dates else None}
-    if span["last"] and span["last"] < f"{year}-12-01":
-        assumptions.append(f"The data runs to {span['last']}, so the year covers January to that day.")
     if source in ("export", "accounts"):
         missing = [k for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers") if not d["found"].get(k)]
         if missing:
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
         if not any(p.get("likes") is not None for p in lib["posts"] + lib["reels"]):
-            assumptions.append("The data has no likes per post, so the nine are picked by comments, else spread across the year.")
+            assumptions.append("The data has no counts per post, so hooks are ranked by caption order alone.")
+        elif not any(p.get("saves") is not None for p in lib["posts"] + lib["reels"]):
+            assumptions.append("The data has no saves per post, so response is comments alone.")
     shelve(lib)
+    launch = launch_block(a, root, lib, assumptions)
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
         assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
     out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
-           "year": year, "range": span, "found": d["found"], **lib, "followers": d["followers"],
+           "year": year, "range": span, "launch": launch, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
     _env.write_json("build/library.json", out)
-    print(f"source: {source}   handle: @{handle}   year: {year}   range: {span['first']} to {span['last']}")
+    print(f"source: {source}   handle: @{handle}   range: {span['first']} to {span['last']}")
+    print(f"launch: {launch['product'] or '-'}   date: {launch['date'] or launch['date_label']}   assets: "
+          f"{launch['assets_kind']} ({len(launch['stills'])} stills, {len(launch['footage'])} clips, "
+          f"{launch['feed_posts']} posts mention it)")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
                                                    "following", "facebook")))
     for k, v in doors.items():

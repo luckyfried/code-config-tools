@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Movement 6, last step: write out/caption.md, out/brief.md and out/review.html, then run the gate.
+"""Movement 6, last step: write out/captions.md, out/brief.md and out/review.html, then run the gate.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/deliver.py
 
-caption.md is build/caption.md when the agent wrote one in the person's voice, otherwise a short caption drafted
-from build/taste.json in their register (their case, their length, their own hashtags). brief.md says where the
-material came from (every door tried, open or closed), what the run assumed, the vote, every clip and whether it was
-generated, taken from their own reels or substituted with an animated photo, where the music came from, which
-engine rendered the film, and the critics' scores of the cut; it opens with the nine, each with its numbers and why it
-worked. review.html plays the film and shows the best-nine image, the story card, the caption, the three storyboards'
-style sheets and the vote, with the runners-up.
+captions.md has one section per piece: the film, story 1, story 2, story 3, the countdown and the feed post. It is
+build/captions.md when the agent wrote one in the person's voice (same six sections), otherwise drafted from
+build/taste.json in their register (their case, their best hook style, their own hashtags); every section names the
+product. brief.md opens with the launch as given (the product, the date, where the assets came from), then their
+hooks ranked by response (comments and saves), what their best-answered posts share, where the product's colors meet
+theirs, every door tried, what the run assumed, the vote, every clip and how it arrived, the music, the engine and the
+critics' scores of the cut. review.html plays the film and shows the three stories, the countdown card, the feed
+post, the captions, the three storyboards' style sheets and the vote, with the runners-up.
 Exit 0 only when qa.py gate passes; on a failed gate the page carries a red banner naming what is wrong.
 """
 import html
@@ -26,33 +27,70 @@ import vote  # noqa: E402
 
 OUT = Path("out")
 HERE = Path(__file__).resolve().parent
+SECTIONS = ("film", "story 1", "story 2", "story 3", "countdown", "feed post")
+STILLS = (("story-1.png", "story 1"), ("story-2.png", "story 2"), ("story-3.png", "story 3"),
+          ("countdown.png", "countdown"), ("feed.png", "feed post"))
 
 
 def esc(s):
     return html.escape("" if s is None else str(s))
 
 
-def caption(taste, win):
-    own = Path("build/caption.md")
+def launch_of(lib, taste):
+    return {**(taste.get("launch") or {}), **(lib.get("launch") or {})}
+
+
+def drafts(taste, launch):
+    """The six captions in their register, each naming the product."""
+    product = launch.get("product") or "it"
+    label = launch.get("date_label") or "soon"
+    days = launch.get("days_to_go")
+    style = (taste.get("best_hook") or {}).get("style")
+    opener = {"question": f"what would you do first with {product}?",
+              "confession": f"confession: {product} has been my secret for a while",
+              "list": f"three things about {product}: it's new, it's mine, it's out {label}"}.get(style, f"{product} is almost here")
+    reg = taste.get("register") or {}
+    tags = list(dict.fromkeys((reg.get("hashtags") or [])[:2] + ["#" + re.sub(r"\W", "", product.lower()), "#launchday"]))
+    count = f"{days} days until {product}" if isinstance(days, int) and days > 0 else f"{product} is out now"
+    c = {
+        "film": f"{opener}\n{product}, out {label}.\n\n{' '.join(tags)}",
+        "story 1": f"something's coming. {product}, {label}.",
+        "story 2": f"closer. {product} is nearly ready.",
+        "story 3": f"meet {product}. out {label}.",
+        "countdown": f"{count}. {label}, set a reminder.",
+        "feed post": f"{product} is out {label}.\n{opener}\n\n{' '.join(tags)}",
+    }
+    if reg.get("lowercase"):
+        c = {k: v.lower() for k, v in c.items()}
+    else:
+        c = {k: v[:1].upper() + v[1:] for k, v in c.items()}
+    return c
+
+
+def captions(taste, launch):
+    own = Path("build/captions.md")
     if own.exists() and own.read_text().strip():
         return own.read_text().strip() + "\n"
-    reg = taste.get("register") or {}
-    places = taste.get("places") or []
-    year = taste.get("year")
-    lines = [f"my best nine of {year}, the ones you loved most"]
-    if len(places) >= 2:
-        lines.append(", ".join(places[:-1]) + " and " + places[-1])
-    lines.append("which one is your favorite?")
-    body = "\n".join(lines)
-    body = body.lower() if reg.get("lowercase") else body[:1].upper() + body[1:]
-    tags = list(dict.fromkeys((reg.get("hashtags") or [])[:3] + ["#bestnine", f"#bestnine{year}"]))
-    return f"{body}\n\n{' '.join(tags)}\n"
+    c = drafts(taste, launch)
+    return "\n".join(f"## {k}\n\n{c[k]}\n" for k in SECTIONS)
+
+
+def sections(text):
+    out, cur = {}, None
+    for ln in text.splitlines():
+        m = re.match(r"^##\s+(.+?)\s*$", ln)
+        if m:
+            cur = m.group(1).strip().lower()
+            out[cur] = []
+        elif cur is not None:
+            out[cur].append(ln)
+    return {k: "\n".join(v).strip() for k, v in out.items()}
 
 
 def clip_rows(clips):
     rows = ["| clip | beat | what it is | how it arrived |", "|---|---|---|---|"]
-    said = {"generated": "made by the video model", "their_reel": "taken from one of your own reels",
-            "substituted": "no generated clip arrived; an animated treatment of your photo stands in"}
+    said = {"generated": "made by the video model", "their_footage": "cut from the footage you supplied",
+            "substituted": "no generated clip arrived; an animated treatment of a still stands in"}
     for cid, c in sorted(clips.items()):
         how = said.get(c.get("status"), c.get("status"))
         if c.get("status") == "substituted" and c.get("why"):
@@ -61,27 +99,47 @@ def clip_rows(clips):
     return rows
 
 
-def nine_rows():
-    st = _env.read_json("build/stats.json") or {}
-    why = {x["rank"]: x for x in (_env.read_json("build/research.json") or {}).get("nine", [])}
-    rows = ["| # | posted | likes | comments | why it worked |", "|---|---|---|---|---|"]
-    for t in st.get("top_nine") or []:
-        w = (why.get(t["rank"]) or {}).get("why") or ""
-        rows.append(f"| {t['rank']} | {t.get('date_label') or t.get('date')} ({t.get('kind')}) | {t.get('likes', '-')} | "
-                    f"{t.get('comments', '-')} | {w.replace('|', '/')} |")
-    ten = st.get("tenth") or {}
-    if ten.get("likes") is not None:
-        rows += ["", f"The tenth had {ten['likes']} likes, {ten.get('gap')} fewer than the ninth."]
+def count(v):
+    return len(v) if isinstance(v, list) else (v or 0)
+
+
+def hook_rows():
+    r = _env.read_json("build/research.json") or {}
+    rows = ["| # | posted | comments | saves | response | opener | style |", "|---|---|---|---|---|---|---|"]
+    for h in r.get("hooks") or []:
+        rows.append(f"| {h['rank']} | {h.get('date')} ({h.get('kind')}) | {h.get('comments', '-')} | {h.get('saves', '-')} | "
+                    f"{h.get('response')} | {str(h.get('hook') or '').replace('|', '/')} | {h.get('style')} |")
     return rows
 
 
 def brief(lib, taste, win, clips, music, engine, cuts):
-    handle, year = lib.get("handle") or taste.get("handle"), lib.get("year") or taste.get("year")
-    L = [f"# @{handle}, best nine of {year}: how this was made", "", "## the nine", ""] + nine_rows()
-    wall = taste.get("wall") or {}
-    if wall.get("why"):
-        L += ["", f"The wall: {wall['why']}"]
-    L += ["", "## where your photos came from", ""]
+    launch = launch_of(lib, taste)
+    research = _env.read_json("build/research.json") or {}
+    product, label = launch.get("product"), launch.get("date_label") or launch.get("date") or "no date given"
+    L = [f"# {product}, launching {label}: how this was made", "", "## the launch, as you gave it", "",
+         f"- Product: {product}.", f"- Date: {label}" + (f" ({launch['date']}, {launch['days_to_go']} days from the latest post)" if launch.get("date") and launch.get("days_to_go") is not None else "") + ".",
+         f"- Assets: {launch.get('assets') or 'none given; the product beats use your own feed'}"
+         + (f" ({count(launch.get('stills'))} stills, {count(launch.get('footage'))} clip{'' if count(launch.get('footage')) == 1 else 's'})" if launch.get("assets") else "") + "."]
+    said = taste.get("said") or {}
+    for k in ("product", "audience"):
+        if said.get(k):
+            L.append(f"- In your words, the {k}: {said[k]}")
+    about = launch.get("posts_about_it") or []
+    if about:
+        L.append(f"- Already in your feed: {len(about)} posts about {product}.")
+    L += ["", "## your hooks, ranked by response", "", "Response is comments plus saves per post.", ""] + hook_rows()
+    best = taste.get("best_hook") or {}
+    if best.get("hook"):
+        L += ["", f"Your best opener: \"{best['hook']}\" ({best.get('style')}, response {best.get('response')}). The hype cut "
+              "storyboard opens on it, and the drafted captions open in its style."]
+    shared = research.get("response_shared") or []
+    if shared:
+        L += ["", "## what your best-answered posts share", ""] + [f"- {x}" for x in shared]
+    meet = (research.get("palette") or {}).get("meet") or []
+    if meet:
+        L += ["", "## where the product's colors meet yours", "", "| product | yours | between | reads |", "|---|---|---|---|"]
+        L += [f"| {m['product_name']} {m['product']} | {m['theirs_name']} {m['theirs']} | {m['between']} | {m['reads']} |" for m in meet]
+    L += ["", "## where your material came from", ""]
     for door, state in (lib.get("doors") or {}).items():
         L.append(f"- {door.replace('_', ' ')}: {state}")
     L += ["", "## what this run assumed", ""] + [f"- {a}" for a in lib.get("assumptions") or []]
@@ -101,7 +159,7 @@ def brief(lib, taste, win, clips, music, engine, cuts):
     L += clip_rows(clips) if clips else ["The winning storyboard uses no clips."]
     subs = [c for c in clips.values() if c.get("status") == "substituted"]
     if subs:
-        L += ["", f"{len(subs)} of {len(clips)} clips were substituted with an animated treatment of one of your photos, "
+        L += ["", f"{len(subs)} of {len(clips)} clips were substituted with an animated treatment of a product still or one of your photos, "
               "so no beat is missing."]
     L += ["", "## music", ""]
     if music.get("file"):
@@ -145,7 +203,7 @@ h1{{font-size:30px;margin:0 0 4px}} h2{{margin:40px 0 12px;font-size:20px}} .sub
 .banner{{background:#b3261e;color:#fff;padding:14px 18px;border-radius:10px;margin-bottom:20px}}
 .top{{display:grid;grid-template-columns:380px 1fr;gap:36px;align-items:start}}
 video{{width:380px;border-radius:16px;background:#000;display:block}}
-.posts{{display:grid;grid-template-columns:420px 236px;gap:18px;align-items:start}}
+.posts{{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}} .posts figure{{margin:0}} .posts figcaption{{font-size:13px;opacity:.75;margin-top:6px}}
 .sheets{{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}}
 .posts img,.sheets img{{width:100%;border-radius:8px;display:block}}
 .board h3{{margin:10px 0 2px;font-size:17px}} .board p{{margin:0;opacity:.8;font-size:14px}}
@@ -154,18 +212,37 @@ pre{{white-space:pre-wrap;background:rgba(127,127,127,.12);padding:16px;border-r
 table{{border-collapse:collapse}} td,th{{padding:6px 12px;border-bottom:1px solid rgba(127,127,127,.3);text-align:left}}
 button{{background:{accent};color:{bg};border:0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}}
 </style></head><body><main>
-<h1>{title}</h1><p class="sub">Your best-nine film, the best-nine image, a story card and a caption, ready to post.</p>
+<h1>{title}</h1><p class="sub">Your reveal film, three teaser stories, a countdown card, a feed post and a caption for each, ready to post.</p>
 {banner}
 <div class="top"><video src="film.mp4" controls playsinline loop></video><div>
-<h2 style="margin-top:0">Caption</h2><pre id="cap">{caption}</pre>
-<button onclick="navigator.clipboard.writeText(document.getElementById('cap').innerText);this.textContent='Copied'">Copy caption</button>
+<h2 style="margin-top:0">Captions</h2>{caption}
 <h2>How it was made</h2><p><a href="brief.md">brief.md</a> says where everything came from, which clips were made and
 which were stood in for, and where the music came from.</p></div></div>
-<h2>The best-nine image and the story card</h2>{posts}
+<h2>The stories, the countdown card and the feed post</h2>{posts}
 <h2>The three storyboards</h2><div class="sheets">{boards}</div>
 <h2>The vote</h2>{table}<p>{runners}</p>
 </main></body></html>
 """
+
+
+def scored(cut):
+    """A cut round whose every score was filled in; an unfilled round never reaches the brief."""
+    sc = [v for e in (cut.get("critics") or {}).values() for b in (e.get("boards") or {}).values() for v in (b.get("scores") or {}).values()]
+    return bool(sc) and all(isinstance(v, int) for v in sc)
+
+
+def caption_html(cap):
+    out = []
+    for i, (k, v) in enumerate(sections(cap).items()):
+        out.append(f"<h3>{esc(k)}</h3><pre id='cap{i}'>{esc(v)}</pre><button onclick=\"navigator.clipboard.writeText("
+                   f"document.getElementById('cap{i}').innerText);this.textContent='Copied'\">Copy</button>")
+    return "".join(out)
+
+
+def posts_html():
+    return "<div class='posts'>" + "".join(
+        f"<figure><a href='{f}'><img src='{f}' loading='lazy' alt=''></a><figcaption>{esc(name)}</figcaption></figure>"
+        for f, name in STILLS if (OUT / f).exists()) + "</div>"
 
 
 def main():
@@ -180,10 +257,11 @@ def main():
     clips = (_env.read_json("build/clips.json") or {}).get("clips") or {}
     music = _env.read_json("build/music.json") or {}
     engine = _env.read_json("build/engine.json") or {}
-    cuts = [_env.read_json(p) for p in vote.rounds()]
+    cuts = [c for c in (_env.read_json(p) for p in vote.rounds()) if scored(c)]
+    launch = launch_of(lib, taste)
     OUT.mkdir(exist_ok=True)
-    cap = caption(taste, win)
-    (OUT / "caption.md").write_text(cap)
+    cap = captions(taste, launch)
+    (OUT / "captions.md").write_text(cap)
     (OUT / "brief.md").write_text(brief(lib, taste, win, clips, music, engine, cuts))
     sheets = OUT / "storyboards"
     sheets.mkdir(exist_ok=True)
@@ -207,12 +285,11 @@ def main():
     pal = (taste.get("palette") or {}).get("year") or []
     colors = (_env.read_json(f"build/storyboards/{win.get('board')}/storyboard.json") or {}).get("system", {}).get("colors", {})
     bg, ink, accent = colors.get("bg", "#141212"), colors.get("ink", "#f4efe8"), colors.get("accent", pal[0]["hex"] if pal else "#e6b26d")
-    handle, year = lib.get("handle"), lib.get("year")
-    posts = gallery([p for p in ("best-nine.png", "story.png") if (OUT / p).exists()], "posts")
+    title = f"{launch.get('product')} · {launch.get('date_label') or 'launch'}"
 
     def page(banner):
-        return PAGE.format(title=esc(f"@{handle} · best nine {year}"), banner=banner, caption=esc(cap), bg=bg, ink=ink,
-                           accent=accent, posts=posts, boards="".join(cells), table=table, runners=runners)
+        return PAGE.format(title=esc(title), banner=banner, caption=caption_html(cap), bg=bg, ink=ink,
+                           accent=accent, posts=posts_html(), boards="".join(cells), table=table, runners=runners)
 
     (OUT / "review.html").write_text(page(""))
     g = subprocess.run([sys.executable, str(HERE / "qa.py"), "gate"], capture_output=True, text=True)
@@ -222,7 +299,8 @@ def main():
         (OUT / "review.html").write_text(page(f"<div class='banner'><b>Not ready to post.</b><ul>{items}</ul></div>"))
         print("deliver: the gate failed; fix what it names and run deliver.py again", file=sys.stderr)
         return 1
-    print("delivered: out/film.mp4, out/best-nine.png, out/story.png, out/caption.md, out/review.html, out/brief.md")
+    print("delivered: out/film.mp4, out/story-1.png, out/story-2.png, out/story-3.png, out/countdown.png, out/feed.png, "
+          "out/captions.md, out/review.html, out/brief.md")
     return 0
 
 

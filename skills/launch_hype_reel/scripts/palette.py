@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the palette, from the person's own photos. Reads build/photo_index.json, writes build/palette.json.
+"""Movement 1, research: the two palettes, the person's and the product's, and where they meet. Reads
+build/photo_index.json and build/picks.json, writes build/palette.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/palette.py [--accent "#E8743B"]
 
-The year's five dominant colors (weighted by how much of each photo they cover, kept distinct from each
-other), each with a plain name ("sea blue", "sunset orange") and the photo that shows it best, and the card
-roles drawn from them: bg (a deep tone of their darkest color), ink (warm white), accent (their most vivid
-color, lifted until it reads on bg at 3:1 or more) and accent2. --accent overrides the accent role.
+year     the five dominant colors of the person's own photos (weighted by how much of each photo they cover, kept
+         distinct from each other), each with a plain name ("sea blue", "sunset orange") and the photo that shows it best
+product  the same five from the product's own stills (picks.json "product")
+meet     each product color beside the nearest of theirs, with the distance between them (CIELAB delta E) and the
+         color halfway between: under 20 the product already lives in their feed, over 45 it is new to it
+roles    bg (a deep tone of the darkest color of either palette), ink (warm white), accent (the product's most vivid
+         color, lifted until it reads on bg at 3:1 or more; theirs when there is no product palette), accent2 (their most
+         vivid color) and muted. --accent overrides the accent role.
 """
 import argparse
 import colorsys
@@ -28,7 +33,7 @@ NAMES = {
     "terracotta": (200, 100, 70), "brick red": (160, 50, 40), "coral": (240, 110, 100), "tomato red": (210, 60, 50),
     "blush pink": (235, 180, 185), "rose": (200, 100, 120), "berry": (130, 40, 70), "plum": (100, 50, 90),
     "lavender": (180, 160, 210), "dusk violet": (90, 70, 120), "chocolate": (90, 60, 40), "caramel": (190, 130, 70),
-    "taupe": (150, 130, 115), "dusty mauve": (170, 130, 140),
+    "taupe": (150, 130, 115), "dusty mauve": (170, 130, 140), "cobalt": (0, 71, 171), "royal blue": (65, 105, 225),
 }
 
 
@@ -103,10 +108,56 @@ def main():
     ap.add_argument("--accent")
     a = ap.parse_args()
     idx = _env.read_json("build/photo_index.json")
-    if not idx:
+    picks_json = _env.read_json("build/picks.json") or {}
+    prod = picks_json.get("product") or []
+    if not idx and not prod:
         sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
-    # weighted color samples: each photo's dominant colors by the share of the photo they cover
-    samples = [(tuple(c["rgb"]), c["share"]) for e in idx for c in e["colors"]]
+    import picks  # noqa: E402  (same folder; prepares photos the same way)
+    year = five(idx or prod, picks.prepare, "src")
+    product = five(prod, lambda p: p, "photo") if prod else []
+    meet = []
+    for c in product:
+        near = min(year, key=lambda y: dist(hex_rgb(y["hex"]), hex_rgb(c["hex"])))
+        de = dist(hex_rgb(near["hex"]), hex_rgb(c["hex"]))
+        mid = tuple((x + y) / 2 for x, y in zip(hex_rgb(near["hex"]), hex_rgb(c["hex"])))
+        meet.append({"product": c["hex"], "product_name": c["name"], "theirs": near["hex"], "theirs_name": near["name"],
+                     "distance": round(de, 1), "between": hexc(mid), "reads": "already in their feed" if de < 20 else
+                     "new to their feed" if de > 45 else "a step from their feed"})
+    meet.sort(key=lambda m: m["distance"])
+
+    both = [hex_rgb(c["hex"]) for c in year + product]
+    darkest = min(both, key=lum)
+    h, l, s_ = hls(darkest)
+    bg = from_hls(h, min(l, 0.11), min(s_, 0.45))
+    ink = (250, 246, 238)
+    def vivid(cols):
+        return sorted((hex_rgb(c["hex"]) for c in cols), key=lambda c: -(hls(c)[2] * (1 - abs(hls(c)[1] - 0.55))))
+    def lift(c):
+        hh, ll, ss = hls(c)
+        while contrast(from_hls(hh, ll, ss), bg) < 3.2 and ll < 0.92:
+            ll += 0.03
+        return from_hls(hh, ll, max(ss, 0.45))
+    pv, yv = vivid(product), vivid(year)
+    accent = hex_rgb(a.accent) if a.accent else lift((pv or yv)[0])
+    accent2 = lift(next((c for c in yv if dist(c, accent) > 25), yv[-1]))
+    roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
+             "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
+    _env.write_json("build/palette.json", {"year": year, "product": product, "meet": meet, "roles": roles,
+                                            "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
+                                                      "ink_on_bg": round(contrast(ink, bg), 2)}})
+    print("their palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in year))
+    print("product palette: " + (", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in product) or "none (no product stills)"))
+    for m in meet:
+        print(f"  {m['product_name']} {m['product']} meets their {m['theirs_name']} {m['theirs']}: delta E {m['distance']}, {m['reads']}")
+    print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
+    print(f"accent on bg {contrast(accent, bg):.1f}:1, ink on bg {contrast(ink, bg):.1f}:1")
+    print("wrote build/palette.json")
+    return 0
+
+
+def five(rows, prep, key):
+    """Five distinct dominant colors of a set of analysed photos, each named and with the photo that shows it best."""
+    samples = [(tuple(c["rgb"]), c["share"]) for e in rows for c in e["colors"]]
     clusters = []  # [rgb_sum, weight]
     for rgb, w in sorted(samples, key=lambda s: -s[1]):
         best = min(clusters, key=lambda c: dist(tuple(v / c[1] for v in c[0]), rgb), default=None)
@@ -124,38 +175,14 @@ def main():
         if len(chosen) >= 5:
             break
     total = sum(w for _, w in chosen) or 1
-    import picks  # noqa: E402  (same folder; prepares photos the same way)
-    year, names = [], set()
+    out, names = [], set()
     for rgb, w in chosen:
         nm = unique_name(rgb, names)
         names.add(nm)
-        ex = min(idx, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
-        year.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": picks.prepare(ex["src"])})
-    year.sort(key=lambda c: -c["share"])
-
-    rgbs = [hex_rgb(c["hex"]) for c in year]
-    darkest = min(rgbs, key=lum)
-    h, l, s = hls(darkest)
-    bg = from_hls(h, min(l, 0.11), min(s, 0.45))
-    ink = (250, 246, 238)
-    vivid = sorted(rgbs, key=lambda c: -(hls(c)[2] * (1 - abs(hls(c)[1] - 0.55))))
-    def lift(c):
-        hh, ll, ss = hls(c)
-        while contrast(from_hls(hh, ll, ss), bg) < 3.2 and ll < 0.92:
-            ll += 0.03
-        return from_hls(hh, ll, max(ss, 0.45))
-    accent = hex_rgb(a.accent) if a.accent else lift(vivid[0])
-    accent2 = lift(next((c for c in vivid[1:] if dist(c, vivid[0]) > 25), vivid[-1]))
-    roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
-             "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
-    _env.write_json("build/palette.json", {"year": year, "roles": roles,
-                                            "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
-                                                      "ink_on_bg": round(contrast(ink, bg), 2)}})
-    print("year palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in year))
-    print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
-    print(f"accent on bg {contrast(accent, bg):.1f}:1, ink on bg {contrast(ink, bg):.1f}:1")
-    print("wrote build/palette.json")
-    return 0
+        ex = min(rows, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
+        out.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": prep(ex[key])})
+    out.sort(key=lambda c: -c["share"])
+    return out
 
 
 if __name__ == "__main__":

@@ -6,9 +6,10 @@ USAGE (from the workspace root):
     python3 S/scripts/grade.py photos [FILE...]  # grade build/photos/*.jpg (or the files named) into build/public/graded/
     python3 S/scripts/grade.py show              # print the filter
 
-The recipe (design/grade.md has the reasoning):
-  shadows lean toward the hue of their darkest color, highlights toward their lightest, midtones toward the
-  year's average hue; saturation follows how saturated their palette is; a film taste lifts the blacks and
+The recipe (design/grade.md has the reasoning) reads both palettes in taste.json, theirs and the product's, at
+equal weight, so the film sits where the two meet and the product keeps its own color:
+  shadows lean toward the hue of the darkest color, highlights toward the lightest, midtones toward the
+  average hue; saturation follows how saturated the palettes are; a film taste lifts the blacks and
   rolls off the whites. One ffmpeg filter string carries all of it, so a photo and a generated clip get the
   identical grade. Also writes build/public/fx/grain.png, the grain tile the renderer overlays when taste asks.
 """
@@ -39,7 +40,13 @@ def lean(rgb, k):
 
 
 def recipe(taste):
-    sw = [s for s in (taste.get("palette", {}).get("year") or []) if s.get("hex")]
+    pal = taste.get("palette", {})
+    year = [s for s in (pal.get("year") or []) if s.get("hex")]
+    prod = [s for s in (pal.get("product") or []) if s.get("hex")]
+    sw = year + prod
+    if year and prod:
+        ky, kp = sum(s.get("share", 1) or 1 for s in year), sum(s.get("share", 1) or 1 for s in prod)
+        sw = [dict(s, share=(s.get("share", 1) or 1) / ky) for s in year] + [dict(s, share=(s.get("share", 1) or 1) / kp) for s in prod]
     if not sw:
         sw = [{"hex": "#8a7560", "share": 1}]
     rgbs = [hex_rgb(s["hex"]) for s in sw]

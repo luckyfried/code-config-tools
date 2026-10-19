@@ -1,7 +1,7 @@
-# 2. Storyboards: three different films, not three versions of one
+# 2. Storyboards: three different launch films, not three versions of one
 
 Goal: `build/storyboards/1..3/` each with `storyboard.md`, `storyboard.json` and a six-frame style sheet
-(`frames/01..06.png` and `sheet.png`; the last frame is the board's ending on the whole wall).
+(`frames/01..06.png` and `sheet.png`; the last frame is the board's ending, the product's name or its date).
 
 ## Draft
 
@@ -9,40 +9,46 @@ Goal: `build/storyboards/1..3/` each with `storyboard.md`, `storyboard.json` and
 python3 S/scripts/storyboard.py draft
 ```
 
-`draft` turns their palette into the film's grade (`build/grade.json`, `design/grade.md`), grades the nine into
-`build/public/graded/` and writes three boards that differ on how the grid assembles, on tone and on clip use:
+`draft` turns the place where the product's colors meet theirs into the film's grade (`build/grade.json`,
+`design/grade.md`), grades their photos and the product's stills into `build/public/graded/` and writes three boards
+that differ on structure, tone and clip use:
 
-| board | how the grid assembles | tone | still or clip first | generated clips |
+| board | structure | tone | still or clip first | generated clips |
 |---|---|---|---|---|
-| 1 on the beat | the wall builds tile by tile on the beat, then the top three | kinetic type, bold fields | still-first | the transitions between tiles |
-| 2 nine to one | a countdown, one tile at a time, ending on the whole wall | quiet editorial (paper, soft serif) | clip-first | each tile's photo brought to life (their own reel where the tile is one) |
-| 3 one camera | one continuous camera across the 3x3 wall, then the pull back | documentary (near-black, mono labels) | still-first | the wall's world (the opener), their reels playing in their tiles |
+| 1 the trilogy | tease, tease harder, reveal: the film sums up the three stories | quiet editorial (paper, soft serif) | clip-first | the product's world opens the reveal; its own footage is the hero moment |
+| 2 the hype cut | 20 s built on their best hook line, the product cut on the beat | kinetic type, bold fields | still-first | light sweeps as the reveal transitions; its own footage is the hero |
+| 3 the countdown | the countdown series opens the film: the days fall to the date, then the reveal | documentary (near-black, mono labels) | still-first | the product's world between the count and the reveal; its own footage after |
 
-Each beat names its component (`Opener`, `ClipShot`, `Countdown`, `Grid`), its frames at 30 fps, its transition
-preset (`design/transitions.json`), its tiles or photo, its words and its clip. Every board also carries `wall` (the
-1080×1080 best-nine image) and `story` (the 1080×1920 card), drawn by the same `Grid` in the board's palette and type.
+Each beat names its component (`Hook` their opening line, `Tease` a product still behind a mask that opens,
+`DateCard` the days falling to the date, `ClipShot` a clip or a photo brought to life), its frames at 30 fps, its
+transition preset (`design/transitions.json`), its photos, its words and its clip. Every board also carries the four
+still formats in its own palette and type: `stories` (three 1080×1920 cards: tease, tease harder, reveal, each
+showing more of the product than the one before), `countdown` (1080×1920, the date they gave) and `feed` (1080×1350,
+the reveal).
 
 ## Make each board better than the draft
 
 Read each `storyboard.md`. Rewrite any line that does not sound like `taste.md` (their case, their length, no
-exclamation marks if they use none), rearrange the wall when another order reads better (`taste.json` `wall.order`, then `draft` again), fix a clip prompt that does not fit their taste. Keep the three boards different.
-Then:
+exclamation marks if they use none); keep the hype cut's opener their best hook word for word unless `said.hook`
+names another; fix a clip prompt that does not fit their taste or the product's world. Keep the three boards
+different. Then:
 
 ```
 python3 S/scripts/storyboard.py check && python3 S/scripts/storyboard.py sheets
 ```
 
-`check` refuses a board outside 15–30 s, a beat under 1.2 s, an unknown component or transition, a missing asset,
-a placeholder, a clip prompt without "no text", a tile or rank that is not one of the nine, or a wall or story
-card that does not carry all nine. `sheets` renders six frames per board with the real engine (about 25 s for all
-three).
+`check` refuses a board outside 15–30 s, a beat under 0.8 s, an unknown component or transition, a cut with no
+transition named, a missing asset, a placeholder, a clip prompt without "no text", a product beat without a still
+from the product's own assets, a board with no beat naming the product or no date beat, fewer than three stories,
+a countdown card that does not carry the date given, a missing feed post, or three boards that do not differ.
+`sheets` renders six frames per board with the real engine (about 25 s for all three).
 
 ## Look at the sheets
 
 Open each `build/storyboards/N/sheet.png` with the Read tool, then any frame that looks wrong full size. Fix text
-that collides, a tile cropped past its subject, colors that fight their photos, a wall where two neighbors read
-as one; run `check` and `sheets` again.
+that collides, a product still cropped past the product, colors that fight the product or their photos, a reveal
+that shows nothing new; run `check` and `sheets` again.
 
 ## Done when
 
-Three sheets that look like three different films, every one of them clearly theirs.
+Three sheets that look like three different launch films, every one of them clearly theirs and clearly the product.

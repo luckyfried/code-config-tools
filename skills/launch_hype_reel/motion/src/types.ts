@@ -44,26 +44,14 @@ export type Clip = {
   /** the clip's frame count; its frames are file without .mp4, then /0001.jpg onward */
   frames?: number;
   image: string | null;
-  status: 'generated' | 'their_reel' | 'substituted' | 'pending';
-};
-
-/** One of the nine: rank 1 is the most liked. */
-export type Tile = {
-  rank: number;
-  photo: string;
-  likes?: number | null;
-  comments?: number | null;
-  label?: string;
-  caption?: string;
-  kind?: string;
-  clip?: Clip | null;
+  status: 'generated' | 'their_footage' | 'substituted' | 'pending';
 };
 
 export type Transition = {preset: string; frames: number; direction?: string};
 
 export type Beat = {
   id: string;
-  kind: 'Opener' | 'ClipShot' | 'Countdown' | 'Grid';
+  kind: 'Hook' | 'Tease' | 'DateCard' | 'ClipShot';
   frames: number;
   transition?: Transition | null;
   treatment?: 'push' | 'parallax' | 'mask' | 'split';
@@ -82,11 +70,15 @@ export type Board = {
   format: {width: number; height: number; fps: number};
   system: System;
   beats: Beat[];
-  /** the best-nine image (1080x1080) */
-  wall?: Beat;
-  /** the story card (1080x1920) */
-  story?: Beat;
+  product: string;
+  launch: {date: string | null; label: string};
+  /** the three teaser stories (1080x1920): tease, tease harder, reveal */
+  stories?: Beat[];
+  /** the countdown card (1080x1920), carrying the date */
+  countdown?: Beat;
+  /** the feed post (1080x1350) */
+  feed?: Beat;
 };
 
 export type FilmProps = {board: Board};
-export type CardProps = {board: Board; beat: Beat; format: 'square' | 'story'};
+export type CardProps = {board: Board; beat: Beat; format: 'story' | 'feed'};

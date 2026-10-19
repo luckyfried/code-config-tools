@@ -4,14 +4,14 @@
 USAGE (from the workspace root):
     python3 S/scripts/stats.py
 
-Counts (posts, reels, stories, likes given, comments written, new followers; each null when the data lacks
-it), the best nine: the nine most-liked posts and reels of the year, ranked by likes, ties broken by comments,
-then by the more recent (by comments alone, or spread across the year, when the data has no likes per post; with
-fewer than nine posts and reels, their stories fill the wall, newest first), the likes of the tenth and the gap
-to it, the median post's likes, every month's activity with the busiest and the quietest, the people (accounts
-commented on and @mentioned most), the accounts liked most, and the person's caption register (lowercase,
-emoji, length, hashtags, sample captions) for writing copy in their voice. Every number a card shows comes
-from this file.
+Counts (posts, reels, stories, likes given, comments written, new followers; each null when the data lacks it),
+the audience's response: every post and reel scored by the comments and saves it drew (comments alone when the data
+has no saves; likes when it has neither), the nine that drew the most as "top", each with its hook (the caption's
+opening line) and the hook's style (question, confession, list or statement), the styles ranked by the mean
+response of their posts, the median post's response and likes, the posts that already mention the product, every
+month's activity, the people (accounts commented on and @mentioned most), the accounts liked most, and the
+person's caption register (lowercase, emoji, length, hashtags, sample captions) for writing copy in their voice.
+Every number the film, the cards or the brief show comes from this file.
 """
 import calendar
 import datetime as dt
@@ -33,6 +33,42 @@ def when(ts):
 def label(ts):
     d = when(ts)
     return f"{calendar.month_name[d.month]} {d.day}"
+
+
+HOOK_END = re.compile(r"(?<=[?!.:;])\s|\s[-\u2013\u2014]\s|\n")
+CONFESS = ("confession", "honestly", "i almost", "i never", "truth", "i have to admit", "not gonna lie", "can i be honest",
+           "real talk", "i've been", "ive been", "i was scared", "secret")
+ASK = ("would", "what", "which", "who", "how", "why", "do", "does", "did", "is", "are", "can", "could", "have", "ever",
+       "where", "when", "should", "will", "anyone")
+NUMBER = re.compile(r"^(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b")
+
+
+def hook_of(cap):
+    """The caption's opening line: up to its first sentence end, colon or line break, without hashtags or emoji."""
+    c = EMOJI_RE.sub("", re.sub(r"#\w+", "", cap or "")).strip()
+    h = next((c[:m.start()] for m in HOOK_END.finditer(c) if len(c[:m.start()].split()) >= 3), c)
+    return re.sub(r"\s+", " ", h).strip(" ,;.:")[:110]
+
+
+def style_of(hook):
+    h = (hook or "").lower().strip()
+    if not h:
+        return "statement"
+    if h.endswith("?") or h.split()[0] in ASK and "?" in h:
+        return "question"
+    if h.startswith(CONFESS) or any(w in h for w in ("confession", "in secret", "almost didn't")):
+        return "confession"
+    if NUMBER.match(h):
+        return "list"
+    return "statement"
+
+
+def names_product(text, product):
+    if not product or not text:
+        return False
+    t = re.sub(r"[^a-z0-9]+", " ", text.lower())
+    p = re.sub(r"[^a-z0-9]+", " ", product.lower()).strip()
+    return f" {p} " in f" {t} " or f" {p.replace(' ', '')} " in f" {t} "
 
 
 def main():
@@ -63,30 +99,39 @@ def main():
     if src == "photos":
         numbers = [("posts", counts["posts"], "photos")] + ([("reels", counts["reels"], "videos")] if counts["reels"] else [])
 
-    ranked_rows = [dict(p, kind="post") for p in posts if p["media"]] + [dict(r, kind="reel") for r in reels if r["media"]]
-    if any(p.get("likes") is not None for p in ranked_rows):
-        ranked = sorted(ranked_rows, key=lambda p: (-(p.get("likes") or 0), -(p.get("comments") or 0), -p["ts"]))
-        by = "likes"
-    elif any(p.get("comments") for p in ranked_rows):
-        ranked = sorted(ranked_rows, key=lambda p: (-(p.get("comments") or 0), -p["ts"]))
-        by = "comments"
+    rows = [dict(p, kind="post") for p in posts if p["media"]] + [dict(r, kind="reel") for r in reels if r["media"]]
+    saves = any(p.get("saves") is not None for p in rows)
+    comments = any(p.get("comments") is not None for p in rows)
+    if comments or saves:
+        by = "comments and saves" if saves and comments else "saves" if saves else "comments"
+        score = lambda p: (p.get("comments") or 0) + (p.get("saves") or 0)
     else:
-        rows = sorted(ranked_rows, key=lambda p: p["ts"])
-        step = max(1, len(rows) / 9)
-        ranked = [rows[int(i * step)] for i in range(min(9, len(rows)))]
-        by = "spread"
-    nine = ranked[:9]
-    if len(nine) < 9:
-        fill = sorted((dict(st, kind="story", caption="") for st in stories if st.get("media")), key=lambda r: -r["ts"])
-        nine += fill[:9 - len(nine)]
-    top = [{"rank": i + 1, "kind": p["kind"], "ts": p["ts"], "date": when(p["ts"]).date().isoformat(), "date_label": label(p["ts"]),
-            "month": when(p["ts"]).month, "likes": p.get("likes"), "comments": p.get("comments"), "caption": p.get("caption") or "",
-            "media": p["media"][0], "video": p["media"][0] if Path(p["media"][0]).suffix.lower() in (".mp4", ".mov", ".m4v") else None}
-           for i, p in enumerate(nine)]
-    tenth = ranked[9] if len(ranked) > 9 else None
-    like_counts = sorted(p["likes"] for p in ranked_rows if p.get("likes") is not None)
-    tenth_info = {"likes": tenth.get("likes"), "comments": tenth.get("comments"),
-                  "gap": (top[8]["likes"] - (tenth.get("likes") or 0)) if top[8:] and top[8]["likes"] is not None and tenth.get("likes") is not None else None} if tenth else None
+        by = "likes"
+        score = lambda p: p.get("likes") or 0
+    ranked = sorted(rows, key=lambda p: (-score(p), -(p.get("likes") or 0), -p["ts"]))
+    product = (d.get("launch") or {}).get("product") or ""
+    top = []
+    for i, p in enumerate(ranked[:9]):
+        cap = p.get("caption") or ""
+        h = hook_of(cap)
+        top.append({"rank": i + 1, "kind": p["kind"], "ts": p["ts"], "date": when(p["ts"]).date().isoformat(),
+                    "date_label": label(p["ts"]), "month": when(p["ts"]).month, "response": score(p),
+                    "likes": p.get("likes"), "comments": p.get("comments"), "saves": p.get("saves"), "caption": cap,
+                    "hook": h, "style": style_of(h), "mentions_product": names_product(cap, product),
+                    "media": p["media"][0], "video": p["media"][0] if Path(p["media"][0]).suffix.lower() in (".mp4", ".mov", ".m4v") else None})
+    resp = sorted(score(p) for p in rows)
+    like_counts = sorted(p["likes"] for p in rows if p.get("likes") is not None)
+    styles = {}
+    for p in rows:
+        styles.setdefault(style_of(hook_of(p.get("caption") or "")), []).append(score(p))
+    top_styles = {}
+    for t in top:
+        top_styles.setdefault(t["style"], []).append(t["response"])
+    hook_styles = sorted(({"style": k, "in_top": len(v), "mean_response": round(sum(v) / len(v)),
+                           "posts": len(styles.get(k, [])), "mean_response_all": round(sum(styles[k]) / len(styles[k]))}
+                          for k, v in top_styles.items()), key=lambda r: (-r["in_top"] * r["mean_response"], -r["mean_response"]))
+    about = [{"date": when(p["ts"]).date().isoformat(), "kind": p["kind"], "response": score(p), "likes": p.get("likes"),
+              "caption": p.get("caption") or "", "media": p["media"][0]} for p in ranked if names_product(p.get("caption"), product)]
 
     last_month = when(max([p["ts"] for p in posts + reels + stories] or [dt.datetime(year, 12, 31).timestamp()])).month
     months = []
@@ -130,14 +175,17 @@ def main():
     }
     out = {"handle": d["handle"], "name": d.get("name"), "year": year, "source": src, "range": d["range"],
            "counts": counts, "numbers": [{"key": k, "value": v, "label": lab} for k, v, lab in numbers],
-           "top_nine": top, "top_ranked_by": by, "tenth": tenth_info,
+           "top": top, "ranked_by": by, "hook_styles": hook_styles, "product_posts": about,
+           "median_response": resp[len(resp) // 2] if resp else None,
            "median_likes": like_counts[len(like_counts) // 2] if like_counts else None, "months": months, "busiest": busiest, "quietest": quietest,
            "people": people[:5], "loved": loved, "register": register}
     _env.write_json("build/stats.json", out)
     print(f"@{d['handle']} {year}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
-    print("best nine (by %s): " % by + "; ".join(f"{t['rank']}. {t['date_label']} {t['kind']} {t['likes'] if t['likes'] is not None else ''}" for t in top))
-    if tenth_info:
-        print(f"tenth: {tenth_info['likes']} likes, {tenth_info['gap']} below the ninth")
+    print(f"response (by {by}), median {out['median_response']}; the hooks that drew the most:")
+    for t in top:
+        print(f"  {t['rank']}. {t['response']:>4} {t['style']:<10} {t['hook']}")
+    print("hook styles: " + ", ".join(f"{h['style']} {h['in_top']} in the top, mean {h['mean_response']}" for h in hook_styles))
+    print(f"{len(about)} posts already mention {product or 'the product'}")
     if busiest:
         print(f"busiest {busiest['name']} ({busiest['posts']} posts), quietest {quietest['name']} ({quietest['posts']} posts)")
     print("people: " + ", ".join(f"@{p['account']} {p['total']}" for p in people[:5]))

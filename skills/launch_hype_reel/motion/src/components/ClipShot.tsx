@@ -2,12 +2,12 @@ import React from 'react';
 import {AbsoluteFill, Img, random, useCurrentFrame} from 'remotion';
 import {src, useMotion, useSys} from '../system';
 import {Headline, Kicker, Line, SafeBox} from '../text';
-import {Photo, RETRIES, Scrim} from '../photo';
+import {LivePhoto, Photo, RETRIES, Scrim} from '../photo';
 import {Leaks} from '../texture';
 import type {Beat, Clip} from '../types';
 
 /**
- * A still of theirs brought to life: the photo split into a far plane and a near plane that move at
+ * A still brought to life: the photo split into a far plane and a near plane that move at
  * different speeds, a breathing light leak and drifting dust. It stands in for any clip that did not arrive.
  */
 export const StillToLife: React.FC<{file: string; seed: string}> = ({file, seed}) => {
@@ -67,7 +67,7 @@ export const ClipShot: React.FC<{beat: Beat}> = ({beat}) => {
   const {tween} = useMotion();
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
-      {beat.clip ? <ClipLayer clip={beat.clip} /> : <StillToLife file={beat.photos?.[0] ?? ''} seed={beat.id} />}
+      {beat.clip ? <ClipLayer clip={beat.clip} /> : <LivePhoto file={beat.photos?.[0] ?? ''} treatment="push" intensity={1.4} />}
       {t.headline || t.kicker ? <Scrim side="bottom" strength={0.7} /> : null}
       {chapter ? (
         <SafeBox name="chapter" justify="center" align="center">

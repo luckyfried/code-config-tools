@@ -2,7 +2,7 @@
 """Movement 6: the measurable checks and the gate that refuses delivery.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/qa.py check     # the film, the best-nine image and the story card only (run before the critics watch the cut)
+    python3 S/scripts/qa.py check     # the film and the four still formats only (run before the critics watch the cut)
     python3 S/scripts/qa.py gate      # everything below; exit 0 only when every check passes
 
 The gate refuses:
@@ -12,16 +12,22 @@ The gate refuses:
   frozen    a frozen stretch of 1.5 s or more (ffmpeg freezedetect): nothing on screen may stand still that long
   safe      text that left its safe box or was cut off (SAFE_BREACH in build/render-report.json), a font that did
             not load, or a render job that failed
-  text      a placeholder string anywhere in the film's words, the caption, the brief or the review page
-  wall      out/best-nine.png is not 1080x1080, build/wall.json does not name nine distinct photos, or the image's
-            nine cells are not nine different pictures (each cell's center, compared with every other)
-  story     out/story.png is not 1080x1920
-  research  build/taste.md (you are / you like / your style / your voice / avoid) or build/taste.json is missing
+  text      a placeholder string anywhere in the film's words, the captions, the brief or the review page
+  stories   out/story-1.png, story-2.png and story-3.png are not all 1080x1920, or two of them are the same picture
+            (tease, tease harder and reveal must each show more than the one before)
+  countdown out/countdown.png is not 1080x1920
+  feed      out/feed.png is not 1080x1350
+  date      the countdown card's beat does not carry the date the person gave (build/library.json launch.date) and
+            its label, or the film has no date beat carrying it
+  product   a product beat (film or card) shows a picture that is not from the product's own assets, when it has any
+  captions  out/captions.md lacks a section for the film, each story, the countdown or the feed post, or a section
+            does not name the product
+  research  build/taste.md (you are / you like / your style / your voice / the launch / avoid) or build/taste.json is missing
   boards    three storyboards, each with storyboard.md, storyboard.json and six style-sheet frames
   vote      build/vote.md and build/winner.json are missing
   clips     the film's storyboard lists clips and build/clips.json does not account for every one
   critic    the latest cut round in build/critic/ is not for this film, or scores below 4 with the one fix unspent
-  deliver   out/caption.md, out/review.html or out/brief.md is missing, or the caption is not in their register
+  deliver   out/captions.md, out/review.html or out/brief.md is missing, or the captions are not in their register
 """
 import argparse
 import hashlib
@@ -33,11 +39,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import grade  # noqa: E402
 
 PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|NaN|\bNone\b|@handle\b|your_handle", re.I)
 FILM = Path("out/film.mp4")
-WALL = Path("out/best-nine.png")
-STORY = Path("out/story.png")
+STORIES = [Path(f"out/story-{i}.png") for i in (1, 2, 3)]
+COUNTDOWN = Path("out/countdown.png")
+FEED = Path("out/feed.png")
+CAPTIONS = Path("out/captions.md")
+SECTIONS = ("film", "story 1", "story 2", "story 3", "countdown", "feed post")
 LENGTH = (15, 30)
 
 
@@ -105,35 +115,72 @@ def film_checks():
     bad = [f["text"][:160] for f in rep.get("findings", []) if f["text"].startswith(("SAFE_BREACH", "FONT_ERROR", "RENDER_ERROR", "UNKNOWN_KIND"))]
     check("safe", rep and not rep.get("failed") and not bad, f"{rep.get('jobs', 0)} render jobs, {rep.get('failed', '?')} failed, "
           f"{len(bad)} findings" + (f": {bad[0]}" if bad else ""))
-    check("wall", *wall_check())
-    sz = png_size(STORY) if STORY.exists() else None
-    check("story", sz == (1080, 1920), f"out/story.png {'at %dx%d' % sz if sz else 'is missing'}")
+    check("stories", *stories_check())
+    for name, f, want in (("countdown", COUNTDOWN, (1080, 1920)), ("feed", FEED, (1080, 1350))):
+        sz = png_size(f) if f.exists() else None
+        check(name, sz == want, f"{f} {'at %dx%d' % sz if sz else 'is missing'}")
     return res
 
 
-def wall_check():
-    """The best-nine image: 1080x1080, nine distinct sources, and nine cells that are nine different pictures."""
-    if not WALL.exists():
-        return False, "out/best-nine.png is missing"
-    sz = png_size(WALL)
-    slots = (_env.read_json("build/wall.json") or {}).get("slots") or []
-    srcs = [x.get("photo") for x in slots if x.get("photo")]
+def stories_check():
+    """The three teaser stories: 1080x1920 each, and three different pictures."""
+    miss = [str(f) for f in STORIES if not f.exists()]
+    if miss:
+        return False, f"missing {miss}"
+    sizes = [png_size(f) for f in STORIES]
     _env.need("PIL")
-    from PIL import Image, ImageStat
-    im = Image.open(WALL).convert("L")
-    w, h = im.size
-    cells, flat = [], 0
-    for i in range(9):
-        x, y = (i % 3) * w / 3, (i // 3) * h / 3
-        c = im.crop((int(x + w / 6 - w / 16), int(y + h / 6 - h / 16), int(x + w / 6 + w / 16), int(y + h / 6 + h / 16))).resize((16, 16), Image.BILINEAR)
-        if ImageStat.Stat(c).stddev[0] <= 4:
-            flat += 1
-        cells.append(list(c.tobytes()))
-    diffs = [sum(abs(p - q) for p, q in zip(cells[i], cells[j])) / 256 for i in range(9) for j in range(i + 1, 9)]
-    least = min(diffs)
-    ok = sz == (1080, 1080) and len(srcs) == 9 and len(set(srcs)) == 9 and flat == 0 and least > 6
-    return ok, (f"out/best-nine.png at {sz[0]}x{sz[1]}, {len(set(srcs))} distinct photos in build/wall.json, "
-                f"{flat} flat cells, least difference between two cells {least:.1f}")
+    from PIL import Image
+    small = [list(Image.open(f).convert("L").resize((24, 42), Image.BILINEAR).tobytes()) for f in STORIES]
+    diffs = [sum(abs(p - q) for p, q in zip(small[i], small[j])) / len(small[i]) for i in range(3) for j in range(i + 1, 3)]
+    ok = all(sz == (1080, 1920) for sz in sizes) and min(diffs) > 4
+    return ok, f"sizes {['%dx%d' % sz for sz in sizes]}, least difference between two stories {min(diffs):.1f}"
+
+
+def date_check(film, launch):
+    want = launch.get("date")
+    if not want:
+        return True, "no date was given; the cards say soon"
+    label = str(launch.get("date_label") or "").lower()
+    cd = film.get("countdown") or {}
+    data, text = cd.get("data") or {}, " ".join(str(v) for v in (cd.get("text") or {}).values()).lower()
+    beat = [b for b in film.get("beats", []) if b["kind"] == "DateCard" and (b.get("data") or {}).get("date") == want]
+    ok = data.get("date") == want and label in text and beat
+    return ok, (f"countdown card carries {data.get('date')} ({'label in its words' if label in text else 'label missing'}), "
+                f"want {want}; {len(beat)} film date beats carry it")
+
+
+def product_check(film):
+    picks = _env.read_json("build/picks.json") or {}
+    own = {grade.graded_name(e["photo"]) for e in picks.get("product") or [] if e.get("own")}
+    own |= {grade.graded_name(e["poster"]) for e in picks.get("footage") or []}
+    if not own:
+        return True, "the product has no assets of its own; product beats use their feed"
+    beats = [*film.get("beats", []), *(film.get("stories") or []), film.get("countdown") or {}, film.get("feed") or {}]
+    prod = [b for b in beats if (b.get("data") or {}).get("product")]
+    bad = [b["id"] for b in prod if not set(b.get("photos") or []) <= own]
+    return not bad and prod, f"{len(prod)} product beats, {len(prod) - len(bad)} on the product's own assets" + (f"; not: {bad}" if bad else "")
+
+
+def sections(text):
+    out, cur = {}, None
+    for ln in text.splitlines():
+        m = re.match(r"^##\s+(.+?)\s*$", ln)
+        if m:
+            cur = m.group(1).strip().lower()
+            out[cur] = ""
+        elif cur:
+            out[cur] += ln + "\n"
+    return out
+
+
+def captions_check(product):
+    if not CAPTIONS.exists():
+        return False, "out/captions.md is missing"
+    sec = sections(CAPTIONS.read_text())
+    miss = [k for k in SECTIONS if k not in sec]
+    unnamed = [k for k in SECTIONS if k in sec and product.lower() not in sec[k].lower()]
+    return not miss and not unnamed and product, (f"{len(sec)} sections" + (f"; missing {miss}" if miss else "") +
+                                                 (f"; not naming {product}: {unnamed}" if unnamed else f"; every one names {product}"))
 
 
 def words_in(obj, acc):
@@ -154,14 +201,20 @@ def gate_checks():
     def check(name, ok, detail):
         res.append((name, bool(ok), detail))
     film = _env.read_json("build/film.json") or {}
-    texts = words_in({"beats": film.get("beats"), "wall": film.get("wall"), "story": film.get("story")}, [])
-    for f in ("out/caption.md", "out/brief.md", "out/review.html"):
+    texts = words_in({"beats": film.get("beats"), "stories": film.get("stories"), "countdown": film.get("countdown"),
+                      "feed": film.get("feed")}, [])
+    for f in ("out/captions.md", "out/brief.md", "out/review.html"):
         if Path(f).exists():
             texts.append(Path(f).read_text())
     hits = sorted({m.group(0) for t in texts for m in PLACEHOLDER.finditer(t)})
     check("text", film and not hits, f"{len(texts)} texts scanned" + (f"; placeholders: {hits}" if hits else ""))
     tm = Path("build/taste.md").read_text().lower() if Path("build/taste.md").exists() else ""
-    heads = [h for h in ("you are", "you like", "your style", "your voice", "avoid") if h not in tm]
+    heads = [h for h in ("you are", "you like", "your style", "your voice", "the launch", "avoid") if h not in tm]
+    launch = (_env.read_json("build/library.json") or {}).get("launch") or {}
+    product = launch.get("product") or film.get("product") or ""
+    check("date", *date_check(film, launch))
+    check("product", *product_check(film))
+    check("captions", *captions_check(product))
     check("research", tm and not heads and Path("build/taste.json").exists(),
           "taste.md and taste.json" + (f"; taste.md is missing: {heads}" if heads else ""))
     boards = sorted(Path("build/storyboards").glob("*/storyboard.json"))
@@ -182,13 +235,15 @@ def gate_checks():
         done = sc and all(isinstance(x, int) for x in sc)
         ok = same and done and (min(sc) >= 4 or len(rounds) >= 2)
         check("critic", ok, f"round {len(rounds)}, lowest {min(sc) if done else '?'}" + ("" if same else "; the round is not for the current out/film.mp4"))
-    cap = Path("out/caption.md").read_text() if Path("out/caption.md").exists() else ""
+    sec = sections(CAPTIONS.read_text()) if CAPTIONS.exists() else {}
     lower = (_env.read_json("build/taste.json") or {}).get("register", {}).get("lowercase")
-    body = re.sub(r"#\w+", "", cap)
-    tags = re.findall(r"#\w+", cap)
-    reg = cap and (not lower or body == body.lower()) and 1 <= len(tags) <= 10
+    name = re.compile(re.escape(product), re.I) if product else None
+    bodies = [re.sub(r"#\w+", "", name.sub("", v) if name else v) for v in sec.values()]
+    tags = [len(re.findall(r"#\w+", sec.get(k, ""))) for k in ("film", "feed post")]
+    reg = sec and (not lower or all(b == b.lower() for b in bodies)) and all(1 <= n <= 10 for n in tags)
     check("deliver", reg and Path("out/review.html").exists() and Path("out/brief.md").exists(),
-          f"caption {len(cap.split())} words, {len(tags)} hashtags" + (", lowercase like theirs" if lower else "") +
+          f"captions {sum(len(v.split()) for v in sec.values())} words, hashtags film {tags[0]} feed {tags[1]}" +
+          (", lowercase like theirs" if lower else "") +
           ("" if Path("out/review.html").exists() else "; review.html missing") + ("" if Path("out/brief.md").exists() else "; brief.md missing"))
     return res
 
