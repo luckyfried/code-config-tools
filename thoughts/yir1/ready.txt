@@ -1,9 +1,26 @@
 yir1 ready: skills/ig_year_in_review (second writing), branch ig-year-in-review
 
 BRANCH TIP
-  kit code: 87aba87 "Render clips from retrying frame sequences, keep captions unique per board, fix the dip transition"
+  kit code: fb0200a "Show the person's photos whole on every board"
   this file is committed on top of it (see git log -1); not pushed, no PR.
-  commits on the branch over 731b89a: 27f3c8b, bf4ebcb, 0a5c9f2, 87aba87, and the ready commit.
+  commits on the branch over 731b89a: 27f3c8b, bf4ebcb, 0a5c9f2, 87aba87, cdddcce (first ready), fb0200a, and this
+  ready commit.
+
+REVISION ROUND (by eye, fb0200a)
+  board 1 (editorial): the paper wash over the whole frame is gone; type sits on a paper card behind the text block
+    only, and the print grows to 88 percent of the width (62 percent of the height). Opener, March, June, September
+    and the top three show the photo whole. The 120-posts beat and the busiest grid are unchanged.
+  board 3 (documentary): the opener's black bands are gone; the busiest wall runs the full frame (it stopped at 60
+    percent). Every board 3 beat now covers 1080x1920.
+  blind-with re-rendered from its existing storyboard with the four changed motion files copied into its kit copy;
+    taste, vote and caption files untouched. Sheets: storyboard.py sheets, 18 of 18 jobs in 15.1 s, 0 findings.
+    Film: film.py render, 14 of 14 jobs in 54.7 s, 0 failed, 0 retries. Frames re-extracted to frames/ and
+    build/frames/, both sheets retiled, out/storyboards/1-3.png refreshed from the new sheets.
+  critic: the gate refuses a cut round scored on an older film, so vote.py cut opened round 2 for the new film;
+    build/critic/cut-2.json carries round 1's scores unchanged, the motion designer's paragraph rewritten for the
+    card, and 'fixed' naming the change. Round 2 is the builder's judgment by eye, not the blind agent's.
+    vote.py verdict: SHIP: round 2, every score is 4 or more.
+  qa.py gate (blind-with, after the revision): GATE GREEN (13 of 13, critic round 2 lowest 4, safe 14 jobs 0 findings)
 
 FILES ADDED (69, all under skills/ig_year_in_review/)
   SKILL.md
