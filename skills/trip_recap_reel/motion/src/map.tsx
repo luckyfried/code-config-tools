@@ -69,9 +69,10 @@ type Spot = {x: number; y: number; anchor: 'start' | 'middle' | 'end'};
 
 /**
  * Where each place's name sits: beside its first dot, on the first side (right, left, above, below) whose box
- * touches no name already placed and no other dot, so two places a few kilometers apart never print over each other.
+ * touches no name already placed, no other dot and no part of the route line, so two places a few kilometers apart
+ * never print over each other or over the line. When every side touches the line, the side crossing it least wins.
  */
-const placeLabels = (points: RoutePoint[], xy: XY[], box: Box, size: number, stroke: number): (Spot | null)[] => {
+const placeLabels = (points: RoutePoint[], xy: XY[], path: XY[], box: Box, size: number, stroke: number): (Spot | null)[] => {
   const taken: [number, number, number, number][] = [];
   const named = new Set<string>();
   const gap = stroke * 2.6;
@@ -79,6 +80,8 @@ const placeLabels = (points: RoutePoint[], xy: XY[], box: Box, size: number, str
     taken.some((t) => r[0] < t[2] && r[2] > t[0] && r[1] < t[3] && r[3] > t[1]) ||
     xy.some((q, j) => j !== self && (points[j].place ?? '') !== (points[self].place ?? '') &&
       q[0] > r[0] - stroke && q[0] < r[2] + stroke && q[1] > r[1] - stroke && q[1] < r[3] + stroke);
+  const crosses = (r: [number, number, number, number]) =>
+    path.filter((q) => q[0] > r[0] - stroke && q[0] < r[2] + stroke && q[1] > r[1] - stroke && q[1] < r[3] + stroke).length;
   return xy.map((p, i) => {
     const place = points[i].place ?? '';
     if (!place || named.has(place)) return null;
@@ -93,7 +96,8 @@ const placeLabels = (points: RoutePoint[], xy: XY[], box: Box, size: number, str
       [{x: p[0], y: p[1] + gap + size * 0.8, anchor: 'middle'}, [p[0] - w / 2, p[1] + gap, p[0] + w / 2, p[1] + gap + h]],
     ];
     if (!right) sides.unshift(sides.splice(1, 1)[0]);
-    const pick = sides.find(([, r]) => !hits(r, i)) ?? sides[0];
+    const free = sides.filter(([, r]) => !hits(r, i));
+    const pick = (free.length ? free : sides).map((sd) => ({sd, n: crosses(sd[1])})).reduce((a, b) => (b.n < a.n ? b : a)).sd;
     taken.push(pick[1]);
     return pick[0];
   });
@@ -130,7 +134,7 @@ export const RouteMap: React.FC<{
   const grid: React.ReactNode[] = [];
   for (let x = box.x; x <= box.x + box.w + 1; x += step) grid.push(<line key={`gx${x}`} x1={x} y1={box.y} x2={x} y2={box.y + box.h} />);
   for (let y = box.y; y <= box.y + box.h + 1; y += step) grid.push(<line key={`gy${y}`} x1={box.x} y1={y} x2={box.x + box.w} y2={y} />);
-  const spots = placeLabels(points, xy, box, size, stroke);
+  const spots = placeLabels(points, xy, s.pts, box, size, stroke);
   const marks = xy.map((p, i) => {
     const reached = s.legEnd[i] <= L + 0.5;
     const place = points[i].place ?? '';
