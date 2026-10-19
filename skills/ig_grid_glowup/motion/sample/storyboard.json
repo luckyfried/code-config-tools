@@ -1,0 +1,539 @@
+{
+ "id": "3",
+ "look": "alternate",
+ "name": "photo and type",
+ "handle": "sample.person",
+ "year": 2026,
+ "format": {
+  "width": 1080,
+  "height": 1920,
+  "fps": 30
+ },
+ "system": {
+  "direction": "documentary",
+  "display": {
+   "family": "Space Grotesk",
+   "file": "fonts/SpaceGrotesk/SpaceGrotesk[wght].ttf",
+   "weight": 600,
+   "tracking": -0.03,
+   "case": "none",
+   "lineHeight": 0.95
+  },
+  "text": {
+   "family": "JetBrains Mono",
+   "file": "fonts/JetBrainsMono/JetBrainsMono[wght].ttf",
+   "weight": 500,
+   "tracking": 0.0,
+   "case": "none",
+   "lineHeight": 1.3
+  },
+  "scale": {
+   "hero": 250,
+   "h1": 136,
+   "h2": 96,
+   "h3": 58,
+   "body": 36,
+   "label": 26
+  },
+  "colors": {
+   "bg": "#190f0c",
+   "ink": "#f4eee2",
+   "accent": "#e0a030",
+   "accent2": "#d9902f",
+   "muted": "#918a82",
+   "paper": "#eee3cf",
+   "swatches": [
+    {
+     "hex": "#9B7C5C",
+     "name": "taupe"
+    },
+    {
+     "hex": "#7A5C3F",
+     "name": "olive"
+    },
+    {
+     "hex": "#524027",
+     "name": "chocolate"
+    },
+    {
+     "hex": "#6C442B",
+     "name": "warm chocolate"
+    },
+    {
+     "hex": "#523327",
+     "name": "deep chocolate"
+    }
+   ]
+  },
+  "texture": {
+   "grain": 0.16,
+   "vignette": 0.32,
+   "leaks": true
+  },
+  "ease": {
+   "enter": [
+    0.33,
+    0,
+    0.15,
+    1
+   ],
+   "exit": [
+    0.6,
+    0,
+    0.8,
+    0.2
+   ],
+   "move": [
+    0.37,
+    0,
+    0.63,
+    1
+   ],
+   "spring": {
+    "damping": 26,
+    "stiffness": 80,
+    "mass": 1
+   },
+   "stagger": 6
+  },
+  "safe": {
+   "reel": {
+    "top": 270,
+    "bottom": 670,
+    "left": 72,
+    "right": 150
+   },
+   "post": {
+    "top": 96,
+    "bottom": 96,
+    "left": 96,
+    "right": 96
+   }
+  }
+ },
+ "posts": [
+  {
+   "n": 9,
+   "kind": "photo",
+   "photo": "graded/sample-1.jpg",
+   "focal": "45% 53%",
+   "caption": "the market in porto is my whole personality"
+  },
+  {
+   "n": 8,
+   "kind": "type",
+   "photo": null,
+   "bg": "#190f0c",
+   "text": {
+    "kicker": null,
+    "headline": "the light did all the work here"
+   },
+   "caption": "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"
+  },
+  {
+   "n": 7,
+   "kind": "photo",
+   "photo": "graded/sample-2.jpg",
+   "focal": "50% 54%",
+   "caption": "cold hands, warm coffee"
+  },
+  {
+   "n": 6,
+   "kind": "type",
+   "photo": null,
+   "bg": "#eee3cf",
+   "text": {
+    "kicker": null,
+    "headline": "forty seconds of the oaxaca market at opening"
+   },
+   "caption": "forty seconds of the oaxaca market at opening time. you asked for the sound of it"
+  },
+  {
+   "n": 5,
+   "kind": "photo",
+   "photo": "graded/sample-3.jpg",
+   "focal": "49% 55%",
+   "caption": "took the long way through porto"
+  },
+  {
+   "n": 4,
+   "kind": "type",
+   "photo": null,
+   "bg": "#eee3cf",
+   "text": {
+    "kicker": null,
+    "headline": "first coffee of the year in lisbon"
+   },
+   "caption": "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"
+  },
+  {
+   "n": 3,
+   "kind": "photo",
+   "photo": "graded/sample-4.jpg",
+   "focal": "50% 52%",
+   "caption": "found this little place by accident"
+  },
+  {
+   "n": 2,
+   "kind": "type",
+   "photo": null,
+   "bg": "#190f0c",
+   "text": {
+    "kicker": null,
+    "headline": "every door in marrakech is terracotta"
+   },
+   "caption": "every door in marrakech is terracotta and i will not be taking questions"
+  },
+  {
+   "n": 1,
+   "kind": "photo",
+   "photo": "graded/sample-5.jpg",
+   "focal": "49% 50%",
+   "caption": "can't stop taking pictures of doorways #slowtravel #shotonfilm #35mm"
+  }
+ ],
+ "grid": [
+  {
+   "pos": 0,
+   "photo": "graded/sample-1.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 1,
+   "photo": "graded/sample-4.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 2,
+   "photo": "graded/sample-7.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 3,
+   "photo": "graded/sample-10.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 4,
+   "photo": "graded/sample-3.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 5,
+   "photo": "graded/sample-6.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 6,
+   "photo": "graded/sample-9.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 7,
+   "photo": "graded/sample-2.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 8,
+   "photo": "graded/sample-5.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 9,
+   "photo": "graded/sample-8.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 10,
+   "photo": "graded/sample-1.jpg",
+   "kind": "reel"
+  },
+  {
+   "pos": 11,
+   "photo": "graded/sample-4.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 12,
+   "photo": "graded/sample-7.jpg",
+   "kind": "reel"
+  },
+  {
+   "pos": 13,
+   "photo": "graded/sample-10.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 14,
+   "photo": "graded/sample-3.jpg",
+   "kind": "reel"
+  },
+  {
+   "pos": 15,
+   "photo": "graded/sample-6.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 16,
+   "photo": "graded/sample-9.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 17,
+   "photo": "graded/sample-2.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 18,
+   "photo": "graded/sample-5.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 19,
+   "photo": "graded/sample-8.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 20,
+   "photo": "graded/sample-1.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 21,
+   "photo": "graded/sample-4.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 22,
+   "photo": "graded/sample-7.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 23,
+   "photo": "graded/sample-10.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 24,
+   "photo": "graded/sample-3.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 25,
+   "photo": "graded/sample-6.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 26,
+   "photo": "graded/sample-9.jpg",
+   "kind": "reel"
+  },
+  {
+   "pos": 27,
+   "photo": "graded/sample-2.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 28,
+   "photo": "graded/sample-5.jpg",
+   "kind": "post"
+  },
+  {
+   "pos": 29,
+   "photo": "graded/sample-8.jpg",
+   "kind": "post"
+  }
+ ],
+ "profile": {
+  "name": "Sample Person",
+  "bio": "film photos of food and the places it comes from",
+  "posts": 154,
+  "followers": 412,
+  "following": 188,
+  "avatar": "graded/sample-2.jpg"
+ },
+ "beats": [
+  {
+   "id": "opener",
+   "kind": "Opener",
+   "frames": 64,
+   "transition": null,
+   "clip": {
+    "id": "01",
+    "file": null,
+    "frames": 0,
+    "image": "graded/sample-1.jpg",
+    "status": "substituted"
+   },
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "data": {
+    "word": "grid"
+   },
+   "text": {
+    "kicker": "@sample.person",
+    "headline": "your grid, glowed up",
+    "line": "the next nine posts"
+   }
+  },
+  {
+   "id": "before",
+   "kind": "Feed",
+   "frames": 115,
+   "transition": {
+    "preset": "iris",
+    "frames": 15
+   },
+   "data": {
+    "mode": "before",
+    "callouts": [
+     {
+      "positions": [
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "label": "off-palette run"
+     },
+     {
+      "positions": [
+       11,
+       23
+      ],
+      "label": "screenshots"
+     },
+     {
+      "positions": [
+       13,
+       16,
+       18,
+       19,
+       20,
+       21,
+       24
+      ],
+      "label": "busy beside busy"
+     }
+    ]
+   },
+   "text": {
+    "kicker": "your grid now",
+    "headline": "5 things pull it apart"
+   },
+   "photos": []
+  },
+  {
+   "id": "reveal",
+   "kind": "ClipShot",
+   "frames": 77,
+   "transition": {
+    "preset": "wipe",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "clip": {
+    "id": "02",
+    "file": null,
+    "frames": 0,
+    "image": "graded/sample-1.jpg",
+    "status": "substituted"
+   },
+   "photos": [
+    "graded/sample-1.jpg"
+   ],
+   "text": {
+    "kicker": "the next nine",
+    "headline": "photo and type"
+   }
+  },
+  {
+   "id": "after",
+   "kind": "Feed",
+   "frames": 134,
+   "transition": {
+    "preset": "match",
+    "frames": 15
+   },
+   "data": {
+    "mode": "after",
+    "weights": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     3
+    ],
+    "cuts": [
+     11,
+     22,
+     34,
+     45,
+     56,
+     67,
+     78,
+     89,
+     100
+    ]
+   },
+   "text": {
+    "kicker": "the next nine",
+    "headline": "photo and type",
+    "line": "a photo, then your words"
+   },
+   "photos": []
+  },
+  {
+   "id": "posts",
+   "kind": "Feed",
+   "frames": 77,
+   "transition": {
+    "preset": "slide",
+    "frames": 15,
+    "direction": "from-right"
+   },
+   "data": {
+    "mode": "posts",
+    "show": [
+     9,
+     5,
+     1
+    ],
+    "weights": [
+     1,
+     1,
+     1
+    ],
+    "cuts": [
+     26,
+     51
+    ]
+   },
+   "photos": []
+  },
+  {
+   "id": "end",
+   "kind": "Feed",
+   "frames": 58,
+   "transition": {
+    "preset": "fade",
+    "frames": 15
+   },
+   "data": {
+    "mode": "end"
+   },
+   "text": {
+    "kicker": "@sample.person",
+    "headline": "post them in this order"
+   },
+   "photos": []
+  }
+ ]
+}
