@@ -1,4 +1,4 @@
-"""Shared helpers for the best-nine scripts (stdlib only).
+"""Shared helpers for the birthday tribute scripts (stdlib only).
 
 - SKILL: this skill's folder, resolved from this file (no machine paths).
 - tools(): runs scripts/setup.py once per process and returns its JSON (python, ffmpeg, ffprobe, node, motion, engine).
@@ -56,12 +56,12 @@ def need(*modules):
             missing.append(m)
     if not missing:
         return
-    if os.environ.get("BN_REEXEC") == "1":
+    if os.environ.get("BT_REEXEC") == "1":
         sys.exit(f"python modules {missing} are still missing. Run: python3 {SKILL}/scripts/setup.py")
     py = tools().get("python")
     if not py or not Path(py).exists() or os.path.abspath(py) == os.path.abspath(sys.executable):
         sys.exit(f"Missing python modules {missing}. Run: python3 {SKILL}/scripts/setup.py")
-    env = dict(os.environ, BN_REEXEC="1")
+    env = dict(os.environ, BT_REEXEC="1")
     os.execve(py, [py, sys.argv[0], *sys.argv[1:]], env)
 
 

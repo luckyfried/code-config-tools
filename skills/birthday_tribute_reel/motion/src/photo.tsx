@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Img} from 'remotion';
+import {AbsoluteFill, Img, useVideoConfig} from 'remotion';
 import {hash, src, useMotion, useSys} from './system';
 
 /** Image requests retry with backoff (1 s, 2 s, 4 s ...), so a dropped request costs a pause, never the render. */
@@ -29,6 +29,7 @@ export const LivePhoto: React.FC<{
 }> = ({file, second, treatment = 'push', delay = 0, intensity = 1}) => {
   const {system} = useSys();
   const {drift, tween, pop} = useMotion();
+  const {width: W, height: H} = useVideoConfig();
   const h = hash(file);
   const dirX = h > 0.5 ? 1 : -1;
   const push = drift(1.06, 1.06 + 0.12 * intensity);
@@ -45,7 +46,7 @@ export const LivePhoto: React.FC<{
         <AbsoluteFill style={{justifyContent: editorial ? 'flex-start' : 'center', alignItems: 'center', paddingTop: editorial ? '7%' : 0}}>
           <div
             style={{
-              width: editorial ? '88%' : '78%',
+              width: Math.min(W * (editorial ? 0.88 : 0.78), H * (editorial ? 0.7 : 0.78) * 0.8),
               aspectRatio: '4 / 5',
               overflow: 'hidden',
               boxShadow: '0 40px 90px rgba(0,0,0,0.45)',

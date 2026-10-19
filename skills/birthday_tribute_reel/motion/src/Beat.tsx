@@ -1,11 +1,13 @@
 import React from 'react';
 import {ClipShot} from './components/ClipShot';
-import {Countdown} from './components/Countdown';
-import {Grid} from './components/Grid';
+import {Closer} from './components/Closer';
+import {Exchange} from './components/Exchange';
+import {KineticType} from './components/KineticType';
 import {Opener} from './components/Opener';
+import {PhotoLive} from './components/PhotoLive';
 import type {Beat} from './types';
 
-const KINDS = {Opener, ClipShot, Countdown, Grid};
+const KINDS = {Opener, ClipShot, PhotoLive, KineticType, Exchange, Closer};
 
 export const BeatView: React.FC<{beat: Beat}> = ({beat}) => {
   const C = KINDS[beat.kind];

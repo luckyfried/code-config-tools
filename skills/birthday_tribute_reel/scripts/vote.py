@@ -8,8 +8,8 @@ USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/vote.py verdict    # SHIP when every score of the latest round is 4 or more, else the worst thing
 
 The panel (S/critic/critic.md has each critic's brief): a motion designer (craft, pacing, type, transitions), an
-editor (story, emotion, the ending) and the person, modeled from build/taste.md (is this unmistakably me; would I
-post it). Each scores every storyboard 1-5 on the seven criteria below and writes one paragraph per board.
+editor (story, emotion, the ending) and the person, modeled from build/taste.md (is this unmistakably us; would I
+send it to them). Each scores every storyboard 1-5 on the seven criteria below and writes one paragraph per board.
 The finished cut is scored by the motion designer and the person on the same criteria.
 """
 import argparse
@@ -22,12 +22,12 @@ import _env  # noqa: E402
 
 CRITERIA = {
     "professional": "it looks like a professional motion designer made it",
-    "them": "it is unmistakably them (their photos carry it, their colors, their voice)",
+    "them": "it is unmistakably the two of them (their photos together, the colors they share, their words to each other)",
     "pacing": "the pacing holds attention to the end",
     "type": "type is a system, not a default",
     "transitions": "every transition is intentional",
     "music": "the music and the cuts agree",
-    "ending": "the ending makes them want to post it",
+    "ending": "the ending makes the person want to send it to the one it is for",
 }
 PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "person": "the person (from taste.md)"}
 CUT_PANEL = {"motion_designer": "the motion designer", "person": "the person (from taste.md)"}

@@ -8,14 +8,15 @@ USAGE (from the workspace root; S = this skill's folder):
 
 list writes build/clips/requests.json and prints one block per clip. The agent generates each clip with its
 video model (image-to-video from the named photo when the model takes an image) and saves it as
-build/clips/NN.mp4 (.mov and .webm are read too). A clip whose role is "their own reel" needs no generation:
-it is cut from their footage. A clip that plays inside one tile of the wall (it names a tile) is square.
+build/clips/NN.mp4 (.mov and .webm are read too). A clip whose role is "their own video" needs no generation:
+it is cut from the video the two shot. Every clip is 9:16 with its subject in the middle square, because the
+1:1 film crops the same clip to its center.
 
-normalize scales and crops each file to 1080x1920 (1080x1080 for a tile), conforms it to 30 fps, trims it to its beat (looping a
+normalize scales and crops each file to 1080x1920, conforms it to 30 fps, trims it to its beat (looping a
 short file), applies the film's grade (build/grade.json, the same filter as the photos) and writes
 build/public/clips/NN.mp4 with no audio, plus its frames in build/public/clips/NN/. A clip that did not arrive is substituted: the renderer animates the
 named photo of theirs (parallax planes, light, dust) in its place. build/clips.json records every clip as
-generated, their_reel or substituted, and brief.md lists them.
+generated, their_video or substituted, and brief.md lists them.
 """
 import argparse
 import shutil
@@ -43,14 +44,8 @@ def board_for(a):
 
 
 def clip_seconds(b, c):
-    """A tile's clip runs for its own length; every other clip runs for its whole beat."""
-    if c.get("tile"):
-        return c.get("seconds") or 3
+    """A clip runs for its whole beat."""
     return max(c.get("seconds") or 0, beat_seconds(b, c["beat"]) or 0)
-
-
-def size_of(c):
-    return (W, W) if c.get("tile") else (W, H)
 
 
 def beat_seconds(b, beat_id):
@@ -74,11 +69,8 @@ def cmd_list(a):
     reqs = []
     for c in b.get("clips", []):
         secs = round(clip_seconds(b, c), 1)
-        w, h = size_of(c)
-        r = {"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "aspect": "1:1" if c.get("tile") else "9:16",
-             "size": f"{w}x{h}", "save_as": str((CLIPS / f"{c['id']}.mp4").resolve())}
-        if c.get("tile"):
-            r["tile"] = c["tile"]
+        r = {"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "aspect": "9:16",
+             "size": f"{W}x{H}", "save_as": str((CLIPS / f"{c['id']}.mp4").resolve())}
         if c.get("source"):
             r["their_footage"] = c["source"]
         else:
@@ -88,9 +80,9 @@ def cmd_list(a):
         reqs.append(r)
     _env.write_json(CLIPS / "requests.json", {"board": b["id"], "clips": reqs})
     for r in reqs:
-        print(f"clip {r['id']} for {r['beat']}{' tile ' + str(r['tile']) if r.get('tile') else ''} ({r['role']}), {r['seconds']} s, {r['aspect']} -> {r['save_as']}")
+        print(f"clip {r['id']} for {r['beat']} ({r['role']}), {r['seconds']} s, {r['aspect']} -> {r['save_as']}")
         if r.get("their_footage"):
-            print(f"  no generation: cut from their reel {r['their_footage']}")
+            print(f"  no generation: cut from their own video {r['their_footage']}")
         else:
             if r.get("image"):
                 print(f"  image-to-video from: {r['image']}")
@@ -99,9 +91,9 @@ def cmd_list(a):
     return 0
 
 
-def conform(src, dst, secs, filt, size=(W, H), start=0.0):
+def conform(src, dst, secs, filt, start=0.0):
     dst.parent.mkdir(parents=True, exist_ok=True)
-    w, h = size
+    w, h = W, H
     vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS},{filt},format=yuv420p"
     cmd = [_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-ss", f"{start:.2f}", "-i", str(src), "-t", f"{secs:.3f}",
            "-vf", vf, "-an", "-c:v", "libx264", "-profile:v", "high", "-crf", "16", "-preset", "fast", str(dst)]
@@ -134,28 +126,27 @@ def cmd_normalize(a):
         shutil.rmtree(f.with_suffix(""), ignore_errors=True)
     for c in b.get("clips", []):
         secs = (clip_seconds(b, c) or 4) + 0.6
-        rec = {"beat": c["beat"], "role": c["role"], "prompt": c.get("prompt"), "image": c.get("image"), "file": None,
-               **({"tile": c["tile"]} if c.get("tile") else {})}
+        rec = {"beat": c["beat"], "role": c["role"], "prompt": c.get("prompt"), "image": c.get("image"), "file": None}
         src = arrived(c["id"])
         if src:
-            ok, err = conform(src, OUT / f"{c['id']}.mp4", secs, g["filter"], size_of(c))
+            ok, err = conform(src, OUT / f"{c['id']}.mp4", secs, g["filter"])
             rec.update({"status": "generated", "from": str(src), "frames": ok} if ok else {"status": "substituted", "why": f"could not read {src.name}: {err}"})
         elif c.get("source") and Path(c["source"]).exists():
-            ok, err = conform(c["source"], OUT / f"{c['id']}.mp4", secs, g["filter"], size_of(c))
-            rec.update({"status": "their_reel", "from": c["source"], "frames": ok} if ok else {"status": "substituted", "why": f"could not read their reel: {err}"})
+            ok, err = conform(c["source"], OUT / f"{c['id']}.mp4", secs, g["filter"])
+            rec.update({"status": "their_video", "from": c["source"], "frames": ok} if ok else {"status": "substituted", "why": f"could not read their video: {err}"})
         else:
             rec.update({"status": "substituted", "why": a.why or "the video model did not produce it"})
-        if rec["status"] in ("generated", "their_reel"):
+        if rec["status"] in ("generated", "their_video"):
             rec["file"] = f"clips/{c['id']}.mp4"
         elif not rec["image"]:
             beat = next((x for x in b["beats"] if x["id"] == c["beat"]), {})
             rec["image"] = (beat.get("photos") or [None])[0]
         out[c["id"]] = rec
-        print(f"clip {c['id']} ({c['beat']}{' tile ' + str(c['tile']) if c.get('tile') else ''}): {rec['status']}" + (f", {rec.get('why')}" if rec.get("why") else "") +
+        print(f"clip {c['id']} ({c['beat']}): {rec['status']}" + (f", {rec.get('why')}" if rec.get("why") else "") +
               (f" -> build/public/{rec['file']}" if rec["file"] else f", animated from their photo {rec['image']}"))
     _env.write_json("build/clips.json", {"board": b["id"], "clips": out})
-    n = {s: sum(1 for r in out.values() if r["status"] == s) for s in ("generated", "their_reel", "substituted")}
-    print(f"clips: {n['generated']} generated, {n['their_reel']} from their reels, {n['substituted']} substituted -> build/clips.json")
+    n = {s: sum(1 for r in out.values() if r["status"] == s) for s in ("generated", "their_video", "substituted")}
+    print(f"clips: {n['generated']} generated, {n['their_video']} from their own videos, {n['substituted']} substituted -> build/clips.json")
     return 0
 
 

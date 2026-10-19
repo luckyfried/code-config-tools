@@ -29,7 +29,7 @@ await ensureBrowser();
 const serveUrl = await bundle({
   entryPoint: path.join(here, 'src', 'index.ts'),
   publicDir: spec.publicDir,
-  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'bn-bundle'), String(process.pid)),
+  outDir: path.join(spec.bundleDir ?? path.join(os.tmpdir(), 'bt-bundle'), String(process.pid)),
 });
 const bundled = Date.now();
 const browser = await openBrowser('chrome', {chromiumOptions: {gl: spec.gl ?? 'swangle'}});

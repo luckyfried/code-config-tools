@@ -1,8 +1,8 @@
 {
-  "name": "ig-best-nine-motion",
+  "name": "birthday-tribute-reel-motion",
   "private": true,
   "version": "1.0.0",
-  "description": "The best-nine film, the best-nine wall and the story card, rendered by Remotion from storyboard.json",
+  "description": "The tribute film in 9:16 and 1:1 and its card, rendered by Remotion from storyboard.json",
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts Film out/film.mp4"

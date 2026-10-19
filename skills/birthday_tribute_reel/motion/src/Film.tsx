@@ -28,7 +28,7 @@ export const Film: React.FC<FilmProps> = ({board}) => {
     );
   });
   return (
-    <SystemProvider value={{system: board.system, board, format: 'reel', still: false}}>
+    <SystemProvider value={{system: board.system, board, format: board.format.safe ?? 'reel', still: false}}>
       <FontGate system={board.system}>
         <AbsoluteFill style={{background: board.system.colors.bg}}>
           <TransitionSeries>{items}</TransitionSeries>
@@ -39,7 +39,7 @@ export const Film: React.FC<FilmProps> = ({board}) => {
   );
 };
 
-/** The best-nine image or the story card: a beat at its settled frame, laid out for that format. */
+/** The card to post: a beat at its settled frame, laid out for that format. */
 export const Card: React.FC<CardProps> = ({board, beat, format}) => (
   <SystemProvider value={{system: board.system, board, format, still: true, beat}}>
     <FontGate system={board.system}>

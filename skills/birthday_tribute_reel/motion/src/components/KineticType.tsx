@@ -9,8 +9,8 @@ import type {Beat} from '../types';
 type Row = {text: string; meta?: string};
 
 /**
- * Type that carries the beat on its own: rows (their people, the accounts they loved) land one after
- * another, each fitted to the width, the newest row in the accent; a photo of theirs moves behind it.
+ * Type that carries the beat on its own: rows land one after another, each fitted to the width and the
+ * height, the newest row in the accent; a photo of the two moves behind it.
  */
 export const KineticType: React.FC<{beat: Beat}> = ({beat}) => {
   const {system, still} = useSys();
@@ -24,6 +24,7 @@ export const KineticType: React.FC<{beat: Beat}> = ({beat}) => {
   const metaW = Math.max(0, ...rows.map((r) => (r.meta ? measureText({text: r.meta, fontFamily: `'${system.text.family}'`, fontWeight: 600, fontSize: system.scale.label, letterSpacing: '0.02em'}).width + 28 : 0)));
   const size = Math.min(
     system.scale.h1,
+    (s.height * 0.72) / Math.max(1, rows.length + (t.kicker ? 0.6 : 0) + (t.line ? 0.8 : 0)),
     ...rows.map((r) => fitText({text: r.text, withinWidth: (s.width - metaW) * 0.97, fontFamily: `'${f.family}'`, fontWeight: f.weight, letterSpacing: `${f.tracking}em`, textTransform: f.case === 'none' ? undefined : f.case}).fontSize),
   );
   const photo = beat.photos?.[0];

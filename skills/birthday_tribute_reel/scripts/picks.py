@@ -171,7 +171,7 @@ def main():
     for e in sh["eras"]:
         ch["eras"][e["label"]] = [r["photo"] for r in items if r["era"] == e["label"]]
     per = max(1, 12 // max(1, len(sh["eras"])))
-    best = [p for e in sh["eras"] for p in sorted((r for r in items if r["era"] == e["label"]), key=lambda r: -r["score"])[:per]]
+    best = {r["photo"] for e in sh["eras"] for r in sorted((r for r in items if r["era"] == e["label"]), key=lambda r: -r["score"])[:per]}
     ch["best"] = [r["photo"] for r in sorted((r for r in items if r["photo"] in best), key=lambda r: r["ts"])][:12]
     _env.write_json("build/picks.json", out)
     print(f"indexed {len(index)} photos ({sum(1 for e in index if e['set'] == 'theirs')} from their feed, {skipped} could not be opened); "

@@ -3,18 +3,18 @@
 USAGE:
     python3 scripts/setup.py          # resolve (installing only what is missing) and print the tools as JSON
 
-First-run setup for the best-nine toolkit. Prints:
+First-run setup for the birthday tribute kit. Prints:
     {"python": ".../python3", "ffmpeg": ".../ffmpeg", "ffprobe": ".../ffprobe" | null, "node": ".../node" | null,
      "motion": ".../motion" | null, "engine": "remotion" | "stills", "ok": true}
 
 The python is the first that imports Pillow: this interpreter, else a venv inside this skill
-folder (`.venv/`, or ~/.cache/ig_best_nine/venv when the skill folder is read-only). The venv is made
+folder (`.venv/`, or ~/.cache/birthday_tribute_reel/venv when the skill folder is read-only). The venv is made
 with `python3 -m venv`; where that has no pip it uses `uv`, else a pip-less venv plus get-pip.py. ffmpeg is the
 system one, else imageio-ffmpeg's. node is the system one (18 or newer), else a portable node from nodejs.org
 unpacked under the kit's data folder (`.cache/node/`). With node, `npm ci` runs in `motion/` (npm cache in
 `.cache/npm/` unless npm_config_cache is set) and Remotion downloads its browser into `motion/node_modules/`;
 the engine is then "remotion". Without node the engine is "stills" (film.py's fallback route) and brief.md says so.
-BN_NODE=portable skips the system node; BN_NODE=none forces the stills route; BN_NODE=/path/to/node picks one.
+BT_NODE=portable skips the system node; BT_NODE=none forces the stills route; BT_NODE=/path/to/node picks one.
 Re-running when everything is present does no network work and returns in about a second.
 """
 import argparse
@@ -39,7 +39,7 @@ def venv_dir():
     d = SKILL_DIR / ".venv"
     if d.exists() or os.access(SKILL_DIR, os.W_OK):
         return d
-    return Path.home() / ".cache" / "ig_best_nine" / "venv"
+    return Path.home() / ".cache" / "birthday_tribute_reel" / "venv"
 
 
 def venv_python(d):
@@ -100,11 +100,11 @@ MOTION = SKILL_DIR / "motion"
 
 
 def data_dir():
-    """The kit's data folder: .cache/ inside the skill, or ~/.cache/ig_best_nine when the skill is read-only."""
+    """The kit's data folder: .cache/ inside the skill, or ~/.cache/birthday_tribute_reel when the skill is read-only."""
     d = SKILL_DIR / ".cache"
     if d.exists() or os.access(SKILL_DIR, os.W_OK):
         return d
-    return Path.home() / ".cache" / "ig_best_nine"
+    return Path.home() / ".cache" / "birthday_tribute_reel"
 
 
 def node_major(node):
@@ -149,9 +149,9 @@ def portable_node():
 
 
 def ensure_node():
-    """node 18 or newer: the system one, else a portable one. BN_NODE=portable skips the system node; BN_NODE=none
+    """node 18 or newer: the system one, else a portable one. BT_NODE=portable skips the system node; BT_NODE=none
     pretends there is no node (the stills route)."""
-    forced = os.environ.get("BN_NODE", "").strip()
+    forced = os.environ.get("BT_NODE", "").strip()
     if forced == "none":
         return None
     if forced not in ("", "portable") and Path(forced).exists():

@@ -8,8 +8,8 @@ import {ClipLayer} from './ClipShot';
 import type {Beat} from '../types';
 
 /**
- * The frame they post: their best photos settle into a stack of prints, the sign-off lands, and the
- * last second holds still enough to screenshot while the prints keep breathing.
+ * The last word: their photos together settle into a stack of prints, the wish lands, and the last second
+ * holds still enough to screenshot while the prints keep breathing. The same beat, still, is the card.
  */
 export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
   const {system, board} = useSys();
@@ -20,6 +20,8 @@ export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
   const d = system.direction;
   const angles = [-7, 5, -3, 8];
   const offsets = [[-16, -6], [14, -2], [-6, 6], [10, 10]];
+  const region = s.H * (s.H > s.W * 1.5 ? 0.33 : 0.4);
+  const print = Math.min(s.W * 0.36, region * 0.8 * 0.82);
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       {beat.clip ? (
@@ -28,12 +30,12 @@ export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
         </AbsoluteFill>
       ) : null}
       <Leaks strength={0.8} seed="closer" />
-      <div style={{position: 'absolute', left: 0, right: 0, top: s.top * 0.4, height: s.H * 0.33, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+      <div style={{position: 'absolute', left: 0, right: 0, top: s.top * 0.4, height: region, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         {photos.map((p, i) => {
           const q = pop(i * 5, d === 'kinetic' ? {damping: 13} : undefined);
           const [ox, oy] = offsets[i % 4];
           return (
-            <div key={i} style={{position: 'absolute', width: s.W * 0.36, aspectRatio: '4 / 5', background: system.colors.paper, padding: s.W * 0.018, paddingBottom: s.W * 0.06,
+            <div key={i} style={{position: 'absolute', width: print, aspectRatio: '4 / 5', background: system.colors.paper, padding: print * 0.05, paddingBottom: print * 0.16,
               boxShadow: '0 30px 70px rgba(0,0,0,0.35)', transform: `translate(${ox * q + (1 - q) * 0}%, ${oy * q + (1 - q) * 120}%) rotate(${angles[i] * q + drift(-0.8, 0.8)}deg) scale(${0.8 + 0.2 * q})`,
               opacity: Math.min(1, q * 2)}}>
               <div style={{width: '100%', height: '100%', overflow: 'hidden'}}>
@@ -47,7 +49,7 @@ export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
       </div>
       <SafeBox name="closer" justify="end" align={d === 'kinetic' ? 'center' : 'start'}>
         <Kicker text={t.kicker ?? `@${board.handle}`} delay={18} />
-        <Headline text={t.headline ?? `see you in ${board.year + 1}`} max="h1" lines={2} delay={22} />
+        {t.headline ? <Headline text={t.headline} max="h1" lines={2} delay={22} /> : null}
         {t.line ? <Line text={t.line} delay={34} /> : null}
         <div style={{display: 'flex', gap: 8, marginTop: 30, width: '60%'}}>
           {system.colors.swatches.slice(0, 5).map((w, i) => (
@@ -55,7 +57,7 @@ export const Closer: React.FC<{beat: Beat}> = ({beat}) => {
           ))}
         </div>
         <div style={{...faceStyle(system.text), fontSize: system.scale.label * 0.85, textTransform: 'none', letterSpacing: '0.04em', color: system.colors.ink, opacity: tween(0, 0.7, 44, 12), marginTop: 18}}>
-          {beat.data?.signoff ?? `my ${board.year} on instagram`}
+          {beat.data?.signoff ?? ''}
         </div>
       </SafeBox>
     </AbsoluteFill>

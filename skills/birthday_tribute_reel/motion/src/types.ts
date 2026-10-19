@@ -47,23 +47,11 @@ export type Clip = {
   status: 'generated' | 'their_reel' | 'substituted' | 'pending';
 };
 
-/** One of the nine: rank 1 is the most liked. */
-export type Tile = {
-  rank: number;
-  photo: string;
-  likes?: number | null;
-  comments?: number | null;
-  label?: string;
-  caption?: string;
-  kind?: string;
-  clip?: Clip | null;
-};
-
 export type Transition = {preset: string; frames: number; direction?: string};
 
 export type Beat = {
   id: string;
-  kind: 'Opener' | 'ClipShot' | 'Countdown' | 'Grid';
+  kind: 'Opener' | 'ClipShot' | 'PhotoLive' | 'KineticType' | 'Exchange' | 'Closer';
   frames: number;
   transition?: Transition | null;
   treatment?: 'push' | 'parallax' | 'mask' | 'split';
@@ -79,14 +67,13 @@ export type Board = {
   name: string;
   handle: string;
   year: number;
-  format: {width: number; height: number; fps: number};
+  /** safe names the safe-area set the film's type keeps to: reel for 9:16, feed for the 1:1 cut */
+  format: {width: number; height: number; fps: number; safe?: string};
   system: System;
   beats: Beat[];
-  /** the best-nine image (1080x1080) */
-  wall?: Beat;
-  /** the story card (1080x1920) */
-  story?: Beat;
+  /** the card to post (1080x1350) */
+  card?: Beat;
 };
 
 export type FilmProps = {board: Board};
-export type CardProps = {board: Board; beat: Beat; format: 'square' | 'story'};
+export type CardProps = {board: Board; beat: Beat; format: 'portrait' | 'square' | 'story'};

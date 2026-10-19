@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Sequence} from 'remotion';
-import {splits, SubShot, useMotion, useSafe, useSys} from '../system';
+import {faceStyle, splits, SubShot, useMotion, useSafe, useSys} from '../system';
 import {Headline, Kicker, Line, SafeBox} from '../text';
 import {Card, CARD_PAD, LivePhoto, Photo, Scrim} from '../photo';
 import {Leaks} from '../texture';
@@ -48,6 +48,27 @@ const Shot: React.FC<{file: string; second?: string; treatment: 'push' | 'parall
   );
 };
 
+/** Where this moment sits between the first photo together and now: a rule across the top with a mark that travels to it. */
+const TimeRule: React.FC<{rule: {at: number; from: string; to: string}}> = ({rule}) => {
+  const {system} = useSys();
+  const s = useSafe();
+  const {tween} = useMotion();
+  const x = tween(Math.max(0, rule.at - 0.08), rule.at, 4, 26, 'move');
+  const label = {...faceStyle(system.text), fontSize: system.scale.label * 0.8, textTransform: 'none' as const, letterSpacing: '0.04em', color: system.colors.ink, opacity: 0.8};
+  return (
+    <div style={{position: 'absolute', left: s.left, right: s.right, top: s.top * 0.55, opacity: tween(0, 1, 0, 10)}}>
+      <div style={{position: 'relative', height: 4, background: 'rgba(255,255,255,0.28)'}}>
+        <div style={{position: 'absolute', left: 0, top: 0, bottom: 0, width: `${x * 100}%`, background: system.colors.accent}} />
+        <div style={{position: 'absolute', left: `${x * 100}%`, top: -9, width: 22, height: 22, marginLeft: -11, borderRadius: 11, background: system.colors.accent}} />
+      </div>
+      <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 16}}>
+        <span style={label}>{rule.from}</span>
+        <span style={label}>{rule.to}</span>
+      </div>
+    </div>
+  );
+};
+
 /** Their photos, alive: one to three shots, each with its own move, cut where storyboard.py snapped the music. */
 export const PhotoLive: React.FC<{beat: Beat}> = ({beat}) => {
   const {system, still} = useSys();
@@ -79,6 +100,7 @@ export const PhotoLive: React.FC<{beat: Beat}> = ({beat}) => {
   const parts = splits(beat, Math.min(photos.length, Math.max(1, items.length)));
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
+      {beat.data?.rule ? <AbsoluteFill style={{zIndex: 2}}><TimeRule rule={beat.data.rule} /></AbsoluteFill> : null}
       {parts.map(([from, dur], i) => {
         const tr = order[i % order.length];
         return (
