@@ -1,0 +1,8 @@
+{
+ "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); feed is the 1:1 cut in the feed, where Instagram lays nothing over the post but the corners crop on the grid; portrait is the 1080x1350 card; story leaves the top bar and the reply field; square is a plain 1:1 still.",
+ "reel": { "width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150 },
+ "feed": { "width": 1080, "height": 1080, "top": 80, "bottom": 100, "left": 72, "right": 72 },
+ "portrait": { "width": 1080, "height": 1350, "top": 90, "bottom": 110, "left": 80, "right": 80 },
+ "story": { "width": 1080, "height": 1920, "top": 250, "bottom": 340, "left": 72, "right": 72 },
+ "square": { "width": 1080, "height": 1080, "top": 40, "bottom": 40, "left": 40, "right": 40 }
+}
