@@ -16,7 +16,8 @@ const Wall: React.FC<{group: Group; index: number}> = ({group, index}) => {
   const cols = n >= 9 ? 3 : n >= 4 ? 2 : 1;
   const rows = Math.ceil(n / cols);
   const gap = system.direction === 'kinetic' ? 8 : 14;
-  const gridH = s.H * (still ? 0.6 : 0.7);
+  // A documentary wall is a contact sheet that runs the full frame; the others leave paper or color below for the type.
+  const gridH = system.direction === 'documentary' ? s.H : s.H * (still ? 0.6 : 0.7);
   const tileH = (gridH - gap * (rows + 1)) / rows;
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>

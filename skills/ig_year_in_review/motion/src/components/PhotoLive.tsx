@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Sequence} from 'remotion';
 import {splits, SubShot, useMotion, useSafe, useSys} from '../system';
 import {Headline, Kicker, Line, SafeBox} from '../text';
-import {LivePhoto, Photo, Scrim} from '../photo';
+import {Card, CARD_PAD, LivePhoto, Photo, Scrim} from '../photo';
 import {Leaks} from '../texture';
 import type {Beat, BeatText} from '../types';
 
@@ -17,12 +17,21 @@ const Shot: React.FC<{file: string; second?: string; treatment: 'push' | 'parall
 }) => {
   const {system} = useSys();
   const {tween} = useMotion();
+  const s = useSafe();
   const kinetic = system.direction === 'kinetic';
+  const editorial = system.direction === 'editorial';
+  const words = (
+    <>
+      {text.kicker ? <Kicker text={text.kicker} delay={6} /> : null}
+      {text.headline ? <Headline text={text.headline} max="h2" lines={3} delay={10} width={editorial ? s.width - 2 * CARD_PAD : undefined} /> : null}
+      {text.line ? <Line text={text.line} delay={18} /> : null}
+    </>
+  );
   return (
     <AbsoluteFill>
       <LivePhoto file={file} second={second} treatment={treatment} />
       {system.direction === 'documentary' ? <Leaks strength={0.7} seed={file} /> : null}
-      <Scrim side="bottom" strength={system.direction === 'editorial' ? 0.92 : 0.8} />
+      {editorial ? null : <Scrim side="bottom" strength={0.8} />}
       {rank ? (
         <SafeBox name={`rank-${index}`} justify="start" align={kinetic ? 'start' : 'end'}>
           <div style={{fontFamily: `'${system.display.family}'`, fontWeight: system.display.weight, fontSize: system.scale.hero,
@@ -33,9 +42,7 @@ const Shot: React.FC<{file: string; second?: string; treatment: 'push' | 'parall
         </SafeBox>
       ) : null}
       <SafeBox name={`photo-${index}`} justify="end">
-        {text.kicker ? <Kicker text={text.kicker} delay={6} /> : null}
-        {text.headline ? <Headline text={text.headline} max="h2" lines={3} delay={10} /> : null}
-        {text.line ? <Line text={text.line} delay={18} /> : null}
+        {editorial && (text.kicker || text.headline || text.line) ? <Card>{words}</Card> : words}
       </SafeBox>
     </AbsoluteFill>
   );

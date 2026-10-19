@@ -36,15 +36,16 @@ export const LivePhoto: React.FC<{
   const dy = drift(1, -1.2) * intensity;
   if (treatment === 'parallax') {
     const p = pop(delay);
+    const editorial = system.direction === 'editorial';
     return (
       <AbsoluteFill style={{background: system.colors.bg, overflow: 'hidden'}}>
         <AbsoluteFill style={{transform: `scale(${1.25 + drift(0, 0.08)}) translate(${dx * 2}%, ${dy * 2}%)`, filter: 'blur(28px) brightness(0.62) saturate(1.1)'}}>
           <Photo file={file} />
         </AbsoluteFill>
-        <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center'}}>
+        <AbsoluteFill style={{justifyContent: editorial ? 'flex-start' : 'center', alignItems: 'center', paddingTop: editorial ? '7%' : 0}}>
           <div
             style={{
-              width: '78%',
+              width: editorial ? '88%' : '78%',
               aspectRatio: '4 / 5',
               overflow: 'hidden',
               boxShadow: '0 40px 90px rgba(0,0,0,0.45)',
@@ -101,17 +102,32 @@ export const LivePhoto: React.FC<{
   );
 };
 
+const tint = (hex: string, a: number) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+};
+
 /** A gradient that seats type over a photo without a box. */
 export const Scrim: React.FC<{side?: 'bottom' | 'top' | 'both'; strength?: number}> = ({side = 'bottom', strength = 0.7}) => {
   const {system} = useSys();
-  const c = system.colors.bg;
-  const alpha = (a: number) => {
-    const n = parseInt(c.slice(1), 16);
-    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-  };
+  const alpha = (a: number) => tint(system.colors.bg, a);
   const bottom = `linear-gradient(to top, ${alpha(strength)} 0%, ${alpha(strength * 0.92)} 36%, ${alpha(strength * 0.55)} 54%, ${alpha(strength * 0.18)} 66%, ${alpha(0)} 76%)`;
   const top = `linear-gradient(to bottom, ${alpha(strength * 0.8)} 0%, ${alpha(0)} 30%)`;
   return (
     <AbsoluteFill style={{background: side === 'both' ? `${bottom}, ${top}` : side === 'top' ? top : bottom, pointerEvents: 'none'}} />
+  );
+};
+
+/** The card's side padding; a headline inside it fits to the safe width less twice this. */
+export const CARD_PAD = 40;
+
+/** A paper card behind the text block only, so the photo around it stays whole: the editorial way to seat type. */
+export const Card: React.FC<{children: React.ReactNode}> = ({children}) => {
+  const {system} = useSys();
+  const {tween} = useMotion();
+  return (
+    <div style={{background: tint(system.colors.bg, 0.9 * tween(0, 1, 2, 12)), padding: `34px ${CARD_PAD}px 38px`, borderTop: `3px solid ${tint(system.colors.ink, 0.85)}`, boxShadow: '0 24px 60px rgba(0,0,0,0.18)'}}>
+      {children}
+    </div>
   );
 };
