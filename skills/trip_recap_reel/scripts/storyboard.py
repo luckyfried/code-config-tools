@@ -260,7 +260,8 @@ class Ctx:
             bg = mix(darkest, "#000000", 0.7)
             ink = mix(lightest, "#ffffff", 0.5)
             paper = mix(lightest, "#f4ead8", 0.5)
-            accent = readable(vivid[0], bg, 4)
+            # the accent sets the small kickers over scrimmed photos, which are lighter than bg: it carries margin
+            accent = readable(vivid[0], bg, 7)
             accent2 = vivid[1] if len(vivid) > 1 else trip[0]
             texture = {"grain": tex.get("grain", 0), "vignette": tex.get("vignette", 0), "leaks": bool(tex.get("leaks"))}
         swatches = [{"hex": s["hex"], "name": self.say(s.get("name") or "")} for s in pal.get("trip") or []][:5]
