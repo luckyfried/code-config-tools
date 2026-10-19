@@ -1,6 +1,5 @@
 {
-  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); story leaves the top bar and the reply field; portrait is the then/now card (1080x1350, the feed's tallest post): the two photos sit inside the margin with the title band under them, so no word covers a photo.",
+  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); portrait is the then/now card (1080x1350, the feed's tallest post): the two photos sit inside the margin with the title band under them, so no word covers a photo.",
   "reel": {"width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150},
-  "story": {"width": 1080, "height": 1920, "top": 250, "bottom": 340, "left": 72, "right": 72},
   "portrait": {"width": 1080, "height": 1350, "top": 56, "bottom": 56, "left": 56, "right": 56}
 }

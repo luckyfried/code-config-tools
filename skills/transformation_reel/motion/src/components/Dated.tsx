@@ -1,3 +1,4 @@
+import {fitTextOnNLines} from '@remotion/layout-utils';
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {faceStyle, useMotion, useSafe, useSys} from '../system';
@@ -38,10 +39,14 @@ export const Rail: React.FC<{beat: Beat; color?: string; track?: string; delay?:
 /** The count since the first post, in the display face: "day 71", "month 6". */
 const Count: React.FC<{text: string; size: number; color: string; delay?: number}> = ({text, size, color, delay = 0}) => {
   const {system} = useSys();
+  const s = useSafe();
   const {pop, tween} = useMotion();
   const p = pop(delay, system.direction === 'kinetic' ? {damping: 12, stiffness: 180} : undefined);
+  const f = system.display;
+  const fit = fitTextOnNLines({text, maxLines: 1, maxBoxWidth: s.width * 0.96, fontFamily: `'${f.family}'`, fontWeight: f.weight,
+    letterSpacing: `${f.tracking}em`, textTransform: f.case === 'none' ? undefined : f.case, maxFontSize: size});
   return (
-    <div style={{...faceStyle(system.display), fontSize: size, lineHeight: 0.86, color, whiteSpace: 'nowrap',
+    <div style={{...faceStyle(f), fontSize: fit.fontSize, lineHeight: 0.86, color, whiteSpace: 'nowrap',
       transform: `translateY(${(1 - p) * -24}%) scale(${0.8 + 0.2 * p})`, transformOrigin: '0% 0%', opacity: tween(0, 1, delay, 6)}}>
       {text}
     </div>

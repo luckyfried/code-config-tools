@@ -106,7 +106,8 @@ def write_card(board):
     """The two posts of the then/now card, with their dates and the span between them."""
     c = board.get("card") or {}
     _env.write_json("build/card.json", {"image": "out/then-now.png", "size": [1080, 1350], "posts": c.get("posts"),
-                                        "at": c.get("at"), "photos": c.get("photos"), "span": (board.get("span") or {}).get("label")})
+                                        "at": c.get("at"), "photos": c.get("photos"), "layout": (c.get("data") or {}).get("layout"),
+                                        "span": (board.get("span") or {}).get("label")})
 
 
 def mux(silent, out, seconds):
@@ -261,12 +262,11 @@ def cmd_stills(a):
             r = str((bt.get("data") or {}).get("n", "")).zfill(2)
             d.text((int(sa["left"] * sf), int(sa["top"] * sf)), r, font=font("display", int(s["scale"]["hero"] * sf)), fill=s["colors"]["accent"])
         left, maxw = int(sa["left"] * sf), int(w - (sa["left"] + sa["right"]) * sf)
-        grid_top = False
         blocks = []
         if t.get("kicker"):
             blocks.append(("text", str(t["kicker"]).upper(), int(s["scale"]["label"] * sf), s["colors"]["accent"]))
         if t.get("headline"):
-            size = int((s["scale"]["h2"] if grid_top else s["scale"]["h1"]) * sf)
+            size = int(s["scale"]["h1"] * sf)
             while size > 20 and font("display", size).getlength(str(t["headline"])) > maxw * 1.9:
                 size -= 4
             blocks.append(("display", t["headline"], size, s["colors"]["ink"]))
@@ -286,10 +286,7 @@ def cmd_stills(a):
             lines.append(cur)
             laid.append((f, lines, size, color))
         height = sum(len(ln) * int(sz * 1.08) + int(sz * 0.4) for _, ln, sz, _ in laid)
-        if grid_top:
-            y = int(sa["top"] * sf)
-        else:
-            y = int(h - sa["bottom"] * sf) - height
+        y = int(h - sa["bottom"] * sf) - height
         for f, lines, size, color in laid:
             for ln in lines:
                 d.text((left, y), ln, font=f, fill=color)

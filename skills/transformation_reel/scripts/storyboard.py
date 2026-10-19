@@ -182,10 +182,10 @@ class Ctx:
         whole = (self.last_day - self.first_day).days or 1
         return round((dt.date.fromisoformat(p["date"]) - self.first_day).days / whole, 4)
 
-    def words(self, p, limit=60):
-        """Their caption for the screen: the milestone prefix dropped, the lead line kept, in their register."""
+    def words(self, p, limit=60, whole=False):
+        """Their caption for the screen: the milestone prefix dropped, the lead line kept (or every sentence that fits), in their register."""
         cap = re.sub(r"^\s*milestone\s*[:\-–]\s*", "", p.get("caption") or "", flags=re.I)
-        return self.say(short(cap, limit)) or self.when(p, "editorial")
+        return self.say(short(cap, limit, whole)) or self.when(p, "editorial")
 
     def title(self):
         return self.say(f"{self.span['label']} of {self.phrase}")
@@ -252,20 +252,23 @@ class Ctx:
         return WORLD.get(self.subject, f"the place where {self.phrase} happens, light moving slowly across it")
 
 
-def short(cap, limit=60):
-    """A caption's lead line for the screen: no hashtags or emoji, cut at a clause or a word, never on a function word."""
+def short(cap, limit=60, whole=False):
+    """A caption's lead line for the screen: no hashtags or emoji, cut at a clause or a word, never on a function word.
+    whole keeps every sentence that fits the limit, for a beat that carries their caption as the narration."""
     c = EMOJI.sub("", re.sub(r"#\w+", "", cap or "")).strip()
-    c = re.sub(r"\s+", " ", c)
-    for sep in (". ", ": ", "; ", " - "):
+    c = whole_c = re.sub(r"\s+", " ", c)
+    for sep in (() if whole else (". ", ": ", "; ", " - ")):
         if sep in c and len(c.split(sep)[0]) >= 14:
             c = c.split(sep)[0]
             break
+    if whole and len(c) > limit and ". " in c[:limit]:
+        c = c[:limit].rsplit(". ", 1)[0]
     if len(c) > limit and ", " in c[:limit] and len(c[:limit].rsplit(", ", 1)[0]) >= 14:
         c = c[:limit].rsplit(", ", 1)[0]
     if len(c) > limit:
         c = c[:limit].rsplit(" ", 1)[0]
     w = c.split()
-    while len(w) > 3 and w[-1].lower().strip(",.") in STOP:
+    while c != whole_c and len(w) > 3 and w[-1].lower().strip(",.") in STOP:
         w.pop()
     return " ".join(w).strip(" ,;:-")
 
@@ -373,7 +376,7 @@ def board_then_now(ctx):
                            line=ctx.say("day one" if i == 0 else f"month {month}")))
     changed = next((c["line"] for c in ctx.sub.get("changed") or [] if c["id"] != ctx.latest()["id"]), None)
     beats.append(split(ctx, "then-now", "wipe", 4.4, tr("edge", d, way, frames=14),
-                       {"kicker": ctx.span_line(), "headline": ctx.title(), "line": ctx.say(short(changed or "", 70)) or None}, d))
+                       {"kicker": ctx.span_line(), "headline": ctx.title(), "line": ctx.say(short(re.sub(r"^\s*milestone\s*[:\-–]\s*", "", changed or "", flags=re.I), 70)) or None}, d))
     return finish(ctx, {"id": "2", "name": ctx.say("then and now"), "direction": d,
                         "structure": "a split-screen then/now whose divider becomes the wipe that carries every date in order, back to the pair",
                         "tone": "quiet editorial", "clip_use": "clip-first: the first, the latest and every milestone brought to life, their own reels playing",
@@ -398,7 +401,7 @@ def board_chapters(ctx):
         title = ctx.say("day one") if k == 0 else ctx.say("now") if i == len(seq) - 1 else ctx.say(f"chapter {k + 1}")
         beats.append({"id": f"chapter-{k + 1}", "kind": "Chapter", "frames": sec(3.6), "transition": tr("bars" if k else "whip", d, "from-right"),
                       "post": p["id"], "at": p["date"], "photos": [p["graded"]],
-                      "text": {"kicker": f"{title} · {ctx.when(p, d)}", "headline": ctx.words(p, 90)},
+                      "text": {"kicker": f"{title} · {ctx.when(p, d)}", "headline": ctx.words(p, 110, whole=True)},
                       "data": {"n": k + 1, "of": len(heads), "label": title, "progress": ctx.progress(p)}})
         stop = heads[k + 1] if k + 1 < len(heads) else len(seq)
         for j in range(i + 1, stop):

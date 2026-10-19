@@ -24,11 +24,13 @@ const Pane: React.FC<{file: string; box: Box; enter?: number; from?: 'left' | 'r
 /** "then · august 9, 2025" set as a tracked word over its date. */
 const Label: React.FC<{text: string; delay: number; align?: 'left' | 'right'}> = ({text, delay, align = 'left'}) => {
   const {system} = useSys();
+  const {tween} = useMotion();
   const [word, date] = text.split(' · ');
   return (
     <div style={{textAlign: align}}>
       <Kicker text={word} delay={delay} color={system.colors.accent} style={{marginBottom: '0.3em'}} />
-      {date ? <div style={{...faceStyle(system.text), fontWeight: 500, letterSpacing: 0, textTransform: 'none', fontSize: system.scale.label, color: system.colors.ink, whiteSpace: 'nowrap'}}>{date}</div> : null}
+      {date ? <div style={{...faceStyle(system.text), fontWeight: 500, letterSpacing: 0, textTransform: 'none', fontSize: system.scale.label,
+        color: system.colors.ink, whiteSpace: 'nowrap', opacity: tween(0, 1, delay + 3, 10)}}>{date}</div> : null}
     </div>
   );
 };
@@ -98,7 +100,7 @@ export const Split: React.FC<{beat: Beat}> = ({beat}) => {
       <Pane file={a} box={first} enter={ea} from={tb ? 'top' : 'left'} />
       <div style={{position: 'absolute', background: system.colors.accent,
         ...(tb ? {left: 0, width: W, top: H * pos - 3, height: 6, transform: `scaleX(${line})`} : {top: 0, height: H, left: W * pos - 3, width: 6, transform: `scaleY(${line})`})}} />
-      <Scrim side="both" strength={0.78} />
+      <Scrim side="both" strength={0.5} />
       {tb ? (
         <>
           <SafeBox name="then" justify="start">{labels[0] ? <Label text={labels[0]} delay={after} /> : null}</SafeBox>

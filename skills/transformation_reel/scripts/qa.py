@@ -2,26 +2,29 @@
 """Movement 6: the measurable checks and the gate that refuses delivery.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/qa.py check     # the film, the best-nine image and the story card only (run before the critics watch the cut)
+    python3 S/scripts/qa.py check     # the film, the then/now card and the timeline only (run before the critics watch the cut)
     python3 S/scripts/qa.py gate      # everything below; exit 0 only when every check passes
 
 The gate refuses:
-  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 15-30 s
+  film      out/film.mp4 is not 1080x1920 H.264 high profile yuv420p at 30 fps, or runs outside 30-60 s
   audio     music was found but the film has no AAC track near 192 kbps, or its loudness is off -14 LUFS by more than 1 LU
   black     a black stretch of 0.4 s or more (ffmpeg blackdetect)
   frozen    a frozen stretch of 1.5 s or more (ffmpeg freezedetect): nothing on screen may stand still that long
   safe      text that left its safe box or was cut off (SAFE_BREACH in build/render-report.json), a font that did
             not load, or a render job that failed
   text      a placeholder string anywhere in the film's words, the caption, the brief or the review page
-  wall      out/best-nine.png is not 1080x1080, build/wall.json does not name nine distinct photos, or the image's
-            nine cells are not nine different pictures (each cell's center, compared with every other)
-  story     out/story.png is not 1080x1920
+  card      out/then-now.png is not 1080x1350, build/card.json does not pair the earliest post with the latest,
+            or its two halves are the same picture
+  timeline  the film's first photo beat is not the subject's earliest post or its last is not the latest, or the
+            photo beats of any of the three storyboards (or of the film) run out of date order
   research  build/taste.md (you are / you like / your style / your voice / avoid) or build/taste.json is missing
   boards    three storyboards, each with storyboard.md, storyboard.json and six style-sheet frames
   vote      build/vote.md and build/winner.json are missing
   clips     the film's storyboard lists clips and build/clips.json does not account for every one
   critic    the latest cut round in build/critic/ is not for this film, or scores below 4 with the one fix unspent
   deliver   out/caption.md, out/review.html or out/brief.md is missing, or the caption is not in their register
+  span      the caption does not state the span between the film's first and last photo beats ("14 months"),
+            or names a different one
 """
 import argparse
 import hashlib
@@ -36,9 +39,11 @@ import _env  # noqa: E402
 
 PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|NaN|\bNone\b|@handle\b|your_handle", re.I)
 FILM = Path("out/film.mp4")
-WALL = Path("out/best-nine.png")
-STORY = Path("out/story.png")
-LENGTH = (15, 30)
+CARD = Path("out/then-now.png")
+LENGTH = (30, 60)
+NUMBER = {w: i for i, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen "
+                                     "sixteen seventeen eighteen nineteen twenty".split())}
+SPAN = re.compile(r"\b(\d+|an?|" + "|".join(NUMBER) + r")[\s-]+(weeks?|months?|years?)\b(?!\s+ago)", re.I)
 
 
 def sha(p):
@@ -105,35 +110,63 @@ def film_checks():
     bad = [f["text"][:160] for f in rep.get("findings", []) if f["text"].startswith(("SAFE_BREACH", "FONT_ERROR", "RENDER_ERROR", "UNKNOWN_KIND"))]
     check("safe", rep and not rep.get("failed") and not bad, f"{rep.get('jobs', 0)} render jobs, {rep.get('failed', '?')} failed, "
           f"{len(bad)} findings" + (f": {bad[0]}" if bad else ""))
-    check("wall", *wall_check())
-    sz = png_size(STORY) if STORY.exists() else None
-    check("story", sz == (1080, 1920), f"out/story.png {'at %dx%d' % sz if sz else 'is missing'}")
+    check("card", *card_check())
+    check("timeline", *timeline_check())
     return res
 
 
-def wall_check():
-    """The best-nine image: 1080x1080, nine distinct sources, and nine cells that are nine different pictures."""
-    if not WALL.exists():
-        return False, "out/best-nine.png is missing"
-    sz = png_size(WALL)
-    slots = (_env.read_json("build/wall.json") or {}).get("slots") or []
-    srcs = [x.get("photo") for x in slots if x.get("photo")]
+def card_check():
+    """The then/now card: 1080x1350, the earliest post beside the latest, and two halves that are two pictures."""
+    if not CARD.exists():
+        return False, "out/then-now.png is missing"
+    sz = png_size(CARD)
+    sub = _env.read_json("build/subject.json") or {}
+    card = _env.read_json("build/card.json") or {}
+    want = [(sub.get("first") or {}).get("id"), (sub.get("latest") or {}).get("id")]
     _env.need("PIL")
-    from PIL import Image, ImageStat
-    im = Image.open(WALL).convert("L")
+    from PIL import Image
+    im = Image.open(CARD).convert("L")
     w, h = im.size
-    cells, flat = [], 0
-    for i in range(9):
-        x, y = (i % 3) * w / 3, (i // 3) * h / 3
-        c = im.crop((int(x + w / 6 - w / 16), int(y + h / 6 - h / 16), int(x + w / 6 + w / 16), int(y + h / 6 + h / 16))).resize((16, 16), Image.BILINEAR)
-        if ImageStat.Stat(c).stddev[0] <= 4:
-            flat += 1
-        cells.append(list(c.tobytes()))
-    diffs = [sum(abs(p - q) for p, q in zip(cells[i], cells[j])) / 256 for i in range(9) for j in range(i + 1, 9)]
-    least = min(diffs)
-    ok = sz == (1080, 1080) and len(srcs) == 9 and len(set(srcs)) == 9 and flat == 0 and least > 6
-    return ok, (f"out/best-nine.png at {sz[0]}x{sz[1]}, {len(set(srcs))} distinct photos in build/wall.json, "
-                f"{flat} flat cells, least difference between two cells {least:.1f}")
+    tb = card.get("layout") == "tb"
+    halves = [im.crop((0, 0, w, h // 2) if tb else (0, 0, w // 2, h)), im.crop((0, h // 2, w, h) if tb else (w // 2, 0, w, h))]
+    a, b = [list(x.resize((24, 24), Image.BILINEAR).tobytes()) for x in halves]
+    diff = sum(abs(p - q) for p, q in zip(a, b)) / len(a)
+    ok = sz == (1080, 1350) and card.get("posts") == want and diff > 4
+    return ok, (f"out/then-now.png at {sz[0]}x{sz[1]}, posts {card.get('posts')} (earliest and latest: {want}), "
+                f"difference between the halves {diff:.1f}")
+
+
+def timeline_check():
+    """The film's photo beats run oldest to latest from the earliest post to the latest, and so does every storyboard's."""
+    import storyboard
+    sub = _env.read_json("build/subject.json")
+    film = _env.read_json("build/film.json")
+    if not sub or not film:
+        return False, "build/subject.json or build/film.json is missing"
+    issues = [f"film: {x}" for x in storyboard.order_issues(film, sub)]
+    boards = sorted(Path("build/storyboards").glob("*/storyboard.json"))
+    for f in boards:
+        issues += [f"board {f.parent.name}: {x}" for x in storyboard.order_issues(_env.read_json(f), sub)]
+    pb = storyboard.photo_beats(film)
+    span = f"{pb[0][2]} ({pb[0][1]}) to {pb[-1][2]} ({pb[-1][1]})" if pb else "no photo beats"
+    return not issues, (f"film photo beats {span}, {len(pb)} in date order; {len(boards)} storyboards checked"
+                        + (f"; {len(issues)} issues: {issues[0]}" if issues else ""))
+
+
+def span_check(cap, film):
+    """The caption states the span between the film's first and last photo beats, and no other."""
+    import datetime as dt
+    import timeline
+    pb = [x for x in __import__("storyboard").photo_beats(film or {"beats": []}) if x[2]]
+    if len(pb) < 2:
+        return False, "the film has fewer than two dated photo beats"
+    span = timeline.span_of(dt.date.fromisoformat(pb[0][2]), dt.date.fromisoformat(pb[-1][2]))
+    said = [m.group(0).lower() for m in SPAN.finditer(cap)]
+    norm = [re.sub(r"\b(" + "|".join(NUMBER) + r")\b", lambda m: str(NUMBER[m.group(1)]), x).replace("-", " ") for x in said]
+    other = [x for x, n in zip(said, norm) if n != span["label"] and x != span["label"]]
+    ok = span["label"] in cap.lower() and not other
+    return ok, (f"span {pb[0][2]} to {pb[-1][2]} is {span['label']!r}; the caption says {said or 'no span'}"
+                + (f"; names a different span: {other}" if other else ""))
 
 
 def words_in(obj, acc):
@@ -154,7 +187,7 @@ def gate_checks():
     def check(name, ok, detail):
         res.append((name, bool(ok), detail))
     film = _env.read_json("build/film.json") or {}
-    texts = words_in({"beats": film.get("beats"), "wall": film.get("wall"), "story": film.get("story")}, [])
+    texts = words_in({"beats": film.get("beats"), "card": film.get("card")}, [])
     for f in ("out/caption.md", "out/brief.md", "out/review.html"):
         if Path(f).exists():
             texts.append(Path(f).read_text())
@@ -190,6 +223,7 @@ def gate_checks():
     check("deliver", reg and Path("out/review.html").exists() and Path("out/brief.md").exists(),
           f"caption {len(cap.split())} words, {len(tags)} hashtags" + (", lowercase like theirs" if lower else "") +
           ("" if Path("out/review.html").exists() else "; review.html missing") + ("" if Path("out/brief.md").exists() else "; brief.md missing"))
+    check("span", *span_check(cap, film))
     return res
 
 

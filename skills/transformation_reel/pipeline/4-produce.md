@@ -1,8 +1,8 @@
 # 4. Produce: top-tier motion graphics, with their assets
 
-Goal: `out/film.mp4` (1080×1920, 30 fps, H.264 high, CRF 18, AAC 192 kbps, −14 LUFS, 15–30 s), the best-nine
-image `out/best-nine.png` (1080×1080) and the story card `out/story.png` (1080×1920), rendered by the kit's Remotion
-project (`S/motion/`). Run movement 5 (`5-clips.md`) first: the film places the clips.
+Goal: `out/film.mp4` (1080×1920, 30 fps, H.264 high, CRF 18, AAC 192 kbps, −14 LUFS, 30–60 s) and the then/now
+card `out/then-now.png` (1080×1350, the first and the latest side by side with the span), rendered by the kit's
+Remotion project (`S/motion/`). Run movement 5 (`5-clips.md`) first: the film places the clips.
 
 ## Music
 
@@ -32,11 +32,12 @@ python3 S/scripts/film.py frames
 - `snap` moves every cut onto a downbeat (or a beat) and writes `build/film.json`, the renderer's props, with the
   clips from `build/clips.json` resolved into their beats.
 - `master` trims the music to the film and brings it to −14 LUFS integrated, true peak about −1.5 dB.
-- `render` renders the film, the best-nine image and the story card in one browser session (about 20 to 60 s on a
+- `render` renders the film and the then/now card in one browser session (about 20 to 60 s on a
   desktop, longer with many clips), lays the music under the picture, and writes `build/render-report.json` (any text outside
-  its safe area, any font that failed, any job that failed after three tries) and `build/timeline.json`.
+  its safe area, any font that failed, any job that failed after three tries), `build/timeline.json` and
+  `build/card.json` (the two posts on the card).
 - `frames` writes one settled frame per beat into `build/frames/NN-<beat>.png` (and every shot of a beat that holds
-  several, such as the camera's walk across the wall, into `build/frames/NN-<beat>/`).
+  several into `build/frames/NN-<beat>/`).
 
 The standards the film is held to are in `S/design/standards.md`; the type scale, easing, transitions and safe
 areas are the JSON files beside it. To change the film, edit the winner's `storyboard.json` (words, order, frames,
@@ -50,5 +51,6 @@ it with eased pushes and crossfades in ffmpeg, from the same `film.json`; `build
 
 ## Look before the critics do
 
-Open every `build/frames/NN-*.png`, `out/best-nine.png` and `out/story.png` with the Read tool. Text cut off, a
-tile cropped past its subject, a beat that looks unfinished, a wall where two neighbors read as one: fix it in the storyboard and render again now.
+Open every `build/frames/NN-*.png` and `out/then-now.png` with the Read tool. Text cut off, a photo cropped past
+its subject, a date that is not the post's, a beat that looks unfinished, a card where the first and the latest do
+not read as a pair: fix it in the storyboard and render again now.
