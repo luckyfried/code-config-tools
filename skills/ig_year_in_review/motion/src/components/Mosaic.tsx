@@ -52,7 +52,7 @@ const PaletteBars: React.FC<{swatches: Swatch[]; beat: Beat}> = ({swatches, beat
   const s = useSafe();
   const {pop, tween, drift} = useMotion();
   const t = beat.text ?? {};
-  const barsH = s.height * 0.58;
+  const barsH = s.height * 0.46;
   return (
     <AbsoluteFill style={{background: system.colors.bg}}>
       <div style={{position: 'absolute', left: s.left, width: s.width, top: s.top, height: barsH, display: 'flex', gap: 12, alignItems: 'flex-end'}}>

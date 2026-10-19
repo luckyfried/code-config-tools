@@ -79,7 +79,8 @@ def timeline(beats):
         t = (b.get("transition") or {}).get("frames", 0) if i else 0
         start = start - t if i else 0
         out.append({"id": b["id"], "kind": b["kind"], "start": start, "frames": b["frames"], "transition": t,
-                    "start_s": round(start / FPS, 3), "seconds": round(b["frames"] / FPS, 3)})
+                    "start_s": round(start / FPS, 3), "seconds": round(b["frames"] / FPS, 3),
+                    "shots": [0] + list((b.get("data") or {}).get("cuts") or []) + [b["frames"]]})
         start += b["frames"]
     return out
 
@@ -158,7 +159,11 @@ def cmd_frames(a):
         f.unlink()
     ff = _env.ffmpeg()
     for i, b in enumerate(tl["beats"], 1):
-        t = (b["start"] + b["transition"] + (b["frames"] - b["transition"]) * 0.6) / FPS
+        # the settled moment of the beat's longest shot: past its entrance, before the next cut or transition
+        edges = b.get("shots") or [0, b["frames"]]
+        lo, hi = max(((edges[k], edges[k + 1]) for k in range(len(edges) - 1)), key=lambda e: e[1] - e[0])
+        lo = max(lo, b["transition"])
+        t = (b["start"] + lo + (hi - lo) * 0.7) / FPS
         dst = out / f"{i:02d}-{b['id']}.png"
         subprocess.run([ff, "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", str(film), "-frames:v", "1", str(dst)], check=True)
     print(f"{len(tl['beats'])} frames -> {out}/")

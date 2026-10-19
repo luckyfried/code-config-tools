@@ -53,6 +53,21 @@ def name_of(rgb):
     return min(NAMES, key=lambda n: dist(NAMES[n], rgb))
 
 
+def unique_name(rgb, taken):
+    """The nearest plain name not yet used; a close second name, then a qualifier, when the nearest is taken."""
+    ranked = sorted(NAMES, key=lambda n: dist(NAMES[n], rgb))
+    best = dist(NAMES[ranked[0]], rgb)
+    for n in ranked:
+        if n not in taken and dist(NAMES[n], rgb) <= max(1.6 * best, best + 8):
+            return n
+    h, l, s = hls(rgb)
+    warm = "warm " if (h < 0.09 or h > 0.92) and s > 0.25 else ""
+    for q in (warm, "deep " if lum(rgb) < lum(NAMES[ranked[0]]) else "light ", "dusty ", "soft "):
+        if q and q + ranked[0] not in taken:
+            return q + ranked[0]
+    return f"{ranked[0]} {len(taken) + 1}"
+
+
 def hexc(rgb):
     return "#%02X%02X%02X" % tuple(int(max(0, min(255, c))) for c in rgb)
 
@@ -112,9 +127,7 @@ def main():
     import picks  # noqa: E402  (same folder; prepares photos the same way)
     year, names = [], set()
     for rgb, w in chosen:
-        nm = name_of(rgb)
-        if nm in names:
-            nm = ("deep " if lum(rgb) < 0.2 else "light ") + nm
+        nm = unique_name(rgb, names)
         names.add(nm)
         ex = min(idx, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
         year.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": picks.prepare(ex["src"])})

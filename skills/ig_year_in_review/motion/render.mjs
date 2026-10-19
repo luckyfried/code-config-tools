@@ -36,41 +36,60 @@ const browser = await openBrowser('chrome', {chromiumOptions: {gl: spec.gl ?? 's
 const concurrency = spec.concurrency ?? Math.max(1, Math.min(16, Math.floor(os.cpus().length / 2)));
 
 let failed = 0;
+let retries = 0;
+// A transient browser fetch failure (an interface change on the host, a dropped proxy request) costs one job
+// attempt, never the run: each job gets three attempts.
+const runJob = async (job, t0) => {
+  const composition = await selectComposition({serveUrl, id: job.composition, inputProps: job.props, puppeteerInstance: browser});
+  if (job.type === 'video') {
+    let last = -1;
+    await renderMedia({
+      serveUrl, composition, inputProps: job.props, puppeteerInstance: browser, outputLocation: job.out,
+      codec: 'h264', crf: job.crf ?? 18, pixelFormat: 'yuv420p', x264Preset: job.preset ?? 'medium', muted: true,
+      concurrency, onBrowserLog: onBrowserLog(job), chromiumOptions: {gl: spec.gl ?? 'swangle'},
+      onProgress: ({progress}) => {
+        const p = Math.floor(progress * 10);
+        if (p !== last) {
+          last = p;
+          process.stderr.write(`render ${path.basename(job.out)} ${p * 10}% (${((Date.now() - t0) / 1000).toFixed(0)} s)\n`);
+        }
+      },
+    });
+  } else {
+    await renderStill({
+      serveUrl, composition, inputProps: job.props, puppeteerInstance: browser, output: job.out,
+      frame: Math.min(job.frame ?? 0, composition.durationInFrames - 1), scale: job.scale ?? 1, imageFormat: 'png',
+      onBrowserLog: onBrowserLog(job),
+    });
+  }
+};
 for (const job of spec.jobs) {
   const t0 = Date.now();
-  try {
-    fs.mkdirSync(path.dirname(job.out), {recursive: true});
-    const composition = await selectComposition({serveUrl, id: job.composition, inputProps: job.props, puppeteerInstance: browser});
-    if (job.type === 'video') {
-      let last = -1;
-      await renderMedia({
-        serveUrl, composition, inputProps: job.props, puppeteerInstance: browser, outputLocation: job.out,
-        codec: 'h264', crf: job.crf ?? 18, pixelFormat: 'yuv420p', x264Preset: job.preset ?? 'medium', muted: true,
-        concurrency, onBrowserLog: onBrowserLog(job), chromiumOptions: {gl: spec.gl ?? 'swangle'},
-        onProgress: ({progress}) => {
-          const p = Math.floor(progress * 10);
-          if (p !== last) {
-            last = p;
-            process.stderr.write(`render ${path.basename(job.out)} ${p * 10}% (${((Date.now() - t0) / 1000).toFixed(0)} s)\n`);
-          }
-        },
-      });
-    } else {
-      await renderStill({
-        serveUrl, composition, inputProps: job.props, puppeteerInstance: browser, output: job.out,
-        frame: Math.min(job.frame ?? 0, composition.durationInFrames - 1), scale: job.scale ?? 1, imageFormat: 'png',
-        onBrowserLog: onBrowserLog(job),
-      });
+  fs.mkdirSync(path.dirname(job.out), {recursive: true});
+  let error = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await runJob(job, t0);
+      error = null;
+      break;
+    } catch (e) {
+      error = e;
+      if (attempt < 3) {
+        retries++;
+        process.stderr.write(`retrying ${path.basename(job.out)} (attempt ${attempt + 1} of 3): ${String(e?.message ?? e).slice(0, 200)}\n`);
+      }
     }
-    timings.push({out: job.out, seconds: (Date.now() - t0) / 1000});
-  } catch (e) {
+  }
+  if (error) {
     failed++;
-    findings.push({job: job.out, text: `RENDER_ERROR ${String(e?.stack ?? e).slice(0, 1500)}`});
-    process.stderr.write(`failed ${job.out}: ${String(e?.message ?? e)}\n`);
+    findings.push({job: job.out, text: `RENDER_ERROR ${String(error?.stack ?? error).slice(0, 1500)}`});
+    process.stderr.write(`failed ${job.out}: ${String(error?.message ?? error)}\n`);
+  } else {
+    timings.push({out: job.out, seconds: (Date.now() - t0) / 1000});
   }
 }
 await browser.close({silent: true});
-const report = {bundle_seconds: (bundled - started) / 1000, seconds: (Date.now() - started) / 1000, jobs: spec.jobs.length, failed, findings, timings};
+const report = {bundle_seconds: (bundled - started) / 1000, seconds: (Date.now() - started) / 1000, jobs: spec.jobs.length, failed, retries, findings, timings};
 if (spec.report) fs.writeFileSync(spec.report, JSON.stringify(report, null, 2));
 process.stderr.write(`rendered ${spec.jobs.length - failed} of ${spec.jobs.length} jobs in ${report.seconds.toFixed(1)} s\n`);
 process.exit(failed ? 1 : 0);

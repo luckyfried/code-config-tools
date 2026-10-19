@@ -100,6 +100,7 @@ class Ctx:
         self.year = int(self.stats.get("year") or self.taste.get("year"))
         self.lower = bool(self.taste.get("register", {}).get("lowercase"))
         self.used = set()
+        self.said = set()
 
     def say(self, s):
         if s is None:
@@ -194,7 +195,7 @@ class Ctx:
         t = self.taste
         colors = [s.get("name") for s in t.get("palette", {}).get("likes", [])[:3] if s.get("name")] + \
                  [s.get("name") for s in t.get("palette", {}).get("year", [])[:2] if s.get("name")]
-        camera = {"editorial": "slow locked-off dolly, shallow depth of field, 35mm film look",
+        camera = {"editorial": "a slow push-in, shallow depth of field, 35mm film look",
                   "kinetic": "fast push-in and whip pan, macro detail, bold graphic framing",
                   "documentary": "handheld, natural light, observational, 16mm grain"}[direction]
         light = "warm golden-hour light" if t.get("texture", {}).get("leaks") else "soft natural light"
@@ -428,9 +429,13 @@ def board_thread(ctx):
 def caption_for(ctx, m):
     caps = [(r.get("caption") or "").split("#")[0].strip() for r in ctx.lib.get("posts", [])
             if r.get("ts") and dt.datetime.fromtimestamp(r["ts"], dt.timezone.utc).month == m]
-    caps = [c for c in caps if 8 <= len(c) <= 48]
+    caps = [c for c in caps if 8 <= len(c) <= 48 and c.lower() not in ctx.said]
     plain = [c for c in caps if "@" not in c]
-    return max(plain or caps, key=len) if caps else MONTHS[m - 1]
+    if not caps:
+        return MONTHS[m - 1]
+    pick = max(plain or caps, key=len)
+    ctx.said.add(pick.lower())
+    return pick
 
 
 def caption_with(ctx, word):
@@ -481,6 +486,11 @@ def finish(ctx, board):
     board["beats"] = beats
     by = {b["id"]: b for b in beats}
     keep = [c for c in board["clips"] if c["beat"] in by]
+    for c in keep:
+        secs = max(2, round(by[c["beat"]]["frames"] / FPS))
+        if c.get("prompt"):
+            c["prompt"] = c["prompt"].replace(f"{c['seconds']} seconds", f"{secs} seconds")
+        c["seconds"] = secs
     board["clips"] = keep
     stats_all = stat_rows(ctx, ["posts", "reels", "stories", "likes_given", "comments_written", "new_followers"],
                           {"likes_given": "likes given", "comments_written": "comments written", "new_followers": "new followers"})
