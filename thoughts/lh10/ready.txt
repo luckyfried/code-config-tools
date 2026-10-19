@@ -1,7 +1,7 @@
-46702f4c6fe71164e263825468d3af96a9a23543
-launch_hype_reel (kit 10), branch launch-hype-reel. The kit tip is the sha above (46702f4, the countdown band fix on top
-of ed5d6a1). The blind runs below ran at ed5d6a1 and da876b1; the COUNTDOWN FIX section proves 46702f4 on the
-blind-with2 build. Scratch: /mnt/data/scratch/kit-lh10. TMPDIR=/mnt/data/scratch/kit-lh10/tmp in every shell.
+57d932b7ef09fd273587734b10775063bb180c1b
+launch_hype_reel (kit 10), branch launch-hype-reel. The kit tip is the sha above: 57d932b, which puts the numeral and
+frame-pick fix on top of 46702f4 (the countdown band fix) and ed5d6a1. The blind runs below ran at ed5d6a1 and da876b1.
+The COUNTDOWN FIX and NUMERAL AND DOT FIX sections prove 46702f4 and 57d932b on the blind-with2 build. Scratch: /mnt/data/scratch/kit-lh10. TMPDIR=/mnt/data/scratch/kit-lh10/tmp in every shell.
 
 FILES
 skills/launch_hype_reel: 67 files (11636 insertions against d04ff01). By folder: SKILL.md 1, pipeline 7, design 6, critic 1, evals 2, fonts 7, motion 28, scripts 15.
@@ -12,6 +12,7 @@ Commits:
 - da876b1: tease words off a card stay readable
 - ed5d6a1: the countdown keeps the product's colors (lighter veil)
 - 46702f4: the countdown keeps the photo's own colors (no veil; a band behind the words)
+- 57d932b: no numeral is cut, and a beat's frame stays out of the next transition
 Against e726707: 3 added, 7 deleted, 44 modified.
 Outputs: a 9:16 film (30 fps, H.264), three teaser stories at 1080x1920, a countdown card at 1080x1920 carrying the date, a feed post at 1080x1350, captions in six sections (film, story 1-3, countdown, feed post), review.html with three style sheets and the vote, and brief.md.
 Remotion compositions: Film and Card. Card is story or feed, set by calculateMetadata.
@@ -216,10 +217,62 @@ Check 1 commands on a clean git archive of 46702f4 (/mnt/data/scratch/kit-lh10/c
   -> rc 0, 6.55 s, 1080x1920. node_modules is linked from the blind-with2 install (npm ci was not rerun; the
   lockfile did not change). Load 7.50 8.83 9.63 at 10:47:13Z.
 
+NUMERAL AND DOT FIX (57d932b, asked for by the coordinator: both problems sit on the opening shot and on the card)
+1. The 4's crossbar was cut.
+   Cause: the outlined day was set at a fixed hero x 2.2 (550 px), right-aligned in a safe box that clips
+   (overflow hidden). The display face's -0.03 em tracking ends the box before the last glyph's ink, and the 3 px
+   stroke sits half outside it, so the safe box cut the 4. The overhang is glyph ink, not box size, so the safe-box
+   measure never saw it.
+   Change (DateCard.tsx): the outlined day and the count numerals take their size from the safe width. Each digit is
+   0.62 em with 0.1 em padding a side, capped at the display maximum. The padding holds the ink, the stroke and the
+   tracking inside the numeral's own box.
+2. The dot between "e" and "m".
+   Cause: it was not the photo. film.py frames grabbed the count beat at frame 150, inside the next beat's 15-frame
+   iris (frames 149 to 163). The dot is the iris's first, tiny opening onto the world clip, drawn over the date. The
+   frame-pick ignored the next beat's transition, so the record showed an in-between frame. Now it grabs frame 139.
+   Change (film.py frames): each shot ends where the next beat's transition begins, so a beat's frame is from that
+   beat alone. The film itself is unchanged: the iris still opens there for half a second, as designed.
+   The band already gave at least 4.5:1 within 30 px of the headline on frame 01 (7.4:1 worst at 46702f4), so I did
+   not widen or strengthen it.
+Proof on the blind-with2 build (re-rendered once):
+- the kit's motion/src and scripts/film.py copied into the sandbox kit (diff: identical), then
+  python3 .claude/skills/launch_hype_reel/scripts/film.py render
+  -> rc 0, 19.16 s, 6 of 6 jobs, 0 SAFE_BREACH. Load 6.56 7.42 8.87 at 10:50:53Z, 12.18 8.65 9.24 at 10:51:12Z.
+  ffprobe: stream,h264,1080,1920,30/1,25.266667 and stream,aac,0/0,25.267000
+- python3 .claude/skills/launch_hype_reel/scripts/film.py frames --out frames-fixed2
+  -> /mnt/data/scratch/kit-lh10/blind-with2/frames/01-count-fixed2.png
+     /mnt/data/scratch/kit-lh10/blind-with2/frames/07-date-fixed2.png
+     /mnt/data/scratch/kit-lh10/blind-with2/frames/countdown-fixed2.png (out/countdown.png)
+  Compare sheet, updated: /mnt/data/scratch/kit-lh10/runs/countdown-fix-compare.png (01 first/fixed2, 07
+  first/fixed2, card first/fixed2). The dot crop, fixed then fixed2: /mnt/data/scratch/kit-lh10/runs/dot-fixed2.png
+- Every day 1 to 31, and the counts: node render.mjs /mnt/data/scratch/kit-lh10/numerals/jobs.json. The jobs come from
+  python3 runs/numerals.py jobs: the countdown card at story size and the film's date beat at reel size, for each day,
+  plus the count beat with ticks 188/31/14/7/1, all over the dark blue photo. -> rc 0, 32.8 s, 67 of 67, 0 SAFE_BREACH.
+  python3 runs/numerals.py check numerals -> 0 CUT. Least room between a numeral's ink and its safe-box edge: card 47
+  px (day 14), reel 47 px (day 14 and day 4), counts 68 px (188). Before, the 4's ink ended on the box edge.
+  Sheet: /mnt/data/scratch/kit-lh10/runs/numerals-sheet.png; listing: runs/numerals-check.txt
+Contrast (python3 runs/measure.py --box ...; ink within 30 px, median / worst):
+                          headline box 56,840,931,1180   words box 56,830,931,1264    top region rgb
+  01 count, blind run     7.9:1 / 6.4:1                  8.8:1 / 6.5:1                (132,117,45)
+  01 count, 46702f4       9.9:1 / 7.4:1                  10.4:1 / 7.5:1               (197,174,61)
+  01 count, 57d932b       9.8:1 / 7.5:1                  10.2:1 / 7.6:1               (197,175,61)
+  07 date, blind run      12.7:1 / 10.2:1                13.8:1 / 10.3:1              (48,67,104)
+  07 date, 57d932b        13.8:1 / 12.0:1                13.9:1 / 12.0:1              (64,92,146)
+                          headline box 66,1140,1008,1490 words box 66,1129,1008,1594
+  countdown, blind run    17.8:1 / 11.5:1                17.9:1 / 11.6:1              (48,57,79)
+  countdown, 46702f4      17.5:1 / 8.4:1                 17.6:1 / 8.6:1               (68,82,109)
+  countdown, 57d932b      17.5:1 / 8.4:1                 17.6:1 / 8.6:1               (68,81,109)
+Frame 07 and the card stay where they were. Frame 01's headline worst is 7.5:1, above 4.5:1.
+Critic round 4 (vote.py cut, runs/cut-fix.py by hand after looking at the frames: motion designer 4/4/4/5/4/4/5,
+person 4/5/4/4/4/4/5) -> vote.py verdict "SHIP: round 4, every score is 4 or more"; deliver.py rc 0.
+- python3 .claude/skills/launch_hype_reel/scripts/qa.py gate -> rc 0, 2.17 s, GATE GREEN, 18 of 18 PASS (safe 0
+  findings; critic round 4, lowest 4). Load 4.20 6.62 8.40 at 10:53:29Z.
+Check 1 commands on a clean git archive of 57d932b (/mnt/data/scratch/kit-lh10/check-fix2/skills/launch_hype_reel):
+- python3 -m py_compile scripts/*.py evals/fixtures/make_person.py -> COMPILE_OK, 16 files
+- for f in scripts/*.py evals/fixtures/make_person.py; do python3 $f --help; done -> 16 of 16
+
 NOT DONE, AND WHY
-- No blind run at 46702f4. The fix is proven on the blind-with2 build through the hand pipeline, as asked.
-- Pre-existing and left alone: the outlined "14" on the date runs past its safe box on the right, so the 4's
-  crossbar is clipped (the same in the old frames); and the first frame's headline shows a dot from the photo between
-  "e" and "m".
+- No blind run at 46702f4 or 57d932b. Both fixes are proven on the blind-with2 build through the hand pipeline, as
+  asked.
 - Hand run phase c: the hand-written taste.json edits were skipped and the research draft was used. hand2 ran at da876b1, before the countdown color fix. The blind-with2 run covers the tip.
 - No PR and no push, per the brief.
