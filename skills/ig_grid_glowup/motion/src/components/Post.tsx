@@ -30,7 +30,7 @@ const rgba = (hex: string, a: number) => {
 /** The treatment each direction gives a photo: one shared grade so nine posts read as one feed. */
 const grade = (look: Look) =>
   look === 'tonal'
-    ? 'saturate(0.7) sepia(0.16) contrast(0.93) brightness(1.05)'
+    ? 'saturate(0.84) sepia(0.1) contrast(0.98)'
     : look === 'blocks'
       ? 'saturate(1.08) contrast(1.04)'
       : 'saturate(0.86) contrast(1.06) brightness(1.01)';
@@ -46,8 +46,7 @@ const Shot: React.FC<{post: Post; look: Look; inset?: number}> = ({post, look, i
       ) : null}
       {look === 'tonal' ? (
         <>
-          <div style={{position: 'absolute', inset: 0, background: c.paper, mixBlendMode: 'soft-light', opacity: 0.35}} />
-          <div style={{position: 'absolute', inset: 0, background: c.bg, mixBlendMode: 'lighten', opacity: 0.16}} />
+          <div style={{position: 'absolute', inset: 0, background: c.paper, mixBlendMode: 'soft-light', opacity: 0.22}} />
         </>
       ) : null}
       {look === 'blocks' && post.tint ? (
