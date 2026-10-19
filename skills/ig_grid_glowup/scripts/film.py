@@ -175,10 +175,14 @@ def cmd_frames(a):
         subprocess.run([ff, "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", str(film), "-frames:v", "1", str(dst)], check=True)
 
     shots = 0
-    for i, b in enumerate(tl["beats"], 1):
-        # the settled moment of the beat: the last shot of a many-shot beat (the nine all landed), else its longest shot
+    beats = tl["beats"]
+    for i, b in enumerate(beats, 1):
+        # the settled moment of the beat: the last shot of a many-shot beat (the nine all landed), else its longest
+        # shot, never inside the transition in or the next beat's transition out
         edges = b.get("shots") or [0, b["frames"]]
-        spans = [(edges[k], edges[k + 1]) for k in range(len(edges) - 1)]
+        end = b["frames"] - (beats[i]["transition"] if i < len(beats) else 0)
+        spans = [(edges[k], min(edges[k + 1], end)) for k in range(len(edges) - 1)]
+        spans = [(lo, hi) if hi > lo else (lo, edges[k + 1]) for k, (lo, hi) in enumerate(spans)]
         lo, hi = spans[-1] if len(spans) >= 4 else max(spans, key=lambda e: e[1] - e[0])
         lo = max(lo, b["transition"])
         grab((b["start"] + lo + (hi - lo) * 0.7) / FPS, out / f"{i:02d}-{b['id']}.png")
