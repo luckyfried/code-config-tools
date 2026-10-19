@@ -467,12 +467,15 @@ def main():
     else:
         doors.setdefault("instagram_download", "closed: none under the workspace")
     fbs = [] if a.photos else find_exports(root, is_fb_export)
+    opened = []
     for f in fbs:
         rows = read_facebook(f)
         d["facebook"] = merge(d["facebook"], rows)
-        doors[f"facebook_download:{f.name}"] = f"open: {len(rows)} posts and photos"
+        opened.append(f"{rel(f, root)} ({len(rows)} posts and photos)")
         d["found"]["facebook"] = [str(f)]
-    if not fbs:
+    if opened:
+        doors["facebook_download"] = "open: " + ", ".join(opened)
+    else:
         doors.setdefault("facebook_download", "closed: none under the workspace")
     source = ("accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
     if not d["posts"] and not d["reels"]:

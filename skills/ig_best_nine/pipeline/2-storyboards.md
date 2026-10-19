@@ -1,7 +1,7 @@
 # 2. Storyboards: three different films, not three versions of one
 
-Goal: `build/storyboards/1..3/` each with `storyboard.md`, `storyboard.json` and a style sheet
-(`frames/NN.png` and `sheet.png`, the board's beats plus its best-nine image and story card).
+Goal: `build/storyboards/1..3/` each with `storyboard.md`, `storyboard.json` and a six-frame style sheet
+(`frames/01..06.png` and `sheet.png`; the last frame is the board's ending on the whole wall).
 
 ## Draft
 
@@ -34,8 +34,8 @@ python3 S/scripts/storyboard.py check && python3 S/scripts/storyboard.py sheets
 
 `check` refuses a board outside 15–30 s, a beat under 1.2 s, an unknown component or transition, a missing asset,
 a placeholder, a clip prompt without "no text", a tile or rank that is not one of the nine, or a wall or story
-card that does not carry all nine. `sheets` renders each board's frames, its wall and its story card with the real
-engine (about 20 s for all three).
+card that does not carry all nine. `sheets` renders six frames per board with the real engine (about 25 s for all
+three).
 
 ## Look at the sheets
 
