@@ -499,7 +499,7 @@ def place_label(ctx, pid, visit=None):
 
 def opener(ctx, headline, line, clip="01", kicker=None):
     return {"id": "opener", "kind": "Opener", "frames": sec(2.6), "transition": None, "photos": [ctx.opener_photo()],
-            "text": {"kicker": kicker or f"@{ctx.handle}", "headline": headline, "line": line}, "clip": clip,
+            "text": {"kicker": kicker, "headline": headline, "line": line}, "clip": clip,
             "data": {"focus": []}}
 
 
