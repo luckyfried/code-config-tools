@@ -27,8 +27,10 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
   const s = useSafe();
   const {tween, pop, frame} = useMotion();
   const t = beat.text ?? {};
-  const year = String(board.year);
   const d = system.direction;
+  const words = (t.headline ?? board.span.label).split(' ');
+  const big = /^\d+$/.test(words[0]) ? words[0] : '';
+  const rest = big ? words.slice(1).join(' ') : words.join(' ');
 
   if (d === 'kinetic') {
     const grow = pop(4, {damping: 14});
@@ -44,7 +46,7 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
         </AbsoluteFill>
         <AbsoluteFill style={{justifyContent: 'flex-start', alignItems: 'center', paddingTop: s.top + s.height * 0.08}}>
           <div style={{display: 'flex', ...faceStyle(system.display), fontSize: s.width / 2.6, color: system.colors.ink, lineHeight: 0.85}}>
-            {year.split('').map((ch, i) => {
+            {big.split('').map((ch, i) => {
               const p = pop(10 + i * 3);
               return (
                 <span key={i} style={{display: 'inline-block', transform: `translateY(${(1 - p) * 60}%) scale(${0.4 + 0.6 * p})`, opacity: Math.min(1, p * 2)}}>
@@ -56,7 +58,8 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
         </AbsoluteFill>
         <SafeBox name="opener" justify="end" align="center">
           <Kicker text={t.kicker ?? `@${board.handle}`} delay={20} color={system.colors.ink} />
-          {t.headline ? <Headline text={t.headline} max="h2" lines={2} delay={24} /> : null}
+          {rest ? <Headline text={rest} max="h2" lines={2} delay={24} /> : null}
+          {t.line ? <Line text={t.line} delay={28} /> : null}
           <Swatches delay={30} height={18} />
         </SafeBox>
       </AbsoluteFill>
@@ -73,12 +76,12 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
         <SafeBox name="opener-top" justify="start">
           <div style={{...faceStyle(system.text), fontSize: system.scale.label, color: system.colors.ink, display: 'flex', gap: 18, alignItems: 'center', opacity: tween(0, 1, 6, 10)}}>
             <span style={{width: 20, height: 20, borderRadius: 10, background: system.colors.accent, opacity: rec ? 1 : 0.25}} />
-            {t.kicker ?? `${board.year}.01.01`}
+            {t.kicker ?? board.span.first.replace(/-/g, '.')}
           </div>
         </SafeBox>
         <SafeBox name="opener" justify="end">
           <Kicker text={`@${board.handle}`} delay={6} color={system.colors.accent} />
-          <Headline text={t.headline ?? year} max="hero" lines={2} delay={8} />
+          <Headline text={t.headline ?? board.span.label} max="h1" lines={2} delay={8} />
           {t.line ? <Line text={t.line} delay={18} /> : null}
           <Swatches delay={22} />
         </SafeBox>
@@ -95,7 +98,7 @@ export const Opener: React.FC<{beat: Beat}> = ({beat}) => {
       <SafeBox name="opener" justify="end">
         <Card>
           <Kicker text={t.kicker ?? `@${board.handle}`} delay={6} color={system.colors.ink} />
-          <Headline text={t.headline ?? year} max="hero" lines={2} delay={8} width={s.width - 2 * CARD_PAD} />
+          <Headline text={t.headline ?? board.span.label} max="h1" lines={2} delay={8} width={s.width - 2 * CARD_PAD} />
           {t.line ? <Line text={t.line} delay={18} /> : null}
           <Swatches delay={24} height={10} />
         </Card>

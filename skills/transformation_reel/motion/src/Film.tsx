@@ -39,7 +39,7 @@ export const Film: React.FC<FilmProps> = ({board}) => {
   );
 };
 
-/** The best-nine image or the story card: a beat at its settled frame, laid out for that format. */
+/** The then/now card: a beat at its settled frame, laid out for the portrait format. */
 export const Card: React.FC<CardProps> = ({board, beat, format}) => (
   <SystemProvider value={{system: board.system, board, format, still: true, beat}}>
     <FontGate system={board.system}>

@@ -84,6 +84,29 @@ const Match: React.FC<TransitionPresentationComponentProps<MatchProps>> = ({chil
   return <AbsoluteFill style={{transform: `scale(${s})`, opacity: o}}>{children}</AbsoluteFill>;
 };
 
+type EdgeProps = {direction: string; color: string};
+
+/** The then/now divider on the move: the next frame is cut in along a hard edge, and the edge is a line in the accent. */
+const Edge: React.FC<TransitionPresentationComponentProps<EdgeProps>> = ({children, presentationProgress: p, presentationDirection, passedProps}) => {
+  if (presentationDirection === 'exiting') return <AbsoluteFill>{children}</AbsoluteFill>;
+  const v = passedProps.direction === 'from-bottom' || passedProps.direction === 'from-top';
+  const back = passedProps.direction === 'from-left' || passedProps.direction === 'from-top';
+  const shown = p * 100;
+  const clip = v
+    ? back ? `inset(0 0 ${100 - shown}% 0)` : `inset(${100 - shown}% 0 0 0)`
+    : back ? `inset(0 ${100 - shown}% 0 0)` : `inset(0 0 0 ${100 - shown}%)`;
+  const at = back ? shown : 100 - shown;
+  const line: React.CSSProperties = v
+    ? {left: 0, right: 0, top: `calc(${at}% - 3px)`, height: 6}
+    : {top: 0, bottom: 0, left: `calc(${at}% - 3px)`, width: 6};
+  return (
+    <AbsoluteFill>
+      <AbsoluteFill style={{clipPath: clip}}>{children}</AbsoluteFill>
+      {p > 0 && p < 1 ? <div style={{position: 'absolute', background: passedProps.color, ...line}} /> : null}
+    </AbsoluteFill>
+  );
+};
+
 const pres = <T extends Record<string, unknown>>(component: React.FC<TransitionPresentationComponentProps<T>>, props: T) =>
   ({component, props}) as TransitionPresentation<T>;
 
@@ -108,6 +131,8 @@ export const transitionFor = (t: Transition, system: System, width: number, heig
         presentation: pres(Dip, {color: system.direction === 'editorial' ? system.colors.paper : '#000000'}),
         timing,
       };
+    case 'edge':
+      return {presentation: pres(Edge, {direction: dir, color: system.colors.accent}), timing};
     case 'match':
       return {presentation: pres(Match, {}), timing};
     case 'fade':

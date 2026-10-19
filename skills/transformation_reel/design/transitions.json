@@ -8,7 +8,12 @@
     "iris": "closing in on one subject: a person, a place",
     "whip": "a whip pan into a new chapter, with motion blur",
     "bars": "two palette bars sweep across and the next chapter is under them",
-    "slide": "the next card pushes the last one out on a spring"
+    "slide": "the next card pushes the last one out on a spring",
+    "edge": "the then/now divider moving: a hard wipe whose edge is a line in the accent, carrying one date to the next"
   },
-  "frames": {"editorial": 18, "kinetic": 9, "documentary": 15}
+  "frames": {
+    "editorial": 18,
+    "kinetic": 9,
+    "documentary": 15
+  }
 }

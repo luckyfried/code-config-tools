@@ -47,23 +47,11 @@ export type Clip = {
   status: 'generated' | 'their_reel' | 'substituted' | 'pending';
 };
 
-/** One of the nine: rank 1 is the most liked. */
-export type Tile = {
-  rank: number;
-  photo: string;
-  likes?: number | null;
-  comments?: number | null;
-  label?: string;
-  caption?: string;
-  kind?: string;
-  clip?: Clip | null;
-};
-
 export type Transition = {preset: string; frames: number; direction?: string};
 
 export type Beat = {
   id: string;
-  kind: 'Opener' | 'ClipShot' | 'Countdown' | 'Grid';
+  kind: 'Opener' | 'ClipShot' | 'Dated' | 'Split' | 'Chapter';
   frames: number;
   transition?: Transition | null;
   treatment?: 'push' | 'parallax' | 'mask' | 'split';
@@ -72,21 +60,28 @@ export type Beat = {
   clip?: Clip | null;
   data?: any;
   settle?: number;
+  /** the subject post a photo beat shows, and its date */
+  post?: string;
+  /** a photo beat's date, or a then/now beat's two dates */
+  at?: string | string[];
+  /** a then/now beat's two posts: the first and the latest */
+  posts?: string[];
 };
+
+export type Span = {first: string; latest: string; months: number; days: number; label: string; from: string; to: string};
 
 export type Board = {
   id: string;
   name: string;
   handle: string;
-  year: number;
+  subject: string;
+  span: Span;
   format: {width: number; height: number; fps: number};
   system: System;
   beats: Beat[];
-  /** the best-nine image (1080x1080) */
-  wall?: Beat;
-  /** the story card (1080x1920) */
-  story?: Beat;
+  /** the then/now card (1080x1350): the first and the latest photo side by side with the span */
+  card?: Beat;
 };
 
 export type FilmProps = {board: Board};
-export type CardProps = {board: Board; beat: Beat; format: 'square' | 'story'};
+export type CardProps = {board: Board; beat: Beat; format: 'portrait'};

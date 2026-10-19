@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the nine and the photos around them. Writes build/photo_index.json,
-build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: the posts the film carries, in date order. Reads build/subject.json (timeline.py),
+writes build/picks.json. Also the photo helpers the other scripts share (prepare, poster, analyse).
 
 USAGE (from the workspace root):
-    python3 S/scripts/picks.py
+    python3 S/scripts/picks.py [--beats 12]
 
-Scores every photo of the year (color, contrast, exposure), finds each one's focal point (where the detail is,
-so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in build/photos/.
-A reel among the nine gets a poster frame (ffmpeg, 40% of the way in) that stands for it on the wall; the reel
-itself stays available as footage. picks.json carries the nine in rank order (each with its photo, its library
-source, its reel when it is one, its score, brightness, focal point and colors) and two chapters around them:
-"opener", the year's most striking photo outside the nine (the wall's world), and "nine", the nine stills.
-To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json.
+The sequence is the subject's first post, every milestone, the latest post, and between them posts spread evenly
+by date (their own reels first where two candidates sit close, since a reel is footage of the change) until the
+sequence holds --beats posts. Every photo is a 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation
+applied); a reel stands in by its poster frame (ffmpeg, 40% of the way in) and stays available as footage.
+picks.json carries the sequence oldest first (each post's id, date, photo, library source, reel, caption,
+milestone flag, visible change and focal point), the first and the latest, and the photos' focal points.
+To swap a post, edit the beat's "post", "at" and "photos" in build/storyboards/N/storyboard.json (run
+`grade.py photos FILE` for a photo that is not graded yet); storyboard.py check keeps the dates in order.
 """
-import datetime as dt
 import hashlib
 import subprocess
 import sys
@@ -110,56 +109,44 @@ def analyse(path):
             "focal": [round(min(0.8, max(0.2, fx)), 2), round(min(0.8, max(0.2, fy)), 2)], "colors": dom}
 
 
+def sequence(posts, firsts, n):
+    """first, milestones, latest, then the post nearest each gap's middle by date, until n posts."""
+    keep = {posts[0]["id"], posts[-1]["id"]} | set(firsts)
+    while len(keep) < min(n, len(posts)):
+        chosen = sorted((p for p in posts if p["id"] in keep), key=lambda p: p["ts"])
+        a, b = max(zip(chosen, chosen[1:]), key=lambda ab: ab[1]["ts"] - ab[0]["ts"])
+        mid = (a["ts"] + b["ts"]) / 2
+        between = [p for p in posts if a["ts"] < p["ts"] < b["ts"]]
+        if not between:
+            break
+        span = b["ts"] - a["ts"]
+        best = min(between, key=lambda p: abs(p["ts"] - mid) - (0.2 * span if p.get("video") else 0))
+        keep.add(best["id"])
+    return [p for p in posts if p["id"] in keep]
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
-    d = _env.read_json("build/library.json")
-    s = _env.read_json("build/stats.json")
-    if not d or not s:
-        sys.exit("run gather.py and stats.py first")
-    index, skipped = [], 0
-    for kind, rows in (("post", d["posts"]), ("story", d["stories"])):
-        for r in rows:
-            for m in r["media"]:
-                if Path(m).suffix.lower() in VIDEO:
-                    continue
-                try:
-                    a = analyse(m)
-                except Exception:
-                    skipped += 1
-                    continue
-                month = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month
-                index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"), **a})
-    if not index:
-        sys.exit("no photos could be opened; the video needs at least one photo")
-    _env.write_json("build/photo_index.json", index)
-    nine, chosen = [], set()
-    for t in s["top_nine"]:
-        still = poster(t["media"]) if t.get("video") else prepare(t["media"])
-        if not still:
-            print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
-            continue
-        a = analyse(still)
-        chosen.add(t["media"])
-        nine.append({"rank": t["rank"], "kind": t["kind"], "photo": still, "src": t["media"], "video": t.get("video"), **a})
-    feed = [e for e in index if e["kind"] == "post" and e["src"] not in chosen] or [e for e in index if e["src"] not in chosen] or index
-    opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
-    out = {"nine": nine, "chapters": {"nine": [n["photo"] for n in nine]}, "focal": {}, "source_of": {}}
-    op = prepare(opener["src"])
-    out["chapters"]["opener"] = [op] if op else []
-    if op:
-        out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
-        out["source_of"][op] = opener["src"]
-    for n in nine:
-        out["focal"][n["photo"]] = f"{n['focal'][0] * 100:.0f}% {n['focal'][1] * 100:.0f}%"
-        out["source_of"][n["photo"]] = n["src"]
+    ap.add_argument("--beats", type=int, default=12, help="how many posts the film carries (first and latest included)")
+    a = ap.parse_args()
+    sub = _env.read_json("build/subject.json")
+    if not sub:
+        sys.exit("build/subject.json is missing: run timeline.py first (research.py runs it)")
+    posts = sub["posts"]
+    seq = sequence(posts, [m["id"] for m in sub["milestones"]], max(2, a.beats))
+    keys = ("id", "date", "ts", "kind", "photo", "src", "video", "caption", "milestone", "change", "step", "focal", "bright")
+    out = {"subject": sub["subject"], "span": sub["span"], "first": posts[0]["id"], "latest": posts[-1]["id"],
+           "sequence": [{k: p.get(k) for k in keys} for p in seq], "focal": {}, "source_of": {}}
+    for p in seq:
+        out["focal"][p["photo"]] = f"{p['focal'][0] * 100:.0f}% {p['focal'][1] * 100:.0f}%"
+        out["source_of"][p["photo"]] = p["src"]
     _env.write_json("build/picks.json", out)
-    print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
-    for n in nine:
-        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}  bright {n['bright']}")
-    print("wrote build/picks.json and build/photo_index.json")
-    return 0 if len(nine) == 9 else 1
+    print(f"the film carries {len(seq)} of {len(posts)} posts, {seq[0]['date']} to {seq[-1]['date']}:")
+    for p in seq:
+        print(f"  {p['id']} {p['date']} {p['kind']:<4} change {p['change']:.2f}{'  milestone' if p['milestone'] else ''}")
+    print("wrote build/picks.json")
+    return 0
 
 
 if __name__ == "__main__":
