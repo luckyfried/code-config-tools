@@ -1,18 +1,28 @@
 #!/usr/bin/env python3
-"""Movement 0, gather: every door to the person's own material, merged into build/library.json.
+"""Movement 0, gather: every door to the person's own material, merged into the run's library.json.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
+    python3 S/scripts/gather.py [--pulled DIR] [--door instagram_account="open: 120 posts"] \
         [--door browser="closed: no signed-in session"] [--year 2026] [--photos DIR] [--root .]
+
+Each run starts here: gather makes the run folder build/<UTC stamp>/ and prints it as `run: build/<stamp>`. Every
+later command takes that folder as --run; everything the run writes goes under it, the deliverables in its out/.
+
+The photographs: the setting BEST_NINE_PHOTOS (or --photos, which wins) names the folder the nine's photographs
+are read from. A post's photograph is found in that folder by its file name first, then in the download's media.
+With no account and no download, that folder is the photo door itself. Unset, the photographs are the account's
+own posts as gathered (the run's library/posts/); library.json records which folder it was and why.
 
 Doors, in order of preference (every one tried is recorded in library.json and in out/brief.md):
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
-     browser session, saved under --pulled DIR as items.json (shape below) with the media files beside it.
+     browser session, or read from a file of theirs that lists their posts with their numbers (a posts.json, a
+     likes.csv, a sheet), saved under --pulled DIR as items.json (shape below) with its media paths.
   2. Instagram "Download your information" exports (JSON) anywhere under --root, as folders or .zip files (a zip is
-     unpacked into build/export/): posts, reels, stories, likes, saves, comments, followers, following, per-post
+     unpacked into the run's export/): posts, reels, stories, likes, saves, comments, followers, following, per-post
      and per-reel likes and comments (past_instagram_insights), the username. Missing files are tolerated.
   3. Facebook "Download your information" exports under --root: posts, photos, albums.
-  4. --photos DIR, else the largest folder of photos under --root (dates from EXIF, else the file time).
+  4. The photo folder (BEST_NINE_PHOTOS or --photos), else the largest folder of photos under --root (dates from
+     EXIF, else the file time).
 With every door closed it writes out/brief.md with the one sentence on how to open one and exits 3: tell the
 person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
 
@@ -25,12 +35,13 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
 The year: --year when the person named one, else the latest year with at least 12 posts, reels and stories.
-Links every media file of the year into build/library/<kind>/ (posts, reels, stories, likes, saved, facebook)
-under its date, writes build/library.json and prints a summary; every choice it made is listed under "assumptions".
+Links every media file of the year into library/<kind>/ (posts, reels, stories, likes, saved, facebook) under
+its date, writes library.json and prints a summary; every choice it made is listed under "assumptions".
 """
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import shutil
 import sys
@@ -88,7 +99,7 @@ def find_exports(root, test=None):
             continue
         if test is is_export and any("your_instagram_activity/" in n or n.endswith("content/posts_1.json") for n in names) or \
                 test is is_fb_export and any("your_facebook_activity/" in n for n in names):
-            dest = Path("build/export") / z.stem
+            dest = Path("export") / z.stem
             if not dest.exists():
                 zipfile.ZipFile(z).extractall(dest)
             for d, _ in walk(dest, 3):
@@ -119,13 +130,18 @@ def first(root, *rels):
 
 
 class Media:
-    def __init__(self, root):
+    """A post's media file: by its name in the photo folder when there is one, else where the download says."""
+
+    def __init__(self, root, photos=None):
         self.root = root
         self.by_name = None
+        self.named = {f.name: f for f in Path(photos).rglob("*") if f.is_file()} if photos else {}
 
     def resolve(self, uri):
         if not uri or re.match(r"^https?://", uri):
             return None
+        if Path(uri).name in self.named:
+            return str(self.named[Path(uri).name].resolve())
         p = self.root / uri
         if p.exists():
             return str(p.resolve())
@@ -147,8 +163,8 @@ def media_items(entry):
     return out
 
 
-def read_export(root):
-    md = Media(root)
+def read_export(root, photos=None):
+    md = Media(root, photos)
     found, notes = {}, []
     posts = []
     files = first(root, "content/posts_*.json", "media/posts_*.json")
@@ -381,7 +397,7 @@ def pick_year(rows, asked):
 
 def write_howto(out):
     out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
+    (out / "brief.md").write_text(f"# Best nine: no posts found\n\n## Assumptions\n\n- No Instagram export and no folder of "
                                   f"photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
@@ -397,8 +413,8 @@ def rel(p, root):
 
 
 def shelve(lib):
-    """Every media file of the year, linked into build/library/<kind>/ under its date; the rows point at the links."""
-    base = Path("build/library").resolve()
+    """Every media file of the year, linked into library/<kind>/ under its date; the rows point at the links."""
+    base = Path("library").resolve()
     for kind in ("posts", "reels", "stories", "likes", "saved", "facebook"):
         for n, row in enumerate(lib[kind]):
             media = []
@@ -423,12 +439,21 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
     ap.add_argument("--year", type=int)
-    ap.add_argument("--photos", help="a folder of photos the person named")
+    ap.add_argument("--photos", help="the folder the nine's photographs come from (default: the setting BEST_NINE_PHOTOS)")
     ap.add_argument("--pulled", action="append", default=[], help="a folder holding items.json the agent pulled")
     ap.add_argument("--door", action="append", default=[], help='name="open: ..." or name="closed: why"')
     a = ap.parse_args()
     root = Path(a.root).resolve()
-    Path("build/library").mkdir(parents=True, exist_ok=True)
+    photos = a.photos or os.environ.get("BEST_NINE_PHOTOS") or None
+    photos_from = "--photos" if a.photos else "BEST_NINE_PHOTOS" if photos else None
+    photos = Path(photos).resolve() if photos else None
+    if photos and not photos.is_dir():
+        sys.exit(f"the photo folder {photos} ({photos_from}) is not a folder")
+    pulled_in = [str(Path(x).resolve()) for x in a.pulled]
+    run = _env.new_run()
+    os.chdir(run)
+    print(f"run: {run.relative_to(_env.WORKSPACE) if run.is_relative_to(_env.WORKSPACE) else run}")
+    Path("library").mkdir(parents=True, exist_ok=True)
     assumptions, doors = [], {}
     for x in a.door:
         k, _, v = x.partition("=")
@@ -437,7 +462,7 @@ def main():
     d = {k: [] for k in keys}
     d.update(handle=None, name=None, found={}, notes=[])
     sources = []
-    pulled = a.pulled or (["build/library/pulled"] if Path("build/library/pulled/items.json").exists() else [])
+    pulled = pulled_in or ([str(root / "pulled")] if (root / "pulled" / "items.json").exists() else [])
     for folder in pulled:
         p = read_pulled(folder)
         if not p:
@@ -448,10 +473,11 @@ def main():
         d["handle"], d["name"] = d["handle"] or p["handle"], d["name"] or p["name"]
         d["found"].update(p["found"])
         sources.append(p["source"])
-        doors.setdefault(p["source"], f"open: {len(p['posts'])} posts, {len(p['likes'])} likes pulled")
-    exports = [] if a.photos else find_exports(root)
+        liked = f", {len(p['likes'])} posts they liked" if p["likes"] else ""
+        doors.setdefault(p["source"], f"open: {len(p['posts']) + len(p['reels'])} posts and reels{liked}")
+    exports = find_exports(root)
     if exports:
-        reads = [(e, read_export(e)) for e in exports]
+        reads = [(e, read_export(e, photos)) for e in exports]
         export, x = max(reads, key=lambda r: max([0] + [int(p["ts"] or 0) for p in r[1]["posts"]]))
         if len(exports) > 1:
             assumptions.append(f"Found {len(exports)} Instagram downloads; used the newest, {export.name}.")
@@ -466,7 +492,7 @@ def main():
         doors["instagram_download"] = f"open: {rel(export, root)}"
     else:
         doors.setdefault("instagram_download", "closed: none under the workspace")
-    fbs = [] if a.photos else find_exports(root, is_fb_export)
+    fbs = find_exports(root, is_fb_export)
     opened = []
     for f in fbs:
         rows = read_facebook(f)
@@ -480,7 +506,7 @@ def main():
     source = ("accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
     if not d["posts"] and not d["reels"]:
         _env.need("PIL")
-        folder = Path(a.photos) if a.photos else largest_photo_folder(root)
+        folder = photos or largest_photo_folder(root)
         if folder:
             posts, vids = read_photos(folder)
             d["posts"], d["reels"] = posts, vids
@@ -495,6 +521,7 @@ def main():
             assumptions.append("Only a Facebook download was found, so the film is made from its posts and photos.")
         else:
             write_howto(Path("out"))
+            print(f"wrote {run / 'out' / 'brief.md'}")
             print(HOWTO)
             return 3
     year, why = pick_year(d["posts"] + d["reels"] + d["stories"], a.year)
@@ -518,10 +545,14 @@ def main():
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
         assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
-    out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
+    if photos and source in ("export", "accounts"):
+        named = sum(1 for p in lib["posts"] + lib["reels"] for m in p.get("media") or [] if photos in Path(m).resolve().parents)
+        assumptions.append(f"The photographs come from {photos} ({photos_from}): {named} of the year's posts found theirs there by name.")
+    picture = {"folder": str(photos) if photos else str(Path("library/posts").resolve()), "from": photos_from or "the account's posts"}
+    out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "photos": picture, "handle": handle, "name": d["name"],
            "year": year, "range": span, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
-    _env.write_json("build/library.json", out)
+    _env.write_json("library.json", out)
     print(f"source: {source}   handle: @{handle}   year: {year}   range: {span['first']} to {span['last']}")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
                                                    "following", "facebook")))
@@ -529,7 +560,7 @@ def main():
         print(f"door {k}: {v}")
     for x in out["assumptions"]:
         print("assumption:", x)
-    print("wrote build/library.json")
+    print(f"wrote {run / 'library.json'}; photographs from {picture['folder']} ({picture['from']})")
     return 0
 
 

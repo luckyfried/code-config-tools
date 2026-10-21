@@ -13,7 +13,9 @@ Any one of these, typed as the whole request:
 - what were my top 9 posts this year? make the grid and a reel
 - best nine please
 
-## The fixture
+## The fixtures
+
+A set's captions are written from its photographs, never separately.
 
 ```
 python3 S/evals/fixtures/make_person.py SANDBOX
@@ -26,6 +28,15 @@ and albums), photos in one palette (portrait and square, some named `.heic` that
 reels. July is clearly the busiest month. Her nine most-liked posts stand clear of the tenth (a gap of more than
 a hundred likes), spread across the year, include two reels, and carry captions that say why they worked. It runs
 in a few seconds.
+
+```
+python3 S/evals/fixtures/make_bakery.py SANDBOX PHOTOS
+```
+
+writes a bakery's Instagram export (@cornerloaf: posts, per-post likes and comments, the username) whose posts
+name the photographs in the folder `PHOTOS` by file name and copies none of them. Run the pipeline with
+`BEST_NINE_PHOTOS=PHOTOS` and the nine are read from that folder at full size: the run a person makes when their
+photographs live beside the download.
 
 ## The run
 
@@ -46,27 +57,24 @@ without-kit run is the same command in a sandbox with the fixture and no `.claud
 
 - **No Instagram or Facebook account, no signed-in browser.** gather.py records both doors closed and opens the
   export door; `brief.md` lists all of them.
-- **No video model.** The agent generates nothing and runs `clips.py normalize --why "no video model in this
-  session"`: every clip of the winning board is substituted with an animated treatment of one of their photos,
-  a clip of their own reels stays as it is, and `brief.md` says which clips were substituted and why. The
-  generated-clip path is proven by hand instead: copy two of the fixture's reels
-  (`instagram-*/media/reels/*.mp4`) to `build/clips/01.mp4` and `02.mp4` as stand-ins for the model's output and
-  run `clips.py normalize`; they arrive as "generated".
 - **No music.** The export carries none, so `music.py find` exits 3 and `music.py make` writes the bed; `brief.md`
   names the origin.
+- **No graphics card.** The render runs on the processor; brief.md says which one made the film.
 
 ## Pass
 
-The run ends with `out/film.mp4`, `out/best-nine.png` (1080×1080), `out/story.png` (1080×1920), `out/caption.md`, `out/review.html`
-and `out/brief.md`; `python3 S/scripts/qa.py gate` prints `GATE GREEN`; the three style sheets
-(`build/storyboards/N/sheet.png`), `build/vote.md` and the cut scores in `build/critic/` exist; and
+The run ends with one run folder `build/<stamp>/` whose `out/` holds `film.mp4`, `film-square.mp4`, `film-wide.mp4`,
+`best-nine.png` (1080x1080), `story.png` (1080x1920), `caption.md`, `review.html` and `brief.md`;
+`python3 S/scripts/qa.py gate --run build/<stamp>` prints `GATE GREEN`; the three sheets
+(`storyboards/<tone>/sheet.png`), `vote.md`, `critic/timed.json` and the cut scores in `critic/` exist in the run;
+and
 
 ```
-ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv out/film.mp4
+ffprobe -v error -show_entries stream=width,height,codec_name,profile,r_frame_rate,duration -of csv build/<stamp>/out/film.mp4
 ```
 
-shows h264 1080×1920 at 30/1 for 15–30 s and an aac track. Then one frame per beat for the eye:
-`python3 S/scripts/film.py frames --out frames`.
+shows h264 High 1080x1920 at 30/1 for 15 to 30 s and an aac track. The run's `frames/` holds the hook, the densest
+beat and the closer of every format for the eye.
 
 ## Judging
 

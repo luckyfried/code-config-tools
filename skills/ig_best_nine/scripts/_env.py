@@ -6,7 +6,10 @@
   the toolkit's python (setup.py makes it and installs Pillow on first run).
 - ffmpeg(), ffprobe(): resolved binaries, or exit with the setup command to run.
 - pil_font(size, kind): a bundled font for Pillow text (video captions, contact sheets).
-- read_json(path, default), write_json(path, obj): build/ files.
+- read_json(path, default), write_json(path, obj): a run's files, written atomically.
+- new_run(), enter_run(path): a run is one folder, build/<UTC stamp>/, holding everything the run writes, with the
+  deliverables in its out/. gather.py makes it; every later script takes --run and works inside it, so a rerun never
+  overwrites a prior build. WORKSPACE is the folder the command was run from.
 """
 import json
 import os
@@ -15,7 +18,35 @@ import sys
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
+WORKSPACE = Path.cwd()
 _TOOLS = None
+
+
+def new_run():
+    """A new run folder under the workspace's build/, named for the UTC second it starts."""
+    import datetime as dt
+    import time
+    while True:
+        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        run = WORKSPACE / "build" / stamp
+        try:
+            run.mkdir(parents=True)
+            return run
+        except FileExistsError:
+            time.sleep(1)
+
+
+def enter_run(path):
+    """Work inside the run folder `path` (relative to the workspace): every path a script names is relative to it."""
+    run = (WORKSPACE / path).resolve()
+    if not (run / "library.json").exists() and not run.is_dir():
+        sys.exit(f"no run at {path}: gather.py makes one and prints its folder")
+    os.chdir(run)
+    return run
+
+
+def run_arg(ap):
+    ap.add_argument("--run", required=True, help="the run folder gather.py printed, for example build/20261020T120000Z")
 
 
 def _parse_last_json(text):

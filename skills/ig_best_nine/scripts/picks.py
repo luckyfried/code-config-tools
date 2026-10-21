@@ -1,21 +1,30 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the nine and the photos around them. Writes build/photo_index.json,
-build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: the nine's photographs, each with the point the storyboard frames it around.
 
 USAGE (from the workspace root):
-    python3 S/scripts/picks.py
+    python3 S/scripts/picks.py --run build/<stamp>
 
-Scores every photo of the year (color, contrast, exposure), finds each one's focal point (where the detail is,
-so a cover crop keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy in build/photos/.
-A reel among the nine gets a poster frame (ffmpeg, 40% of the way in) that stands for it on the wall; the reel
-itself stays available as footage. picks.json carries the nine in rank order (each with its photo, its library
-source, its reel when it is one, its score, brightness, focal point and colors) and two chapters around them:
-"opener", the year's most striking photo outside the nine (the wall's world), and "nine", the nine stills.
-To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json.
+Indexes every photo of the year (color, contrast, exposure) into photo_index.json. For each of the nine (rank
+order, from stats.json) it writes the photograph the film draws, public/photos/r<rank>-<name>.jpg (HEIC
+converted, EXIF rotation applied, at most 2400 px on a side, its mean light moved halfway to the nine's common
+exposure by a curve that keeps its color; a reel stands in by its poster frame, 40% of the way in), and decides
+where the storyboard looks:
+
+  focus  the subject, as [u, v] fractions of the photograph: each cell of a small copy is weighted by its detail
+         (edge strength), by how far its color stands from the photograph's mean color, by skin tones, and by a
+         soft center prior; the focus is the weighted center of the strongest tenth of the cells, kept 0.2-0.8.
+  crop   the wall's square, [x, y, w] fractions (w of the width): the largest square inside the photograph,
+         centered on the focus as far as the edges allow.
+  line   the photograph's own strongest straight line, [u0, v0, u1, v1] fractions (a rail, a board's edge, a hem):
+         written by the person reading the photographs, never guessed here. drive lays its cut along it; a
+         photograph without one is cut level. Running picks.py again keeps each photograph's line.
+
+picks.json carries the nine in rank order (file relative to public/, aspect as height over width, focus, crop,
+score, brightness, colors, source). The storyboard records the same focus and crop on every layer that draws the
+photograph, so a person can move a focus in picks.json and draft again.
 """
 import datetime as dt
-import hashlib
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -33,8 +42,10 @@ try:
 except Exception:
     pillow_heif = None
 
-PHOTOS = Path("build/photos")
+PUBLIC = Path("public")
+PHOTOS = PUBLIC / "photos"
 VIDEO = {".mp4", ".mov", ".m4v"}
+LONG = 2400
 
 
 def open_image(path, draft=None):
@@ -45,40 +56,88 @@ def open_image(path, draft=None):
     return im.convert("RGB")
 
 
-def prepare(path):
-    """A 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
-    src = Path(path)
-    dest = PHOTOS / (hashlib.sha1(str(src.resolve()).encode()).hexdigest()[:12] + ".jpg")
-    if dest.exists():
-        return str(dest.resolve())
-    try:
-        im = open_image(src)
-    except Exception as e:
-        print(f"skip {src.name}: cannot open ({e}){' ; HEIC needs pillow-heif' if src.suffix.lower() in ('.heic', '.heif') else ''}",
-              file=sys.stderr)
-        return None
-    im.thumbnail((1600, 1600), Image.LANCZOS)
-    PHOTOS.mkdir(parents=True, exist_ok=True)
-    im.save(dest, "JPEG", quality=90)
-    return str(dest.resolve())
-
-
-def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in build/photos/, 40% of the way in. Returns its path or None."""
-    src = Path(video)
-    dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
-    if dest.exists():
-        return str(dest.resolve())
-    PHOTOS.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
+def poster(video, dest):
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
                        capture_output=True, text=True)
     try:
         at = float(r.stdout.strip()) * 0.4
     except ValueError:
         at = 0.5
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
-                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
-    return str(dest.resolve()) if dest.exists() and dest.stat().st_size > 0 else None
+    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(video), "-frames:v", "1",
+                    "-vf", f"scale='min({LONG},iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
+    return dest.exists() and dest.stat().st_size > 0
+
+
+def place(rank, src, video=None):
+    """The photograph the film draws, in public/photos/. Returns its path, or None when it cannot be opened."""
+    PHOTOS.mkdir(parents=True, exist_ok=True)
+    dest = PHOTOS / f"r{rank}-{Path(src).stem}.jpg"
+    if video:
+        return dest if poster(src, dest) else None
+    try:
+        im = open_image(src)
+    except Exception as e:
+        print(f"skip {Path(src).name}: cannot open ({e})", file=sys.stderr)
+        return None
+    im.thumbnail((LONG, LONG), Image.LANCZOS)
+    matched(im.convert("RGB")).save(dest, "JPEG", quality=90)
+    return dest
+
+
+# the nine's common exposure (mean luma, 0-255) and how far toward it each photograph moves
+EXPOSURE = 128
+MATCH = 0.5
+
+
+def matched(im):
+    """The photograph with its mean light moved MATCH of the way to EXPOSURE by one gamma curve on every channel, so
+    the nine sit in one grade and each keeps its own color."""
+    m = ImageStat.Stat(im.convert("L")).mean[0]
+    if not 8 < m < 247:
+        return im
+    want = m + (EXPOSURE - m) * MATCH
+    g = math.log(want / 255) / math.log(m / 255)
+    lut = [round(255 * (i / 255) ** g) for i in range(256)]
+    return im.point(lut * 3)
+
+
+def skin(r, g, b):
+    return r > 95 and g > 40 and b > 20 and r > g and r > b and r - min(g, b) > 15 and abs(r - g) > 15
+
+
+def focus_of(im, cells=48):
+    """The subject's point, [u, v]: detail x color distinctness (skin counts double) x a soft center prior, averaged
+    over the strongest tenth of the cells."""
+    w, h = im.size
+    sw, sh = (cells, max(1, round(cells * h / w))) if w >= h else (max(1, round(cells * w / h)), cells)
+    small = im.resize((sw, sh), Image.BILINEAR)
+    edges = small.convert("L").filter(ImageFilter.FIND_EDGES).filter(ImageFilter.BoxBlur(1))
+    rgb, ed = small.load(), edges.load()
+    mean = ImageStat.Stat(small).mean
+    weights = []
+    for y in range(sh):
+        for x in range(sw):
+            r, g, b = rgb[x, y]
+            far = math.sqrt((r - mean[0]) ** 2 + (g - mean[1]) ** 2 + (b - mean[2]) ** 2) / 255
+            u, v = (x + 0.5) / sw, (y + 0.5) / sh
+            prior = math.exp(-((u - 0.5) ** 2 + (v - 0.5) ** 2) / (2 * 0.22 ** 2))
+            wgt = (0.5 + ed[x, y] / 255) * (0.25 + far) * (2.0 if skin(r, g, b) else 1.0) * prior
+            weights.append((wgt, u, v))
+    weights.sort(reverse=True)
+    top = weights[:max(1, len(weights) // 10)]
+    tot = sum(wt for wt, _, _ in top) or 1
+    fu = sum(wt * u for wt, u, _ in top) / tot
+    fv = sum(wt * v for wt, _, v in top) / tot
+    return [round(min(0.8, max(0.2, fu)), 2), round(min(0.8, max(0.2, fv)), 2)]
+
+
+def square_crop(aspect, focus):
+    """The largest square window, [x, y, w] fractions, centered on the focus as far as the edges allow."""
+    w = min(1.0, aspect)
+    hh = w / aspect
+    x = min(max(0.0, focus[0] - w / 2), 1 - w)
+    y = min(max(0.0, focus[1] - hh / 2), 1 - hh)
+    return [round(x, 3), round(y, 3), round(w, 3)]
 
 
 def analyse(path):
@@ -90,32 +149,21 @@ def analyse(path):
     light = ImageStat.Stat(small.convert("L"))
     bright, contrast = light.mean[0] / 255, light.stddev[0] / 128
     expo = 1 - min(1, abs(bright - 0.52) * 2.2)
-    edges = small.convert("L").filter(ImageFilter.FIND_EDGES)
-    px = edges.load()
-    sw, sh = edges.size
-    tot = sx = sy = 0
-    for y in range(sh):
-        for x in range(sw):
-            v = px[x, y]
-            tot += v
-            sx += v * x
-            sy += v * y
-    fx, fy = (sx / tot / sw, sy / tot / sh) if tot else (0.5, 0.5)
     q = small.quantize(colors=5, method=Image.Quantize.MEDIANCUT)
     pal = q.getpalette()[:15]
     cols = sorted(q.getcolors(), reverse=True)
-    dom = [{"rgb": pal[3 * i:3 * i + 3], "share": round(n / (sw * sh), 3)} for n, i in cols]
+    dom = [{"rgb": pal[3 * i:3 * i + 3], "share": round(n / (small.size[0] * small.size[1]), 3)} for n, i in cols]
     score = round(0.45 * sat + 0.35 * min(1, contrast) + 0.2 * expo, 3)
-    return {"w": w, "h": h, "score": score, "bright": round(bright, 3),
-            "focal": [round(min(0.8, max(0.2, fx)), 2), round(min(0.8, max(0.2, fy)), 2)], "colors": dom}
+    return {"w": w, "h": h, "score": score, "bright": round(bright, 3), "colors": dom}
 
 
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
-    d = _env.read_json("build/library.json")
-    s = _env.read_json("build/stats.json")
+    _env.run_arg(ap)
+    _env.enter_run(ap.parse_args().run)
+    d = _env.read_json("library.json")
+    s = _env.read_json("stats.json")
     if not d or not s:
         sys.exit("run gather.py and stats.py first")
     index, skipped = [], 0
@@ -131,35 +179,27 @@ def main():
                     continue
                 month = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month
                 index.append({"src": m, "kind": kind, "ts": r["ts"], "month": month, "likes": r.get("likes"), **a})
-    if not index:
-        sys.exit("no photos could be opened; the video needs at least one photo")
-    _env.write_json("build/photo_index.json", index)
-    nine, chosen = [], set()
+    _env.write_json("photo_index.json", index)
+    lines = {n["src"]: n["line"] for n in (_env.read_json("picks.json") or {}).get("nine", []) if n.get("line")}
+    nine = []
     for t in s["top_nine"]:
-        still = poster(t["media"]) if t.get("video") else prepare(t["media"])
-        if not still:
+        out = place(t["rank"], t["media"], t.get("video"))
+        if not out:
             print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
             continue
-        a = analyse(still)
-        chosen.add(t["media"])
-        nine.append({"rank": t["rank"], "kind": t["kind"], "photo": still, "src": t["media"], "video": t.get("video"), **a})
-    feed = [e for e in index if e["kind"] == "post" and e["src"] not in chosen] or [e for e in index if e["src"] not in chosen] or index
-    opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
-    out = {"nine": nine, "chapters": {"nine": [n["photo"] for n in nine]}, "focal": {}, "source_of": {}}
-    op = prepare(opener["src"])
-    out["chapters"]["opener"] = [op] if op else []
-    if op:
-        out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
-        out["source_of"][op] = opener["src"]
+        im = open_image(out)
+        aspect = round(im.size[1] / im.size[0], 4)
+        focus = focus_of(im)
+        nine.append({"rank": t["rank"], "kind": t["kind"], "file": str(out.relative_to(PUBLIC)), "src": t["media"],
+                     "video": t.get("video"), "aspect": aspect, "focus": focus, "crop": square_crop(aspect, focus), **analyse(out)})
+        if t["media"] in lines:
+            nine[-1]["line"] = lines[t["media"]]
+    _env.write_json("picks.json", {"nine": nine})
+    print(f"indexed {len(index)} photos ({skipped} could not be opened); the nine's photographs in {PHOTOS}/")
     for n in nine:
-        out["focal"][n["photo"]] = f"{n['focal'][0] * 100:.0f}% {n['focal'][1] * 100:.0f}%"
-        out["source_of"][n["photo"]] = n["src"]
-    _env.write_json("build/picks.json", out)
-    print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
-    for n in nine:
-        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  score {n['score']}  bright {n['bright']}")
-    print("wrote build/picks.json and build/photo_index.json")
-    return 0 if len(nine) == 9 else 1
+        print(f"  {n['rank']}. {n['kind']:<5} {Path(n['src']).name}  focus {n['focus']}  crop {n['crop']}")
+    print("wrote picks.json and photo_index.json")
+    return 0 if nine else 1
 
 
 if __name__ == "__main__":

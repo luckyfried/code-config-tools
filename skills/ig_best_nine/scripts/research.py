@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Movement 1: the counting behind the taste profile. Reads build/library.json; writes build/research.json,
-a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
-turns into build/taste.md).
+"""Movement 1: the counting behind the taste profile. Reads the run's library.json; writes research.json, a
+machine draft of taste.json, and taste.draft.md (the numbers under the five headings the agent turns into
+taste.md), all in the run.
 
 USAGE (from the workspace root):
-    python3 S/scripts/research.py
+    python3 S/scripts/research.py --run R
 
 It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's palette), then reads:
   palette   the year's colors versus the colors of what they like and save (from the liked media when the
@@ -19,11 +19,10 @@ It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's
   nine      why each of the nine worked: how many times their usual likes it got, its subject (from the caption,
             the places and the themes), its two strongest colors by name, what its caption says; and what the nine
             share that the rest of the year does not
-  rhythm    the wall's rhythm: each tile's brightness and color in its slot, how many of the twelve neighbor pairs
-            contrast, and the arrangement that alternates best with their number one kept top left (taste.json
-            "wall.order" takes it when it reads clearly better than rank order, else rank order)
-taste.json also carries the type direction, pacing, register, texture, the wall order and the grade inputs; the
-agent edits it freely before storyboards are drafted.
+  rhythm    the nine's light and color in rank order, which neighbors read as one
+taste.json carries what the storyboards read: their register (lowercase or not), the words each tone sets on screen
+(`words.drive`, drafted in the first person, which the agent rewrites in their voice),
+the palette, why each of the nine worked, and what to avoid. The agent edits it before storyboards are drafted.
 """
 import collections
 import datetime as dt
@@ -74,8 +73,8 @@ EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
 FILM = {"film photography"}
 
 
-def run(script):
-    p = subprocess.run([sys.executable, str(S / script)], capture_output=True, text=True)
+def run(script, where):
+    p = subprocess.run([sys.executable, str(S / script), "--run", str(where)], capture_output=True, text=True, cwd=_env.WORKSPACE)
     if p.returncode:
         sys.exit(f"{script} failed:\n{p.stdout[-1500:]}\n{p.stderr[-1500:]}")
     return p.stdout
@@ -367,14 +366,15 @@ def type_direction(themes, register, pacing):
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.run_arg(ap)
+    where = _env.enter_run(ap.parse_args().run)
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     for s in ("stats.py", "picks.py", "palette.py"):
-        print(run(s).strip().splitlines()[-1])
-    stats = _env.read_json("build/stats.json")
-    pal = _env.read_json("build/palette.json") or {}
+        print(run(s, where).strip().splitlines()[-1])
+    stats = _env.read_json("stats.json")
+    pal = _env.read_json("palette.json") or {}
     posts = lib["posts"]
     captioned = posts + lib["reels"] + lib.get("facebook", [])
     caps = caption_read(captioned)
@@ -393,7 +393,7 @@ def main():
     pacing = reel_pacing(lib["reels"])
     places, place_by_month = places_in(posts + lib["reels"], lib.get("facebook", []))
     mom, eras = moments(posts, stats, place_by_month)
-    picks = _env.read_json("build/picks.json") or {}
+    picks = _env.read_json("picks.json") or {}
     nine = nine_read(stats, picks)
     nine_shared = shared(nine, posts + lib["reels"])
     wall = rhythm(picks)
@@ -421,17 +421,14 @@ def main():
         "ranked_by": stats.get("top_ranked_by"), "rhythm": wall,
         "type": td,
     }
-    _env.write_json("build/research.json", research)
+    _env.write_json("research.json", research)
     shot = pacing.get("avg_shot_seconds")
+    import storyboard  # noqa: E402
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "year": lib["year"],
-        "palette": {"year": year_palette, "likes": likes_palette,
-                    "direction": "toward their likes" if likes_palette else "their year"},
-        "type": td,
-        "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
-                   "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
-                   "energy": "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"},
+        "palette": {"year": year_palette, "likes": likes_palette},
+        "words": storyboard.words_default(int(lib["year"])),
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
                      "samples": caps.get("samples", [])[:4]},
@@ -440,14 +437,12 @@ def main():
         "places": [p for p, _ in places.most_common(5) if p != "home"],
         "moments": mom,
         "nine": [{"rank": x["rank"], "why": x["why"]} for x in nine],
-        "wall": {"order": wall["order"], "why": wall["why"]},
-        "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
         "avoid": ["cold blue grading", "neon", "stock-photo gloss"] if film else ["muddy grading"],
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
+    if not Path("taste.json").exists() or "research.py draft" in (_env.read_json("taste.json") or {}).get("written_by", ""):
+        _env.write_json("taste.json", taste)
     lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
+             "The agent writes taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
              f"- places: {', '.join(f'{p} ({n})' for p, n in places.most_common(6))}",
              f"- eras: {'; '.join(e['place'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') for e in eras)}",
@@ -473,7 +468,7 @@ def main():
              f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
              f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
+    Path("taste.draft.md").write_text("\n".join(lines))
     print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
     print(f"year palette: {[s['hex'] for s in year_palette]}; likes palette: {[s['hex'] + ' ' + s['name'] for s in likes_palette]}")
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
@@ -482,7 +477,7 @@ def main():
     for x in nine:
         print(f"  {x['rank']}. {x['kind']:<5} {x['likes']} likes: {x['why']}")
     print(f"wall: order {wall['order']} ({wall['why']})")
-    print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
+    print(f"wrote research.json, taste.json (draft) and taste.draft.md in {where}; now write taste.md there")
     return 0
 
 
