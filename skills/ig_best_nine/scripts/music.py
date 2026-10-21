@@ -3,7 +3,7 @@
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/music.py find --run R [--origin "..."]  # music.json: the track to use and where it came from
-    python3 S/scripts/music.py make --run R [--mood calm|drive|film] [--bpm N] [--seconds S]
+    python3 S/scripts/music.py make --run R [--bpm N] [--seconds S]
                                                              # a bed made here (keys, bass, drums) when no music was found
     python3 S/scripts/music.py analyze --run R               # onsets, tempo, beat grid and downbeats into music.json
     python3 S/scripts/music.py master --run R [--seconds S]  # from the first downbeat, the board's sound cues mixed over the bed ducked
@@ -11,7 +11,7 @@ USAGE (from the workspace root; S = this skill's folder):
 
 The music comes from whatever the person or the agent has: a track the agent fetched or generated saved as
 music/source.<ext> in the run (any audio ffmpeg reads), else the longest audio file under the workspace that is
-30 s or longer (their own library), else `make`, which writes a warm bed in the winning tone's mood at its tempo (`--mood` names another mood).
+30 s or longer (their own library), else `make`, which writes a drive bed at the drive tempo.
 brief.md names the origin either way. analyze reads the energy envelope (ffmpeg decodes to mono PCM),
 picks onsets as peaks of its rise, takes the tempo by autocorrelation and lays a beat grid on the strongest
 phase; storyboard.py snap cuts the film on that grid.
@@ -85,23 +85,18 @@ def cmd_find(a):
 
 
 # ------------------------------------------------------------------ make
-MOODS = {
-    "calm": {"bpm": 84, "chords": [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]],
-             "kick": [0, 2.5], "snare": [1, 3], "hat": 0.5, "stab": [0, 1.5, 2.5], "bright": 0.25},
-    "drive": {"bpm": 118, "chords": [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 60], [55, 59, 62, 67]],
-              "kick": [0, 1, 2, 3], "snare": [1, 3], "hat": 0.25, "stab": [0, 0.75, 1.5, 2.5, 3.25], "bright": 0.6},
-    "film": {"bpm": 92, "chords": [[50, 57, 62, 65], [46, 53, 58, 62], [53, 57, 60, 65], [48, 55, 60, 64]],
-             "kick": [0, 2], "snare": [], "hat": 0, "stab": [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5], "bright": 0.15},
-}
+# the drive bed: four chords, kick on every beat, snare on two and four, sixteenth hats, the stabs in beats
+BED = {"chords": [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 60], [55, 59, 62, 67]],
+       "kick": [0, 1, 2, 3], "snare": [1, 3], "hat": 0.25, "stab": [0, 0.75, 1.5, 2.5, 3.25], "bright": 0.6}
 
 
 def midi_hz(n):
     return 440.0 * 2 ** ((n - 69) / 12)
 
 
-def synth(mood, bpm, sr=22050):
+def synth(bpm, sr=22050):
     """Eight bars (two passes of four chords) of keys, bass and drums, as mono floats."""
-    m = MOODS[mood]
+    m = BED
     beat = 60.0 / bpm
     bars = 8
     n = int(sr * beat * 4 * bars)
@@ -116,40 +111,34 @@ def synth(mood, bpm, sr=22050):
     for bar in range(bars):
         chord = m["chords"][bar % 4]
         t0 = bar * 4 * beat
-        for k, at in enumerate(m["stab"]):
-            notes = chord if mood != "film" else [chord[(k % 3) + 1]]
-            for note in notes:
-                f = midi_hz(note + (12 if mood == "film" else 0))
-                dec = 2.6 if mood != "drive" else 5.0
+        for at in m["stab"]:
+            for note in chord:
+                f = midi_hz(note)
                 add(t0 + at * beat, beat * 1.6,
-                    lambda t, f=f, dec=dec: math.exp(-dec * t) * (math.sin(2 * math.pi * f * t) + m["bright"] * math.sin(4 * math.pi * f * t))
-                    * (1 + 0.15 * math.sin(2 * math.pi * 5 * t)), 0.09 / len(notes) * 4 / (1 + 0.3 * len(notes)))
+                    lambda t, f=f: math.exp(-5.0 * t) * (math.sin(2 * math.pi * f * t) + m["bright"] * math.sin(4 * math.pi * f * t))
+                    * (1 + 0.15 * math.sin(2 * math.pi * 5 * t)), 0.09 / len(chord) * 4 / (1 + 0.3 * len(chord)))
         root = midi_hz(chord[0] - 12)
-        for at in (0, 2.5) if mood != "drive" else (0, 0.5, 1.5, 2, 2.5, 3.5):
+        for at in (0, 0.5, 1.5, 2, 2.5, 3.5):
             add(t0 + at * beat, beat * 0.9, lambda t, f=root: math.exp(-3 * t) * math.sin(2 * math.pi * f * t) * min(1, t * 200), 0.22)
         for at in m["kick"]:
             add(t0 + at * beat, 0.35, lambda t: math.exp(-9 * t) * math.sin(2 * math.pi * (45 * t + 60 * (1 - math.exp(-30 * t)) / 30 * 2)), 0.55)
         for at in m["snare"]:
             add(t0 + at * beat, 0.25, lambda t: math.exp(-18 * t) * (rnd.uniform(-1, 1) * 0.8 + 0.3 * math.sin(2 * math.pi * 190 * t)), 0.18)
-        if m["hat"]:
-            k = 0.0
-            while k < 4:
-                if abs(k - round(k)) > 0.01 or mood == "drive":
-                    add(t0 + k * beat, 0.05, lambda t: math.exp(-60 * t) * rnd.uniform(-1, 1), 0.05)
-                k += m["hat"]
+        k = 0.0
+        while k < 4:
+            add(t0 + k * beat, 0.05, lambda t: math.exp(-60 * t) * rnd.uniform(-1, 1), 0.05)
+            k += m["hat"]
     peak = max(abs(x) for x in out) or 1
     return [x / peak * 0.8 for x in out], sr
 
 
 def cmd_make(a):
     MUSIC.mkdir(parents=True, exist_ok=True)
-    import importlib
-    tone = a.mood or (_env.read_json("winner.json") or {}).get("board")
-    plan = (_env.read_json(f"storyboards/{tone}/plan.json") or {}).get("reel") if tone else None
-    mood = tone or "calm"
-    bpm = a.bpm or (importlib.import_module(f"tones.{tone}").BPM if tone else MOODS[mood]["bpm"])
+    from tones.drive import BPM
+    plan = (_env.read_json("storyboards/drive/plan.json") or {}).get("reel")
+    bpm = a.bpm or BPM
     seconds = a.seconds or ((plan or {}).get("seconds") or 60) + 4
-    samples, sr = synth(mood, bpm)
+    samples, sr = synth(bpm)
     loop = MUSIC / "loop.wav"
     with wave.open(str(loop), "wb") as w:
         w.setnchannels(1)
@@ -164,7 +153,7 @@ def cmd_make(a):
     for f in MUSIC.glob("source.*"):
         if f != src:
             f.unlink()
-    origin = f"made by music.py: a {mood} bed at {bpm} bpm (keys, bass, drums) because no music was found"
+    origin = f"made by music.py: a drive bed at {bpm} bpm (keys, bass, drums) because no music was found"
     _env.write_json("music.json", {"file": str(src), "origin": origin, "seconds": round(seconds, 2), "bpm": bpm})
     print(f"music: {src} ({seconds:.1f} s), {origin}")
     return 0
@@ -476,7 +465,6 @@ def cmd_master(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["find", "make", "analyze", "master"])
-    ap.add_argument("--mood", choices=list(MOODS))
     ap.add_argument("--bpm", type=float)
     ap.add_argument("--seconds", type=float)
     ap.add_argument("--origin", help="find: where a track placed at music/source.<ext> came from, for brief.md")

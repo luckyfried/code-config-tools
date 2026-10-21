@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """Movement 2: the storyboard of the nine, laid out for the reel, the square and the wide.
-Also the step that cuts the winning storyboard to the music.
+Also the step that cuts the storyboard to the music.
 
 USAGE (from the workspace root):
     python3 S/scripts/storyboard.py draft  --run R             # storyboards/<tone>/board-{reel,square,wide}.json + storyboard.md
     python3 S/scripts/storyboard.py check  --run R             # the bounds check, the length and the hook, every board
     python3 S/scripts/storyboard.py sheets --run R             # storyboards/<tone>/sheet.png: the hook, the densest beat and the closer at rest
-    python3 S/scripts/storyboard.py snap   --run R [--board T] # the winner (winner.json) at the music's tempo -> film.json
+    python3 S/scripts/storyboard.py snap   --run R             # the storyboard at the music's tempo -> film.json
 
 The kit has one tone (scripts/tones/):
   drive  the cut                      each photograph is cut along its own line, its count standing on the edge
 Each board is the storyboard the studio composition (motion/studio) renders: the rank order, the layout (the cuts
 and their edges), and every photograph by its focus and crop from picks.json. One storyboard gives all three formats: the layout is solved again for each frame, never
-scaled to fit. Each board names its rests (the hook, the densest beat and the closer; drive adds an ordinary count
-beat), the settled frames the sheets and the stills are taken from.
+scaled to fit. Each board names its rests (the hook, the densest beat, an ordinary count beat and the
+closer), the settled frames the sheets and the stills are taken from.
 
 The words are the person's: taste.json `words.<tone>` replaces any default below, in their case and voice.
-check fails a board on any bounds finding (a photograph cut, covered or crowding the frame edge or the type; type
-outside the safe area; a tag over a count; a strand off its square runs), a length outside the band, or a hook
+check fails a board on any bounds finding (type outside the safe area, cut by the frame or run onto a photograph; a
+slice too thin to read; a bar over a count; a count under its floor), a length outside the band, or a hook
 event after frame 30. storyboard.md states each board's cuts and cuts per minute as figures for the critics.
 """
 import argparse
@@ -245,9 +245,7 @@ def cmd_sheets(a, run):
 
 
 def cmd_snap(a, run):
-    tone = a.board or (_env.read_json("winner.json") or {}).get("board")
-    if tone not in TONES:
-        sys.exit("no winner: run vote.py tally, or name the tone with --board")
+    tone = TONES[0]
     music = _env.read_json("music.json") or {}
     base = tone_module(tone).BPM
     lo, hi = length_band(len(run.posts))
@@ -281,7 +279,6 @@ def cmd_snap(a, run):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["draft", "check", "sheets", "snap"])
-    ap.add_argument("--board", choices=TONES, help="snap: the tone to cut instead of the winner")
     _env.run_arg(ap)
     a = ap.parse_args()
     _env.enter_run(a.run)

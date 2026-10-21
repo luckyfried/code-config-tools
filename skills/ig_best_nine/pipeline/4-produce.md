@@ -12,7 +12,7 @@ The music comes from whatever you or the person have. In order:
 1. A track you can fetch or make: their own library, a platform music library you have access to, a music model.
    Save it as the run's `music/source.<ext>` and run `music.py find --origin "<where it came from>"`.
 2. `music.py find` on its own takes the longest audio file of 30 s or more under the workspace (their library).
-3. When find exits 3 (no music anywhere), `music.py make` writes a warm bed in the winning tone's mood and tempo.
+3. When find exits 3 (no music anywhere), `music.py make` writes a drive bed at the drive tempo.
 
 ```
 python3 S/scripts/music.py find --run build/<stamp> || python3 S/scripts/music.py make --run build/<stamp>
@@ -42,7 +42,7 @@ python3 S/scripts/film.py preview --run build/<stamp>
 python3 S/scripts/vote.py timed --run build/<stamp>
 ```
 
-- `snap` times the winner's storyboard at the music's tempo (or half or double it, whichever keeps the cut in the
+- `snap` times the storyboard at the music's tempo (or half or double it, whichever keeps the cut in the
   length band nearest the tone's own tempo), so every cut lands on a beat, and writes `film.json`.
 - `preview` renders the reel at half size into `preview/film.mp4` with its strips and measures it: the cuts as
   planned and as the picture shows them, cuts per minute, the luma line, the hook event's frame.

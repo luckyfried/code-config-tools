@@ -200,17 +200,11 @@ def wrap_measured(system_, line, width, max_lines=3):
 
 
 # ------------------------------------------------------------------ the timed cut
-TIMES = ("at", "lightAt", "fullAt", "nextAt")
-
-
 def shift(layer, t):
-    """The layer with every time in it made relative to a shot starting at musical beat `t`."""
+    """The layer with its time made relative to a shot starting at musical beat `t`."""
     l = dict(layer)
-    for k in TIMES:
-        if k in l:
-            l[k] = round(l[k] - t, 4)
-    if "knots" in l:
-        l["knots"] = [dict(k, at=round(k["at"] - t, 4)) for k in l["knots"]]
+    if "at" in l:
+        l["at"] = round(l["at"] - t, 4)
     return l
 
 
@@ -240,8 +234,6 @@ def shots(scenes, end, bpm, drift=0.0):
         b["driftFrom"] = round(reached, 4) if sc.get("same") else 0.0
         b["drift"] = sc.get("drift", drift)
         reached = b["driftFrom"] + b["drift"]
-        b["camera"] = "none"
-        b["transition"] = None
         out.append(b)
     return out
 

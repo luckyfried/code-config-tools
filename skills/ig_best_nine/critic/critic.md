@@ -84,8 +84,7 @@ levers below.
 ## The levers
 
 - The words: `taste.json` `words.<tone>`, then `storyboard.py draft`, `check`, `snap`, `film.py preview` and on.
-- The tone: `storyboard.py snap --board <tone>` cuts another board, then `film.py preview` and on.
-- The music: another track at `music/source.<ext>`, or `music.py make --mood calm|drive|film --bpm N`, then
+- The music: another track at `music/source.<ext>`, or `music.py make --bpm N`, then
   `music.py analyze`, `storyboard.py snap`, `film.py preview`, `music.py master`, `film.py render`.
 - The layout, the crops and the timing are computed from their numbers and photographs; they are never edited by
   hand.

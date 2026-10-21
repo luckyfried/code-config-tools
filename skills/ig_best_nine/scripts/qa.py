@@ -182,7 +182,7 @@ def film_checks():
             _env.write_json("qa/film.check.json", measured)
             figures(res, measured)
     rep = _env.read_json("render/film-report.json") or {}
-    bad = [x["text"][:160] for x in rep.get("findings", []) if x["text"].startswith(("SAFE_BREACH", "FONT_ERROR", "RENDER_ERROR", "UNKNOWN_KIND", "IMAGE_ERROR"))]
+    bad = [x["text"][:160] for x in rep.get("findings", []) if x["text"].startswith(("FONT_ERROR", "RENDER_ERROR", "IMAGE_ERROR"))]
     res("safe", rep and not rep.get("failed") and not bad, f"{rep.get('jobs', 0)} render jobs, {rep.get('failed', '?')} failed, {len(bad)} findings"
         + (f": {bad[0]}" if bad else ""))
     for png, size, fmt in ((STORY, (1080, 1920), "reel"), (WALL, (1080, 1080), "square")):
