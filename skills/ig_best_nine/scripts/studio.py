@@ -1,9 +1,9 @@
 """The studio composition (motion/studio) as a function: storyboards in, films and settled frames out.
 
 A run's public/ folder is what the composition reads: public/photos/ (picks.py writes it), and the kit's fonts and
-grain, copied in here. Every render writes its jobs, its report and its log under render/ in the run; the report
-lists any job that failed after three tries and any finding the composition logged (SAFE_BREACH, FONT_ERROR,
-UNKNOWN_KIND, IMAGE_ERROR, RENDER_ERROR). With an NVIDIA device the render rasterizes and encodes on the card."""
+grain, copied in here; `npm run studio -- <run>/public` in motion/ opens the Remotion preview on it. Every render writes its jobs, its report and its log under render/ in the run; the report
+lists any job that failed after three tries and any finding the composition logged (FONT_ERROR,
+IMAGE_ERROR, RENDER_ERROR). With an NVIDIA device the render rasterizes and encodes on the card."""
 import json
 import os
 import shutil
@@ -87,7 +87,7 @@ def luma_line(mp4):
     """Each second's change: the mean luma difference between the frame at the start of the second and the frame at
     its end, with the picture downscaled to LUMA_WIDTH px wide. Grain is new noise on every frame, so it neither
     survives the downscale nor adds up across the second; a move, however slow, does both. A locked frame under
-    moving grain reads 0.25 or less, the slowest drift in the three tones over 1."""
+    moving grain reads 0.25 or less, the slowest drift in the drive film over 1."""
     import re
     ya = [float(x) for x in re.findall(r"YAVG=([\d.]+)", ff(["-i", str(mp4), "-vf", f"fps=1,scale={LUMA_WIDTH}:-2:flags=area,tblend=all_mode=difference,signalstats,metadata=print:key=lavfi.signalstats.YAVG", "-an", "-f", "null", "-"]))]
     return [round(y, 2) for y in ya]

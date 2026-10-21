@@ -1,8 +1,11 @@
 import React from 'react';
 import {Composition} from 'remotion';
-import {filmFrames} from '../system/Film';
+import {framesOf} from '../system/system';
 import type {Board, FilmProps} from '../system/types';
 import {Film} from './Film';
+
+/** Frames the film runs: every beat end to end; each cut sits on its downbeat. */
+const filmFrames = (board: Board) => board.beats.reduce((n, b) => n + framesOf(b, board, board.format.fps), 0);
 
 /** The best-nine film, sized and timed by the board it is given. */
 export const Root: React.FC = () => (

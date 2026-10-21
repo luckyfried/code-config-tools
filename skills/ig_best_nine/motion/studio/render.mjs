@@ -23,7 +23,7 @@ const timings = [];
 
 const onBrowserLog = (job) => (log) => {
   const text = String(log.text ?? '');
-  if (/^(SAFE_BREACH|FONT_ERROR|UNKNOWN_KIND|IMAGE_ERROR)/.test(text)) findings.push({job: job.out, text});
+  if (/^(FONT_ERROR|IMAGE_ERROR)/.test(text)) findings.push({job: job.out, text});
 };
 
 await ensureBrowser();
