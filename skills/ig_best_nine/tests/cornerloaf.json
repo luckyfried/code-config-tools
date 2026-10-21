@@ -1,0 +1,169 @@
+{
+ "about": "The bakery's nine as the board builder takes them: rank order, likes, caption, the day of the year and its label, and each photograph with its focus point and its square crop, decided by eye.",
+ "handle": "@cornerloaf",
+ "year": 2026,
+ "posts": [
+  {
+   "rank": 1,
+   "caption": "heart croissants, gone by 9",
+   "likes": 640,
+   "date": "14 feb",
+   "doy": 45,
+   "file": "sets/bakery/09-croissant-pile-close.jpg",
+   "aspect": 1.3333,
+   "focus": [
+    0.55,
+    0.45
+   ],
+   "crop": [
+    0,
+    0.12,
+    1
+   ]
+  },
+  {
+   "rank": 2,
+   "caption": "how we laminate, 3 minutes",
+   "likes": 428,
+   "date": "17 may",
+   "doy": 137,
+   "file": "sets/bakery/10-dough-balls-rolling-pin.jpg",
+   "aspect": 0.75,
+   "focus": [
+    0.6,
+    0.4
+   ],
+   "crop": [
+    0.08,
+    0,
+    0.75
+   ]
+  },
+  {
+   "rank": 3,
+   "caption": "a day at the bench",
+   "likes": 351,
+   "date": "30 aug",
+   "doy": 242,
+   "file": "sets/bakery/21-dough-under-floured-towel.jpg",
+   "aspect": 0.7704,
+   "focus": [
+    0.5,
+    0.45
+   ],
+   "crop": [
+    0.12,
+    0,
+    0.77
+   ]
+  },
+  {
+   "rank": 4,
+   "caption": "easter buns, 200 of them",
+   "likes": 305,
+   "date": "5 apr",
+   "doy": 95,
+   "file": "sets/bakery/05-rolls-on-oven-racks.jpg",
+   "aspect": 0.75,
+   "focus": [
+    0.5,
+    0.5
+   ],
+   "crop": [
+    0.12,
+    0,
+    0.75
+   ]
+  },
+  {
+   "rank": 5,
+   "caption": "fig and walnut loaf",
+   "likes": 266,
+   "date": "12 sep",
+   "doy": 255,
+   "file": "sets/bakery/03-scored-boule-cutting-board.jpg",
+   "aspect": 0.75,
+   "focus": [
+    0.52,
+    0.5
+   ],
+   "crop": [
+    0.15,
+    0,
+    0.75
+   ]
+  },
+  {
+   "rank": 6,
+   "caption": "sourdough, day one of the new oven",
+   "likes": 212,
+   "date": "9 jan",
+   "doy": 9,
+   "file": "sets/bakery/24-boule-in-dutch-oven.jpg",
+   "aspect": 1.0182,
+   "focus": [
+    0.43,
+    0.55
+   ],
+   "crop": [
+    0,
+    0.01,
+    1
+   ]
+  },
+  {
+   "rank": 7,
+   "caption": "peach tart season",
+   "likes": 188,
+   "date": "19 jul",
+   "doy": 200,
+   "file": "sets/bakery/15-pasteis-de-nata-trays-baker.jpg",
+   "aspect": 0.6665,
+   "focus": [
+    0.42,
+    0.55
+   ],
+   "crop": [
+    0.12,
+    0,
+    0.667
+   ]
+  },
+  {
+   "rank": 8,
+   "caption": "spring menu is up",
+   "likes": 188,
+   "date": "21 mar",
+   "doy": 80,
+   "file": "sets/bakery/22-focaccia-counter-labels.jpg",
+   "aspect": 0.7529,
+   "focus": [
+    0.62,
+    0.45
+   ],
+   "crop": [
+    0.24,
+    0,
+    0.753
+   ]
+  },
+  {
+   "rank": 9,
+   "caption": "first cold morning",
+   "likes": 150,
+   "date": "3 oct",
+   "doy": 276,
+   "file": "sets/bakery/06-cinnamon-bun-cortado-sunlit.jpg",
+   "aspect": 0.7529,
+   "focus": [
+    0.55,
+    0.6
+   ],
+   "crop": [
+    0.2,
+    0,
+    0.753
+   ]
+  }
+ ]
+}

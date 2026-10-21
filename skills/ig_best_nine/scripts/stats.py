@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the numbers. Reads build/library.json, writes build/stats.json.
+"""Movement 1, research: the numbers. Reads the run's library.json, writes its stats.json.
 
 USAGE (from the workspace root):
-    python3 S/scripts/stats.py
+    python3 S/scripts/stats.py --run build/<stamp>
 
 Counts (posts, reels, stories, likes given, comments written, new followers; each null when the data lacks
 it), the best nine: the nine most-liked posts and reels of the year, ranked by likes, ties broken by comments,
 then by the more recent (by comments alone, or spread across the year, when the data has no likes per post; with
-fewer than nine posts and reels, their stories fill the wall, newest first), the likes of the tenth and the gap
+fewer than nine posts and reels the best nine is the ones there are, and the storyboard lays out that many), the likes of the tenth and the gap
 to it, the median post's likes, every month's activity with the busiest and the quietest, the people (accounts
 commented on and @mentioned most), the accounts liked most, and the person's caption register (lowercase,
 emoji, length, hashtags, sample captions) for writing copy in their voice. Every number a card shows comes
@@ -38,10 +38,11 @@ def label(ts):
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
-    d = _env.read_json("build/library.json")
+    _env.run_arg(ap)
+    _env.enter_run(ap.parse_args().run)
+    d = _env.read_json("library.json")
     if not d:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     year, src = d["year"], d["source"]
     exp = src == "export"
     posts, reels, stories = d["posts"], d["reels"], d["stories"]
@@ -76,9 +77,6 @@ def main():
         ranked = [rows[int(i * step)] for i in range(min(9, len(rows)))]
         by = "spread"
     nine = ranked[:9]
-    if len(nine) < 9:
-        fill = sorted((dict(st, kind="story", caption="") for st in stories if st.get("media")), key=lambda r: -r["ts"])
-        nine += fill[:9 - len(nine)]
     top = [{"rank": i + 1, "kind": p["kind"], "ts": p["ts"], "date": when(p["ts"]).date().isoformat(), "date_label": label(p["ts"]),
             "month": when(p["ts"]).month, "likes": p.get("likes"), "comments": p.get("comments"), "caption": p.get("caption") or "",
             "media": p["media"][0], "video": p["media"][0] if Path(p["media"][0]).suffix.lower() in (".mp4", ".mov", ".m4v") else None}
@@ -86,7 +84,7 @@ def main():
     tenth = ranked[9] if len(ranked) > 9 else None
     like_counts = sorted(p["likes"] for p in ranked_rows if p.get("likes") is not None)
     tenth_info = {"likes": tenth.get("likes"), "comments": tenth.get("comments"),
-                  "gap": (top[8]["likes"] - (tenth.get("likes") or 0)) if top[8:] and top[8]["likes"] is not None and tenth.get("likes") is not None else None} if tenth else None
+                  "gap": (top[-1]["likes"] - (tenth.get("likes") or 0)) if top and top[-1]["likes"] is not None and tenth.get("likes") is not None else None} if tenth else None
 
     last_month = when(max([p["ts"] for p in posts + reels + stories] or [dt.datetime(year, 12, 31).timestamp()])).month
     months = []
@@ -133,7 +131,7 @@ def main():
            "top_nine": top, "top_ranked_by": by, "tenth": tenth_info,
            "median_likes": like_counts[len(like_counts) // 2] if like_counts else None, "months": months, "busiest": busiest, "quietest": quietest,
            "people": people[:5], "loved": loved, "register": register}
-    _env.write_json("build/stats.json", out)
+    _env.write_json("stats.json", out)
     print(f"@{d['handle']} {year}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
     print("best nine (by %s): " % by + "; ".join(f"{t['rank']}. {t['date_label']} {t['kind']} {t['likes'] if t['likes'] is not None else ''}" for t in top))
     if tenth_info:
@@ -144,7 +142,7 @@ def main():
     print("loved: " + ", ".join(f"@{p['account']} {p['likes']}" for p in loved))
     print(f"register: lowercase {register['lowercase_share']}, emoji/caption {register['emoji_per_caption']}, "
           f"avg words {register['avg_words']}, hashtags {register['top_hashtags'][:3]}")
-    print("wrote build/stats.json")
+    print("wrote stats.json")
     return 0
 
 

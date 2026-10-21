@@ -5,7 +5,7 @@ USAGE:
 
 First-run setup for the best-nine toolkit. Prints:
     {"python": ".../python3", "ffmpeg": ".../ffmpeg", "ffprobe": ".../ffprobe" | null, "node": ".../node" | null,
-     "motion": ".../motion" | null, "engine": "remotion" | "stills", "ok": true}
+     "motion": ".../motion" | null, "engine": "remotion" | null, "ok": true}
 
 The python is the first that imports Pillow: this interpreter, else a venv inside this skill
 folder (`.venv/`, or ~/.cache/ig_best_nine/venv when the skill folder is read-only). The venv is made
@@ -13,8 +13,9 @@ with `python3 -m venv`; where that has no pip it uses `uv`, else a pip-less venv
 system one, else imageio-ffmpeg's. node is the system one (18 or newer), else a portable node from nodejs.org
 unpacked under the kit's data folder (`.cache/node/`). With node, `npm ci` runs in `motion/` (npm cache in
 `.cache/npm/` unless npm_config_cache is set) and Remotion downloads its browser into `motion/node_modules/`;
-the engine is then "remotion". Without node the engine is "stills" (film.py's fallback route) and brief.md says so.
-BN_NODE=portable skips the system node; BN_NODE=none forces the stills route; BN_NODE=/path/to/node picks one.
+the engine is then "remotion", the studio composition in `motion/studio/` that renders every storyboard. ok is
+true only when ffmpeg and the engine are both there: the films need both.
+BN_NODE=portable skips the system node; BN_NODE=/path/to/node picks one.
 Re-running when everything is present does no network work and returns in about a second.
 """
 import argparse
@@ -149,11 +150,8 @@ def portable_node():
 
 
 def ensure_node():
-    """node 18 or newer: the system one, else a portable one. BN_NODE=portable skips the system node; BN_NODE=none
-    pretends there is no node (the stills route)."""
+    """node 18 or newer: the system one, else a portable one. BN_NODE=portable skips the system node."""
     forced = os.environ.get("BN_NODE", "").strip()
-    if forced == "none":
-        return None
     if forced not in ("", "portable") and Path(forced).exists():
         return Path(forced)
     if forced != "portable":
@@ -217,8 +215,8 @@ def main():
     node = ensure_node()
     motion = bool(node) and ensure_motion(node)
     out = {"python": str(py), "ffmpeg": ffmpeg, "ffprobe": ffprobe, "node": str(node) if node else None,
-           "motion": str(MOTION) if motion else None, "engine": "remotion" if motion else "stills",
-           "ok": bool(ffmpeg)}
+           "motion": str(MOTION) if motion else None, "engine": "remotion" if motion else None,
+           "ok": bool(ffmpeg) and bool(motion)}
     print(json.dumps(out, indent=2))
     return 0 if out["ok"] else 1
 

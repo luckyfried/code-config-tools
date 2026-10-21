@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the palette, from the person's own photos. Reads build/photo_index.json, writes build/palette.json.
+"""Movement 1, research: the palette, from the person's own photos. Reads the run's photo_index.json, writes its palette.json.
 
 USAGE (from the workspace root):
-    python3 S/scripts/palette.py [--accent "#E8743B"]
+    python3 S/scripts/palette.py --run R [--accent "#E8743B"]
 
 The year's five dominant colors (weighted by how much of each photo they cover, kept distinct from each
 other), each with a plain name ("sea blue", "sunset orange") and the photo that shows it best, and the card
@@ -101,10 +101,12 @@ def hex_rgb(h):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--accent")
+    _env.run_arg(ap)
     a = ap.parse_args()
-    idx = _env.read_json("build/photo_index.json")
+    _env.enter_run(a.run)
+    idx = _env.read_json("photo_index.json")
     if not idx:
-        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
+        sys.exit("photo_index.json missing: run picks.py first (research.py runs it)")
     # weighted color samples: each photo's dominant colors by the share of the photo they cover
     samples = [(tuple(c["rgb"]), c["share"]) for e in idx for c in e["colors"]]
     clusters = []  # [rgb_sum, weight]
@@ -124,13 +126,12 @@ def main():
         if len(chosen) >= 5:
             break
     total = sum(w for _, w in chosen) or 1
-    import picks  # noqa: E402  (same folder; prepares photos the same way)
     year, names = [], set()
     for rgb, w in chosen:
         nm = unique_name(rgb, names)
         names.add(nm)
         ex = min(idx, key=lambda e: min(dist(tuple(c["rgb"]), rgb) / (0.2 + c["share"]) for c in e["colors"]))
-        year.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": picks.prepare(ex["src"])})
+        year.append({"hex": hexc(rgb), "name": nm, "share": round(w / total, 3), "photo": ex["src"]})
     year.sort(key=lambda c: -c["share"])
 
     rgbs = [hex_rgb(c["hex"]) for c in year]
@@ -148,13 +149,13 @@ def main():
     accent2 = lift(next((c for c in vivid[1:] if dist(c, vivid[0]) > 25), vivid[-1]))
     roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
              "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
-    _env.write_json("build/palette.json", {"year": year, "roles": roles,
+    _env.write_json("palette.json", {"year": year, "roles": roles,
                                             "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
                                                       "ink_on_bg": round(contrast(ink, bg), 2)}})
     print("year palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['share']:.0%})" for c in year))
     print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
     print(f"accent on bg {contrast(accent, bg):.1f}:1, ink on bg {contrast(ink, bg):.1f}:1")
-    print("wrote build/palette.json")
+    print("wrote palette.json")
     return 0
 
 
