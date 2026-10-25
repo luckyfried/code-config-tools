@@ -1,0 +1,215 @@
+@import "tailwindcss";
+@source not "../dist";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter/opsz.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
+
+/* Every value lives in theme.css (one file per theme in src/themes/); this file maps those variables into Tailwind. */
+@custom-variant dark (&:where([data-scheme="dark"], [data-scheme="dark"] *));
+
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-heading: var(--font-ui);
+  --font-figures: var(--font-numerals);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-spark: var(--spark);
+  --color-goal: var(--goal);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+
+  /* The wall's type scale: 12, 14, 20, 48, 96. */
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.25rem;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.75rem;
+  --text-figure: 3rem;
+  --text-figure--line-height: 1;
+  --text-hero: 6rem;
+  --text-hero--line-height: 1;
+
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+}
+
+/* Figures: tabular, the display optical size of Inter, and the theme's own numeral features. */
+.figure {
+  font-family: var(--font-numerals);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: var(--numeral-features);
+  font-variation-settings: "opsz" 32;
+  letter-spacing: var(--figure-tracking);
+}
+
+/* A group's tiles draw in that group's hue: the sparkline, the fill, and the light in the tile's corner. */
+[data-group="0"] { --spark: var(--hue-1); }
+[data-group="1"] { --spark: var(--hue-2); }
+[data-group="2"] { --spark: var(--hue-3); }
+[data-group="3"] { --spark: var(--hue-4); }
+
+/* A tile is lit from the top and carries its group's hue in the upper corner, over the theme's own shadow. */
+.tile-surface {
+  background:
+    radial-gradient(90% 70% at 100% 0%, color-mix(in oklch, var(--spark) var(--card-tint), transparent), transparent 70%),
+    linear-gradient(180deg, var(--card-top), var(--card) 60%);
+  box-shadow: var(--card-shadow);
+}
+/* In TV mode the wash shows through the tiles. */
+[data-tv="on"] .tile-surface {
+  background:
+    radial-gradient(90% 70% at 100% 0%, color-mix(in oklch, var(--spark) var(--card-tint), transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in oklch, var(--card-top) 66%, transparent), color-mix(in oklch, var(--card) 48%, transparent));
+}
+.spark-fill-top { stop-color: var(--color-value); stop-opacity: var(--spark-fill); }
+.spark-fill-mid { stop-color: var(--color-value); stop-opacity: calc(var(--spark-fill) * 0.35); }
+.spark-fill-end { stop-color: var(--color-value); stop-opacity: 0; }
+.spark-glow path { stroke-opacity: var(--spark-glow); }
+/* The fill under a sparkline fades in at its left end and out under the end dot, so it never stops in a hard edge. */
+#spark-fade { mask-type: alpha; }
+.sparkline .recharts-area-area { mask: url(#spark-fade); }
+
+/* The wall's light: the theme's wash colors, still, behind the page. */
+.wall-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--backdrop-strength);
+  background:
+    radial-gradient(55% 45% at 12% 0%, var(--wash-1), transparent 70%),
+    radial-gradient(50% 45% at 92% 8%, var(--wash-2), transparent 70%),
+    radial-gradient(60% 50% at 60% 105%, var(--wash-3), transparent 70%);
+}
+
+/* On load the wall rolls up: tiles rise in, figures count from zero, and each sparkline draws left to right, staggered
+   across the wall by --i so the reveal sweeps from the first tile to the last over about two seconds. */
+.tile-enter {
+  animation: tile-enter 640ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+@keyframes tile-enter {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.spark-reveal {
+  animation: spark-reveal 1200ms cubic-bezier(0.45, 0, 0.2, 1) both;
+  animation-delay: calc(260ms + var(--i, 0) * 90ms);
+}
+@keyframes spark-reveal {
+  from { clip-path: inset(-12px 100% -12px 0); }
+  to { clip-path: inset(-12px -12px -12px 0); }
+}
+
+/* A goal that is met lights the tile's edge once the sparkline has finished drawing. */
+.goal-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--positive) 75%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--positive) 40%, transparent),
+    0 0 36px -6px color-mix(in oklch, var(--positive) 60%, transparent);
+}
+.reveal .goal-glow {
+  animation: goal-glow 700ms ease-out both;
+  animation-delay: calc(1460ms + var(--i, 0) * 90ms);
+}
+@keyframes goal-glow {
+  0% { opacity: 0; }
+  60% { opacity: 1; box-shadow: inset 0 0 0 1px var(--positive), 0 0 0 2px color-mix(in oklch, var(--positive) 55%, transparent), 0 0 56px -4px color-mix(in oklch, var(--positive) 75%, transparent); }
+  100% { opacity: 1; }
+}
+
+/* TV mode: two layers of the theme's wash colors drift and turn behind the wall, one slow orbit and one slow sway. */
+.tv-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tv-wash::before,
+.tv-wash::after {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  will-change: transform;
+}
+.tv-wash::before {
+  background:
+    radial-gradient(22% 26% at 32% 30%, var(--wash-1), transparent 70%),
+    radial-gradient(24% 22% at 70% 38%, var(--wash-2), transparent 70%),
+    radial-gradient(26% 24% at 48% 70%, var(--wash-3), transparent 70%);
+  animation: tv-orbit 36s linear infinite;
+}
+.tv-wash::after {
+  background:
+    radial-gradient(18% 20% at 62% 62%, var(--wash-1), transparent 70%),
+    radial-gradient(20% 18% at 36% 58%, var(--wash-2), transparent 70%);
+  opacity: 0.8;
+  animation: tv-sway 14s ease-in-out infinite alternate;
+}
+@keyframes tv-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes tv-sway {
+  0% { transform: translate3d(-8%, 4%, 0) scale(1); }
+  100% { transform: translate3d(9%, -6%, 0) scale(1.15); }
+}
+
+/* Entering and leaving TV mode moves each tile from its place on the wall to its place on the screen. */
+.tile-move {
+  view-transition-name: var(--vt);
+}
+::view-transition-group(*) {
+  animation-duration: 760ms;
+  animation-timing-function: var(--ease-out-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark-reveal,
+  .tile-enter,
+  .reveal .goal-glow,
+  .tv-wash::before,
+  .tv-wash::after {
+    animation: none;
+  }
+}

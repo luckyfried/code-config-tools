@@ -1,0 +1,17 @@
+{
+  "id": "01a1622d-3eff-75f1-bda1-0844fe0fdaa1",
+  "version": "2026-10-21",
+  "name": "Numbers Wall",
+  "shortDescription": "Your key numbers on one wall: big figures, sparklines, and a TV mode.",
+  "description": "Numbers Wall puts the four to twelve numbers you check every day on one page. Each tile shows the latest figure in large type, the change since the last reading in green or red, and a sparkline of the last thirty readings with your goal drawn on it. A tile's edge lights up when its goal is met. Tap a tile for its whole history and every raw reading.\n\nTiles come in three sizes, so the numbers that matter most are the biggest on the wall. Press F, or open the page with #tv at the end of the address, for TV mode: just the tiles, sized to read from across a room. On a phone the wall is one column you can scroll.\n\nYour agent keeps the numbers in one file in your project and adds a reading on each refresh, by hand or from a report, a spreadsheet, or a service. Pick a dark, light, or terminal look, or follow the system.",
+  "category": "business",
+  "subcategory": "KPI dashboard",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/numbers-wall",
+  "setup": "Ask: Which four to twelve numbers matter to you, and where does each come from so I can refresh it (a report, a spreadsheet, a service)? Which should be bigger on the wall? Dark, light, or terminal?\n\nThen copy inputs.example.json to numbers-wall.inputs.json in the project folder and replace the sample numbers with theirs: one metric per number, grouped under the headings they use, with the readings they already have as history (oldest first). Set size 2x2 or 2x1 on the numbers they want bigger, higherIsBetter false on anything where down is good news, and a goal where they have one. Run scripts/run.py and serve out/numbers-wall.\n\nTo refresh, add a reading to each metric's history and set refreshedAt to now, then run again. A number kept in a spreadsheet or CSV export can use the csv_last_row source in scripts/sources.py. A number from a service needs that service's key: the person sets it with csc key set (for Plausible, PLAUSIBLE_API_KEY), never in chat, and the source reads it from the environment when run.py runs. Add a function to scripts/sources.py for any other service. No key is ever written into the inputs or the page."
+}

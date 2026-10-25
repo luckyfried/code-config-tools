@@ -1,0 +1,51 @@
+/* Terminal: phosphor green on black, mono numerals with a slashed zero, amber for bad news. */
+:root {
+  color-scheme: dark;
+  --font-ui: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-numerals: "JetBrains Mono Variable", ui-monospace, monospace;
+  --numeral-features: "tnum" 1, "zero" 1;
+  --figure-tracking: -0.04em;
+  --radius: 0.25rem;
+
+  --background: oklch(0.13 0.012 150);
+  --foreground: oklch(0.9 0.17 145);
+  --card: oklch(0.16 0.02 150);
+  --card-foreground: oklch(0.9 0.17 145);
+  --popover: oklch(0.17 0.022 150);
+  --popover-foreground: oklch(0.9 0.17 145);
+  --primary: oklch(0.87 0.2 145);
+  --primary-foreground: oklch(0.15 0.02 150);
+  --secondary: oklch(0.21 0.03 150);
+  --secondary-foreground: oklch(0.9 0.17 145);
+  --muted: oklch(0.21 0.03 150);
+  --muted-foreground: oklch(0.68 0.11 148);
+  --accent: oklch(0.22 0.035 150);
+  --accent-foreground: oklch(0.9 0.17 145);
+  --destructive: oklch(0.8 0.15 72);
+  --border: oklch(0.85 0.18 145 / 0.16);
+  --input: oklch(0.85 0.18 145 / 0.22);
+  --ring: oklch(0.87 0.2 145 / 0.6);
+  --chart-1: oklch(0.87 0.2 145);
+  --chart-2: oklch(0.68 0.11 148);
+
+  --spark: oklch(0.87 0.2 145);
+  --goal: oklch(0.8 0.15 72 / 0.7);
+  --positive: oklch(0.9 0.2 145);
+  --negative: oklch(0.8 0.15 72);
+
+  --wash-1: oklch(0.36 0.11 150 / 0.6);
+  --wash-2: oklch(0.3 0.08 175 / 0.5);
+  --wash-3: oklch(0.32 0.09 125 / 0.45);
+
+  /* Each group of tiles draws in its own phosphor; the screen glows faintly behind the tiles. */
+  --hue-1: oklch(0.87 0.2 145);
+  --hue-2: oklch(0.86 0.14 180);
+  --hue-3: oklch(0.88 0.17 118);
+  --hue-4: oklch(0.82 0.14 80);
+  --card-top: oklch(0.19 0.03 150);
+  --card-tint: 10%;
+  --card-shadow: inset 0 1px 0 oklch(0.87 0.2 145 / 0.08), 0 0 0 1px oklch(0.85 0.18 145 / 0.14), 0 20px 40px -26px oklch(0 0 0 / 0.8);
+  --spark-fill: 0.34;
+  --spark-glow: 0.35;
+  --backdrop-strength: 0.45;
+}

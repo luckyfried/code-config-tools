@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Your numbers on one wall: big stats, sparklines, and a TV mode." />
+    <title>Numbers Wall</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./theme.css" />
+    <script src="./config.js"></script>
+    <script>
+      if (window.__APP_CONFIG__ && window.__APP_CONFIG__.title) document.title = window.__APP_CONFIG__.title;
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
