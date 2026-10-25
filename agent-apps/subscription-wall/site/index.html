@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Subscription Wall</title>
+  <meta name="description" content="Every recurring charge on one wall, with the true yearly cost.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/inter/files/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./vendor/inter/inter.css">
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/tokens.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/app.css">
+  <script src="./config.js"></script>
+  <script src="./data.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <a class="skip" href="#screens">Skip to the subscriptions</a>
+  <div class="app">
+    <header class="top">
+      <div class="headline" id="headline" data-yearly="">
+        <p class="headline-label" id="headline-label">Your subscriptions cost</p>
+        <p class="total">
+          <span class="visually-hidden" id="total-text"></span>
+          <span class="odo" id="odo" aria-hidden="true"></span>
+          <span class="total-unit" aria-hidden="true">a year</span>
+        </p>
+        <p class="headline-sub" id="headline-sub" aria-live="polite"></p>
+      </div>
+      <section class="year" aria-labelledby="year-caption">
+        <p class="year-caption" id="year-caption"></p>
+        <div class="year-strip" id="year-strip"></div>
+      </section>
+      <nav class="tabs" aria-label="Screens">
+        <a class="tab" href="#wall" data-screen="wall">
+          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
+          <span>Wall</span>
+        </a>
+        <a class="tab" href="#calendar" data-screen="calendar">
+          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="16" r="2.5"/><circle cx="12" cy="12" r="4"/><circle cx="19.5" cy="15" r="2"/><path d="M2 21h20" fill="none" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Calendar</span>
+        </a>
+        <a class="tab" href="#category" data-screen="category">
+          <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="12" height="4" rx="1.5"/><rect x="3" y="16" width="7" height="4" rx="1.5"/></svg>
+          <span>By category</span>
+        </a>
+      </nav>
+    </header>
+
+    <main id="screens">
+      <section class="screen" id="screen-wall" aria-labelledby="wall-title">
+        <div class="screen-head">
+          <h2 class="screen-title" id="wall-title">The wall</h2>
+          <div class="screen-tools">
+            <button class="chip chip-keep" id="keep-all" type="button" hidden>Keep them all</button>
+            <div class="segmented" role="group" aria-label="Order the wall">
+              <button class="seg-btn" type="button" data-sort="cost" aria-pressed="true">By cost</button>
+              <button class="seg-btn" type="button" data-sort="renewal" aria-pressed="false">By next charge</button>
+            </div>
+          </div>
+        </div>
+        <div class="wall" id="wall"></div>
+        <p class="empty" id="wall-empty" hidden>The wall is empty. Ask your agent to add your first subscription.</p>
+      </section>
+
+      <section class="screen" id="screen-calendar" aria-labelledby="calendar-title" hidden>
+        <div class="screen-head">
+          <h2 class="screen-title" id="calendar-title">The year ahead</h2>
+          <p class="screen-note" id="calendar-note"></p>
+        </div>
+        <div class="strip-scroll" id="strip-scroll">
+          <div class="strip" id="strip"></div>
+        </div>
+        <div class="month-detail" id="month-detail" aria-live="polite"></div>
+      </section>
+
+      <section class="screen" id="screen-category" aria-labelledby="category-title" hidden>
+        <div class="screen-head">
+          <h2 class="screen-title" id="category-title">By category</h2>
+          <p class="screen-note" id="category-note"></p>
+        </div>
+        <ol class="cats" id="cats"></ol>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

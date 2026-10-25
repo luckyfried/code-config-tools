@@ -1,0 +1,31 @@
+{
+  "_notes": {
+    "currency": "The three-letter code every amount is in, such as USD, EUR, or GBP.",
+    "subscriptions": "One entry per recurring charge. name: what the statement calls it. amount: the price per charge. every: week, month, or year. nextCharge: the next charge date as YYYY-MM-DD; a past date is fine, the run moves it forward by the period. category: one of the names in categories. color (optional): a #rrggbb brand color; its hue is used, at the theme's lightness.",
+    "categories": "The category names the By category screen shows, in any order.",
+    "sort": "How the wall is ordered when it opens: cost (largest yearly cost first) or renewal (next charge first).",
+    "theme": "billboard (a black wall), receipt (paper), or auto (receipt in a light system setting, billboard in a dark one)."
+  },
+  "currency": "USD",
+  "subscriptions": [
+    { "name": "Adobe Creative Cloud", "amount": 59.99, "every": "month", "nextCharge": "2026-10-28", "category": "Work" },
+    { "name": "Farm Box", "amount": 32.0, "every": "week", "nextCharge": "2026-10-17", "category": "Food" },
+    { "name": "Iron Yard Gym", "amount": 45.0, "every": "month", "nextCharge": "2026-11-01", "category": "Health" },
+    { "name": "Netflix", "amount": 15.49, "every": "month", "nextCharge": "2026-10-09", "category": "Streaming" },
+    { "name": "ChatGPT Plus", "amount": 20.0, "every": "month", "nextCharge": "2026-11-12", "category": "Work" },
+    { "name": "Amazon Prime", "amount": 139.0, "every": "year", "nextCharge": "2027-03-14", "category": "Shopping" },
+    { "name": "Spotify", "amount": 11.99, "every": "month", "nextCharge": "2026-10-24", "category": "Music" },
+    { "name": "YouTube Premium", "amount": 13.99, "every": "month", "nextCharge": "2026-11-05", "category": "Streaming" },
+    { "name": "Disney+", "amount": 13.99, "every": "month", "nextCharge": "2026-10-30", "category": "Streaming" },
+    { "name": "The Daily Ledger", "amount": 17.0, "every": "month", "nextCharge": "2026-11-18", "category": "News" },
+    { "name": "Xbox Game Pass", "amount": 16.99, "every": "month", "nextCharge": "2026-11-08", "category": "Games" },
+    { "name": "Headspace", "amount": 69.99, "every": "year", "nextCharge": "2027-01-20", "category": "Health" },
+    { "name": "Duolingo", "amount": 83.99, "every": "year", "nextCharge": "2026-12-02", "category": "Learning" },
+    { "name": "Code Config", "amount": 5.0, "every": "month", "nextCharge": "2026-11-15", "category": "Work" },
+    { "name": "iCloud+", "amount": 2.99, "every": "month", "nextCharge": "2026-10-26", "category": "Work" },
+    { "name": "1Password", "amount": 35.88, "every": "year", "nextCharge": "2027-06-03", "category": "Work" }
+  ],
+  "categories": ["Streaming", "Music", "Work", "Food", "Health", "News", "Games", "Learning", "Shopping"],
+  "sort": "cost",
+  "theme": "auto"
+}

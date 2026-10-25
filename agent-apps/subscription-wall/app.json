@@ -1,0 +1,17 @@
+{
+  "id": "01a1622d-9f2c-7577-9516-92d163fc0560",
+  "version": "2026-10-21",
+  "name": "Subscription Wall",
+  "shortDescription": "Every recurring charge on one wall, with the true yearly cost.",
+  "description": "A wall of tiles, one per recurring charge, each in its own color with its yearly cost in big figures and a bar that fills toward the next charge; the most expensive one gets the biggest tile. The yearly total rolls up on top, with the twelve months ahead beside it and the heaviest month lifted. Tap \"What if I cancel?\" on any tile to watch it go gray and the total count down to what you would pay without it. A Calendar screen lists every charge by month and a By category screen shows where the money goes. Your agent keeps the list up to date, and nothing leaves your computer.",
+  "category": "finance",
+  "subcategory": "Subscriptions",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/subscription-wall",
+  "setup": "Your agent asks, in one message, what currency you pay in, your subscriptions as name, price, and how often (weekly, monthly, or yearly) with the next charge date if you know it, and whether you want the dark wall or the light one. If you have a bank or card export, it can draft the first list from that. No keys and no accounts are needed; the list stays in a file in your project."
+}
