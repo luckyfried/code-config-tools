@@ -1,0 +1,677 @@
+/* The stage, the profile card, and everything on it. */
+
+body {
+  background:
+    radial-gradient(42% 38% at 16% 22%, var(--blob-1), transparent 72%),
+    radial-gradient(40% 40% at 84% 24%, var(--blob-2), transparent 72%),
+    radial-gradient(44% 42% at 24% 82%, var(--blob-3), transparent 72%),
+    radial-gradient(40% 38% at 82% 80%, var(--blob-4), transparent 72%),
+    var(--stage-base);
+  background-attachment: fixed;
+}
+
+.no-gl body {
+  background-size: 170% 170%;
+  animation: drift 40s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { background-position: 0% 0%; }
+  to { background-position: 100% 100%; }
+}
+
+.mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 300ms var(--ease-out);
+}
+
+.gl-ready .mesh {
+  opacity: 1;
+}
+
+.no-gl .mesh {
+  display: none;
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: url("../grain.png");
+  background-size: 160px 160px;
+}
+
+.stage {
+  position: relative;
+  z-index: 2;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding:
+    max(var(--space-5), env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(var(--space-5), env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+}
+
+/* The entrance lives on .lift so the card's own transform stays free for the tilt. */
+.lift {
+  width: 100%;
+  max-width: 440px;
+}
+
+/* The card is glass: the stage shows through it, blurred, and a highlight and a rim light move with its tilt. */
+.card {
+  position: relative;
+  display: grid;
+  grid-template-areas: "identity" "links" "share";
+  gap: 12px;
+  padding: 20px 14px 14px;
+  border-radius: var(--radius-xl);
+  background: color-mix(in oklab, var(--color-surface) var(--surface-alpha), transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 0 var(--highlight), var(--shadow-2);
+  overflow: hidden;
+  isolation: isolate;
+  transform: perspective(1200px) rotateX(calc(var(--rx) * 1deg)) rotateY(calc(var(--ry) * 1deg));
+  will-change: transform;
+}
+
+.card__sheen {
+  position: absolute;
+  z-index: var(--sheen-layer);
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: var(--sheen-blend);
+  opacity: var(--sheen-strength);
+}
+
+.card__sheen::before {
+  content: "";
+  position: absolute;
+  left: -40%;
+  top: -40%;
+  width: 180%;
+  height: 180%;
+  background: radial-gradient(circle 260px at 50% 50%, var(--sheen), transparent);
+  transform: translate3d(calc(-14% + var(--sx) * 0.42%), calc(-16% + var(--sy) * 0.42%), 0);
+}
+
+.card__sheen::after {
+  content: "";
+  position: absolute;
+  left: -60%;
+  top: -60%;
+  width: 220%;
+  height: 220%;
+  background: linear-gradient(118deg, transparent 40%, var(--sheen) 47%, transparent 51%, transparent 55%, var(--sheen) 57%, transparent 60%);
+  opacity: 0.7;
+  transform: translate3d(calc(var(--sx) * 0.55%), calc(var(--sy) * 0.3%), 0);
+}
+
+.card__rim {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  padding: 1.5px;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(var(--color-text) 0 0) content-box, linear-gradient(var(--color-text) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--color-text) 0 0) content-box exclude, linear-gradient(var(--color-text) 0 0);
+}
+
+.card__rim::before {
+  content: "";
+  position: absolute;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(closest-side, var(--rim), transparent 72%);
+  transform: translate3d(calc(-20% + var(--sx) * 0.5%), calc(-22% + var(--sy) * 0.5%), 0);
+}
+
+/* Identity */
+
+.identity {
+  grid-area: identity;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+/* The picture and the QR code sit above the glass, so the highlight passes behind them. */
+.avatar {
+  position: relative;
+  z-index: 3;
+  width: 80px;
+  aspect-ratio: 1;
+  margin-bottom: var(--space-1);
+}
+
+.avatar__halo {
+  position: absolute;
+  inset: -9px;
+  animation: breathe 4.2s ease-in-out infinite alternate;
+}
+
+.avatar__glow {
+  position: absolute;
+  inset: -16px;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, var(--blob-2), transparent);
+  opacity: 0.85;
+}
+
+.avatar__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: conic-gradient(from 20deg, var(--color-accent), var(--blob-1), var(--blob-3), var(--blob-2), var(--color-accent));
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 5px), var(--color-text) calc(100% - 4px));
+  mask: radial-gradient(closest-side, transparent calc(100% - 5px), var(--color-text) calc(100% - 4px));
+  animation: spin 14s linear infinite;
+}
+
+.avatar__img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  background: var(--color-surface-2);
+  outline: 1px solid var(--color-border);
+  outline-offset: -1px;
+}
+
+@keyframes breathe {
+  from { transform: scale(0.93); opacity: 0.55; }
+  to { transform: scale(1.07); opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(1turn); }
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: clamp(2.375rem, 10.5vw, 2.75rem);
+  font-weight: var(--name-wght);
+  font-stretch: var(--name-wdth);
+  font-optical-sizing: auto;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.name .word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.name .ch {
+  display: inline-block;
+}
+
+.line {
+  max-width: 32ch;
+  font-size: var(--text-md);
+  line-height: 1.45;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.social {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-surface-2) 62%, transparent);
+  border: 1px solid var(--color-border);
+  transition: translate var(--motion-base) var(--ease-out), background-color var(--motion-base) ease;
+}
+
+.social .icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Links */
+
+.links {
+  grid-area: links;
+}
+
+.links ul {
+  display: grid;
+  gap: 8px;
+}
+
+.link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--color-surface-2) 74%, transparent);
+  border: 1px solid var(--color-border);
+  box-shadow: inset 0 1px 0 var(--highlight), 0 1px 2px var(--shadow-color);
+  overflow: hidden;
+  transform: translate3d(calc(var(--mx) * 1px), calc(var(--my) * 1px), 0);
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    scale var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-base) ease;
+  -webkit-touch-callout: none;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, var(--sheen) 50%, transparent 70%);
+  opacity: 0;
+  transform: translateX(-110%);
+}
+
+.link__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 5px 16px 5px 6px;
+  border-radius: inherit;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.link__icon {
+  --tile: var(--blob-1);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: var(--color-text);
+  background: color-mix(in oklab, var(--tile) 62%, var(--color-surface-2));
+  box-shadow: inset 0 1px 0 var(--highlight);
+}
+
+.links li:nth-child(4n + 2) .link__icon { --tile: var(--blob-2); }
+.links li:nth-child(4n + 3) .link__icon { --tile: var(--blob-3); }
+.links li:nth-child(4n + 4) .link__icon { --tile: var(--blob-4); }
+
+.link__text {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.link__label {
+  font-size: 1.0625rem;
+  font-weight: var(--label-wght);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link__host {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link :focus-visible {
+  outline-offset: -3px;
+}
+
+.link:active,
+.link.is-pressing {
+  scale: 0.985;
+}
+
+/* Share: the QR code and the contact card */
+
+.share {
+  grid-area: share;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 12px;
+  padding: 12px;
+  border-radius: 22px;
+  background: color-mix(in oklab, var(--color-surface-2) 58%, transparent);
+  border: 1px solid var(--color-border);
+}
+
+.qr {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  width: 76px;
+  aspect-ratio: 1;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--qr-paper);
+  box-shadow: 0 1px 2px var(--shadow-color);
+}
+
+.qr__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.share__body {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.share__url {
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.share__hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.share__actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-2);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 18px 0 14px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: scale var(--motion-fast) var(--ease-out), background-color var(--motion-base) ease;
+}
+
+.button .icon {
+  width: 19px;
+  height: 19px;
+}
+
+.button--primary {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-on-accent) 30%, transparent), 0 6px 18px -8px var(--color-accent);
+}
+
+.button--quiet {
+  background: color-mix(in oklab, var(--color-text) 8%, transparent);
+}
+
+.button:active {
+  scale: 0.96;
+}
+
+/* The toast that says a link was copied */
+
+.toast {
+  position: fixed;
+  z-index: 10;
+  left: 50%;
+  bottom: max(var(--space-5), calc(env(safe-area-inset-bottom) + var(--space-3)));
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-text);
+  box-shadow: var(--shadow-1);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+  transition: opacity var(--motion-base) var(--ease-out), transform var(--motion-base) var(--ease-out);
+}
+
+.toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Hover, only where a pointer can hover */
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    box-shadow: inset 0 1px 0 var(--highlight), 0 12px 30px -10px var(--shadow-color), 0 2px 6px var(--shadow-color);
+  }
+
+  .link:hover::after {
+    opacity: 0.6;
+    transform: translateX(110%);
+    transition: transform 900ms var(--ease-out), opacity var(--motion-base) ease;
+  }
+
+  .social:hover {
+    translate: 0 -2px;
+    background: var(--color-surface-2);
+  }
+
+  .button--primary:hover {
+    background: color-mix(in oklab, var(--color-accent) 88%, var(--color-text));
+  }
+
+  .button--quiet:hover {
+    background: color-mix(in oklab, var(--color-text) 13%, transparent);
+  }
+}
+
+/* The entrance: one orchestrated moment on load */
+
+.js .lift {
+  animation: lift-in 800ms var(--ease-out) both;
+}
+
+.js .enter {
+  animation: enter var(--motion-enter) var(--ease-out) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+/* Each link card catches the light once as it lands. */
+.js .link::after {
+  animation: glint 1100ms var(--ease-out) both;
+  animation-delay: calc(var(--d, 0) * 1ms + 520ms);
+}
+
+.avatar { --d: 120; }
+.line { --d: 640; }
+.socials { --d: 720; }
+.links li:nth-child(1) { --d: 420; }
+.links li:nth-child(2) { --d: 480; }
+.links li:nth-child(3) { --d: 540; }
+.links li:nth-child(4) { --d: 600; }
+.links li:nth-child(5) { --d: 660; }
+.links li:nth-child(6) { --d: 720; }
+.links li:nth-child(7) { --d: 780; }
+.links li:nth-child(n + 8) { --d: 840; }
+.share { --d: 820; }
+
+.js .name {
+  opacity: 0;
+  animation: reveal 0ms 1200ms forwards;
+}
+
+.js .name.is-split {
+  opacity: 1;
+  animation: none;
+}
+
+.name.is-split .ch {
+  animation: settle 950ms var(--ease-out) both;
+  animation-delay: calc(260ms + var(--i, 0) * 38ms);
+}
+
+@keyframes lift-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+}
+
+@keyframes enter {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+@keyframes glint {
+  from { opacity: 0; transform: translateX(-110%); }
+  35% { opacity: 0.75; }
+  to { opacity: 0; transform: translateX(110%); }
+}
+
+@keyframes reveal {
+  to { opacity: 1; }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(0.34em);
+    font-weight: 260;
+    font-stretch: 75%;
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* Desktop: who and how to keep in touch on the left, the links on the right */
+
+@media (min-width: 900px) {
+  .lift {
+    max-width: 1060px;
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "identity links" "share links";
+    align-content: center;
+    column-gap: var(--space-7);
+    row-gap: 28px;
+    padding: var(--space-7) 52px;
+  }
+
+  .identity {
+    align-items: flex-start;
+    text-align: left;
+    gap: var(--space-4);
+  }
+
+  .avatar {
+    width: 124px;
+  }
+
+  .name {
+    font-size: clamp(3.25rem, 4.8vw, 4.75rem);
+    line-height: 0.96;
+  }
+
+  .line {
+    font-size: var(--text-lg);
+  }
+
+  .socials {
+    justify-content: flex-start;
+  }
+
+  .links {
+    align-self: center;
+  }
+
+  .links ul {
+    gap: 12px;
+  }
+
+  .link__main {
+    min-height: 76px;
+    padding: 12px 20px 12px 14px;
+    gap: 16px;
+  }
+
+  .link__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .link__label {
+    font-size: var(--text-lg);
+  }
+
+  .link__host {
+    font-size: var(--text-sm);
+  }
+
+  .share {
+    padding: 14px;
+  }
+
+  .share {
+    grid-template-rows: auto auto;
+    row-gap: 10px;
+  }
+
+  .qr {
+    grid-row: 1 / 3;
+    width: 116px;
+    padding: 8px;
+  }
+
+  .share__body {
+    align-self: end;
+  }
+
+  .share__actions {
+    grid-column: 2;
+    align-self: start;
+    display: flex;
+  }
+}
+
+@media (min-width: 900px) and (max-height: 760px) {
+  .stage {
+    place-items: start center;
+  }
+}

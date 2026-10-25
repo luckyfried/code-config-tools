@@ -1,0 +1,25 @@
+{
+  "_notes": "Every key this app reads. name, line, avatar, url, and links are needed; socials, vcard, and theme are optional. avatar is a picture file in this folder. url is the address the page will live at; the QR code opens it. A link takes label, url (https://, http://, mailto:, or tel:), and an optional icon: link, shop, calendar, mail, letter, play, music, mic, camera, book, heart, star, pin, chat, code, gift, or globe. socials takes handles or full addresses for instagram, tiktok, youtube, x, threads, bluesky, mastodon (user@server), github, linkedin, pinterest, twitch, dribbble, facebook, spotify (full address), and website (full address). vcard fills the Save contact card. theme is dawn, dusk, mono, or candy.",
+  "name": "Maya Okafor",
+  "line": "Ceramicist in Oakland. Small-batch tableware, glazed by hand.",
+  "avatar": "avatar.svg",
+  "url": "https://mayaokafor.com",
+  "links": [
+    { "label": "Shop the spring collection", "url": "https://shop.mayaokafor.com/spring", "icon": "shop" },
+    { "label": "Book a wheel class", "url": "https://mayaokafor.com/classes", "icon": "calendar" },
+    { "label": "Studio letter, once a month", "url": "https://mayaokafor.com/letter", "icon": "letter" },
+    { "label": "Watch me throw a teapot", "url": "https://youtube.com/watch?v=studio-teapot", "icon": "play" },
+    { "label": "Wholesale and commissions", "url": "mailto:studio@mayaokafor.com", "icon": "mail" }
+  ],
+  "socials": {
+    "instagram": "mayaokafor.studio",
+    "tiktok": "mayamakespots",
+    "youtube": "mayaokafor",
+    "pinterest": "mayaokafor"
+  },
+  "vcard": {
+    "phone": "+1 510 555 0142",
+    "email": "studio@mayaokafor.com"
+  },
+  "theme": "dawn"
+}

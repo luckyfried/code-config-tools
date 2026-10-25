@@ -1,0 +1,17 @@
+{
+  "id": "01a1622c-dcf6-79cf-9dc8-decef710f69a",
+  "version": "2026-10-21",
+  "name": "Link in Bio",
+  "shortDescription": "One page with all your links, a QR code, and a contact card.",
+  "description": "Makes the page you put in your bio: your picture and name on a card that tilts as you move, over a slowly drifting color field, with every link you share, your social profiles, a QR code that opens the page, and a Save contact button that adds you to a phone's contacts. Press and hold a link on a phone to copy it. Pick from four color themes, and the page follows the visitor's light or dark setting. It is a folder of plain files you can host anywhere.",
+  "category": "social",
+  "subcategory": "Profile pages",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/link-in-bio",
+  "setup": "Your agent asks, in one message, for your name, a one-line intro, a picture of you, the links you want on the page with a short label for each, your social handles, and the web address the page will live at so the QR code opens it. It also asks whether to add a phone number and email to the Save contact card, and which theme you like: dawn, dusk, mono, or candy. No accounts or keys are needed, and everything stays in your project folder."
+}
