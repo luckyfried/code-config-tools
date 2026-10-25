@@ -1,0 +1,43 @@
+/* Fresh: a white plate on a warm linen counter in daylight; protein in berry, carbs in honey, fat in leaf, calories in plum. */
+:root {
+  color-scheme: light;
+  --background: oklch(0.968 0.009 80);
+  --foreground: oklch(0.23 0.02 60);
+  --card: oklch(0.995 0.003 85);
+  --card-foreground: oklch(0.23 0.02 60);
+  --popover: oklch(0.995 0.003 85);
+  --popover-foreground: oklch(0.23 0.02 60);
+  --primary: oklch(0.5 0.13 148);
+  --primary-foreground: oklch(0.99 0.01 140);
+  --secondary: oklch(0.95 0.01 80);
+  --secondary-foreground: oklch(0.28 0.02 60);
+  --muted: oklch(0.952 0.011 80);
+  --muted-foreground: oklch(0.5 0.022 60);
+  --accent: oklch(0.945 0.018 80);
+  --accent-foreground: oklch(0.28 0.03 60);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.905 0.012 80);
+  --input: oklch(0.87 0.014 80);
+  --ring: oklch(0.62 0.13 148);
+  --radius: 0.75rem;
+
+  --macro-protein: oklch(0.6 0.21 12);
+  --macro-protein-deep: oklch(0.4 0.16 12);
+  --macro-carbs: oklch(0.78 0.16 74);
+  --macro-carbs-deep: oklch(0.55 0.14 58);
+  --macro-fat: oklch(0.66 0.17 146);
+  --macro-fat-deep: oklch(0.42 0.13 150);
+  --macro-energy: oklch(0.55 0.2 300);
+  --macro-energy-2: oklch(0.6 0.17 262);
+  --macro-energy-deep: oklch(0.36 0.17 292);
+  --macro-water: oklch(0.64 0.12 230);
+
+  --card-shadow: 0 1px 2px oklch(0.35 0.04 60 / 0.06), 0 10px 30px -14px oklch(0.35 0.05 60 / 0.2);
+  --plate: radial-gradient(circle at 50% 30%, oklch(1 0 0), oklch(0.975 0.006 85) 70%, oklch(0.94 0.01 80));
+  --plate-shadow: 0 1px 1px oklch(0.35 0.04 60 / 0.08), 0 8px 18px -6px oklch(0.35 0.05 60 / 0.16),
+    0 30px 50px -18px oklch(0.35 0.06 60 / 0.3), inset 0 -2px 3px oklch(0.35 0.04 60 / 0.06);
+  --plate-well: radial-gradient(circle at 50% 40%, oklch(1 0 0), oklch(0.985 0.004 85));
+  --plate-well-shadow: inset 0 3px 8px oklch(0.35 0.05 60 / 0.12), inset 0 -1px 0 oklch(1 0 0);
+  --cap-shadow: oklch(0.2 0.04 40 / 0.42);
+  --entry-glow: oklch(0.9 0.06 300 / 0.55);
+}

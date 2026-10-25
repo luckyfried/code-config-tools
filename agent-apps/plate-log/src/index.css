@@ -1,0 +1,191 @@
+@import "tailwindcss" source(".");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Color values live only in theme.css (one file from src/themes/); this file maps them and sets structure. */
+@custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* The type scale: 12, 14, 16 (body and inputs), 18, 32, 56. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5rem;
+  --text-title: 2rem;
+  --text-title--line-height: 2.25rem;
+  --text-hero: 3.5rem;
+  --text-hero--line-height: 1;
+
+  --ease-ring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --color-protein: var(--macro-protein);
+  --color-protein-deep: var(--macro-protein-deep);
+  --color-carbs: var(--macro-carbs);
+  --color-carbs-deep: var(--macro-carbs-deep);
+  --color-fat: var(--macro-fat);
+  --color-fat-deep: var(--macro-fat-deep);
+  --color-energy: var(--macro-energy);
+  --color-energy-2: var(--macro-energy-2);
+  --color-energy-deep: var(--macro-energy-deep);
+  /* The finished first lap of a ring past its target: halfway between its shade and its deep shade. */
+  --color-protein-mid: color-mix(in oklab, var(--macro-protein) 50%, var(--macro-protein-deep));
+  --color-carbs-mid: color-mix(in oklab, var(--macro-carbs) 50%, var(--macro-carbs-deep));
+  --color-fat-mid: color-mix(in oklab, var(--macro-fat) 50%, var(--macro-fat-deep));
+  --color-energy-mid: color-mix(in oklab, var(--macro-energy) 50%, var(--macro-energy-deep));
+  --color-water: var(--macro-water);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss03";
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* A card sits on the counter: the theme decides how much it lifts. */
+  .surface {
+    background-color: var(--card);
+    box-shadow: var(--card-shadow);
+  }
+
+  /* The plate under the rings, and the well the macro rings sit in. */
+  .plate {
+    background: var(--plate);
+    box-shadow: var(--plate-shadow);
+  }
+  .plate-well {
+    background: var(--plate-well);
+    box-shadow: var(--plate-well-shadow);
+  }
+
+  /* A logged entry slides in from the left and its row glows once, then settles. */
+  .entry-in {
+    animation:
+      entry-in 520ms var(--ease-out-strong) both,
+      entry-glow 1400ms ease-out both;
+    border-radius: var(--radius-lg);
+  }
+  @keyframes entry-in {
+    from {
+      opacity: 0;
+      transform: translateX(-28px);
+    }
+  }
+  @keyframes entry-glow {
+    from {
+      background-color: var(--entry-glow);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  /* A day of the week strip rises in; the delay is set per day. */
+  .day-in {
+    animation: day-in 520ms var(--ease-out-strong) both;
+    animation-delay: var(--day-delay, 0ms);
+  }
+  @keyframes day-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px) scale(0.85);
+    }
+  }
+
+  .tile-press {
+    transition: transform 140ms var(--ease-out-strong), background-color 140ms ease;
+  }
+  .tile-press:active {
+    transform: scale(0.96);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .tile-press:hover {
+      background-color: var(--muted);
+    }
+  }
+
+  .scroll-row {
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .scroll-row::-webkit-scrollbar {
+    display: none;
+  }
+  .scroll-row > * {
+    scroll-snap-align: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .day-in {
+    animation: none;
+  }
+  .entry-in {
+    animation: entry-fade 150ms ease both;
+  }
+  @keyframes entry-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  .tile-press,
+  .tile-press:active {
+    transform: none;
+  }
+}
