@@ -1,0 +1,32 @@
+/* Graphite: dark slate with a cool blue accent. */
+:root {
+  color-scheme: dark;
+  --background: oklch(0.185 0.008 255);
+  --foreground: oklch(0.94 0.006 255);
+  --card: oklch(0.232 0.01 255);
+  --card-foreground: oklch(0.94 0.006 255);
+  --popover: oklch(0.225 0.01 255);
+  --popover-foreground: oklch(0.94 0.006 255);
+  --primary: oklch(0.76 0.115 238);
+  --primary-foreground: oklch(0.2 0.03 250);
+  --secondary: oklch(0.27 0.011 255);
+  --secondary-foreground: oklch(0.94 0.006 255);
+  --muted: oklch(0.255 0.009 255);
+  --muted-foreground: oklch(0.7 0.012 255);
+  --accent: oklch(0.285 0.012 255);
+  --accent-foreground: oklch(0.96 0.005 255);
+  --destructive: oklch(0.7 0.18 22);
+  --border: oklch(0.94 0.01 255 / 9%);
+  --input: oklch(0.94 0.01 255 / 15%);
+  --ring: oklch(0.76 0.115 238 / 65%);
+  --today: oklch(0.76 0.115 238 / 6%);
+  --now: oklch(0.8 0.13 30);
+  --shadow: oklch(0.05 0.01 255 / 60%);
+  --rule: oklch(0.94 0.01 255 / 8%);
+  --card-edge: inset 0 1px 0 oklch(1 0 0 / 6%);
+  --today-glow: oklch(0.76 0.115 238 / 16%);
+  --today-shadow: inset 0 1px 0 oklch(1 0 0 / 5%), 0 28px 70px -34px oklch(0.76 0.115 238 / 45%);
+  --rail: oklch(0.05 0.01 255 / 22%);
+  --shadow-lift: oklch(0.02 0.01 255 / 78%);
+  --radius: 0.7rem;
+}

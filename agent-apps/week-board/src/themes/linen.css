@@ -1,0 +1,32 @@
+/* Linen: warm paper with an ink-blue accent. */
+:root {
+  color-scheme: light;
+  --background: oklch(0.958 0.014 84);
+  --foreground: oklch(0.26 0.02 62);
+  --card: oklch(0.992 0.006 88);
+  --card-foreground: oklch(0.26 0.02 62);
+  --popover: oklch(0.992 0.006 88);
+  --popover-foreground: oklch(0.26 0.02 62);
+  --primary: oklch(0.46 0.135 260);
+  --primary-foreground: oklch(0.98 0.008 88);
+  --secondary: oklch(0.925 0.017 82);
+  --secondary-foreground: oklch(0.28 0.02 62);
+  --muted: oklch(0.932 0.015 82);
+  --muted-foreground: oklch(0.49 0.024 66);
+  --accent: oklch(0.915 0.02 82);
+  --accent-foreground: oklch(0.24 0.02 62);
+  --destructive: oklch(0.55 0.2 27);
+  --border: oklch(0.3 0.04 62 / 13%);
+  --input: oklch(0.3 0.04 62 / 20%);
+  --ring: oklch(0.46 0.135 260 / 50%);
+  --today: oklch(0.993 0.006 88 / 78%);
+  --now: oklch(0.58 0.19 30);
+  --shadow: oklch(0.32 0.05 62 / 24%);
+  --rule: oklch(0.42 0.045 62 / 17%);
+  --card-edge: inset 0 -1px 0 oklch(0.3 0.04 62 / 7%);
+  --today-glow: oklch(0.46 0.135 260 / 7%);
+  --today-shadow: inset 0 1px 0 oklch(1 0 0 / 90%), 0 22px 44px -24px oklch(0.36 0.07 55 / 50%), 0 2px 6px -3px oklch(0.36 0.07 55 / 18%);
+  --rail: oklch(0.3 0.04 62 / 3.5%);
+  --shadow-lift: oklch(0.36 0.07 55 / 34%);
+  --radius: 0.7rem;
+}

@@ -1,0 +1,30 @@
+{
+  "name": "Dana's week",
+  "weekStart": "mon",
+  "columns": 7,
+  "later": true,
+  "seedTasks": [
+    { "title": "Send the Henley invoice", "day": "mon" },
+    { "title": "Book the dentist", "day": "mon" },
+    { "title": "Return the library books", "day": "tue" },
+    { "title": "Call the bank about the card", "day": "today" },
+    { "title": "Draft the quarterly update", "day": "today" },
+    { "title": "Pick up the dry cleaning", "day": "tomorrow" },
+    { "title": "Review Sam's pull request", "day": "thu" },
+    { "title": "Pay the water bill", "day": "fri" },
+    { "title": "Plan Saturday's hike", "day": "fri" },
+    { "title": "Farmers market", "day": "sat" },
+    { "title": "Meal prep for the week", "day": "sun" },
+    { "title": "Repaint the back fence", "day": "later" },
+    { "title": "Sort the photo backup", "day": "later" }
+  ],
+  "theme": "auto",
+  "_notes": {
+    "name": "The board's title, shown at the top, such as \"Dana's week\".",
+    "weekStart": "\"mon\" or \"sun\": the day the first column shows.",
+    "columns": "7 shows every day; 5 shows Monday to Friday.",
+    "later": "true shows the Later rail for things with no day yet; false hides it.",
+    "seedTasks": "The cards the board starts with on its first open, each a title and a day: mon to sun, today, tomorrow, or later. A card on a day already past this week, and still open, carries into today with a \"from Mon\" badge. Use [] for an empty board.",
+    "theme": "graphite (dark, cool blue), linen (light warm paper, ink blue), forest (deep green, amber), or auto (linen by day, graphite when the device is set to dark)."
+  }
+}

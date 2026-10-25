@@ -1,0 +1,399 @@
+@import "tailwindcss" source(".");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Color values live in src/themes/<name>.css, served as ./theme.css; this file only maps them. */
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-today: var(--today);
+  --color-now: var(--now);
+  --color-shadow: var(--shadow);
+  --color-rule: var(--rule);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    overscroll-behavior: none;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+/* The board's moving parts: card entrance, carry-over, lift, strike, and the now marker. */
+@layer components {
+  /* The signature: heavy, tight display numerals and title, drawn from Inter's display optical size. */
+  .wb-display {
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    font-optical-sizing: auto;
+  }
+  .wb-num {
+    font-weight: 750;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    font-optical-sizing: auto;
+  }
+
+  /* The board is planner paper: a fine dot grid the cards sit on. */
+  .wb-paper {
+    background-image: radial-gradient(circle at center, var(--rule) 1px, transparent 1.25px);
+    background-size: 22px 22px;
+    background-position: 11px 4px;
+  }
+  .wb-today {
+    background-color: var(--today);
+    background-image: radial-gradient(120% 42% at 50% 0%, var(--today-glow), transparent 72%);
+  }
+  @media (min-width: 1024px) {
+    .wb-today {
+      box-shadow: var(--today-shadow);
+    }
+  }
+  .wb-rail {
+    background-color: var(--rail);
+  }
+  .wb-hour {
+    top: calc(var(--at, 0) * 100%);
+    transform: translateY(-50%);
+    opacity: 0.75;
+  }
+  .wb-hour-line {
+    top: calc(var(--at, 0) * 100%);
+    background: var(--rule);
+  }
+  .wb-hour::before {
+    content: "";
+    position: absolute;
+    left: -0.6rem;
+    top: 50%;
+    width: 0.3rem;
+    height: 1px;
+    background: currentColor;
+  }
+
+  .wb-card {
+    box-shadow:
+      var(--card-edge),
+      0 1px 0 0 var(--shadow),
+      0 1px 2px -1px var(--shadow);
+    transition:
+      box-shadow var(--dur-fast) var(--ease-out),
+      background-color var(--dur-fast) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .wb-card:hover {
+      box-shadow:
+        var(--card-edge),
+        0 1px 0 0 var(--shadow),
+        0 4px 10px -4px var(--shadow);
+    }
+  }
+  .wb-card[data-placeholder="true"] {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+
+  .wb-enter {
+    animation: wb-rise var(--dur-slow) var(--ease-out) both;
+    animation-delay: var(--delay, 0ms);
+  }
+  .wb-carry-in {
+    animation: wb-carry var(--dur-slow) var(--ease-out) both;
+  }
+
+  .wb-lifted {
+    animation: wb-lift 220ms var(--ease-out) both;
+    cursor: grabbing;
+  }
+  .wb-dropping {
+    animation: wb-settle 180ms var(--ease-spring) both;
+  }
+  .wb-ghost {
+    position: fixed;
+    z-index: 60;
+    margin: 0;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .wb-tick-box {
+    display: inline-block;
+    overflow: hidden;
+    height: 1.2em;
+    line-height: 1.2em;
+    vertical-align: bottom;
+    min-width: 0.65em;
+    text-align: center;
+  }
+  .wb-tick {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    animation: wb-tick 300ms var(--ease-out) both;
+  }
+
+  .wb-strike {
+    position: relative;
+  }
+  .wb-strike::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 55%;
+    height: 2px;
+    border-radius: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 280ms var(--ease-out);
+  }
+  [data-done="true"] .wb-strike::after {
+    transform: scaleX(1);
+  }
+
+  .wb-collapse {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--dur-base) var(--ease-out);
+  }
+  .wb-collapse[data-closed="true"] {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows var(--dur-base) var(--ease-out),
+      opacity var(--dur-base) var(--ease-out);
+  }
+  .wb-collapse[data-closed="true"] > * {
+    overflow: hidden;
+  }
+
+  .wb-now {
+    top: calc(var(--now-at, 0) * 100%);
+    transition: top 900ms var(--ease-out);
+    animation: wb-drop 1.1s var(--ease-out) 0.2s both;
+  }
+  .wb-now-fill {
+    transform: scaleY(var(--now-at, 0));
+    transition: transform 900ms var(--ease-out);
+    animation: wb-grow 1.1s var(--ease-out) 0.2s both;
+  }
+  .wb-now-dot::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    background: var(--now);
+    opacity: 0;
+    animation: wb-ping 1.6s var(--ease-out) 0.9s 3;
+  }
+
+  .wb-count {
+    animation: wb-pop var(--dur-base) var(--ease-spring);
+  }
+
+  .wb-days {
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .wb-days::-webkit-scrollbar {
+    display: none;
+  }
+  .wb-day {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  .wb-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+@keyframes wb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes wb-carry {
+  from {
+    opacity: 0;
+    transform: translateX(-44px) rotate(-1.5deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes wb-lift {
+  from {
+    transform: rotate(0deg) scale(1);
+    box-shadow:
+      var(--card-edge),
+      0 2px 2px -1px var(--shadow);
+  }
+  to {
+    transform: rotate(2deg) scale(1.03);
+    box-shadow:
+      var(--card-edge),
+      0 16px 32px -8px var(--shadow-lift),
+      0 4px 10px -4px var(--shadow);
+  }
+}
+
+@keyframes wb-settle {
+  from {
+    transform: rotate(2deg) scale(1.03);
+    box-shadow:
+      var(--card-edge),
+      0 16px 32px -8px var(--shadow-lift),
+      0 4px 10px -4px var(--shadow);
+  }
+  to {
+    transform: none;
+    box-shadow:
+      var(--card-edge),
+      0 1px 0 0 var(--shadow),
+      0 1px 2px -1px var(--shadow);
+  }
+}
+
+@keyframes wb-tick {
+  from {
+    transform: translateY(85%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes wb-drop {
+  from {
+    top: 0;
+  }
+}
+
+@keyframes wb-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes wb-ping {
+  from {
+    opacity: 0.55;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@keyframes wb-pop {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Reduced motion keeps the meaning and drops the travel: fades stay, lift and slides go, the strike appears whole. */
+@media (prefers-reduced-motion: reduce) {
+  .wb-enter,
+  .wb-carry-in {
+    animation: wb-fade var(--dur-base) linear both;
+    animation-delay: 0ms;
+  }
+  .wb-lifted {
+    animation: none;
+    box-shadow: 0 6px 16px -6px var(--shadow);
+  }
+  .wb-strike::after {
+    transition: none;
+  }
+  .wb-collapse,
+  .wb-now,
+  .wb-now-fill {
+    transition: none;
+  }
+  .wb-now,
+  .wb-now-fill {
+    animation: none;
+  }
+  .wb-now-dot::before,
+  .wb-count,
+  .wb-tick,
+  .wb-dropping {
+    animation: none;
+  }
+}
+
+@keyframes wb-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "01a1622e-0820-7164-9e07-e9addddce862",
+  "version": "2026-10-21",
+  "name": "Week Board",
+  "shortDescription": "Seven columns, drag your tasks across the week, nothing slips.",
+  "description": "A weekly task board that lives in one web page. Each day of this week is a column, with a Later rail for things that have no day yet. Drag a card from Monday to Wednesday and it lifts off the board with a tilt and a deeper shadow while the other cards open a slot for it; drop it and it snaps into place. Check a card and a line draws through it before it folds into the day's done list. Today's column carries a thin accent outline and a live now marker that moves down the column through the day, and anything left undone on a past day slides into today on your next open with a badge that counts what carried over. Add takes one line and reads a day word at the end, so \"call the bank fri\" lands on Friday. On a phone the board shows one day per screen with a day strip on top, and a long press picks a card up. On a computer the arrow keys move between cards, Shift with an arrow moves the card, and N adds one. Your tasks stay in your browser, with export and import in Settings. Your agent asks whether you want seven days or workdays, what is on your plate this week and on which day, and which look you like, then builds the page.",
+  "category": "productivity",
+  "subcategory": "Task management",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/week-board",
+  "setup": "Ask the person, in one message: Seven days or just workdays? What are five to ten things on your plate this week, and which day for each? Graphite, linen, or forest?\n\nThen copy inputs.example.json from the app folder to week-board.inputs.json in the project folder and edit it: columns (7 or 5), weekStart (mon or sun), later (true for the Later rail), seedTasks (each a title and a day: mon to sun, today, tomorrow, or later), name for the board's title, and theme (graphite, linen, forest, or auto). Delete the _notes object if you like; it only explains the keys.\n\nRun python3 <app folder>/scripts/run.py from the project folder. It writes out/week-board/, which any static file server can host."
+}
