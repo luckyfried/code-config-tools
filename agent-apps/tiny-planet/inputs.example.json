@@ -1,0 +1,18 @@
+{
+  "title": "Tiny Planet",
+  "planetName": "Pebble",
+  "playerName": "Juniper",
+  "theme": "meadow",
+  "seed": "pebble",
+  "daySeconds": 120,
+  "crystals": 7,
+  "_notes": {
+    "title": "Optional. The small line above the planet's name on the title card. Default: Tiny Planet.",
+    "planetName": "Required. The planet's name, shown on the title card and the result card.",
+    "playerName": "Required. The explorer's name, shown on the result card.",
+    "theme": "Required. One of meadow (green land, blue seas), tundra (snow, ice, and pines), or ember (dark rock, glowing lava seas).",
+    "seed": "Required. Any word. The same word always grows the same planet, with the crystals in the same places.",
+    "daySeconds": "Optional. How long the day lasts, in seconds, from 30 to 1800. Default: 120.",
+    "crystals": "Optional. How many crystals are hidden, from 1 to 24. Default: 7."
+  }
+}

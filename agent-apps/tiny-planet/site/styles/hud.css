@@ -1,0 +1,379 @@
+/* The run's heads-up display: crystal count, compass, clock, touch stick, and jump button. */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-hud);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition-property: opacity, visibility;
+  transition-duration: var(--motion-slow), 0s;
+  transition-delay: 0s, var(--motion-slow);
+}
+
+body[data-screen="run"] .hud,
+body[data-screen="pause"] .hud {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s, 0s;
+}
+
+.hud-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: var(--space-3);
+  padding: calc(var(--space-4) + var(--safe-top)) calc(var(--space-4) + var(--safe-right)) 0
+    calc(var(--space-4) + var(--safe-left));
+}
+
+.hud-crystals,
+.hud-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  color: var(--color-hud-text);
+  box-shadow: var(--shadow-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hud-crystals {
+  justify-self: start;
+  flex-wrap: wrap;
+}
+
+.hud-count {
+  font-size: var(--text-md);
+}
+
+.hud-count b,
+.hud-clock b {
+  font-size: var(--text-lg);
+}
+
+.gem-icon {
+  width: 22px;
+  height: 22px;
+  fill: var(--color-crystal);
+  stroke: var(--color-crystal-ink);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.gem-facet {
+  fill: none;
+}
+
+.hud-pips {
+  display: inline-flex;
+  gap: 5px;
+  margin-left: var(--space-1);
+}
+
+.pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  transform: rotate(45deg) scale(0.85);
+  border: 1.5px solid var(--color-hud-muted);
+  transition-property: transform, background-color, border-color;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-spring);
+}
+
+.pip.is-found {
+  background: var(--color-crystal);
+  border-color: var(--color-crystal);
+  transform: rotate(45deg) scale(1.1);
+}
+
+.hud-right {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sun-icon {
+  width: 22px;
+  height: 22px;
+  fill: var(--color-sun-icon);
+  stroke: var(--color-sun-icon);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.hud-clock-label {
+  font-size: var(--text-sm);
+  color: var(--color-hud-muted);
+}
+
+.hud-clock.is-late {
+  background: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+.hud-clock.is-late .hud-clock-label {
+  color: var(--color-on-danger);
+}
+
+.hud-clock.is-late .sun-icon {
+  fill: var(--color-on-danger);
+  stroke: var(--color-on-danger);
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  color: var(--color-hud-text);
+  box-shadow: var(--shadow-1);
+  pointer-events: auto;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.icon-button:active {
+  transform: scale(0.94);
+}
+
+/* Compass: forward is the top of the ring; the gem marker sits at the crystal's bearing. */
+
+.compass {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  justify-self: center;
+}
+
+.compass-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  box-shadow: var(--shadow-1), inset 0 0 0 2px var(--color-hud-ring);
+}
+
+.compass-tick {
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 7px solid var(--color-hud-muted);
+}
+
+.compass-explorer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: var(--radius-full);
+  background: var(--color-explorer-dot);
+  box-shadow: 0 0 0 3px var(--color-hud);
+}
+
+.compass-needle {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--compass-angle, 0deg));
+}
+
+.compass-needle svg {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  fill: var(--color-crystal);
+  stroke: var(--color-crystal-ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.compass.is-done .compass-needle {
+  opacity: 0;
+}
+
+/* Toast and hint */
+
+.hud-toast {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--safe-top) + 108px);
+  transform: translate(-50%, -8px);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  color: var(--color-hud-text);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  white-space: nowrap;
+  opacity: 0;
+  box-shadow: var(--shadow-1);
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.hud-toast.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.hud-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--space-5) + var(--safe-bottom));
+  transform: translateX(-50%);
+  max-width: calc(100% - 2 * var(--space-5));
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  color: var(--color-hud-text);
+  font-size: var(--text-md);
+  text-align: center;
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.hud-hint.is-on {
+  opacity: 1;
+}
+
+/* Touch controls appear only on touch screens. */
+
+.stick,
+.jump-button {
+  display: none;
+}
+
+body.is-touch .stick {
+  display: block;
+  position: absolute;
+  left: var(--stick-x, calc(76px + var(--safe-left)));
+  top: var(--stick-y, calc(100% - 96px - var(--safe-bottom)));
+  width: 124px;
+  height: 124px;
+  margin: -62px 0 0 -62px;
+  border-radius: var(--radius-full);
+  background: var(--color-stick);
+  box-shadow: inset 0 0 0 2px var(--color-hud-ring);
+  opacity: 0.55;
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+
+body.is-touch .stick.is-active {
+  opacity: 1;
+}
+
+.stick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  box-shadow: var(--shadow-1), inset 0 0 0 2px var(--color-hud-ring);
+  transform: translate(var(--knob-x, 0px), var(--knob-y, 0px));
+}
+
+body.is-touch .jump-button {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  right: calc(var(--space-6) + var(--safe-right));
+  bottom: calc(var(--space-6) + var(--safe-bottom));
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: var(--color-hud);
+  color: var(--color-hud-text);
+  box-shadow: var(--shadow-1), inset 0 0 0 2px var(--color-hud-ring);
+  pointer-events: auto;
+  touch-action: none;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+body.is-touch .jump-button.is-pressed {
+  transform: scale(0.92);
+}
+
+.jump-button svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+}
+
+@media (max-width: 767px) {
+  .hud-top {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "crystals right"
+      "compass compass";
+    row-gap: var(--space-2);
+    padding: calc(var(--space-3) + var(--safe-top)) calc(var(--space-3) + var(--safe-right)) 0
+      calc(var(--space-3) + var(--safe-left));
+  }
+  .hud-crystals {
+    grid-area: crystals;
+  }
+  .hud-right {
+    grid-area: right;
+  }
+  .compass {
+    grid-area: compass;
+    width: 68px;
+    height: 68px;
+  }
+  .hud-pips {
+    display: none;
+  }
+  .hud-clock-label {
+    display: none;
+  }
+  .hud-toast {
+    top: calc(var(--safe-top) + 150px);
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud-top {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: none;
+  }
+  .hud-crystals,
+  .hud-right,
+  .compass {
+    grid-area: auto;
+  }
+  .hud-toast {
+    top: calc(var(--safe-top) + 92px);
+  }
+}

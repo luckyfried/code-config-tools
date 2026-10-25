@@ -1,0 +1,17 @@
+{
+  "id": "01a1622d-bcf3-71d4-9e35-674d7b244f59",
+  "version": "2026-10-21",
+  "name": "Tiny Planet",
+  "shortDescription": "Walk a tiny planet and find the crystals before nightfall.",
+  "description": "Tiny Planet is a little world of your own to explore. A round explorer walks a planet grown from a word you choose, with continents, mountains, forests, and seas, and the horizon curves away under their feet as they go. Crystals are hidden across the land, each sending a beam of light into the sky, and the sun sets for real while you look: noon blue turns to an amber sunset, then stars and a rising moon. Find every crystal before dark to save the planet, and your time is the score to beat. It plays on a phone with a thumb stick and on a desktop with the keyboard and mouse, with three worlds to pick from (meadow, tundra, and ember), each with a light and a dark title screen. Name the planet and the explorer, and pick how long the day lasts and how many crystals to hide.",
+  "category": "games",
+  "subcategory": "3D and WebGL worlds",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/tiny-planet",
+  "setup": "Your agent asks: \"What's your planet called, what's your name, and which world do you want (meadow, tundra, or ember)?\" It picks a seed word for the planet, which you can change to grow a different one, and it can make the day longer or shorter and hide from 1 to 24 crystals. No accounts or keys are needed. The game is one folder of files you can host anywhere, and best times stay on each player's device."
+}
