@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2b55"/><stop offset="1" stop-color="#3b4a7a"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a3"/><stop offset="1" stop-color="#f39a4a"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.55" r="0.5"><stop offset="0" stop-color="#ffcf7a" stop-opacity="0.55"/><stop offset="1" stop-color="#ffcf7a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#sky)"/>
+  <circle cx="128" cy="150" r="110" fill="url(#glow)"/>
+  <path d="M48 124 128 58l80 66" fill="none" stroke="#f4efe4" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M70 118v82h116v-82" fill="#f4efe4"/>
+  <rect x="88" y="132" width="36" height="34" rx="4" fill="url(#glass)"/>
+  <rect x="104" y="132" width="4" height="34" fill="#f4efe4"/>
+  <rect x="88" y="147" width="36" height="4" fill="#f4efe4"/>
+  <rect x="138" y="140" width="30" height="60" rx="4" fill="#3f6b55"/>
+  <circle cx="190" cy="74" r="30" fill="#5d9a6c"/>
+  <path d="m176 74 10 10 20-21" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

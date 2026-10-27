@@ -1,0 +1,17 @@
+{
+  "id": "01a163f2-1b68-7655-8e9e-0cb38ad8b8a5",
+  "version": "2026-10-21",
+  "name": "Home Hunt",
+  "shortDescription": "Your agent finds the homes; you say yes, no, or maybe and compare.",
+  "description": "A board of the homes your agent found for you, each a tall photo card with the price, the rooms and baths, the floor area, the neighborhood, a link to the listing, and the facts your agent checked, each with where it checked them: the school zone, the flood map, the commute, and the price history. Mark each home yes, no, or maybe with one tap, a swipe on a phone, or a key on a computer, and leave notes on any card. Drag two or three homes into the compare tray to see them side by side, with the best price, the most room, the lowest price per square foot, and the shortest commute lit up. On any home, ask a question for the seller or the listing agent: your agent tells you what it would send and to whom, sends it only when you say so, and the answer unfolds onto the card. A yes means you like a home and never lets your agent contact anyone. Every home, choice, note, and answer stays on your computer in your project's own folder, so a reload changes nothing you decided. Comes in two looks: open house, airy white with sage and brass, and after dark, deep navy with a warm window glow.",
+  "category": "lifestyle",
+  "subcategory": "Home search",
+  "useCase": "product-discovery",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/home-hunt",
+  "setup": "Your agent asks, in one message, for your first name, where you want to live, whether you are buying or renting, the budget, how many rooms, what you can't do without, the look you want (open house, after dark, or the one that follows your device), and whether it may send your questions once you say so on each one or should only write them for you to send. No keys are needed and the app uses no outside service: your agent finds the homes and checks the facts with its own tools, and the page loads only the photos a home names. Your homes, choices, notes, and answers stay in data/home-hunt/ in your project, on your computer, and your agent contacts a seller or a listing agent only after it asks you in the conversation."
+}
