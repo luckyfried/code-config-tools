@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="Roll a glass marble down a canyon track against your own ghost.">
+    <title>Marble Canyon</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="preload" href="./fonts/NationalPark.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="./theme.css">
+    <link rel="stylesheet" href="./styles/tokens.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/hud.css">
+    <link rel="stylesheet" href="./styles/cards.css">
+    <script src="./config.js"></script>
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+    </script>
+    <script type="module" src="./game/main.js"></script>
+  </head>
+  <body data-screen="title">
+    <canvas id="scene" tabindex="-1" aria-label="The canyon track and your marble"></canvas>
+    <div class="shade" aria-hidden="true"></div>
+
+    <header class="hud" aria-label="Run">
+      <div class="hud-clock">
+        <span class="timer" id="timer" role="timer" aria-label="Run time">0:00.00</span>
+        <span class="delta" id="delta" hidden><span class="delta-value" id="delta-value">0.00</span> <span class="delta-label" id="delta-label">best</span></span>
+      </div>
+      <div class="progress" id="progress" aria-hidden="true">
+        <span class="progress-line"></span>
+        <span class="progress-fill" id="progress-fill"></span>
+        <span class="progress-ticks" id="progress-ticks"></span>
+        <span class="progress-dot progress-ghost" id="progress-ghost" hidden></span>
+        <span class="progress-dot progress-you" id="progress-you"></span>
+      </div>
+      <div class="hud-actions">
+        <button class="icon-button" id="sound" type="button" aria-label="Sound" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sound-body" d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="sound-wave" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path class="sound-off" d="M15.5 9.5l5 5m0-5l-5 5"/></svg>
+        </button>
+        <button class="icon-button" id="restart" type="button" aria-label="Restart the run">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12a6.5 6.5 0 1 0 2-4.7"/><path d="M5 4.5v4h4"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="banner" id="banner" role="status" aria-live="polite">
+      <span class="banner-label" id="banner-label">Gate 1</span>
+      <span class="banner-time" id="banner-time">0:00.00</span>
+      <span class="delta banner-delta" id="banner-delta" hidden></span>
+    </div>
+
+    <div class="count" id="count" aria-live="assertive"></div>
+
+    <div class="speed" id="speed" aria-hidden="true">
+      <span class="speed-readout"><span class="speed-value" id="speed-value">0</span><span class="speed-unit">km/h</span></span>
+      <span class="speed-bar"><span class="speed-fill" id="speed-fill"></span><span class="speed-mark" id="speed-mark"></span></span>
+      <span class="jump-cue" id="jump-cue">Jump ahead</span>
+    </div>
+
+    <section class="card title-card" id="title-card" aria-labelledby="canyon-name">
+      <p class="app-title" id="app-title">Marble Canyon</p>
+      <h1 class="canyon-name" id="canyon-name">Canyon</h1>
+      <p class="canyon-facts" id="canyon-facts"></p>
+      <dl class="medals" id="medals">
+        <div class="medal" data-medal="gold"><dt>Gold</dt><dd id="medal-gold">0:00.00</dd></div>
+        <div class="medal" data-medal="silver"><dt>Silver</dt><dd id="medal-silver">0:00.00</dd></div>
+        <div class="medal" data-medal="bronze"><dt>Bronze</dt><dd id="medal-bronze">0:00.00</dd></div>
+      </dl>
+      <p class="best" id="best"></p>
+      <div class="actions">
+        <button class="button primary" id="start" type="button">Roll</button>
+        <span class="key-hint" id="start-key"><kbd>Space</kbd></span>
+      </div>
+      <p class="hint" id="hint">Drag left or right anywhere to steer.</p>
+    </section>
+
+    <section class="card result-card" id="result-card" aria-labelledby="result-time" hidden>
+      <p class="result-name" id="result-name"></p>
+      <p class="result-time" id="result-time">0:00.00</p>
+      <p class="result-medal" id="result-medal" data-medal="none"></p>
+      <p class="result-note" id="result-note"></p>
+      <ol class="splits" id="splits"></ol>
+      <div class="actions">
+        <button class="button primary" id="again" type="button">Race the ghost</button>
+        <button class="button" id="tilt" type="button" aria-pressed="false" hidden>Tilt to steer</button>
+        <span class="key-hint" id="again-key"><kbd>Space</kbd></span>
+      </div>
+    </section>
+
+    <noscript><p class="no-webgl">Marble Canyon needs JavaScript to roll.</p></noscript>
+    <script src="./badge.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "id": "01a179b7-820b-71a9-abeb-9f24966dae2c",
+  "version": "2026-10-21",
+  "name": "Marble Canyon",
+  "shortDescription": "Roll a glass marble down a canyon track against your own ghost.",
+  "description": "A marble time trial in the browser. A glass marble rolls down a banked ribbon track through a sandstone canyon, with jumps, boost pads, and three checkpoint gates. Steer by dragging on a phone or with the arrow keys on a computer. Every run after your first races a translucent ghost of your best, saved in your browser. The canyon is built from a word you choose, so your hosted copy has its own track, and the gold, silver, and bronze times come from the track's length. Pick a short, medium, or long canyon, the color of the swirl inside the marble, and one of three looks: canyon, ice, or neon, each with a daytime and an evening version.",
+  "category": "games",
+  "subcategory": "Racing and driving",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.jpg",
+    "assets/shot-2.jpg"
+  ],
+  "deploy": "out/marble-canyon",
+  "setup": ""
+}

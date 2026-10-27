@@ -1,0 +1,16 @@
+{
+  "title": "Marble Canyon",
+  "racerName": "Ash",
+  "theme": "canyon",
+  "seed": "Juniper",
+  "trackLength": "medium",
+  "marbleColor": "#2f6fdb",
+  "_notes": {
+    "title": "The name on the title card.",
+    "racerName": "Your name, on the result card and beside your ghost's time difference.",
+    "theme": "canyon (sandstone walls and a teal sky), ice (blue glass, a white track, a pale sun), or neon (a dark track with light strips). Each has a daytime look for light mode and an evening look for dark mode.",
+    "seed": "Any word. The canyon is built from it, so the same word always gives the same canyon. Leave it out to use your name.",
+    "trackLength": "short, medium, or long: about 40, 70, or 110 seconds at a good pace.",
+    "marbleColor": "The color of the swirl inside the glass, as a hex color like #2f6fdb."
+  }
+}
