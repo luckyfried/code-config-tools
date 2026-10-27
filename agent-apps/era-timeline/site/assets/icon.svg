@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#f8f4ec"/>
+  <rect x="40" y="96" width="250" height="40" rx="12" fill="#b08a2a" fill-opacity="0.32" stroke="#b08a2a" stroke-opacity="0.6" stroke-width="3"/>
+  <rect x="180" y="146" width="292" height="40" rx="12" fill="#b5543a" fill-opacity="0.3" stroke="#b5543a" stroke-opacity="0.6" stroke-width="3"/>
+  <rect x="40" y="96" width="250" height="296" fill="#b08a2a" fill-opacity="0.08"/>
+  <rect x="180" y="146" width="292" height="246" fill="#b5543a" fill-opacity="0.08"/>
+  <line x1="104" y1="392" x2="104" y2="290" stroke="#221d17" stroke-opacity="0.4" stroke-width="4"/>
+  <line x1="228" y1="392" x2="228" y2="236" stroke="#221d17" stroke-opacity="0.4" stroke-width="4"/>
+  <line x1="352" y1="392" x2="352" y2="310" stroke="#221d17" stroke-opacity="0.4" stroke-width="4"/>
+  <rect x="84" y="250" width="132" height="40" rx="20" fill="#fffcf6" stroke="#ddd3c1" stroke-width="3"/>
+  <circle cx="106" cy="270" r="7" fill="#b08a2a"/>
+  <rect x="122" y="265" width="76" height="10" rx="5" fill="#221d17" fill-opacity="0.75"/>
+  <rect x="208" y="196" width="150" height="40" rx="20" fill="#221d17"/>
+  <circle cx="230" cy="216" r="7" fill="#b5543a" stroke="#fbf8f2" stroke-width="3"/>
+  <rect x="246" y="211" width="92" height="10" rx="5" fill="#fbf8f2"/>
+  <rect x="332" y="270" width="130" height="40" rx="20" fill="#fffcf6" stroke="#ddd3c1" stroke-width="3"/>
+  <circle cx="354" cy="290" r="7" fill="#b5543a"/>
+  <rect x="370" y="285" width="72" height="10" rx="5" fill="#221d17" fill-opacity="0.75"/>
+  <line x1="40" y1="392" x2="472" y2="392" stroke="#221d17" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="104" cy="392" r="12" fill="#b08a2a" stroke="#f8f4ec" stroke-width="5"/>
+  <circle cx="228" cy="392" r="15" fill="#221d17" stroke="#f8f4ec" stroke-width="5"/>
+  <circle cx="352" cy="392" r="12" fill="#b5543a" stroke="#f8f4ec" stroke-width="5"/>
+  <path d="M104 412v16M168 412v10M228 412v16M292 412v10M352 412v16M416 412v10" stroke="#221d17" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round"/>
+</svg>

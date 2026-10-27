@@ -1,0 +1,35 @@
+/* Museum: a near-black gallery wall, era bands in muted jewel tones, bone pins. Tokens only. */
+:root {
+  --scheme: dark;
+  --color-bg: #101114;
+  --color-surface: #18191e;
+  --color-surface-2: #212228;
+  --color-text: #ebe4d7;
+  --color-muted: #9d968a;
+  --color-accent: #d3b06f;
+  --color-on-accent: #1a140a;
+  --color-danger: #e0705f;
+  --color-ok: #7dbb8f;
+  --color-border: #2f3038;
+  --color-pin: #ebe4d7;
+  --color-on-pin: #15161a;
+  --color-axis: #cfc7b8;
+  --color-grid: #ebe4d70f;
+  --color-scrim: #00000073;
+  --era-red: #a8394c;
+  --era-orange: #c0773c;
+  --era-gold: #c3a04a;
+  --era-green: #2f8e6f;
+  --era-teal: #2b8a92;
+  --era-blue: #4a6db5;
+  --era-violet: #8459b0;
+  --era-rose: #b5557c;
+  --era-tint: 0.085;
+  --era-strip: 0.36;
+  --era-edge: 0.55;
+  --grain-opacity: 0.35;
+  --grain-blend: screen;
+  --grain-invert: 1;
+  --shadow-1: 0 1px 0 #ffffff0a inset, 0 1px 3px #00000066;
+  --shadow-2: 0 0 0 1px #ffffff12, 0 16px 40px #000000a6, 0 2px 6px #00000080;
+}

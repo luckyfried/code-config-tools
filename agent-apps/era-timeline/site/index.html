@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="A timeline to pan and zoom, with eras, events, and a story walk.">
+    <title>Era Timeline</title>
+    <link rel="preload" href="./vendor/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./vendor/@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./theme.css">
+    <link rel="stylesheet" href="./styles/fonts.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/app.css">
+    <link rel="stylesheet" href="./styles/panels.css">
+    <link rel="stylesheet" href="./styles/print.css">
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+    <script src="./config.js"></script>
+    <script src="./data.js"></script>
+    <script type="module" src="./js/main.js"></script>
+  </head>
+  <body>
+    <div class="app" id="app" data-orient="h">
+      <header class="bar">
+        <div class="brand">
+          <h1 class="title" id="title">Era Timeline</h1>
+          <p class="subtitle" id="subtitle"></p>
+        </div>
+        <div class="search" id="search-box" role="search">
+          <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="search" type="search" placeholder="Search events" aria-label="Search events" autocomplete="off" spellcheck="false" role="combobox" aria-controls="results" aria-expanded="false" aria-autocomplete="list">
+          <ul class="results" id="results" role="listbox" aria-label="Matching events" hidden></ul>
+        </div>
+        <nav class="actions" aria-label="Views">
+          <button class="btn icon-only search-toggle" id="btn-search" type="button" aria-label="Search events">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          </button>
+          <button class="btn primary" id="btn-story" type="button" aria-pressed="false">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M8 5.5v13l10.5-6.5z"/></svg>
+            <span>Story</span>
+          </button>
+          <button class="btn" id="btn-list" type="button" aria-haspopup="dialog">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle class="fill" cx="4.5" cy="6.5" r="1.4"/><circle class="fill" cx="4.5" cy="12" r="1.4"/><circle class="fill" cx="4.5" cy="17.5" r="1.4"/></svg>
+            <span>List</span>
+          </button>
+          <button class="btn" id="btn-print" type="button" aria-haspopup="dialog">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3.5h10V9M7 17.5H4.5v-7.5a1.5 1.5 0 0 1 1.5-1.5h12a1.5 1.5 0 0 1 1.5 1.5v7.5H17"/><path d="M7 14h10v6.5H7z"/></svg>
+            <span>Print</span>
+          </button>
+          <div class="zoom zoom-top" role="group" aria-label="Zoom">
+            <button class="btn icon-only" data-zoom="out" type="button" aria-label="Zoom out"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+            <button class="btn icon-only" data-zoom="in" type="button" aria-label="Zoom in"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+          </div>
+        </nav>
+      </header>
+
+      <main class="stage" id="stage" tabindex="0" aria-label="Timeline. Drag or use the arrow keys to move, scroll, pinch, or press plus and minus to zoom." aria-describedby="status">
+        <svg class="timeline" id="timeline" role="group" aria-label="Eras and events" data-overlaps=""></svg>
+      </main>
+
+      <div class="minimap" id="minimap">
+        <svg class="minimap-svg" id="minimap-svg" role="slider" tabindex="0" aria-label="Overview. Drag the window to move through time." aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></svg>
+      </div>
+
+      <footer class="foot">
+        <p class="status" id="status" aria-live="polite"></p>
+        <div class="zoom zoom-foot" role="group" aria-label="Zoom">
+          <button class="btn icon-only" data-zoom="out" type="button" aria-label="Zoom out"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
+          <span class="zoom-level" id="zoom-level" aria-live="off"></span>
+          <button class="btn icon-only" data-zoom="in" type="button" aria-label="Zoom in"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg></button>
+          <button class="btn" data-zoom="fit" type="button">Whole timeline</button>
+        </div>
+      </footer>
+
+      <aside class="card" id="card" tabindex="-1" role="dialog" aria-modal="false" aria-labelledby="card-title" hidden>
+        <div class="card-grip" id="card-grip" aria-hidden="true"></div>
+        <div class="card-scroll" id="card-scroll">
+          <figure class="card-figure" id="card-figure">
+            <img id="card-img" alt="" width="600" height="400" decoding="async">
+          </figure>
+          <div class="card-body">
+            <p class="card-meta">
+              <span class="era-chip" id="card-era"><span class="chip-dot" id="card-era-dot"></span><span id="card-era-name"></span></span>
+              <time class="card-date" id="card-date"></time>
+            </p>
+            <h2 class="card-title" id="card-title"></h2>
+            <p class="card-text" id="card-text"></p>
+          </div>
+        </div>
+        <div class="card-foot">
+          <a class="goto" id="card-goto" href="#">Go to this moment</a>
+          <div class="card-nav">
+            <button class="btn icon-only" id="card-prev" type="button" aria-label="Previous event"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg></button>
+            <span class="card-pos" id="card-pos"></span>
+            <button class="btn icon-only" id="card-play" type="button" aria-label="Pause the story"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path class="fill play-shape" d="M8 5.5v13l10.5-6.5z"/><path class="fill pause-shape" d="M7 5.5h3.5v13H7zM13.5 5.5H17v13h-3.5z"/></svg></button>
+            <button class="btn icon-only" id="card-next" type="button" aria-label="Next event"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></button>
+          </div>
+        </div>
+        <button class="btn icon-only card-close" id="card-close" type="button" aria-label="Close"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg></button>
+      </aside>
+
+      <div class="scrim" id="scrim" hidden></div>
+
+      <section class="drawer" id="list" role="dialog" aria-modal="true" aria-labelledby="list-title" hidden>
+        <header class="drawer-head">
+          <div>
+            <h2 class="drawer-title" id="list-title">Every event</h2>
+            <p class="drawer-sub" id="list-sub"></p>
+          </div>
+          <button class="btn icon-only" id="list-close" type="button" aria-label="Close the list"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg></button>
+        </header>
+        <ol class="list-items" id="list-items"></ol>
+      </section>
+
+      <section class="printview" id="printview" role="dialog" aria-modal="true" aria-labelledby="print-title" hidden>
+        <header class="printview-bar">
+          <div>
+            <h2 class="drawer-title" id="print-title">Print</h2>
+            <p class="drawer-sub">The whole timeline as one long strip at a fixed scale.</p>
+          </div>
+          <div class="printview-actions">
+            <button class="btn primary" id="print-go" type="button">Print the strip</button>
+            <button class="btn icon-only" id="print-close" type="button" aria-label="Close"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg></button>
+          </div>
+        </header>
+        <div class="printview-scroll" id="print-scroll">
+          <div class="strip" id="strip"></div>
+        </div>
+      </section>
+    </div>
+    <div class="camera-driver" id="camera-driver" aria-hidden="true"></div>
+    <script src="./badge.js"></script>
+  </body>
+</html>

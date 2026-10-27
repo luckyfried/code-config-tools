@@ -1,0 +1,17 @@
+{
+  "id": "01a17b56-dcc2-70fb-918a-ed00906c6717",
+  "version": "2026-10-21",
+  "name": "Era Timeline",
+  "shortDescription": "A zoomable timeline of eras and events for a family, a project, or a course.",
+  "description": "A timeline you can pan and zoom, of whatever you are keeping: a family's generations, a project's history, a course's periods. Eras are translucent layered bands whose labels slide along to stay in view; events are pins that sort themselves into lanes so nothing overlaps at any zoom, and open a card with their text, a picture, and their era. Drag to pan, scroll or pinch to zoom, and the axis relabels itself from centuries to decades, years, months, and days. A minimap shows where you are and can be dragged. Story mode walks every event in order, easing the camera from one to the next. On a phone the timeline runs down the screen and cards open as a sheet. It also prints as one long strip with the title at the left. Your agent writes the eras and events from what you tell it, in one sitting or over months.",
+  "category": "reference",
+  "subcategory": "Timeline",
+  "useCase": "documentation",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/era-timeline",
+  "setup": ""
+}

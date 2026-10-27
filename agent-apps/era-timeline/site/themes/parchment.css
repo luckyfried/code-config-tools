@@ -1,0 +1,34 @@
+/* Parchment: warm white paper, era bands in earth tones, ink pins. Tokens only. */
+:root {
+  --scheme: light;
+  --color-bg: #f8f4ec;
+  --color-surface: #fffcf6;
+  --color-surface-2: #efe8da;
+  --color-text: #221d17;
+  --color-muted: #6b6155;
+  --color-accent: #27406b;
+  --color-on-accent: #fbf8f2;
+  --color-danger: #a3362a;
+  --color-ok: #3f6b4b;
+  --color-border: #ddd3c1;
+  --color-pin: #221d17;
+  --color-on-pin: #fbf8f2;
+  --color-axis: #3b342c;
+  --color-grid: #221d1712;
+  --color-scrim: #2a211426;
+  --era-red: #b5543a;
+  --era-orange: #c3772f;
+  --era-gold: #b08a2a;
+  --era-green: #6c7a35;
+  --era-teal: #467769;
+  --era-blue: #4d6884;
+  --era-violet: #7a5670;
+  --era-rose: #a85b5b;
+  --era-tint: 0.055;
+  --era-strip: 0.26;
+  --era-edge: 0.5;
+  --grain-opacity: 0.32;
+  --grain-blend: multiply;
+  --shadow-1: 0 1px 0 #6a4f2c14, 0 1px 3px #6a4f2c1f;
+  --shadow-2: 0 2px 4px #5a3f1a12, 0 12px 32px #5a3f1a29, 0 0 0 1px #5a3f1a12;
+}

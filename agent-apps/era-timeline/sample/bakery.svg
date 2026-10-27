@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <rect width="600" height="400" fill="#ece3cf"/>
+  <rect x="60" y="40" width="480" height="360" fill="#c9a77a" stroke="#2a241d" stroke-width="4"/>
+  <g stroke="#2a241d" stroke-width="1.5" opacity="0.35">
+    <path d="M60 70 h480 M60 100 h480 M60 130 h480"/>
+    <path d="M120 40 v30 M200 70 v30 M280 40 v30 M360 70 v30 M440 40 v30 M520 70 v30 M160 100 v30 M320 100 v30 M480 100 v30"/>
+  </g>
+  <rect x="96" y="140" width="408" height="52" rx="6" fill="#2a241d"/>
+  <text x="300" y="175" text-anchor="middle" font-family="Georgia, serif" font-size="26" font-weight="700" letter-spacing="3" fill="#e8c77a">LINDGREN'S BAKERY</text>
+  <path d="M80 204 H520 L506 246 H94Z" fill="#f2ead8" stroke="#2a241d" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="#9e3a2b"><path d="M80 204 h40 l-2 42 h-24Z M160 204 h40 l-1 42 h-38Z M240 204 h40 v42 h-40Z M320 204 h40 v42 h-40Z M400 204 h40 l1 42 h-38Z M480 204 h40 l14 42 h-26Z" transform="translate(0 0)"/></g>
+  <path d="M94 246 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0 q13 12 26 0" fill="none" stroke="#2a241d" stroke-width="3"/>
+  <g stroke="#2a241d" stroke-width="4">
+    <rect x="96" y="266" width="250" height="134" fill="#f4e7c8"/>
+    <rect x="380" y="266" width="124" height="134" fill="#5a4e40"/>
+    <path d="M96 330 h250" stroke-width="3"/>
+  </g>
+  <rect x="396" y="282" width="92" height="56" fill="#f4e7c8" stroke="#2a241d" stroke-width="3"/>
+  <circle cx="478" cy="346" r="5" fill="#e8c77a" stroke="#2a241d" stroke-width="2"/>
+  <g fill="#c98a45" stroke="#2a241d" stroke-width="2.5">
+    <ellipse cx="136" cy="314" rx="28" ry="13"/><ellipse cx="200" cy="314" rx="28" ry="13"/><ellipse cx="300" cy="312" rx="32" ry="15"/>
+    <circle cx="128" cy="372" r="14"/><circle cx="162" cy="372" r="14"/><circle cx="196" cy="372" r="14"/>
+    <path d="M232 384 c0 -30 60 -30 60 0Z"/>
+  </g>
+  <g stroke="#2a241d" stroke-width="2" opacity="0.55" fill="none">
+    <path d="M118 310 l8 -6 M136 310 l8 -6 M154 310 l8 -6 M182 310 l8 -6 M200 310 l8 -6 M218 310 l8 -6 M280 308 l10 -7 M300 308 l10 -7 M318 308 l10 -7"/>
+    <path d="M122 368 q6 6 12 0 M156 368 q6 6 12 0 M190 368 q6 6 12 0 M248 376 h28"/>
+  </g>
+</svg>

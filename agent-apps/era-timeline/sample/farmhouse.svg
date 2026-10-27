@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <rect width="600" height="400" fill="#efe5d1"/>
+  <circle cx="470" cy="96" r="44" fill="#e8c77a"/>
+  <path d="M0 250 Q150 222 300 238 T600 228 V400 H0Z" fill="#b9b27a"/>
+  <path d="M0 300 Q170 270 330 292 T600 284 V400 H0Z" fill="#8f9356"/>
+  <g stroke="#2a241d" stroke-width="2" stroke-linecap="round" opacity="0.45">
+    <path d="M30 330 l40 -6 M90 350 l60 -8 M200 340 l50 -6 M380 336 l70 -8 M470 360 l60 -6 M120 380 l80 -8 M300 372 l60 -6"/>
+  </g>
+  <g>
+    <rect x="196" y="176" width="210" height="112" fill="#9e3a2b" stroke="#2a241d" stroke-width="4"/>
+    <path d="M182 180 L301 104 L420 180Z" fill="#3b332a" stroke="#2a241d" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M196 176 h210" stroke="#f4eee2" stroke-width="6"/>
+    <rect x="352" y="112" width="20" height="40" fill="#5a4e40" stroke="#2a241d" stroke-width="3"/>
+    <g fill="#f4eee2" stroke="#2a241d" stroke-width="3">
+      <rect x="220" y="204" width="40" height="40"/>
+      <rect x="342" y="204" width="40" height="40"/>
+      <rect x="282" y="222" width="40" height="66"/>
+    </g>
+    <path d="M240 204v40M220 224h40M362 204v40M342 224h40" stroke="#2a241d" stroke-width="2.5"/>
+    <g stroke="#2a241d" stroke-width="1.5" opacity="0.35">
+      <path d="M200 270h70M330 270h72M200 258h20M390 258h14M270 194h70"/>
+    </g>
+  </g>
+  <g stroke="#2a241d" stroke-width="3">
+    <path d="M90 300 V120" stroke="#f4eee2" stroke-width="12"/>
+    <path d="M84 300 V122 M96 300 V122"/>
+    <path d="M84 160h6M90 200h6M84 236h6M90 270h6" stroke-width="3"/>
+    <path d="M520 300 V150" stroke="#f4eee2" stroke-width="10"/>
+    <path d="M515 300 V152 M525 300 V152"/>
+    <path d="M515 190h5M520 232h5M515 268h5"/>
+  </g>
+  <g fill="#8f9356" stroke="#2a241d" stroke-width="3">
+    <path d="M90 82 C40 96 34 150 60 178 C76 196 112 196 126 176 C150 146 138 96 90 82Z"/>
+    <path d="M520 118 C478 128 474 176 494 198 C508 214 538 212 548 194 C566 166 556 128 520 118Z"/>
+  </g>
+  <g stroke="#2a241d" stroke-width="2" opacity="0.4" fill="none">
+    <path d="M70 120 q18 10 36 0 M64 146 q26 12 52 0 M500 150 q16 8 32 0 M496 172 q22 10 44 0"/>
+  </g>
+  <path d="M0 304 h600" stroke="#2a241d" stroke-width="1.5" opacity="0.25"/>
+  <path d="M136 292 h52 M156 292 v-36 M136 268 h52" stroke="#5a4e40" stroke-width="3"/>
+</svg>

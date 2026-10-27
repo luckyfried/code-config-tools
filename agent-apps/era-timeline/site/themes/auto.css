@@ -1,0 +1,140 @@
+/* Auto: Parchment in a light color scheme, Museum in a dark one. Tokens only. */
+:root {
+  --scheme: light;
+  --color-bg: #f8f4ec;
+  --color-surface: #fffcf6;
+  --color-surface-2: #efe8da;
+  --color-text: #221d17;
+  --color-muted: #6b6155;
+  --color-accent: #27406b;
+  --color-on-accent: #fbf8f2;
+  --color-danger: #a3362a;
+  --color-ok: #3f6b4b;
+  --color-border: #ddd3c1;
+  --color-pin: #221d17;
+  --color-on-pin: #fbf8f2;
+  --color-axis: #3b342c;
+  --color-grid: #221d1712;
+  --color-scrim: #2a211426;
+  --era-red: #b5543a;
+  --era-orange: #c3772f;
+  --era-gold: #b08a2a;
+  --era-green: #6c7a35;
+  --era-teal: #467769;
+  --era-blue: #4d6884;
+  --era-violet: #7a5670;
+  --era-rose: #a85b5b;
+  --era-tint: 0.055;
+  --era-strip: 0.26;
+  --era-edge: 0.5;
+  --grain-opacity: 0.32;
+  --grain-blend: multiply;
+  --shadow-1: 0 1px 0 #6a4f2c14, 0 1px 3px #6a4f2c1f;
+  --shadow-2: 0 2px 4px #5a3f1a12, 0 12px 32px #5a3f1a29, 0 0 0 1px #5a3f1a12;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --scheme: dark;
+    --color-bg: #101114;
+    --color-surface: #18191e;
+    --color-surface-2: #212228;
+    --color-text: #ebe4d7;
+    --color-muted: #9d968a;
+    --color-accent: #d3b06f;
+    --color-on-accent: #1a140a;
+    --color-danger: #e0705f;
+    --color-ok: #7dbb8f;
+    --color-border: #2f3038;
+    --color-pin: #ebe4d7;
+    --color-on-pin: #15161a;
+    --color-axis: #cfc7b8;
+    --color-grid: #ebe4d70f;
+    --color-scrim: #00000073;
+    --era-red: #a8394c;
+    --era-orange: #c0773c;
+    --era-gold: #c3a04a;
+    --era-green: #2f8e6f;
+    --era-teal: #2b8a92;
+    --era-blue: #4a6db5;
+    --era-violet: #8459b0;
+    --era-rose: #b5557c;
+    --era-tint: 0.085;
+    --era-strip: 0.36;
+    --era-edge: 0.55;
+    --grain-opacity: 0.35;
+    --grain-blend: screen;
+  --grain-invert: 1;
+    --shadow-1: 0 1px 0 #ffffff0a inset, 0 1px 3px #00000066;
+    --shadow-2: 0 0 0 1px #ffffff12, 0 16px 40px #000000a6, 0 2px 6px #00000080;
+  }
+}
+
+:root[data-theme="light"] {
+  --scheme: light;
+  --color-bg: #f8f4ec;
+  --color-surface: #fffcf6;
+  --color-surface-2: #efe8da;
+  --color-text: #221d17;
+  --color-muted: #6b6155;
+  --color-accent: #27406b;
+  --color-on-accent: #fbf8f2;
+  --color-danger: #a3362a;
+  --color-ok: #3f6b4b;
+  --color-border: #ddd3c1;
+  --color-pin: #221d17;
+  --color-on-pin: #fbf8f2;
+  --color-axis: #3b342c;
+  --color-grid: #221d1712;
+  --color-scrim: #2a211426;
+  --era-red: #b5543a;
+  --era-orange: #c3772f;
+  --era-gold: #b08a2a;
+  --era-green: #6c7a35;
+  --era-teal: #467769;
+  --era-blue: #4d6884;
+  --era-violet: #7a5670;
+  --era-rose: #a85b5b;
+  --era-tint: 0.055;
+  --era-strip: 0.26;
+  --era-edge: 0.5;
+  --grain-opacity: 0.32;
+  --grain-blend: multiply;
+  --shadow-1: 0 1px 0 #6a4f2c14, 0 1px 3px #6a4f2c1f;
+  --shadow-2: 0 2px 4px #5a3f1a12, 0 12px 32px #5a3f1a29, 0 0 0 1px #5a3f1a12;
+}
+
+:root[data-theme="dark"] {
+  --scheme: dark;
+  --color-bg: #101114;
+  --color-surface: #18191e;
+  --color-surface-2: #212228;
+  --color-text: #ebe4d7;
+  --color-muted: #9d968a;
+  --color-accent: #d3b06f;
+  --color-on-accent: #1a140a;
+  --color-danger: #e0705f;
+  --color-ok: #7dbb8f;
+  --color-border: #2f3038;
+  --color-pin: #ebe4d7;
+  --color-on-pin: #15161a;
+  --color-axis: #cfc7b8;
+  --color-grid: #ebe4d70f;
+  --color-scrim: #00000073;
+  --era-red: #a8394c;
+  --era-orange: #c0773c;
+  --era-gold: #c3a04a;
+  --era-green: #2f8e6f;
+  --era-teal: #2b8a92;
+  --era-blue: #4a6db5;
+  --era-violet: #8459b0;
+  --era-rose: #b5557c;
+  --era-tint: 0.085;
+  --era-strip: 0.36;
+  --era-edge: 0.55;
+  --grain-opacity: 0.35;
+  --grain-blend: screen;
+  --grain-invert: 1;
+  --shadow-1: 0 1px 0 #ffffff0a inset, 0 1px 3px #00000066;
+  --shadow-2: 0 0 0 1px #ffffff12, 0 16px 40px #000000a6, 0 2px 6px #00000080;
+}

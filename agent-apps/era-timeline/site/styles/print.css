@@ -1,0 +1,49 @@
+/* On paper the page is the strip alone: the whole timeline at one fixed scale, the title at its left. The page size
+   is set to the strip's size when the strip is drawn. */
+
+@media print {
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: var(--color-bg);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .app {
+    position: static;
+    display: block;
+    padding: 0;
+  }
+
+  .app > * {
+    display: none !important;
+  }
+
+  .app > .printview,
+  .app > .printview[hidden] {
+    display: block !important;
+    position: static;
+  }
+
+  .printview-bar {
+    display: none !important;
+  }
+
+  .printview-scroll {
+    overflow: visible;
+    padding: 0;
+  }
+
+  .strip {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .camera-driver,
+  .code-config-toast {
+    display: none !important;
+  }
+}

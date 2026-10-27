@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <rect width="600" height="400" fill="#e3e3da"/>
+  <rect width="600" height="250" fill="#d9dcd6"/>
+  <path d="M250 222 L392 84 L428 112 L452 104 L560 222Z" fill="#c7cbc6" stroke="#2a241d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M392 84 L428 112 L452 104 L478 130 L452 124 L432 140 L412 120 L384 134 L366 112Z" fill="#f4f2ea" stroke="#2a241d" stroke-width="2.5" stroke-linejoin="round"/>
+  <g fill="#5a6a6a" stroke="#2a241d" stroke-width="3">
+    <path d="M40 250 v-60 h30 v60Z M76 250 v-90 h26 v90Z M108 250 v-50 h34 v50Z M182 250 v-74 h28 v74Z M216 250 v-104 h22 v104Z M244 250 v-62 h30 v62Z M470 250 v-44 h40 v44Z M520 250 v-70 h28 v70Z"/>
+  </g>
+  <g stroke="#2a241d" stroke-width="3" fill="#f2ead8">
+    <path d="M156 250 L152 140 M164 140 L160 250" fill="none"/>
+    <path d="M132 136 h56 l-8 -12 h-40Z"/>
+    <path d="M144 124 l16 -20 l16 20Z"/>
+    <path d="M160 104 v-26"/>
+  </g>
+  <path d="M0 250 H600 V400 H0Z" fill="#46636e"/>
+  <path d="M0 250 H600" stroke="#2a241d" stroke-width="3"/>
+  <g stroke="#e3e3da" stroke-width="2.5" fill="none" opacity="0.55" stroke-linecap="round">
+    <path d="M30 276 h50 M150 284 h40 M380 272 h60 M500 286 h50 M60 340 h70 M260 356 h50 M450 344 h70 M120 384 h60"/>
+  </g>
+  <g stroke="#2a241d" stroke-width="3" stroke-linejoin="round">
+    <path d="M232 300 H420 L400 330 H250Z" fill="#f2ead8"/>
+    <path d="M256 300 v-18 H392 v18" fill="#f2ead8"/>
+    <path d="M282 282 v-14 h84 v14" fill="#3e5776"/>
+    <path d="M318 268 v-14 h12 v14" fill="#2a241d"/>
+    <path d="M232 300 H420" stroke-width="4"/>
+  </g>
+  <g fill="#3e5776"><rect x="268" y="288" width="10" height="7"/><rect x="286" y="288" width="10" height="7"/><rect x="304" y="288" width="10" height="7"/><rect x="334" y="288" width="10" height="7"/><rect x="352" y="288" width="10" height="7"/><rect x="370" y="288" width="10" height="7"/></g>
+  <path d="M420 316 q24 4 48 0 q24 -4 48 0" stroke="#e3e3da" stroke-width="2.5" fill="none" opacity="0.7"/>
+  <path d="M90 120 q8 -8 16 0 q8 -8 16 0 M480 60 q8 -8 16 0 q8 -8 16 0" stroke="#2a241d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>
