@@ -1,0 +1,52 @@
+/* Market: chalk white paper, graphite type, cuisine edges in a ten-color set. Tokens only. */
+:root {
+  color-scheme: light;
+  --color-bg: #f2f3ee;
+  --color-surface: #ffffff;
+  --color-surface-2: #e7e9e2;
+  --color-text: #23262a;
+  --color-muted: #5c6168;
+  --color-accent: #1d5a45;
+  --color-on-accent: #f4f5f0;
+  --color-danger: #b0372b;
+  --color-ok: #2c7a4c;
+  --color-border: #d6d9cf;
+
+  --edge-1: #c63b2b;
+  --edge-2: #d9701c;
+  --edge-3: #b8900a;
+  --edge-4: #6f8a1a;
+  --edge-5: #2e8a4b;
+  --edge-6: #13808c;
+  --edge-7: #2f5fb8;
+  --edge-8: #6d4bb0;
+  --edge-9: #b03f86;
+  --edge-10: #8a5a33;
+
+  --tile-bg: var(--color-surface);
+  --tile-wash: 6%;
+  --tile-edge: 6px;
+  --tile-border: transparent;
+  --tile-empty-border: #b9bdb2;
+  --arc-track: #e3e5de;
+  --check-ink: #f4f5f0;
+  --strike: #23262a;
+  --scrim: rgb(35 38 42 / 0.32);
+
+  --display-axes: "SOFT" 100, "WONK" 0;
+  --display-weight: 620;
+  --meal-style: normal;
+  --meal-weight: 580;
+  --meal-axes: "SOFT" 100, "WONK" 0;
+
+  --shadow-1: 0 1px 1px rgb(35 38 42 / 0.05), 0 2px 6px rgb(35 38 42 / 0.05);
+  --shadow-2: 0 2px 4px rgb(35 38 42 / 0.06), 0 12px 32px rgb(35 38 42 / 0.12);
+}
+@media print {
+  :root {
+    --color-bg: #ffffff;
+    --color-surface: #ffffff;
+    --tile-wash: 9%;
+    --shadow-1: none;
+  }
+}

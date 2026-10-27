@@ -1,0 +1,48 @@
+/* Print: the week on one landscape page with its name in the display serif, then the list on a second page
+   in two columns with checkbox squares. The paper size follows the printer's setting, Letter or A4. */
+.print-only { display: none; }
+@media print {
+  @page week-page { size: landscape; margin: 10mm; }
+  @page list-page { size: portrait; margin: 11mm 13mm 10mm; }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  html, body { background: var(--color-bg); }
+  .app, .meal-sheet { display: none !important; }
+  .print-only { display: block; }
+
+  .page { break-inside: avoid; }
+  .page-week { page: week-page; height: 188mm; display: flex; flex-direction: column; }
+  .page-list { page: list-page; break-before: page; }
+  .page-list .pg-head { margin-bottom: 3mm; }
+  .page-list .pg-head h1 { font-size: 24pt; }
+  .pg-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8mm; padding-bottom: 4mm; margin-bottom: 4mm; border-bottom: 0.4mm solid var(--color-text); }
+  .pg-head h1 {
+    font-family: var(--font-display); font-weight: var(--display-weight); font-variation-settings: var(--display-axes), "opsz" 144;
+    font-size: 30pt; line-height: 1;
+  }
+  .pg-head p { font-size: 10pt; color: var(--color-muted); }
+
+  .pg-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 7mm repeat(7, minmax(0, 1fr)); gap: 2.5mm; }
+  .pg-slots, .pg-day { display: grid; grid-template-rows: 9mm repeat(3, minmax(0, 1fr)); gap: 2.5mm; min-height: 0; }
+  .pg-slot { writing-mode: vertical-rl; transform: rotate(180deg); align-self: center; justify-self: center; font-family: var(--font-display); font-style: italic; font-size: 10pt; color: var(--color-muted); }
+  .pg-day-head { display: flex; align-items: baseline; justify-content: space-between; font-size: 8.5pt; color: var(--color-muted); border-bottom: 0.25mm solid var(--color-border); }
+  .pg-day-head b { font-size: 9.5pt; color: var(--color-text); font-weight: 650; }
+  .pg-tile {
+    position: relative; display: flex; flex-direction: column; gap: 1.5mm; padding: 3mm 2.5mm 2.5mm 4mm; min-height: 0; overflow: hidden;
+    border-radius: 1.5mm; background: color-mix(in oklab, var(--edge) var(--tile-wash), var(--color-surface)); border: 0.25mm solid var(--color-border);
+  }
+  .pg-tile::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 1.5mm; background: var(--edge); }
+  .pg-name { font-family: var(--font-display); font-style: var(--meal-style); font-weight: var(--meal-weight); font-variation-settings: var(--meal-axes), "opsz" 18; font-size: 10.5pt; line-height: 1.15; }
+  .pg-cuisine { margin-top: auto; font-size: 7.5pt; font-weight: 600; color: color-mix(in oklab, var(--edge) 70%, var(--color-text)); padding-right: 9mm; }
+  .pg-tile .arc-sm { top: auto; right: 2mm; bottom: 2mm; width: 8mm; height: 8mm; }
+  .pg-tile .arc-num { font-size: 6.5pt; }
+  .pg-empty { align-items: center; justify-content: center; background: transparent; border: 0.35mm dashed var(--tile-empty-border); font-family: var(--font-display); font-style: italic; font-size: 10pt; color: var(--color-muted); }
+  .pg-empty::before { display: none; }
+
+  .pg-cols { columns: 2; column-gap: 10mm; }
+  .pg-aisle { margin-bottom: 3.5mm; }
+  .pg-aisle h3 { font-family: var(--font-display); font-weight: var(--display-weight); font-variation-settings: var(--display-axes), "opsz" 36; font-size: 11.5pt; padding-bottom: 1mm; border-bottom: 0.3mm solid var(--color-text); margin-bottom: 0.5mm; break-after: avoid; }
+  .pg-aisle li { display: grid; grid-template-columns: 4mm minmax(0, 1fr) auto; gap: 2.5mm; align-items: center; padding: 0.75mm 0; border-bottom: 0.2mm solid var(--color-border); font-size: 8.5pt; line-height: 1.25; break-inside: avoid; }
+  .pg-box { width: 3.2mm; height: 3.2mm; border: 0.3mm solid var(--color-text); border-radius: 0.6mm; }
+  .pg-qty { color: var(--color-muted); font-variant-numeric: tabular-nums; }
+  .pg-pantry { margin-top: 2mm; font-size: 9pt; color: var(--color-muted); }
+}

@@ -1,0 +1,157 @@
+/* The week: a seven-by-three board of meal tiles. Each tile carries its cuisine's edge, its prep-time arc,
+   and generous room on an 8-pt grid. */
+[data-edge="1"] { --edge: var(--edge-1); }
+[data-edge="2"] { --edge: var(--edge-2); }
+[data-edge="3"] { --edge: var(--edge-3); }
+[data-edge="4"] { --edge: var(--edge-4); }
+[data-edge="5"] { --edge: var(--edge-5); }
+[data-edge="6"] { --edge: var(--edge-6); }
+[data-edge="7"] { --edge: var(--edge-7); }
+[data-edge="8"] { --edge: var(--edge-8); }
+[data-edge="9"] { --edge: var(--edge-9); }
+[data-edge="10"] { --edge: var(--edge-10); }
+[data-edge="0"] { --edge: var(--color-muted); }
+
+.days-strip { display: none; }
+.week-viewport { flex: 1; min-height: 0; display: grid; overflow: hidden; }
+.week-track {
+  grid-area: 1 / 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 20px repeat(7, minmax(0, 1fr));
+  grid-template-rows: auto repeat(var(--rows, 3), minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.slot-labels, .day { grid-row: 1 / -1; display: grid; grid-template-rows: subgrid; min-width: 0; min-height: 0; }
+.slot-label {
+  writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; align-self: center;
+  font-family: var(--font-display); font-style: italic; font-variation-settings: var(--meal-axes);
+  font-size: var(--text-md); color: var(--color-muted);
+}
+.day-head { display: flex; align-items: baseline; gap: var(--space-2); padding: 0 var(--space-1) var(--space-1); }
+.day-name { font-size: var(--text-sm); font-weight: 600; color: var(--color-muted); }
+.day-date { font-family: var(--font-display); font-size: var(--text-2xl); font-variation-settings: var(--display-axes), "opsz" 48; font-weight: var(--display-weight); line-height: 1; font-variant-numeric: tabular-nums; }
+.is-today .day-name { color: var(--color-accent); }
+
+.tile {
+  position: relative;
+  min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-4) var(--space-3) var(--space-4) calc(var(--tile-edge) + var(--space-3));
+  text-align: left;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--tile-border);
+  background: color-mix(in oklab, var(--edge, var(--tile-bg)) var(--tile-wash), var(--tile-bg));
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  transition: transform var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out);
+}
+.tile::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--tile-edge); background: var(--edge); }
+.tile:active { transform: scale(0.985); }
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+}
+.tile-kicker { flex: none; display: flex; gap: var(--space-1); min-width: 0; font-size: var(--text-xs); font-weight: 650; line-height: 16px; }
+.tile-slot { display: none; color: var(--color-muted); font-weight: 560; }
+.tile-cuisine {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: color-mix(in oklab, var(--edge) 70%, var(--color-text));
+}
+.tile-name {
+  flex: none;
+  font-family: var(--font-display);
+  font-style: var(--meal-style);
+  font-weight: var(--meal-weight);
+  font-variation-settings: var(--meal-axes), "opsz" 48;
+  font-size: var(--fit, 0.90625rem);
+  line-height: 1.2;
+  text-wrap: balance;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+/* A name too long for two lines even at the smallest size takes a third line rather than lose its end. */
+.tile-name.is-long { -webkit-line-clamp: 3; line-clamp: 3; }
+/* A long name wraps; rows that do not fit are hidden whole and counted in the "+N more" line (app.js). */
+.tile-ings {
+  flex: 1 1 0; min-height: 0; margin-bottom: var(--space-6);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ing {
+  flex: none; display: flex; gap: var(--space-2); min-width: 0;
+  font-size: var(--text-xs); line-height: 16px; padding-block: 1px; color: var(--color-muted);
+}
+.ing[hidden] { display: none; }
+.ing-a { display: none; flex: none; color: var(--color-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ing-n { min-width: 0; overflow-wrap: anywhere; }
+.ing-more { flex: none; font-size: var(--text-xs); line-height: 18px; font-style: italic; color: var(--color-muted); }
+
+.arc { position: absolute; display: grid; place-items: center; }
+.arc svg { grid-area: 1 / 1; width: 100%; height: 100%; }
+.arc-sm { right: var(--space-3); bottom: var(--space-3); width: 32px; height: 32px; }
+.arc-lg { position: relative; width: 64px; height: 64px; flex: none; }
+.arc-track { fill: none; stroke: var(--arc-track); stroke-width: 3.5; }
+.arc-fill { fill: none; stroke: var(--edge); stroke-width: 3.5; stroke-linecap: round; }
+.arc-num { grid-area: 1 / 1; font-size: var(--text-xs); font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1; }
+.arc-lg .arc-num { font-size: var(--text-md); }
+
+.tile-empty {
+  align-items: center; justify-content: center; text-align: center;
+  background: transparent; box-shadow: none; padding: var(--space-3);
+  border: 1.5px dashed var(--tile-empty-border);
+}
+.tile-empty::before { display: none; }
+.tile-empty .tile-slot { display: none; }
+.empty-word { font-family: var(--font-display); font-style: italic; font-size: var(--text-xl); color: var(--color-muted); font-variation-settings: var(--meal-axes); }
+
+/* The opening: the board deals in day by day and each arc draws to its minutes. */
+@keyframes tile-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+@keyframes arc-draw { from { stroke-dashoffset: var(--arc); } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+.opening .day { --d: calc(var(--i, 0) * 70ms); }
+.opening .tile { animation: tile-in 560ms var(--ease-out) both; animation-delay: calc(var(--d) + var(--r, 0ms)); }
+.opening .day > .tile:nth-of-type(2) { --r: 50ms; }
+.opening .day > .tile:nth-of-type(3) { --r: 100ms; }
+.opening .day > .tile:nth-of-type(4) { --r: 150ms; }
+.opening .tile .arc-fill { animation: arc-draw 760ms var(--ease-out) both; animation-delay: calc(var(--d) + var(--r, 0ms) + 220ms); }
+.opening .day-head, .opening .slot-label { animation: rise 420ms var(--ease-out) both; animation-delay: var(--d, 0ms); }
+
+@media (max-width: 899px) {
+  .days-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--space-1); margin-bottom: var(--space-3); }
+  .strip-day {
+    display: grid; justify-items: center; gap: 0; padding: var(--space-1) 0; height: 48px; border-radius: var(--radius-md);
+    font-size: var(--text-xs); color: var(--color-muted);
+    transition: background-color var(--motion-fast) ease, color var(--motion-fast) ease;
+  }
+  .strip-day b { font-size: var(--text-md); font-weight: 600; color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .strip-day.is-active { background: var(--color-text); color: var(--color-bg); }
+  .strip-day.is-active b { color: var(--color-bg); }
+
+  .week-track {
+    display: flex; gap: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain; scrollbar-width: none;
+  }
+  .week-track::-webkit-scrollbar { display: none; }
+  .slot-labels { display: none; }
+  .day {
+    flex: 0 0 100%; display: flex; flex-direction: column; gap: var(--space-3);
+    scroll-snap-align: start; scroll-snap-stop: always; padding: 0 1px;
+    overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none;
+  }
+  .day-head { display: none; }
+  .tile { flex: 1 0 auto; gap: var(--space-2); padding: var(--space-4) var(--space-4) var(--space-4) calc(var(--tile-edge) + var(--space-4)); }
+  .tile-kicker { font-size: var(--text-sm); line-height: 20px; padding-right: 56px; }
+  .tile-slot { display: inline; }
+  .tile-slot::after { content: " ·"; }
+  .tile-name { font-size: 1.5rem; line-height: 1.15; letter-spacing: 0; padding-right: 56px; }
+  .tile-ings {
+    flex: 1 0 auto; margin: var(--space-1) 0 0;
+    display: grid; grid-template-columns: auto auto; column-gap: var(--space-5); align-content: start;
+  }
+  .ing { font-size: var(--text-sm); line-height: 20px; padding-block: 1px; }
+  .ing-a { display: inline; }
+  .arc-sm { width: 44px; height: 44px; top: var(--space-4); right: var(--space-4); bottom: auto; }
+  .arc-sm .arc-num { font-size: var(--text-sm); }
+  .tile-empty .tile-slot { display: none; }
+  .empty-word { font-size: var(--text-2xl); }
+  .opening .tile { animation-delay: var(--r, 0ms); }
+  .opening .tile .arc-fill { animation-delay: calc(var(--r, 0ms) + 220ms); }
+}

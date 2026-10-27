@@ -1,0 +1,68 @@
+/* Bistro: a slate board, bone type, cuisine edges at full chroma, meal names in italic. Tokens only. */
+:root {
+  color-scheme: dark;
+  --color-bg: #161d24;
+  --color-surface: #1f2830;
+  --color-surface-2: #29333d;
+  --color-text: #ede6d6;
+  --color-muted: #a8a395;
+  --color-accent: #e8c068;
+  --color-on-accent: #161d24;
+  --color-danger: #ff6a55;
+  --color-ok: #7bd88f;
+  --color-border: #34414c;
+
+  --edge-1: #ff5236;
+  --edge-2: #ff8a3d;
+  --edge-3: #ffcc33;
+  --edge-4: #b8e04a;
+  --edge-5: #43d17a;
+  --edge-6: #19c7dc;
+  --edge-7: #5b8cff;
+  --edge-8: #a874ff;
+  --edge-9: #ff5fae;
+  --edge-10: #c9a27a;
+
+  --tile-bg: var(--color-surface);
+  --tile-wash: 0%;
+  --tile-edge: 4px;
+  --tile-border: #2c3742;
+  --tile-empty-border: #4a5864;
+  --arc-track: #34414c;
+  --check-ink: #161d24;
+  --strike: #ede6d6;
+  --scrim: rgb(8 12 16 / 0.6);
+
+  --display-axes: "SOFT" 0, "WONK" 1;
+  --display-weight: 480;
+  --meal-style: italic;
+  --meal-weight: 460;
+  --meal-axes: "SOFT" 0, "WONK" 1;
+
+  --shadow-1: none;
+  --shadow-2: 0 16px 48px rgb(0 0 0 / 0.5);
+}
+@media print {
+  :root {
+    color-scheme: light;
+    --color-bg: #f7f3ea;
+    --color-surface: #f7f3ea;
+    --color-surface-2: #ece6d8;
+    --color-text: #161d24;
+    --color-muted: #555a5c;
+    --color-border: #cfc8b8;
+    --tile-border: #cfc8b8;
+    --arc-track: #ddd6c6;
+    --strike: #161d24;
+    --edge-1: #d93a22;
+    --edge-2: #d9661d;
+    --edge-3: #b88f00;
+    --edge-4: #6f8f1a;
+    --edge-5: #1f9a52;
+    --edge-6: #0e93a6;
+    --edge-7: #2f5fd0;
+    --edge-8: #7a4bd0;
+    --edge-9: #c23d86;
+    --edge-10: #8a6440;
+  }
+}

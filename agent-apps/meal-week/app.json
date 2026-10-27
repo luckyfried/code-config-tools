@@ -1,0 +1,17 @@
+{
+  "id": "01a162ca-d247-720d-b264-88a812b83572",
+  "version": "2026-10-21",
+  "name": "Meal Week",
+  "shortDescription": "A week of meals on one grid and the grocery list it needs, ready to print.",
+  "description": "Meal Week puts a whole week of meals on one board: breakfast, lunch, and dinner for seven days, each a tile with its cuisine's color down the left edge, a small arc that fills with the minutes it takes to make, and room to breathe, so the week reads like a menu board. Tap a tile to see the meal's ingredients and amounts. An open slot is a dashed tile that names the meal still to plan.\n\nBeside the week sits the grocery list it needs: every ingredient merged by name, amounts in the same unit added up, grouped in your store's aisle order, and the staples already in your kitchen left off. Shop mode turns the list into big checkboxes; each check draws its stroke, strikes the line, and the aisle's count ticks down. What is in the cart stays checked when you change screens or reload.\n\nStep back to an earlier week and the board slides sideways to it. Print gives you two pages: the week in landscape with its name in a serif, then the list in two columns with boxes to tick by pen. On a phone the week shows one day per screen with a day strip on top; on a computer the week and the list sit side by side. Your agent plans the week from what you tell it, then builds the page.",
+  "category": "food-drink",
+  "subcategory": "Meal planning",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/meal-week",
+  "setup": "Ask the person, in one message: How many people am I cooking for? Anything to avoid? A few meals you love, so I can build the week around them? What's already in the pantry?\n\nThen copy inputs.example.json from the app folder to meal-week.inputs.json in the project folder and write the week: weekOf (the Monday, YYYY-MM-DD), people, slots, days (mon to sun, each meal with name, cuisine, minutes, and ingredients of amount, unit, name, and aisle), aisles in the store's order, pantry, and theme (market, bistro, or auto). name and otherWeeks are optional. Delete the _notes object if you like; it only explains the keys.\n\nRun python3 <app folder>/scripts/run.py from the project folder. It writes out/meal-week/, which any static file server can host."
+}

@@ -1,0 +1,1403 @@
+{
+  "_notes": {
+    "weekOf": "The Monday the week starts on, written YYYY-MM-DD.",
+    "name": "Optional. The week's title at the top of the page and the printed menu; leave it out for \"Week of October 26\".",
+    "people": "How many people the amounts are for. The page says it beside the dates.",
+    "slots": "The meals of each day, in order. Each day's meals use these names as keys.",
+    "days": "Seven days, mon to sun. meals maps a slot to { name, cuisine, minutes, ingredients }; a slot left out shows as an open tile.",
+    "ingredients": "Each { amount, unit, name, aisle }. unit is \"\" for a count (2 limes). The same name and unit add up on the list; another unit gets its own line under the same name.",
+    "aisles": "The grocery list's sections, in the order you walk the store. Every ingredient's aisle is one of these.",
+    "pantry": "Ingredient names that never go on the list, because they are always in the kitchen.",
+    "otherWeeks": "Optional. Weeks the week picker also shows, each { weekOf, name, days }, with the same slots, aisles, and pantry.",
+    "theme": "market (chalk white), bistro (slate), or auto (market by day, bistro when the device is in dark mode)."
+  },
+  "weekOf": "2026-10-26",
+  "people": 4,
+  "slots": [
+    "breakfast",
+    "lunch",
+    "dinner"
+  ],
+  "days": [
+    {
+      "day": "mon",
+      "meals": {
+        "breakfast": {
+          "name": "Overnight oats with berries",
+          "cuisine": "American",
+          "minutes": 10,
+          "ingredients": [
+            {
+              "amount": 2,
+              "unit": "cup",
+              "name": "Rolled oats",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 500,
+              "unit": "ml",
+              "name": "Milk",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 250,
+              "unit": "g",
+              "name": "Blueberries",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "tbsp",
+              "name": "Honey",
+              "aisle": "Pantry"
+            }
+          ]
+        },
+        "lunch": {
+          "name": "Chickpea and feta salad",
+          "cuisine": "Mediterranean",
+          "minutes": 15,
+          "ingredients": [
+            {
+              "amount": 2,
+              "unit": "can",
+              "name": "Chickpeas",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Cucumber",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 300,
+              "unit": "g",
+              "name": "Cherry tomatoes",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 200,
+              "unit": "g",
+              "name": "Feta",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Red onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Lemon",
+              "aisle": "Produce"
+            }
+          ]
+        },
+        "dinner": {
+          "name": "Chicken tikka masala",
+          "cuisine": "Indian",
+          "minutes": 45,
+          "ingredients": [
+            {
+              "amount": 800,
+              "unit": "g",
+              "name": "Chicken thighs",
+              "aisle": "Meat and fish"
+            },
+            {
+              "amount": 250,
+              "unit": "g",
+              "name": "Greek yogurt",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 1,
+              "unit": "can",
+              "name": "Crushed tomatoes",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Yellow onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 4,
+              "unit": "clove",
+              "name": "Garlic",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "tbsp",
+              "name": "Garam masala",
+              "aisle": "Spices"
+            },
+            {
+              "amount": 2,
+              "unit": "cup",
+              "name": "Basmati rice",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Cilantro",
+              "aisle": "Produce"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "day": "tue",
+      "meals": {
+        "breakfast": {
+          "name": "Greek yogurt and granola",
+          "cuisine": "Mediterranean",
+          "minutes": 5,
+          "ingredients": [
+            {
+              "amount": 500,
+              "unit": "g",
+              "name": "Greek yogurt",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 300,
+              "unit": "g",
+              "name": "Granola",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 2,
+              "unit": "tbsp",
+              "name": "Honey",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 125,
+              "unit": "g",
+              "name": "Blueberries",
+              "aisle": "Produce"
+            }
+          ]
+        },
+        "lunch": {
+          "name": "Tikka wraps",
+          "cuisine": "Indian",
+          "minutes": 10,
+          "ingredients": [
+            {
+              "amount": 8,
+              "unit": "",
+              "name": "Flour tortillas",
+              "aisle": "Bakery"
+            },
+            {
+              "amount": 100,
+              "unit": "g",
+              "name": "Baby spinach",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 150,
+              "unit": "g",
+              "name": "Greek yogurt",
+              "aisle": "Dairy and eggs"
+            }
+          ]
+        },
+        "dinner": {
+          "name": "Miso salmon with bok choy",
+          "cuisine": "Japanese",
+          "minutes": 25,
+          "ingredients": [
+            {
+              "amount": 4,
+              "unit": "",
+              "name": "Salmon fillets",
+              "aisle": "Meat and fish"
+            },
+            {
+              "amount": 3,
+              "unit": "tbsp",
+              "name": "White miso",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 4,
+              "unit": "",
+              "name": "Baby bok choy",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "cup",
+              "name": "Jasmine rice",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Scallions",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "tbsp",
+              "name": "Sesame seeds",
+              "aisle": "Spices"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "day": "wed",
+      "meals": {
+        "breakfast": {
+          "name": "Overnight oats with berries",
+          "cuisine": "American",
+          "minutes": 10,
+          "ingredients": [
+            {
+              "amount": 2,
+              "unit": "cup",
+              "name": "Rolled oats",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 500,
+              "unit": "ml",
+              "name": "Milk",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 250,
+              "unit": "g",
+              "name": "Blueberries",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "tbsp",
+              "name": "Honey",
+              "aisle": "Pantry"
+            }
+          ]
+        },
+        "lunch": {
+          "name": "Tomato soup and grilled cheese",
+          "cuisine": "American",
+          "minutes": 25,
+          "ingredients": [
+            {
+              "amount": 2,
+              "unit": "can",
+              "name": "Crushed tomatoes",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Yellow onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Sourdough loaf",
+              "aisle": "Bakery"
+            },
+            {
+              "amount": 200,
+              "unit": "g",
+              "name": "Sharp cheddar",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 50,
+              "unit": "g",
+              "name": "Butter",
+              "aisle": "Dairy and eggs"
+            }
+          ]
+        },
+        "dinner": {
+          "name": "Pasta e fagioli",
+          "cuisine": "Italian",
+          "minutes": 40,
+          "ingredients": [
+            {
+              "amount": 400,
+              "unit": "g",
+              "name": "Ditalini",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 2,
+              "unit": "can",
+              "name": "Cannellini beans",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Carrots",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "stalk",
+              "name": "Celery",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Yellow onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 3,
+              "unit": "clove",
+              "name": "Garlic",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 80,
+              "unit": "g",
+              "name": "Parmesan",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Rosemary",
+              "aisle": "Produce"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "day": "thu",
+      "meals": {
+        "breakfast": {
+          "name": "Spinach and feta omelets",
+          "cuisine": "Mediterranean",
+          "minutes": 15,
+          "ingredients": [
+            {
+              "amount": 8,
+              "unit": "",
+              "name": "Eggs",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 100,
+              "unit": "g",
+              "name": "Baby spinach",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 100,
+              "unit": "g",
+              "name": "Feta",
+              "aisle": "Dairy and eggs"
+            }
+          ]
+        },
+        "lunch": {
+          "name": "Pasta e fagioli, second bowl",
+          "cuisine": "Italian",
+          "minutes": 5,
+          "ingredients": []
+        },
+        "dinner": {
+          "name": "Beef tacos with lime crema",
+          "cuisine": "Mexican",
+          "minutes": 30,
+          "ingredients": [
+            {
+              "amount": 700,
+              "unit": "g",
+              "name": "Ground beef",
+              "aisle": "Meat and fish"
+            },
+            {
+              "amount": 12,
+              "unit": "",
+              "name": "Corn tortillas",
+              "aisle": "Bakery"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Limes",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Avocados",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Red onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Cilantro",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "tbsp",
+              "name": "Ground cumin",
+              "aisle": "Spices"
+            },
+            {
+              "amount": 200,
+              "unit": "g",
+              "name": "Sour cream",
+              "aisle": "Dairy and eggs"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "day": "fri",
+      "meals": {
+        "breakfast": {
+          "name": "Banana pancakes",
+          "cuisine": "American",
+          "minutes": 20,
+          "ingredients": [
+            {
+              "amount": 3,
+              "unit": "",
+              "name": "Bananas",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Eggs",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 2,
+              "unit": "cup",
+              "name": "Flour",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 400,
+              "unit": "ml",
+              "name": "Milk",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 120,
+              "unit": "ml",
+              "name": "Maple syrup",
+              "aisle": "Pantry"
+            }
+          ]
+        },
+        "lunch": {
+          "name": "Burrito bowls",
+          "cuisine": "Mexican",
+          "minutes": 20,
+          "ingredients": [
+            {
+              "amount": 1,
+              "unit": "can",
+              "name": "Black beans",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "cup",
+              "name": "Jasmine rice",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Avocados",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Limes",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "jar",
+              "name": "Salsa",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 250,
+              "unit": "g",
+              "name": "Frozen corn",
+              "aisle": "Frozen"
+            }
+          ]
+        },
+        "dinner": {
+          "name": "Margherita pizza night",
+          "cuisine": "Italian",
+          "minutes": 35,
+          "ingredients": [
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Pizza dough",
+              "aisle": "Bakery"
+            },
+            {
+              "amount": 250,
+              "unit": "g",
+              "name": "Fresh mozzarella",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 1,
+              "unit": "can",
+              "name": "Crushed tomatoes",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Basil",
+              "aisle": "Produce"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "day": "sat",
+      "meals": {
+        "breakfast": {
+          "name": "Shakshuka with sourdough",
+          "cuisine": "Middle Eastern",
+          "minutes": 30,
+          "ingredients": [
+            {
+              "amount": 6,
+              "unit": "",
+              "name": "Eggs",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 1,
+              "unit": "can",
+              "name": "Crushed tomatoes",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Red bell peppers",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Yellow onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 3,
+              "unit": "clove",
+              "name": "Garlic",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "tsp",
+              "name": "Ground cumin",
+              "aisle": "Spices"
+            },
+            {
+              "amount": 2,
+              "unit": "tsp",
+              "name": "Smoked paprika",
+              "aisle": "Spices"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Sourdough loaf",
+              "aisle": "Bakery"
+            }
+          ]
+        },
+        "dinner": {
+          "name": "Thai green curry",
+          "cuisine": "Thai",
+          "minutes": 35,
+          "ingredients": [
+            {
+              "amount": 600,
+              "unit": "g",
+              "name": "Chicken thighs",
+              "aisle": "Meat and fish"
+            },
+            {
+              "amount": 2,
+              "unit": "can",
+              "name": "Coconut milk",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 3,
+              "unit": "tbsp",
+              "name": "Green curry paste",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 300,
+              "unit": "g",
+              "name": "Green beans",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "cup",
+              "name": "Jasmine rice",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Thai basil",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Limes",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 300,
+              "unit": "g",
+              "name": "Frozen peas",
+              "aisle": "Frozen"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "day": "sun",
+      "meals": {
+        "breakfast": {
+          "name": "Bagels and lox",
+          "cuisine": "American",
+          "minutes": 10,
+          "ingredients": [
+            {
+              "amount": 6,
+              "unit": "",
+              "name": "Bagels",
+              "aisle": "Bakery"
+            },
+            {
+              "amount": 225,
+              "unit": "g",
+              "name": "Cream cheese",
+              "aisle": "Dairy and eggs"
+            },
+            {
+              "amount": 200,
+              "unit": "g",
+              "name": "Smoked salmon",
+              "aisle": "Meat and fish"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Red onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 2,
+              "unit": "tbsp",
+              "name": "Capers",
+              "aisle": "Pantry"
+            }
+          ]
+        },
+        "lunch": {
+          "name": "Roast vegetable grain bowls",
+          "cuisine": "Mediterranean",
+          "minutes": 40,
+          "ingredients": [
+            {
+              "amount": 300,
+              "unit": "g",
+              "name": "Farro",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 2,
+              "unit": "",
+              "name": "Sweet potatoes",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Red onion",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "can",
+              "name": "Chickpeas",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 3,
+              "unit": "tbsp",
+              "name": "Tahini",
+              "aisle": "Pantry"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Lemon",
+              "aisle": "Produce"
+            }
+          ]
+        },
+        "dinner": {
+          "name": "Roast chicken and potatoes",
+          "cuisine": "French",
+          "minutes": 80,
+          "ingredients": [
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Whole chicken",
+              "aisle": "Meat and fish"
+            },
+            {
+              "amount": 1200,
+              "unit": "g",
+              "name": "Yukon Gold potatoes",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "",
+              "name": "Lemon",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "bunch",
+              "name": "Thyme",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 1,
+              "unit": "head",
+              "name": "Garlic",
+              "aisle": "Produce"
+            },
+            {
+              "amount": 4,
+              "unit": "",
+              "name": "Carrots",
+              "aisle": "Produce"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "aisles": [
+    "Produce",
+    "Bakery",
+    "Dairy and eggs",
+    "Meat and fish",
+    "Pantry",
+    "Spices",
+    "Frozen"
+  ],
+  "pantry": [
+    "Salt",
+    "Black pepper",
+    "Olive oil",
+    "Water"
+  ],
+  "otherWeeks": [
+    {
+      "weekOf": "2026-10-19",
+      "days": [
+        {
+          "day": "mon",
+          "meals": {
+            "breakfast": {
+              "name": "Peanut butter toast and bananas",
+              "cuisine": "American",
+              "minutes": 5,
+              "ingredients": [
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Whole wheat loaf",
+                  "aisle": "Bakery"
+                },
+                {
+                  "amount": 1,
+                  "unit": "jar",
+                  "name": "Peanut butter",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 4,
+                  "unit": "",
+                  "name": "Bananas",
+                  "aisle": "Produce"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Turkey and avocado sandwiches",
+              "cuisine": "American",
+              "minutes": 10,
+              "ingredients": [
+                {
+                  "amount": 300,
+                  "unit": "g",
+                  "name": "Sliced turkey",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 2,
+                  "unit": "",
+                  "name": "Avocados",
+                  "aisle": "Produce"
+                }
+              ]
+            },
+            "dinner": {
+              "name": "Spaghetti and meatballs",
+              "cuisine": "Italian",
+              "minutes": 50,
+              "ingredients": [
+                {
+                  "amount": 500,
+                  "unit": "g",
+                  "name": "Spaghetti",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 600,
+                  "unit": "g",
+                  "name": "Ground beef",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 1,
+                  "unit": "jar",
+                  "name": "Marinara",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 60,
+                  "unit": "g",
+                  "name": "Parmesan",
+                  "aisle": "Dairy and eggs"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "day": "tue",
+          "meals": {
+            "breakfast": {
+              "name": "Yogurt with honey and walnuts",
+              "cuisine": "Mediterranean",
+              "minutes": 5,
+              "ingredients": [
+                {
+                  "amount": 500,
+                  "unit": "g",
+                  "name": "Greek yogurt",
+                  "aisle": "Dairy and eggs"
+                },
+                {
+                  "amount": 100,
+                  "unit": "g",
+                  "name": "Walnuts",
+                  "aisle": "Pantry"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Meatball subs",
+              "cuisine": "Italian",
+              "minutes": 15,
+              "ingredients": [
+                {
+                  "amount": 4,
+                  "unit": "",
+                  "name": "Sub rolls",
+                  "aisle": "Bakery"
+                },
+                {
+                  "amount": 150,
+                  "unit": "g",
+                  "name": "Provolone",
+                  "aisle": "Dairy and eggs"
+                }
+              ]
+            },
+            "dinner": {
+              "name": "Teriyaki chicken bowls",
+              "cuisine": "Japanese",
+              "minutes": 30,
+              "ingredients": [
+                {
+                  "amount": 700,
+                  "unit": "g",
+                  "name": "Chicken thighs",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 2,
+                  "unit": "cup",
+                  "name": "Jasmine rice",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Broccoli",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 120,
+                  "unit": "ml",
+                  "name": "Teriyaki sauce",
+                  "aisle": "Pantry"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "day": "wed",
+          "meals": {
+            "breakfast": {
+              "name": "Scrambled eggs on toast",
+              "cuisine": "American",
+              "minutes": 10,
+              "ingredients": [
+                {
+                  "amount": 8,
+                  "unit": "",
+                  "name": "Eggs",
+                  "aisle": "Dairy and eggs"
+                },
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Sourdough loaf",
+                  "aisle": "Bakery"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Lentil soup",
+              "cuisine": "Middle Eastern",
+              "minutes": 35,
+              "ingredients": [
+                {
+                  "amount": 300,
+                  "unit": "g",
+                  "name": "Red lentils",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 2,
+                  "unit": "",
+                  "name": "Carrots",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Yellow onion",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 1,
+                  "unit": "tsp",
+                  "name": "Ground cumin",
+                  "aisle": "Spices"
+                }
+              ]
+            },
+            "dinner": {
+              "name": "Sheet-pan sausage and peppers",
+              "cuisine": "Italian",
+              "minutes": 35,
+              "ingredients": [
+                {
+                  "amount": 6,
+                  "unit": "",
+                  "name": "Italian sausages",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 3,
+                  "unit": "",
+                  "name": "Bell peppers",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Red onion",
+                  "aisle": "Produce"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "day": "thu",
+          "meals": {
+            "breakfast": {
+              "name": "Overnight oats",
+              "cuisine": "American",
+              "minutes": 10,
+              "ingredients": [
+                {
+                  "amount": 2,
+                  "unit": "cup",
+                  "name": "Rolled oats",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 500,
+                  "unit": "ml",
+                  "name": "Milk",
+                  "aisle": "Dairy and eggs"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Lentil soup, second bowl",
+              "cuisine": "Middle Eastern",
+              "minutes": 5,
+              "ingredients": []
+            },
+            "dinner": {
+              "name": "Chicken fajitas",
+              "cuisine": "Mexican",
+              "minutes": 30,
+              "ingredients": [
+                {
+                  "amount": 600,
+                  "unit": "g",
+                  "name": "Chicken breasts",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 8,
+                  "unit": "",
+                  "name": "Flour tortillas",
+                  "aisle": "Bakery"
+                },
+                {
+                  "amount": 2,
+                  "unit": "",
+                  "name": "Bell peppers",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Limes",
+                  "aisle": "Produce"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "day": "fri",
+          "meals": {
+            "breakfast": {
+              "name": "Breakfast burritos",
+              "cuisine": "Mexican",
+              "minutes": 20,
+              "ingredients": [
+                {
+                  "amount": 6,
+                  "unit": "",
+                  "name": "Eggs",
+                  "aisle": "Dairy and eggs"
+                },
+                {
+                  "amount": 6,
+                  "unit": "",
+                  "name": "Flour tortillas",
+                  "aisle": "Bakery"
+                },
+                {
+                  "amount": 150,
+                  "unit": "g",
+                  "name": "Sharp cheddar",
+                  "aisle": "Dairy and eggs"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Caprese sandwiches",
+              "cuisine": "Italian",
+              "minutes": 10,
+              "ingredients": [
+                {
+                  "amount": 250,
+                  "unit": "g",
+                  "name": "Fresh mozzarella",
+                  "aisle": "Dairy and eggs"
+                },
+                {
+                  "amount": 3,
+                  "unit": "",
+                  "name": "Tomatoes",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 1,
+                  "unit": "bunch",
+                  "name": "Basil",
+                  "aisle": "Produce"
+                }
+              ]
+            },
+            "dinner": {
+              "name": "Pad see ew",
+              "cuisine": "Thai",
+              "minutes": 30,
+              "ingredients": [
+                {
+                  "amount": 400,
+                  "unit": "g",
+                  "name": "Wide rice noodles",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 1,
+                  "unit": "bunch",
+                  "name": "Chinese broccoli",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 3,
+                  "unit": "tbsp",
+                  "name": "Dark soy sauce",
+                  "aisle": "Pantry"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "day": "sat",
+          "meals": {
+            "breakfast": {
+              "name": "Blueberry waffles",
+              "cuisine": "American",
+              "minutes": 25,
+              "ingredients": [
+                {
+                  "amount": 2,
+                  "unit": "cup",
+                  "name": "Flour",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 250,
+                  "unit": "g",
+                  "name": "Blueberries",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 120,
+                  "unit": "ml",
+                  "name": "Maple syrup",
+                  "aisle": "Pantry"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Falafel pitas",
+              "cuisine": "Middle Eastern",
+              "minutes": 25,
+              "ingredients": [
+                {
+                  "amount": 1,
+                  "unit": "bag",
+                  "name": "Frozen falafel",
+                  "aisle": "Frozen"
+                },
+                {
+                  "amount": 6,
+                  "unit": "",
+                  "name": "Pita breads",
+                  "aisle": "Bakery"
+                },
+                {
+                  "amount": 1,
+                  "unit": "",
+                  "name": "Cucumber",
+                  "aisle": "Produce"
+                },
+                {
+                  "amount": 3,
+                  "unit": "tbsp",
+                  "name": "Tahini",
+                  "aisle": "Pantry"
+                }
+              ]
+            },
+            "dinner": {
+              "name": "Steak frites",
+              "cuisine": "French",
+              "minutes": 40,
+              "ingredients": [
+                {
+                  "amount": 4,
+                  "unit": "",
+                  "name": "Strip steaks",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 1,
+                  "unit": "bag",
+                  "name": "Frozen fries",
+                  "aisle": "Frozen"
+                },
+                {
+                  "amount": 50,
+                  "unit": "g",
+                  "name": "Butter",
+                  "aisle": "Dairy and eggs"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "day": "sun",
+          "meals": {
+            "breakfast": {
+              "name": "Croissants and fruit",
+              "cuisine": "French",
+              "minutes": 5,
+              "ingredients": [
+                {
+                  "amount": 6,
+                  "unit": "",
+                  "name": "Croissants",
+                  "aisle": "Bakery"
+                },
+                {
+                  "amount": 2,
+                  "unit": "",
+                  "name": "Pears",
+                  "aisle": "Produce"
+                }
+              ]
+            },
+            "lunch": {
+              "name": "Miso noodle soup",
+              "cuisine": "Japanese",
+              "minutes": 20,
+              "ingredients": [
+                {
+                  "amount": 300,
+                  "unit": "g",
+                  "name": "Udon",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 3,
+                  "unit": "tbsp",
+                  "name": "White miso",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 1,
+                  "unit": "bunch",
+                  "name": "Scallions",
+                  "aisle": "Produce"
+                }
+              ]
+            },
+            "dinner": {
+              "name": "Butter chicken",
+              "cuisine": "Indian",
+              "minutes": 50,
+              "ingredients": [
+                {
+                  "amount": 800,
+                  "unit": "g",
+                  "name": "Chicken thighs",
+                  "aisle": "Meat and fish"
+                },
+                {
+                  "amount": 1,
+                  "unit": "can",
+                  "name": "Tomato puree",
+                  "aisle": "Pantry"
+                },
+                {
+                  "amount": 200,
+                  "unit": "ml",
+                  "name": "Heavy cream",
+                  "aisle": "Dairy and eggs"
+                },
+                {
+                  "amount": 2,
+                  "unit": "tbsp",
+                  "name": "Garam masala",
+                  "aisle": "Spices"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "theme": "auto"
+}
