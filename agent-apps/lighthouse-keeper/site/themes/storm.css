@@ -1,0 +1,112 @@
+/* Storm: purple-grey sky, heavy rain, frequent thunder, violet lanterns. Light scheme is a bruised afternoon squall; dark is the storm at midnight. */
+:root {
+  color-scheme: light;
+  --color-bg: #675f76;
+  --color-surface: rgba(238, 235, 242, 0.84);
+  --color-surface-2: rgba(220, 214, 228, 0.9);
+  --color-text: #17121f;
+  --color-muted: #352d42;
+  --color-accent: #241b33;
+  --color-on-accent: #f3ecff;
+  --color-danger: #b4223a;
+  --color-ok: #3d6d5e;
+  --color-border: rgba(30, 20, 45, 0.16);
+  --text-glow: rgba(222, 216, 230, 0.85);
+  --scrim: rgba(214, 206, 222, 0.8);
+  --shadow-1: 0 1px 2px rgba(20, 12, 32, 0.2), 0 4px 14px rgba(20, 12, 32, 0.14);
+  --shadow-2: 0 2px 6px rgba(20, 12, 32, 0.22), 0 18px 48px rgba(20, 12, 32, 0.24);
+
+  --sky-top: #332d48;
+  --sky-horizon: #837b93;
+  --sky-glow: #c4b9c6;
+  --fog: #675f76;
+  --sea-deep: #14111c;
+  --sea-shallow: #383146;
+  --sea-foam: #ebe6f2;
+  --sea-spec: #ffffff;
+  --moon: #f6f2ff;
+  --beam: #f6f0ff;
+  --lamp: #fbf7ff;
+  --lantern: #d9c3ff;
+  --ship: #0c0a12;
+  --ship-rim: #ddd4ec;
+  --burn-edge: #b98aff;
+  --tower: #ecebef;
+  --tower-band: #33333f;
+  --tower-trim: #1e1d26;
+  --rock: #2a2730;
+  --window: #ffcb78;
+  --rain: #f2eefa;
+  --dawn-top: #77739a;
+  --dawn-horizon: #e8b3a8;
+
+  --moon-elev: 26;
+  --moon-bearing: 14;
+  --stars: 0;
+  --rain-amount: 1;
+  --fog-density: 0.0112;
+  --fog-layer: 1.05;
+  --sea-rough: 1.35;
+  --thunder-every: 10;
+  --exposure: 0.9;
+  --ambient: 0.8;
+  --moon-light: 0.7;
+  --beam-power: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #241f2e;
+    --color-surface: rgba(14, 10, 20, 0.76);
+    --color-surface-2: rgba(28, 22, 38, 0.86);
+    --color-text: #f1ecf9;
+    --color-muted: #aaa0bb;
+    --color-accent: #e3d4ff;
+    --color-on-accent: #150f20;
+    --color-danger: #ff6f86;
+    --color-ok: #b5f5d8;
+    --color-border: rgba(225, 210, 255, 0.16);
+    --text-glow: rgba(6, 4, 9, 0.85);
+    --scrim: rgba(6, 4, 9, 0.6);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.55), 0 18px 48px rgba(0, 0, 0, 0.5);
+
+    --sky-top: #06040b;
+    --sky-horizon: #231e2d;
+    --sky-glow: #3e3249;
+    --fog: #241f2e;
+    --sea-deep: #030207;
+    --sea-shallow: #181524;
+    --sea-foam: #a69dbb;
+    --sea-spec: #e4daff;
+    --moon: #d8d0ee;
+    --beam: #f0ebff;
+    --lamp: #fbf6ff;
+    --lantern: #c6a4ff;
+    --ship: #040308;
+    --ship-rim: #8a76b2;
+    --burn-edge: #e0c2ff;
+    --tower: #c9c6d1;
+    --tower-band: #2b2c38;
+    --tower-trim: #14131a;
+    --rock: #121016;
+    --window: #ffcb72;
+    --rain: #bdb3d8;
+    --dawn-top: #3a3466;
+    --dawn-horizon: #d68f8a;
+
+    --moon-elev: 22;
+    --moon-bearing: 16;
+    --stars: 0.3;
+    --rain-amount: 1;
+    --fog-density: 0.0122;
+    --fog-layer: 1.15;
+    --sea-rough: 1.35;
+    --thunder-every: 9;
+    --exposure: 1;
+    --ambient: 0.5;
+    --moon-light: 0.75;
+    --beam-power: 1;
+  }
+}

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lighthouse Keeper</title>
+  <meta name="description" content="Sweep a lighthouse beam through the fog and turn back the ghost ships.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/screens.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body data-mode="title">
+  <canvas id="scene" tabindex="-1" aria-label="A lighthouse on the rocks at night, its beam sweeping a foggy sea where ghost ships drift in"></canvas>
+  <div class="scrim" aria-hidden="true"></div>
+
+  <main class="title" id="title">
+    <header class="masthead">
+      <p class="kicker" id="title-line">Lighthouse Keeper</p>
+      <h1 class="name" id="light-name">Gull Rock Light</h1>
+      <p class="lede">Ghost ships are drifting in through the fog toward the rocks. Hold the beam on each one until it burns away.</p>
+    </header>
+    <div class="start">
+      <p class="terms" id="terms">Dawn comes in 5 minutes. Three ships on the rocks and the night is lost.</p>
+      <p class="best" id="best" hidden></p>
+      <button class="primary" id="start" type="button">Light the lamp</button>
+      <p class="hint" id="hint">Move the mouse or hold Left and Right to swing the beam. Space fires a flare.</p>
+    </div>
+    <div class="title-tools">
+      <button class="icon-button sound-toggle" type="button" aria-pressed="false" aria-label="Turn sound off">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="wave" d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path class="wave" d="M18.2 6.5a8 8 0 0 1 0 11"/><path class="cross" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+      </button>
+    </div>
+  </main>
+
+  <section class="hud" id="hud" aria-label="The night">
+    <div class="hud-top">
+      <div class="hud-panel">
+        <span class="hud-name" id="hud-name">Gull Rock Light</span>
+        <span class="hud-dawn"><span id="dawn-left">Dawn in 5:00</span><span class="dawn-bar" aria-hidden="true"><span class="dawn-fill"></span></span></span>
+      </div>
+      <div class="hud-panel hud-score">
+        <span class="turned"><b id="turned">0</b>turned back</span>
+        <span class="shore" id="shore" role="img" aria-label="No ships ashore"></span>
+      </div>
+    </div>
+    <div class="hud-bottom">
+      <button class="icon-button" id="pause-btn" type="button" aria-label="Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg>
+      </button>
+      <button class="icon-button sound-toggle" type="button" aria-pressed="false" aria-label="Turn sound off">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="wave" d="M15.5 9a4.2 4.2 0 0 1 0 6"/><path class="wave" d="M18.2 6.5a8 8 0 0 1 0 11"/><path class="cross" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+      </button>
+      <span class="hud-hint" id="hud-hint">Space fires a flare. Esc pauses.</span>
+      <span class="spacer"></span>
+      <button class="flare" id="flare-btn" type="button" aria-label="Fire a flare">
+        <span class="flare-ring" aria-hidden="true"></span>
+        <span class="flare-label" id="flare-label">Flare</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="card" id="result" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <p class="card-kicker" id="result-kicker">Gull Rock Light</p>
+    <h2 id="result-title">Dawn breaks</h2>
+    <p id="result-line">You kept the light all night.</p>
+    <dl class="stats">
+      <div><dt>Ships turned back</dt><dd id="r-turned">0</dd></div>
+      <div><dt>Minutes kept</dt><dd id="r-time">0:00</dd></div>
+      <div><dt>Best night</dt><dd id="r-best">0</dd></div>
+    </dl>
+    <div class="card-actions">
+      <button class="primary" id="again" type="button">Keep another night</button>
+      <button class="text-button" id="to-title" type="button">Back to the shore</button>
+    </div>
+  </section>
+
+  <section class="card" id="pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <p class="card-kicker" id="pause-kicker">Gull Rock Light</p>
+    <h2 id="pause-title">The lamp waits</h2>
+    <p>The ships hold still until you come back.</p>
+    <div class="card-actions">
+      <button class="primary" id="resume" type="button">Back to the lamp</button>
+      <button class="text-button" id="quit" type="button">End the night</button>
+    </div>
+  </section>
+
+  <div class="notice" id="notice" role="status" aria-live="polite"></div>
+  <div class="flash" aria-hidden="true"></div>
+
+  <script type="module" src="./game/main.js"></script>
+</body>
+</html>

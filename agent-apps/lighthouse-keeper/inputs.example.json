@@ -1,0 +1,16 @@
+{
+  "_notes": {
+    "lighthouseName": "Painted around the tower and shown large on the title. Up to 40 characters.",
+    "playerName": "The keeper's name, on the dawn or lost card.",
+    "theme": "night (blue-black sea, white beam), storm (purple-grey, heavier rain, more thunder), or dawn (pink horizon, thinner fog, gold beam).",
+    "title": "The small line above the lighthouse name. Defaults to Lighthouse Keeper.",
+    "shipsToLose": "How many ships on the rocks end the night, 1 to 10. Defaults to 3.",
+    "nightMinutes": "Minutes until dawn, 1 to 30. Defaults to 5."
+  },
+  "lighthouseName": "Gull Rock Light",
+  "playerName": "Morgan",
+  "theme": "night",
+  "title": "Lighthouse Keeper",
+  "shipsToLose": 3,
+  "nightMinutes": 5
+}
