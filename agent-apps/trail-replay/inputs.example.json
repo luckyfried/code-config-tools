@@ -1,0 +1,18 @@
+{
+  "athlete": "Sam Rivera",
+  "activities": "samples",
+  "units": "km",
+  "colorBy": "pace",
+  "theme": "topo",
+  "labels": false,
+  "strava": false,
+  "_notes": {
+    "athlete": "Your name as it goes on the page and the poster.",
+    "activities": "A folder of GPX and TCX files beside this inputs file (Strava, Garmin Connect, and Apple Fitness all export them). \"samples\" is the run, hike, and ride that ship with the app.",
+    "units": "\"km\" for kilometers and meters, or \"mi\" for miles and feet.",
+    "colorBy": "What colors the track: \"pace\", \"heart\" (heart rate), or \"elevation\".",
+    "theme": "\"topo\", \"night\", or \"paper\". Each has a light and a dark look that follows the device.",
+    "labels": "true draws roads, water, and place names from OpenFreeMap over the terrain while the page is online; false keeps the map to terrain alone.",
+    "strava": "true also pulls your last thirty Strava activities when STRAVA_ACCESS_TOKEN is set through csc key set; false uses the folder alone."
+  }
+}

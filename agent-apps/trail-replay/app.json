@@ -1,0 +1,17 @@
+{
+  "id": "01a17b59-0ce5-7489-9cbe-c744f66463b2",
+  "version": "2026-10-21",
+  "name": "Trail Replay",
+  "shortDescription": "Replay your run, ride, or hike over real 3D terrain, with stats and a poster.",
+  "description": "Turns the GPX and TCX files you export from Strava, Garmin Connect, or Apple Fitness into a page per activity. Each one replays over real 3D terrain: the track glows in colors for pace, heart rate, or height, a marker with a comet tail runs it, and the camera follows behind and above. Elevation, pace, and heart-rate charts scrub together with the map, splits light up as you pass them, and a poster of the route downloads as a print-ready PNG. Three themes, each with a light and a dark look. Your files stay on your computer.",
+  "category": "sports",
+  "subcategory": "Running & cycling",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/trail-replay",
+  "setup": "Your agent asks, in one message: where your activity exports are (a folder of GPX or TCX files; Strava, Garmin Connect, and Apple Fitness all export them), whether you want miles or kilometers, and which look you like: topo, night, or paper. No key is needed. If you want your last thirty Strava activities pulled in too, it asks for a Strava access token through csc key set STRAVA_ACCESS_TOKEN, never in chat; the token stays on your computer and never goes into the page. Terrain comes from the free AWS terrain tiles, and roads and place names, if you turn them on, from OpenFreeMap."
+}

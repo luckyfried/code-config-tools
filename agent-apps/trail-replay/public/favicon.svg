@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1220"/>
+      <stop offset="1" stop-color="#1e3330"/>
+    </linearGradient>
+    <linearGradient id="route" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#3a6df0"/>
+      <stop offset="0.45" stop-color="#f0388c"/>
+      <stop offset="0.75" stop-color="#ff6a2b"/>
+      <stop offset="1" stop-color="#ffc93c"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#sky)"/>
+  <path d="M0 330 L92 250 L150 286 L246 168 L318 238 L372 196 L512 300 L512 512 L0 512 Z" fill="#24332a"/>
+  <path d="M0 382 L70 342 L142 368 L226 300 L300 352 L388 304 L512 372 L512 512 L0 512 Z" fill="#162019"/>
+  <path d="M246 168 L318 238 L290 232 L262 248 L246 214 L226 222 Z" fill="#56615b"/>
+  <path d="M84 430 C 150 420, 168 360, 214 340 S 262 282, 252 236 S 300 170, 340 214 S 398 252, 430 228" fill="none" stroke="url(#route)" stroke-width="30" stroke-linecap="round" opacity="0.55" filter="url(#glow)"/>
+  <path d="M84 430 C 150 420, 168 360, 214 340 S 262 282, 252 236 S 300 170, 340 214 S 398 252, 430 228" fill="none" stroke="url(#route)" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="430" cy="228" r="26" fill="#ffe7a3" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="430" cy="228" r="15" fill="#ffffff" stroke="#0e1512" stroke-width="5"/>
+</svg>

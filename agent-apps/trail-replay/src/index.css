@@ -1,0 +1,221 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/big-shoulders-display";
+
+/* Colors live only in theme.css (one of src/themes/); this file maps them for Tailwind and holds structure. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+/* A phone turned on its side. */
+@custom-variant short (@media (orientation: landscape) and (max-height: 540px));
+/* A big screen, wide and tall, with room under the splits. */
+@custom-variant roomy (@media (min-width: 1536px) and (min-height: 1000px));
+
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", ui-sans-serif, sans-serif;
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-glass: var(--glass);
+  --color-map: var(--map-bg);
+  --color-comet: var(--comet);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    backdrop-filter: blur(10px) saturate(1.2);
+  }
+  .chart-strip {
+    scrollbar-width: none;
+  }
+  .chart-strip::-webkit-scrollbar {
+    display: none;
+  }
+  .scrub-handle {
+    transform: translateX(var(--x, 0px));
+  }
+  /* The credit line, open or folded, sits on the theme's glass in light and dark. */
+  .maplibregl-ctrl-attrib {
+    font-size: 11px;
+    background: var(--glass) !important;
+    color: var(--foreground) !important;
+  }
+  .maplibregl-ctrl-attrib a {
+    color: inherit !important;
+  }
+  .maplibregl-ctrl-attrib-button {
+    filter: var(--attrib-filter, none);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --attrib-filter: invert(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  html,
+  body {
+    background: #fff;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .poster-table {
+    background: none !important;
+    padding: 0 !important;
+  }
+  .print-poster {
+    width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+  }
+}
+
+/* The replay marker: a bright core in a soft halo that breathes while the replay runs. */
+.track-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.replay-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+.replay-marker__core {
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background: var(--marker);
+  box-shadow:
+    0 0 0 3px var(--marker-ring),
+    0 0 14px 4px var(--comet);
+}
+.replay-marker__halo {
+  position: absolute;
+  inset: -14px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, var(--comet), transparent);
+  opacity: 0.55;
+  animation: marker-breathe 1.8s ease-in-out infinite;
+}
+@keyframes marker-breathe {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .replay-marker__halo {
+    animation: none;
+  }
+}
+
+.progress-fill {
+  transform: scaleX(var(--progress, 0));
+}
+
+.split-bar {
+  transform: scaleX(var(--share, 1));
+}
+
+.ramp-bar {
+  background: linear-gradient(90deg, var(--ramp-1), var(--ramp-2), var(--ramp-3), var(--ramp-4), var(--ramp-5));
+}
+
+.activity-card {
+  animation: card-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.poster-table {
+  background: color-mix(in oklab, var(--muted) 75%, var(--background));
+}
+
+.map-scrim-top {
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--background) 40%, transparent), transparent);
+}
