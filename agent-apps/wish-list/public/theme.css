@@ -1,0 +1,115 @@
+/* Ribbon: pink tissue paper, plum ink, a raspberry ribbon, and a teal box for contrast. Light. */
+:root {
+  color-scheme: light;
+  --background: #fcf1f3;
+  --foreground: #2d1530;
+  --card: #ffffff;
+  --card-foreground: #2d1530;
+  --popover: #ffffff;
+  --popover-foreground: #2d1530;
+  --primary: #b8124f;
+  --primary-foreground: #fff6f8;
+  --secondary: #f6dde4;
+  --secondary-foreground: #2d1530;
+  --muted: #f7e4e9;
+  --muted-foreground: #74536a;
+  --accent: #ffe1e9;
+  --accent-foreground: #7a0c35;
+  --destructive: #b3261e;
+  --border: #edd2da;
+  --input: #e4c3cd;
+  --ring: #b8124f;
+  --radius: 0.875rem;
+
+  --bar: rgb(252 241 243 / 0.86);
+  --paper-sky: #fcf1f3;
+  --paper-1: #f7d6de;
+  --paper-2: #f2bccb;
+  --paper-3: #ec8ba4;
+  --paper-4: #2b8a83;
+  --paper-5: #ffffff;
+  --paper-6: #fbe2a1;
+  --ribbon: #b8124f;
+  --ribbon-2: #f5b52e;
+  --sun: #ffe4ea;
+  --speck: #eeaabd;
+  --paper-shadow: rgb(122 18 60 / 0.2);
+
+  --stage: #fbe8ed;
+  --stage-floor: #f6d6df;
+  --plinth: #ffffff;
+  --plinth-edge: #f0d0da;
+  --plinth-shadow: rgb(110 20 60 / 0.22);
+  --picture-shadow: rgb(70 10 40 / 0.22);
+  --tag: #fffaf3;
+  --tag-edge: #ecd6c4;
+  --tag-ink: #2d1530;
+  --tag-muted: #8c6a74;
+  --string: #b8124f;
+  --stamp: #b8124f;
+  --stamp-yours: #2b8a83;
+  --sheen: rgb(255 255 255 / 0.62);
+  --glare: rgb(255 255 255 / 0.42);
+  --shadow-card: 0 1px 0 rgb(90 20 50 / 0.05), 0 2px 6px -2px rgb(90 20 50 / 0.12), 0 18px 36px -18px rgb(120 20 60 / 0.28);
+  --shadow-lift: 0 2px 4px rgb(90 20 50 / 0.06), 0 24px 44px -16px rgb(120 20 60 / 0.38);
+  --grain: none;
+}
+
+@media (prefers-color-scheme: dark) {
+/* Midnight: navy paper under a cream moon, gold foil ribbon, berry and blue boxes. Dark. */
+:root {
+  color-scheme: dark;
+  --background: #0e1530;
+  --foreground: #f4ecdc;
+  --card: #18213f;
+  --card-foreground: #f4ecdc;
+  --popover: #1b2547;
+  --popover-foreground: #f4ecdc;
+  --primary: #e9bf58;
+  --primary-foreground: #1d1503;
+  --secondary: #232d52;
+  --secondary-foreground: #f4ecdc;
+  --muted: #1f2849;
+  --muted-foreground: #a9b0ca;
+  --accent: #27325c;
+  --accent-foreground: #f6d989;
+  --destructive: #ef6a6a;
+  --border: #2b3662;
+  --input: #3a4677;
+  --ring: #e9bf58;
+  --radius: 0.875rem;
+
+  --bar: rgb(14 21 48 / 0.84);
+  --paper-sky: #0e1530;
+  --paper-1: #1a2450;
+  --paper-2: #222f66;
+  --paper-3: #d9577b;
+  --paper-4: #3557a0;
+  --paper-5: #121b3c;
+  --paper-6: #f4ecdc;
+  --ribbon: #e9bf58;
+  --ribbon-2: #f4ecdc;
+  --sun: #f3e5bf;
+  --speck: #f3e5bf;
+  --paper-shadow: rgb(0 0 0 / 0.5);
+
+  --stage: #1d2852;
+  --stage-floor: #243163;
+  --plinth: #2c3a70;
+  --plinth-edge: #3d4c88;
+  --plinth-shadow: rgb(0 0 0 / 0.55);
+  --picture-shadow: rgb(0 0 0 / 0.5);
+  --tag: #f4ecdc;
+  --tag-edge: #d8c9a9;
+  --tag-ink: #1b1d33;
+  --tag-muted: #5b5a6e;
+  --string: #e9bf58;
+  --stamp: #c42e55;
+  --stamp-yours: #2f5aa8;
+  --sheen: rgb(255 255 255 / 0.2);
+  --glare: rgb(255 240 210 / 0.16);
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 6px -2px rgb(0 0 0 / 0.5), 0 20px 40px -20px rgb(0 0 0 / 0.8);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 26px 48px -16px rgb(0 0 0 / 0.85);
+  --grain: none;
+}
+}

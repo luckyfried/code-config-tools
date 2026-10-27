@@ -1,0 +1,17 @@
+{
+  "id": "01a163ee-b9a6-7d5f-a1d1-b4e1db5d43d7",
+  "version": "2026-10-21",
+  "name": "Wish List",
+  "shortDescription": "A wish list page for your people: pretty cards, prices, and \"I'll get this\".",
+  "description": "Turns the things you'd love for a birthday, a holiday, a baby, or a move into a page you can send to your people. It opens on a paper-cut scene of gift boxes and ribbons in the theme's colors that drifts as the pointer moves or the phone tilts, then deals out a card for every wish: the picture standing on a soft plinth, the price, size and color notes, and where to buy it. Cards tilt toward the pointer with a glossy sheen. A running total of what is still wished for sits in a bar with price filters, a switch to hide what is already gotten, and Shuffle, which fans the cards into a hand and deals them again; the prices roll like a counter whenever a filter changes. \"I'll get this\" opens a text or an email to you with the gift already named, so two people never buy the same thing. When someone tells you, your agent marks the item gotten and the card folds under a gift tag with a stamp. Light and dark follow the device. It works on a phone and a laptop, and needs no account and no network.",
+  "category": "shopping",
+  "subcategory": "Wish lists",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/wish-list",
+  "setup": "Your agent asks, in one message, who the list is for and the occasion, the things you'd love (a name, a price, a link, and a picture if you have one), how friends should tell you they're getting something (a phone number or an email), and whether you'd like ribbon, kraft, or midnight, or light and dark that follow the device. No accounts or keys are needed, and the list stays in a file in your project."
+}

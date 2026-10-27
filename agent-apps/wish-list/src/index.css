@@ -1,0 +1,385 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/fraunces/full.css";
+
+/* Class names never come from the previous dist/, so the same source builds the same files. */
+@source not "../dist";
+
+/* Colors live only in theme.css (one of src/themes/); this file maps them to Tailwind and holds structure and motion. */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-heading: var(--font-display);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-bar: var(--bar);
+  --color-tag: var(--tag);
+  --color-tag-ink: var(--tag-ink);
+  --color-tag-muted: var(--tag-muted);
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image: var(--grain);
+    min-height: 100dvh;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+}
+
+/* The hero: paper layers cut from the theme's colors, each drifting by its depth. */
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--paper-sky);
+}
+.hero-layer {
+  position: absolute;
+  inset: -28px -40px -6px;
+  animation: layer-rise 900ms var(--ease-out) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+.hero-layer > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 6px 7px var(--paper-shadow));
+  will-change: transform;
+}
+@keyframes layer-rise {
+  from { transform: translateY(70px); opacity: 0; }
+}
+.p-sky { fill: var(--paper-sky); }
+.p-1 { fill: var(--paper-1); }
+.p-2 { fill: var(--paper-2); }
+.p-3 { fill: var(--paper-3); }
+.p-4 { fill: var(--paper-4); }
+.p-5 { fill: var(--paper-5); }
+.p-6 { fill: var(--paper-6); }
+.p-ribbon { fill: var(--ribbon); }
+.p-ribbon-2 { fill: var(--ribbon-2); }
+.p-speck { fill: var(--speck); }
+.p-bg { fill: var(--background); }
+.s-string { stroke: var(--string); fill: none; }
+.s-ribbon { stroke: var(--ribbon); fill: none; }
+.s-ribbon-2 { stroke: var(--ribbon-2); fill: none; }
+
+.hero-title {
+  animation: title-in 700ms var(--ease-out) 120ms both;
+}
+@keyframes title-in {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+/* Phones: the scene sinks and shrinks under the page as it scrolls away. */
+@media (max-width: 767px) {
+  @supports (animation-timeline: scroll()) {
+    .hero-scene {
+      animation: hero-shrink linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 320px;
+      transform-origin: 50% 100%;
+    }
+    .hero-copy {
+      animation: hero-copy-out linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 260px;
+    }
+  }
+}
+@keyframes hero-shrink {
+  to { transform: translateY(16%) scale(0.8); opacity: 0.55; }
+}
+@keyframes hero-copy-out {
+  to { transform: translateY(-24px) scale(0.92); opacity: 0; }
+}
+
+/* The sticky bar under the hero. */
+.bar {
+  background: var(--bar);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  padding-top: env(safe-area-inset-top);
+}
+.no-scrollbar { scrollbar-width: none; }
+@media (max-width: 1023px) {
+  .fade-end { mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent); }
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* A card: a slot that deals and shuffles, a tilt layer the pointer drives, and the card itself. */
+.deal-slot {
+  position: relative;
+}
+.tilt {
+  transform-style: preserve-3d;
+}
+.wish-card {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  border-radius: var(--radius-2xl);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  perspective: 1100px;
+  transition: box-shadow 200ms ease;
+}
+.tilt.is-live .wish-card {
+  box-shadow: var(--shadow-lift);
+}
+.sheen {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.sheen-band {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: -60%;
+  width: 70%;
+  background: linear-gradient(90deg, transparent, var(--sheen) 50%, transparent);
+  opacity: 0.55;
+  will-change: transform;
+  transform: translateX(var(--band-x, 40%));
+}
+.glare {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 90%;
+  aspect-ratio: 1;
+  margin: -45% 0 0 -45%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glare), transparent);
+  opacity: 0.6;
+  will-change: transform;
+  transform: translate(var(--glare-x, 30%), var(--glare-y, 20%));
+}
+.no-sheen .sheen { display: none; }
+
+.stage {
+  position: relative;
+  aspect-ratio: 5 / 4;
+  overflow: hidden;
+  border-radius: var(--radius-2xl) var(--radius-2xl) var(--radius-lg) var(--radius-lg);
+  background:
+    radial-gradient(120% 60% at 50% 100%, var(--stage-floor), transparent 70%),
+    var(--stage);
+}
+.plinth {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  width: 64%;
+  height: 15%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--plinth);
+  box-shadow:
+    0 -3px 0 0 var(--plinth-edge) inset,
+    0 18px 22px -8px var(--plinth-shadow),
+    0 4px 6px -2px var(--plinth-shadow);
+}
+.picture {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  height: 78%;
+  width: 78%;
+  transform: translateX(-50%);
+  object-fit: contain;
+  object-position: 50% 100%;
+  filter: drop-shadow(0 10px 10px var(--picture-shadow));
+  transition: opacity 300ms ease;
+}
+.picture[data-ready="false"] { opacity: 0; }
+
+/* The gift tag a gotten card wears: it folds down from the top edge and a stamp lands on it. */
+.tag {
+  position: absolute;
+  z-index: 4;
+  inset: 14px 14px 14px 14px;
+  transform-origin: 50% 0;
+  backface-visibility: hidden;
+  clip-path: polygon(14% 0, 86% 0, 100% 9%, 100% 100%, 0 100%, 0 9%);
+  background: var(--tag);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  box-shadow: 0 0 0 1px var(--tag-edge) inset;
+  color: var(--tag-ink);
+}
+.tag-hole {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 0 0 4px var(--tag-edge);
+}
+.tag-string {
+  position: absolute;
+  z-index: 5;
+  top: -6px;
+  left: 50%;
+  width: 52px;
+  height: 46px;
+  margin-left: -26px;
+  pointer-events: none;
+  transform-origin: 50% 0;
+}
+.tag-string path { stroke: var(--string); fill: none; }
+.fold-in { animation: fold-in 760ms var(--ease-out) both; animation-delay: var(--fold-delay, 0ms); }
+@keyframes fold-in {
+  0% { transform: rotateX(-92deg); opacity: 0; }
+  12% { opacity: 1; }
+  62% { transform: rotateX(9deg); }
+  82% { transform: rotateX(-3deg); }
+  100% { transform: rotateX(0); opacity: 1; }
+}
+.string-in { animation: string-in 500ms var(--ease-out) both; animation-delay: var(--fold-delay, 0ms); }
+@keyframes string-in {
+  from { transform: scaleY(0); opacity: 0; }
+}
+
+.stamp {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  padding: 0.35em 0.7em 0.3em;
+  border: 4px double currentColor;
+  border-radius: 10px;
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 0, "WONK" 0;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--stamp);
+  transform: translate(-50%, -50%) rotate(-12deg);
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.7'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-size: 160px 160px;
+}
+.stamp.is-yours { color: var(--stamp-yours); }
+.stamp-in { animation: stamp-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both; animation-delay: calc(var(--fold-delay, 0ms) + 560ms); }
+@keyframes stamp-in {
+  0% { transform: translate(-50%, -50%) rotate(-24deg) scale(2.3); opacity: 0; }
+  55% { transform: translate(-50%, -50%) rotate(-11deg) scale(0.94); opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(-12deg) scale(1); opacity: 1; }
+}
+.thunk { animation: thunk 260ms ease-out both; animation-delay: calc(var(--fold-delay, 0ms) + 770ms); }
+@keyframes thunk {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(3px) scale(0.992); }
+  100% { transform: translateY(0); }
+}
+.gotten-body { transition: opacity 400ms ease; }
+.is-gotten .gotten-body { opacity: 0.35; }
+
+/* Rolling figures: each digit is a strip of 0 to 9 that slides to its value. */
+.roll {
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.roll-col {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+}
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 900ms var(--ease-out);
+  transition-delay: var(--roll-delay, 0ms);
+}
+.roll-strip > span { height: 1.1em; display: block; text-align: center; }
+.roll-strip.is-instant { transition: none; }
+
+.pad-safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-layer, .hero-title, .fold-in, .string-in, .stamp-in, .thunk { animation: none; }
+  .roll-strip { transition: none; }
+  .hero-scene, .hero-copy { animation: none !important; }
+}
+
+@media print {
+  .print-hide { display: none !important; }
+  body { background-image: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .wish-card { break-inside: avoid; }
+}
+
+.p-shade { fill: rgb(0 0 0 / 0.1); }
+
+/* Phones: a shorter stage and a tighter plinth, so a whole card and the top of the next fit the first screen. */
+@media (max-width: 639px) {
+  .hanging-tag { display: none; }
+  .stage { aspect-ratio: 16 / 10; }
+  .plinth { width: 46%; height: 13%; bottom: 8%; }
+  .picture { height: 80%; bottom: 12%; }
+}

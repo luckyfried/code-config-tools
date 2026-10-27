@@ -1,0 +1,28 @@
+{
+  "_notes": {
+    "owner": "Who the list is for. \"name\" shows on the page; give \"phone\", \"email\", or both: \"I'll get this\" opens a text or an email to them with the gift named.",
+    "occasion": "The big title at the top, such as \"Maya turns 30\", \"Baby Ruiz\", or \"Our new place\".",
+    "currency": "The three-letter code for every price, such as USD, EUR, GBP, or JPY.",
+    "items": "One entry per wish. \"name\" and \"price\" (a number) are needed. \"url\" is where to buy it. \"image\" is a picture file beside this one, such as pictures/camera.png; a picture with a clear background sits best on the stand. \"note\" holds size, color, or anything else. \"priority\" is high, normal, or low; high shows a Most wanted badge. \"claimed\": true folds the card under a Gotten tag; set it when someone tells the owner they're getting it.",
+    "theme": "auto (light or dark from the device: ribbon by day, midnight by night), ribbon (pink tissue and raspberry), kraft (brown paper, twine, and forest green), or midnight (navy and gold).",
+    "copy": "Optional: the words on the page by key, such as {\"getThis\": \"Count me in\"}. Leave a key out to keep its word; copy.js in the built site lists every key."
+  },
+  "owner": { "name": "Maya", "phone": "+1 (415) 555-0142", "email": "maya.okafor@example.com" },
+  "occasion": "Maya turns 30",
+  "currency": "USD",
+  "theme": "auto",
+  "items": [
+    { "name": "Ceramic pour-over set", "price": 48, "url": "https://www.heathceramics.com/collections/coffee", "image": "pictures/coffee.png", "note": "Speckled white, with the two matching cups", "priority": "normal" },
+    { "name": "Noise-canceling headphones", "price": 279, "url": "https://www.bose.com/c/headphones", "image": "pictures/headphones.png", "note": "Over-ear, in sand. Her old pair lost a cushion.", "priority": "high" },
+    { "name": "Instant camera", "price": 129, "url": "https://www.polaroid.com/collections/cameras", "image": "pictures/camera.png", "note": "Mint green, plus a two-pack of film", "priority": "normal", "claimed": true },
+    { "name": "Monstera in a clay pot", "price": 64, "url": "https://www.thesill.com/collections/monstera", "image": "pictures/monstera.png", "note": "The 10-inch one. The sunny corner is ready.", "priority": "normal" },
+    { "name": "Linen duvet cover", "price": 189, "url": "https://www.parachutehome.com/collections/duvet-covers", "image": "pictures/duvet.png", "note": "Queen, in rust or olive", "priority": "low" },
+    { "name": "Enameled Dutch oven", "price": 110, "url": "https://www.lecreuset.com/dutch-ovens", "image": "pictures/dutchoven.png", "note": "5.5 quarts, any warm color", "priority": "high" },
+    { "name": "Canvas sneakers", "price": 140, "url": "https://www.veja-store.com/en_us/women", "image": "pictures/shoes.png", "note": "Women's 8, in ochre", "priority": "normal" },
+    { "name": "The Overstory", "price": 22, "url": "https://bookshop.org/search?keywords=the+overstory", "image": "pictures/book.png", "note": "Hardcover, by Richard Powers", "priority": "normal", "claimed": true },
+    { "name": "Merino wool scarf", "price": 46, "url": "https://www.uniqlo.com/us/en/women/accessories", "image": "pictures/scarf.png", "note": "Long, in a deep green", "priority": "low" },
+    { "name": "Beeswax taper candles", "price": 34, "url": "https://www.etsy.com/search?q=beeswax+tapers", "image": "pictures/candles.png", "note": "Unscented, the tall ones", "priority": "normal" },
+    { "name": "Record player", "price": 199, "url": "https://www.crosleyradio.com/turntables", "image": "pictures/record.png", "note": "Belt drive, with its own speakers", "priority": "normal" },
+    { "name": "Pottery class for two", "price": 120, "url": "https://www.classbento.com/pottery-classes", "image": "pictures/pottery.png", "note": "A Saturday wheel class. Bring a friend.", "priority": "normal" }
+  ]
+}

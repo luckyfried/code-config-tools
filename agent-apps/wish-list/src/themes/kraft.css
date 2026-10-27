@@ -1,0 +1,58 @@
+/* Kraft: brown wrapping paper, natural card, forest green, and red twine. Light. */
+:root {
+  color-scheme: light;
+  --background: #d6b98e;
+  --foreground: #2a1c0f;
+  --card: #f6ecda;
+  --card-foreground: #2a1c0f;
+  --popover: #f8f0e1;
+  --popover-foreground: #2a1c0f;
+  --primary: #2d5a3a;
+  --primary-foreground: #f6ecda;
+  --secondary: #e7d4b4;
+  --secondary-foreground: #2a1c0f;
+  --muted: #eadbc0;
+  --muted-foreground: #6a4f30;
+  --accent: #e9d7b6;
+  --accent-foreground: #23462d;
+  --destructive: #a5261d;
+  --border: #c5a271;
+  --input: #b8935f;
+  --ring: #2d5a3a;
+  --radius: 0.5rem;
+
+  --bar: rgb(214 185 142 / 0.9);
+  --paper-sky: #d6b98e;
+  --paper-1: #e6d0aa;
+  --paper-2: #c49a62;
+  --paper-3: #f6ecda;
+  --paper-4: #2d5a3a;
+  --paper-5: #b98c55;
+  --paper-6: #8c5f32;
+  --ribbon: #ad2a20;
+  --ribbon-2: #f6ecda;
+  --sun: #fbebc4;
+  --sun-edge: #ecc07a;
+  --sun-glow: rgb(255 232 176 / 0.5);
+  --speck: #a97d48;
+  --paper-shadow: rgb(70 42 12 / 0.3);
+
+  --stage: #efe1c6;
+  --stage-floor: #e2cba3;
+  --plinth: #f9f2e4;
+  --plinth-edge: #d9c09a;
+  --plinth-shadow: rgb(70 42 12 / 0.28);
+  --picture-shadow: rgb(60 36 10 / 0.26);
+  --tag: #c79e66;
+  --tag-edge: #a57c45;
+  --tag-ink: #2a1c0f;
+  --tag-muted: #573c1e;
+  --string: #ad2a20;
+  --stamp: #ad2a20;
+  --stamp-yours: #23462d;
+  --sheen: rgb(255 250 236 / 0.5);
+  --glare: rgb(255 250 236 / 0.34);
+  --shadow-card: 0 1px 0 rgb(70 42 12 / 0.08), 0 2px 6px -2px rgb(70 42 12 / 0.2), 0 18px 34px -18px rgb(70 42 12 / 0.45);
+  --shadow-lift: 0 2px 4px rgb(70 42 12 / 0.1), 0 24px 44px -16px rgb(70 42 12 / 0.55);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.22 0 0 0 0 0.08 0 0 0 0.16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

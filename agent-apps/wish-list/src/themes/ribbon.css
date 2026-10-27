@@ -1,0 +1,58 @@
+/* Ribbon: pink tissue paper, plum ink, a raspberry ribbon, and a teal box for contrast. Light. */
+:root {
+  color-scheme: light;
+  --background: #fcf1f3;
+  --foreground: #2d1530;
+  --card: #ffffff;
+  --card-foreground: #2d1530;
+  --popover: #ffffff;
+  --popover-foreground: #2d1530;
+  --primary: #b8124f;
+  --primary-foreground: #fff6f8;
+  --secondary: #f6dde4;
+  --secondary-foreground: #2d1530;
+  --muted: #f7e4e9;
+  --muted-foreground: #74536a;
+  --accent: #ffe1e9;
+  --accent-foreground: #7a0c35;
+  --destructive: #b3261e;
+  --border: #edd2da;
+  --input: #e4c3cd;
+  --ring: #b8124f;
+  --radius: 0.875rem;
+
+  --bar: rgb(252 241 243 / 0.86);
+  --paper-sky: #fcf1f3;
+  --paper-1: #f7d6de;
+  --paper-2: #f2bccb;
+  --paper-3: #ec8ba4;
+  --paper-4: #2b8a83;
+  --paper-5: #ffffff;
+  --paper-6: #fbe2a1;
+  --ribbon: #b8124f;
+  --ribbon-2: #f5b52e;
+  --sun: #ffd978;
+  --sun-edge: #f6a43f;
+  --sun-glow: rgb(255 196 110 / 0.45);
+  --speck: #eeaabd;
+  --paper-shadow: rgb(122 18 60 / 0.2);
+
+  --stage: #fbe8ed;
+  --stage-floor: #f6d6df;
+  --plinth: #ffffff;
+  --plinth-edge: #f0d0da;
+  --plinth-shadow: rgb(110 20 60 / 0.22);
+  --picture-shadow: rgb(70 10 40 / 0.22);
+  --tag: #fffaf3;
+  --tag-edge: #ecd6c4;
+  --tag-ink: #2d1530;
+  --tag-muted: #8c6a74;
+  --string: #b8124f;
+  --stamp: #b8124f;
+  --stamp-yours: #2b8a83;
+  --sheen: rgb(255 255 255 / 0.62);
+  --glare: rgb(255 255 255 / 0.42);
+  --shadow-card: 0 1px 0 rgb(90 20 50 / 0.05), 0 2px 6px -2px rgb(90 20 50 / 0.12), 0 18px 36px -18px rgb(120 20 60 / 0.28);
+  --shadow-lift: 0 2px 4px rgb(90 20 50 / 0.06), 0 24px 44px -16px rgb(120 20 60 / 0.38);
+  --grain: none;
+}

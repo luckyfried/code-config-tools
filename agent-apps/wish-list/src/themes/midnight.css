@@ -1,0 +1,58 @@
+/* Midnight: navy paper under a cream moon, gold foil ribbon, berry and blue boxes. Dark. */
+:root {
+  color-scheme: dark;
+  --background: #0e1530;
+  --foreground: #f4ecdc;
+  --card: #18213f;
+  --card-foreground: #f4ecdc;
+  --popover: #1b2547;
+  --popover-foreground: #f4ecdc;
+  --primary: #e9bf58;
+  --primary-foreground: #1d1503;
+  --secondary: #232d52;
+  --secondary-foreground: #f4ecdc;
+  --muted: #1f2849;
+  --muted-foreground: #a9b0ca;
+  --accent: #27325c;
+  --accent-foreground: #f6d989;
+  --destructive: #ef6a6a;
+  --border: #2b3662;
+  --input: #3a4677;
+  --ring: #e9bf58;
+  --radius: 0.875rem;
+
+  --bar: rgb(14 21 48 / 0.84);
+  --paper-sky: #0e1530;
+  --paper-1: #1a2450;
+  --paper-2: #222f66;
+  --paper-3: #d9577b;
+  --paper-4: #3557a0;
+  --paper-5: #2f7f78;
+  --paper-6: #f4ecdc;
+  --ribbon: #e9bf58;
+  --ribbon-2: #f4ecdc;
+  --sun: #fbf2d6;
+  --sun-edge: #e6d3a0;
+  --sun-glow: rgb(243 229 191 / 0.16);
+  --speck: #f3e5bf;
+  --paper-shadow: rgb(0 0 0 / 0.5);
+
+  --stage: #1d2852;
+  --stage-floor: #243163;
+  --plinth: #2c3a70;
+  --plinth-edge: #3d4c88;
+  --plinth-shadow: rgb(0 0 0 / 0.55);
+  --picture-shadow: rgb(0 0 0 / 0.5);
+  --tag: #f4ecdc;
+  --tag-edge: #d8c9a9;
+  --tag-ink: #1b1d33;
+  --tag-muted: #5b5a6e;
+  --string: #e9bf58;
+  --stamp: #c42e55;
+  --stamp-yours: #2f5aa8;
+  --sheen: rgb(255 255 255 / 0.2);
+  --glare: rgb(255 240 210 / 0.16);
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 6px -2px rgb(0 0 0 / 0.5), 0 20px 40px -20px rgb(0 0 0 / 0.8);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 26px 48px -16px rgb(0 0 0 / 0.85);
+  --grain: none;
+}
