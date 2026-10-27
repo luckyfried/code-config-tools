@@ -1,0 +1,270 @@
+/* The chart card and the hand-drawn SVG inside it. */
+
+.chart-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-4) var(--space-3) var(--space-2);
+}
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-1) var(--space-2);
+}
+
+.chart-title {
+  display: none;
+  font-size: var(--text-lg);
+  font-weight: 650;
+}
+
+.chart-summary {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.summary-label {
+  font-size: var(--text-xs);
+  font-weight: 560;
+  color: var(--color-muted);
+}
+
+.summary-value {
+  font-size: var(--text-lg);
+  font-weight: 680;
+}
+
+.summary-goal .summary-value {
+  color: var(--color-goal);
+}
+
+.legend {
+  display: none;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend-swatch {
+  display: block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legend-point {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-point);
+  opacity: var(--point-opacity);
+}
+
+.legend-trend {
+  background: var(--color-trend);
+}
+
+.legend-goal {
+  height: 0;
+  border-top: 2px dashed var(--color-goal);
+  border-radius: 0;
+}
+
+.chart-host {
+  position: relative;
+  flex: 1;
+  min-height: 220px;
+}
+
+.chart-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  font-family: var(--font-sans);
+}
+
+.grid-line {
+  stroke: var(--color-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.axis-label {
+  fill: var(--color-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.future {
+  fill: var(--color-future);
+}
+
+.today-line {
+  stroke: var(--color-tick);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.today-label {
+  fill: var(--color-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.goal-line {
+  stroke: var(--color-goal);
+  stroke-width: 2;
+  stroke-dasharray: 7 6;
+  stroke-linecap: round;
+}
+
+.goal-tag rect {
+  fill: var(--color-surface);
+  stroke: var(--color-goal);
+  stroke-width: 1.5;
+}
+
+.goal-tag text {
+  fill: var(--color-goal);
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.area-top {
+  stop-color: var(--color-trend-area);
+  stop-opacity: var(--area-top-opacity);
+}
+
+.area-bottom {
+  stop-color: var(--color-trend-area);
+  stop-opacity: 0;
+}
+
+.trend-area {
+  stroke: none;
+}
+
+.trend-line {
+  fill: none;
+  stroke: var(--color-trend);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 6px 8px var(--shadow-trend));
+}
+
+.stem {
+  stroke: var(--color-point);
+  stroke-width: 1;
+  opacity: 0.12;
+}
+
+.point {
+  fill: var(--color-point);
+  opacity: var(--point-opacity);
+}
+
+.point-today {
+  fill: var(--color-trend);
+  opacity: 1;
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.trend-head {
+  fill: var(--color-surface);
+  stroke: var(--color-trend);
+  stroke-width: 3;
+}
+
+.trend-head-pen {
+  fill: var(--color-trend);
+  stroke: var(--color-surface);
+  filter: drop-shadow(0 0 6px var(--color-trend));
+}
+
+.projection {
+  fill: none;
+  stroke: var(--color-trend);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 7;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.marker-halo {
+  fill: var(--color-goal);
+  opacity: 0.18;
+}
+
+.marker-dot {
+  fill: var(--color-goal);
+  stroke: var(--color-surface);
+  stroke-width: 3;
+}
+
+.marker-tag rect {
+  fill: var(--color-goal);
+}
+
+.marker-tag text {
+  fill: var(--color-on-ink);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-empty {
+  fill: var(--color-muted);
+  font-size: 14px;
+  font-weight: 560;
+}
+
+@media (min-width: 900px) {
+  .chart-card {
+    padding: var(--space-5) var(--space-5) var(--space-3);
+  }
+
+  .chart-head {
+    padding: 0 0 var(--space-3);
+  }
+
+  .chart-title {
+    display: block;
+  }
+
+  .chart-summary {
+    display: none;
+  }
+
+  .legend {
+    display: flex;
+  }
+
+  .chart-card-full .chart-title,
+  .chart-card-full .screen-title {
+    display: block;
+  }
+}

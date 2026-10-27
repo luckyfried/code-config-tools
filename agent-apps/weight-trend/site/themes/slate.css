@@ -1,0 +1,46 @@
+/* Slate: warm charcoal, an ember trend that glows, a lilac goal, and a dark enamel dial. */
+:root {
+  color-scheme: dark;
+  --color-bg: #15110f;
+  --color-surface: #1f1a17;
+  --color-surface-2: #2a2420;
+  --color-text: #f4ebdf;
+  --color-muted: #a99888;
+  --color-accent: #ff8a5b;
+  --color-on-accent: #2b1108;
+  --color-danger: #ff6f6f;
+  --color-ok: #ff9d74;
+  --color-border: #342b25;
+
+  --color-trend: #ff8a5b;
+  --color-trend-area: #ff6f3c;
+  --color-goal: #d5a8ea;
+  --color-point: #f4ebdf;
+  --color-grid: #2a2420;
+  --color-future: #1a1613;
+  --color-tick: #5f5249;
+  --color-tick-strong: #f4ebdf;
+  --color-backdrop: #0f0c0a;
+  --color-ink: #f4ebdf;
+  --color-on-ink: #1f1a17;
+
+  --dial-face: #2b2420;
+  --dial-rim: #4a3f37;
+  --dial-well: #000000;
+  --dial-tick: #f4ebdf;
+  --dial-tick-minor: #8c7c6f;
+  --dial-needle: #ff7a45;
+  --dial-glare: #fff1e2;
+  --dial-bezel-top: #0b0908;
+  --dial-bezel-bottom: #3a312b;
+  --key-top: #342c27;
+  --key-bottom: #241e1a;
+
+  --area-top-opacity: 0.3;
+  --point-opacity: 0.3;
+  --shadow-trend: rgba(255, 138, 91, 0.5);
+  --shadow-key: 0 1px 0 rgba(255, 240, 225, 0.1) inset, 0 1px 1px rgba(0, 0, 0, 0.5), 0 5px 12px -4px rgba(0, 0, 0, 0.7);
+  --shadow-well: inset 0 3px 7px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+  --shadow-1: inset 0 1px 0 rgba(255, 240, 225, 0.05), 0 0 0 1px rgba(255, 240, 225, 0.06);
+  --shadow-2: inset 0 1px 0 rgba(255, 240, 225, 0.06), 0 0 0 1px rgba(255, 240, 225, 0.06), 0 24px 48px -24px rgba(0, 0, 0, 0.75);
+}

@@ -1,0 +1,46 @@
+/* Mist: oat paper and cream cards, espresso ink, a persimmon trend on an enamel dial, and a plum goal. */
+:root {
+  color-scheme: light;
+  --color-bg: #ede4d6;
+  --color-surface: #faf6ef;
+  --color-surface-2: #f1e9dc;
+  --color-text: #2a1c15;
+  --color-muted: #7b6a5b;
+  --color-accent: #c8452a;
+  --color-on-accent: #fff6ec;
+  --color-danger: #a8202c;
+  --color-ok: #b03d24;
+  --color-border: #e2d6c4;
+
+  --color-trend: #c8452a;
+  --color-trend-area: #e06a3c;
+  --color-goal: #6b3478;
+  --color-point: #3b291f;
+  --color-grid: #ece3d5;
+  --color-future: #f4ede2;
+  --color-tick: #a8968a;
+  --color-tick-strong: #2a1c15;
+  --color-backdrop: #e4d9c8;
+  --color-ink: #2a1c15;
+  --color-on-ink: #faf3e8;
+
+  --dial-face: #fbf6ec;
+  --dial-rim: #d8c8b0;
+  --dial-well: #3a2a1f;
+  --dial-tick: #2a1c15;
+  --dial-tick-minor: #8a7868;
+  --dial-needle: #d2401f;
+  --dial-glare: #ffffff;
+  --dial-bezel-top: #d6c7b1;
+  --dial-bezel-bottom: #fffaf2;
+  --key-top: #fffbf5;
+  --key-bottom: #ece2d3;
+
+  --area-top-opacity: 0.24;
+  --point-opacity: 0.3;
+  --shadow-trend: rgba(200, 69, 42, 0.34);
+  --shadow-key: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 -1px 0 rgba(58, 42, 31, 0.08) inset, 0 1px 1px rgba(58, 42, 31, 0.18), 0 4px 10px -4px rgba(58, 42, 31, 0.35);
+  --shadow-well: inset 0 2px 5px rgba(42, 28, 21, 0.35), inset 0 0 0 1px rgba(42, 28, 21, 0.12);
+  --shadow-1: 0 1px 2px rgba(58, 42, 31, 0.08), 0 0 0 1px rgba(58, 42, 31, 0.06);
+  --shadow-2: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 22px 44px -26px rgba(74, 46, 28, 0.42), 0 2px 6px rgba(58, 42, 31, 0.06), 0 0 0 1px rgba(58, 42, 31, 0.06);
+}

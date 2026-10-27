@@ -1,0 +1,368 @@
+/* The morning entry: the dial, the ruler under it, the note, and the log button; the delta chip; the stats column. */
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 28px;
+}
+
+.entry-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 var(--space-3) 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 620;
+  white-space: nowrap;
+  transition-property: color, background-color;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: ease;
+}
+
+.chip[data-dir="toward"] {
+  color: var(--color-ok);
+  background: color-mix(in oklab, var(--color-ok) 13%, var(--color-surface));
+}
+
+.chip[data-dir="away"] {
+  color: var(--color-goal);
+  background: color-mix(in oklab, var(--color-goal) 14%, var(--color-surface));
+}
+
+.chip-arrow {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(var(--angle, 0deg));
+  transition: transform calc(var(--motion-slow) * 2) var(--ease-spring);
+}
+
+.dial {
+  display: grid;
+  grid-template-columns: var(--tap) minmax(0, 1fr) var(--tap);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dial-step {
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--key-top), var(--key-bottom));
+  box-shadow: var(--shadow-key);
+  color: var(--color-text);
+  touch-action: manipulation;
+  transition-property: transform, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.dial-step svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.dial-step:active {
+  transform: translateY(1px) scale(0.96);
+  box-shadow: var(--shadow-well);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dial-step:hover {
+    color: var(--color-accent);
+  }
+}
+
+.dial-readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+  cursor: text;
+}
+
+.dial-input {
+  field-sizing: content;
+  min-width: 3ch;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 720;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.dial-input:focus {
+  outline: none;
+}
+
+.dial-input:focus-visible {
+  outline: none;
+  text-decoration: underline 2px var(--color-accent);
+  text-underline-offset: 8px;
+}
+
+.dial-unit {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+/* The dial's window: a bezel ring around a recessed well; the disc, needle, and glass are drawn in the canvas. */
+.ruler {
+  position: relative;
+  height: 84px;
+  padding: 4px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--dial-bezel-top), var(--dial-bezel-bottom));
+  box-shadow: 0 1px 0 var(--dial-bezel-bottom);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.ruler:active {
+  cursor: grabbing;
+}
+
+.ruler::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-well);
+  pointer-events: none;
+}
+
+.ruler-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+}
+
+.entry-row {
+  display: flex;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+}
+
+.note {
+  flex: 1;
+  min-width: 0;
+}
+
+.note-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--color-surface-2);
+  font-size: var(--text-md);
+  transition: border-color var(--motion-fast) ease;
+}
+
+.note-input::placeholder {
+  color: var(--color-muted);
+}
+
+.note-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.log {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  height: 48px;
+  min-width: 140px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--color-accent) 86%, var(--color-on-accent)), var(--color-accent) 55%, color-mix(in oklab, var(--color-accent) 88%, var(--color-text)));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-on-accent) 45%, transparent), 0 1px 1px color-mix(in oklab, var(--color-accent) 40%, transparent), 0 8px 18px -8px var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-md);
+  font-weight: 650;
+  white-space: nowrap;
+  transition-property: transform, box-shadow, color;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.log:active {
+  transform: scale(0.97);
+}
+
+.log-check {
+  width: 20px;
+  height: 20px;
+  margin-left: -4px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  display: none;
+}
+
+.log[data-state="logged"] {
+  background: color-mix(in oklab, var(--color-accent) 14%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 30%, transparent);
+  color: var(--color-accent);
+}
+
+.log[data-state="logged"] .log-check {
+  display: block;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--motion-slow) var(--ease-out);
+}
+
+@starting-style {
+  .log[data-state="logged"] .log-check {
+    stroke-dashoffset: 22;
+  }
+}
+
+.stats {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .entry {
+    padding: var(--space-5);
+    gap: var(--space-3);
+  }
+
+  .dial-input {
+    font-size: 3.75rem;
+  }
+
+  .ruler {
+    height: 100px;
+  }
+
+  .stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    min-height: 0;
+  }
+
+  .stat-label {
+    font-size: var(--text-sm);
+    font-weight: 560;
+    color: var(--color-muted);
+  }
+
+  .stat-value {
+    font-size: var(--text-4xl);
+    font-weight: 720;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .stat-value.stat-small {
+    font-size: var(--text-xl);
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+
+  .stat-sub {
+    margin-top: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .recent {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .recent-list {
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .recent-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 76px;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: 5px 0;
+    font-size: var(--text-sm);
+  }
+
+  .recent-day {
+    color: var(--color-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .recent-value {
+    font-weight: 650;
+  }
+
+  .recent-diff {
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    text-align: right;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+}

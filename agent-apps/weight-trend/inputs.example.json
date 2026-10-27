@@ -1,0 +1,18 @@
+{
+  "name": "Sam",
+  "units": "kg",
+  "goal": 78,
+  "smoothing": 0.1,
+  "showProjection": true,
+  "theme": "auto",
+  "sample": true,
+  "_notes": {
+    "name": "The name in the greeting at the top of the page.",
+    "units": "\"kg\" or \"lb\". Every number on the page reads in these units; the person can switch in Settings.",
+    "goal": "The goal weight in those units. The chart draws it as a dashed line and marks the date the trend reaches it.",
+    "smoothing": "Optional, 0.1 when left out. How far each weigh-in moves the trend line, from 0.01 (very calm) to 0.5 (quick to follow the scale).",
+    "showProjection": "Optional, true when left out. false hides the goal date and its marker.",
+    "theme": "\"mist\" (light), \"slate\" (dark), or \"auto\" (Mist or Slate, following the system).",
+    "sample": "Optional. true fills a first visit with three months of made-up weigh-ins so the chart has something to show; leave it out for a real start."
+  }
+}

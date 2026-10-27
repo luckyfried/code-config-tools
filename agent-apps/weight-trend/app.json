@@ -1,0 +1,17 @@
+{
+  "id": "01a162b5-0ff1-7df6-8e82-7cd544d20199",
+  "version": "2026-10-21",
+  "name": "Weight Trend",
+  "shortDescription": "A daily weigh-in with a smooth trend line and the day you reach your goal.",
+  "description": "Weigh in each morning with a big dial that opens on yesterday's trend, so most days it takes a tap or two and Log weigh-in. The chart draws every weigh-in as a faint dot and the trend through them as one smooth line that washes out water and salt, so the real change shows. Your goal is a dashed line, and a marker glides to the day the trend reaches it at its current pace, moving again each time you log. A chip shows how much the trend changed this week, with an arrow that turns to match, and says Holding when it is flat. Look back over 90 days, a year, or every weigh-in, delete a mistake, switch between kilograms and pounds, and change your goal. Everything stays in your browser, and Settings exports your weigh-ins to a file you can import in another one. Comes in a light mist look and a dark slate look, plus an automatic one that follows your system.",
+  "category": "health-fitness",
+  "subcategory": "Body weight",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/weight-trend",
+  "setup": "Ask: \"Kilograms or pounds? What's your goal weight? Do you want the projected date shown on the chart?\" and their name for the greeting. Put the name in name, kg or lb in units, the goal weight in those units in goal, and true or false in showProjection. Put mist (light), slate (dark), or auto (follows the system) in theme; auto when they have no preference. Keep smoothing 0.1 unless they ask for a calmer or quicker line, and leave sample out. No keys or accounts are needed."
+}

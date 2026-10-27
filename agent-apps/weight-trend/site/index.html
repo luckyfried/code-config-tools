@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Weight Trend</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/inter/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/entry.css">
+  <link rel="stylesheet" href="./styles/chart.css">
+  <link rel="stylesheet" href="./styles/screens.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path class="brand-goal" d="M4 23h24"/>
+          <path class="brand-line" d="M4 9c5 1 7 6 12 8s8 2 12 6"/>
+          <circle class="brand-dot" cx="28" cy="23" r="3"/>
+        </svg>
+        <div class="brand-text">
+          <p class="greeting" data-greeting>Good morning</p>
+          <p class="today-date num" data-today-date></p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Screens">
+        <button class="tab" type="button" data-tab="today" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v4M5.6 6.6l2.8 2.8M4 14h4M16 14h4M18.4 6.6l-2.8 2.8"/><path d="M12 14l3-4"/><circle cx="12" cy="14" r="1.6"/><path d="M3.5 19h17"/></svg>
+          <span>Today</span>
+        </button>
+        <button class="tab" type="button" data-tab="chart">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16"/><path d="M7 15c3-1 4-6 7-6s3 3 6 2"/></svg>
+          <span>Chart</span>
+        </button>
+        <button class="tab" type="button" data-tab="settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </header>
+
+    <main class="screens">
+      <section class="screen screen-today" data-screen="today" aria-label="Today">
+        <div class="entry card">
+          <div class="entry-head">
+            <p class="entry-label">This morning</p>
+            <p class="chip num" data-chip>
+              <svg class="chip-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg>
+              <span data-chip-text>Holding</span>
+            </p>
+          </div>
+
+          <div class="dial">
+            <button class="dial-step" type="button" data-step="-1" aria-label="Down a tenth">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+            </button>
+            <label class="dial-readout">
+              <span class="visually-hidden">Today's weight</span>
+              <input class="dial-input num" data-dial-input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" enterkeyhint="done">
+              <span class="dial-unit" data-unit>kg</span>
+            </label>
+            <button class="dial-step" type="button" data-step="1" aria-label="Up a tenth">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg>
+            </button>
+          </div>
+
+          <div class="ruler" data-ruler>
+            <canvas class="ruler-canvas" aria-hidden="true"></canvas>
+          </div>
+
+          <form class="entry-row" data-entry-form>
+            <label class="note">
+              <span class="visually-hidden">Note</span>
+              <input class="note-input" data-note type="text" maxlength="80" placeholder="Add a note" autocomplete="off" enterkeyhint="done">
+            </label>
+            <button class="log" type="submit" data-log>
+              <svg class="log-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+              <span data-log-text>Log weigh-in</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="chart-card card">
+          <div class="chart-head">
+            <h2 class="chart-title">Last 90 days</h2>
+            <div class="chart-summary">
+              <p class="summary-item">
+                <span class="summary-label">Trend</span>
+                <span class="summary-value num" data-trend-value>–</span>
+              </p>
+              <p class="summary-item summary-goal" data-goal-summary>
+                <span class="summary-label" data-goal-label>Goal</span>
+                <span class="summary-value num" data-goal-date>–</span>
+              </p>
+            </div>
+            <ul class="legend" aria-hidden="true">
+              <li><span class="legend-swatch legend-point"></span>Weigh-ins</li>
+              <li><span class="legend-swatch legend-trend"></span>Trend</li>
+              <li><span class="legend-swatch legend-goal"></span>Goal</li>
+            </ul>
+          </div>
+          <div class="chart-host" data-chart="today"></div>
+        </div>
+
+        <aside class="stats card" aria-label="Where you are">
+          <div class="stat stat-hero">
+            <p class="stat-label">Trend weight</p>
+            <p class="stat-value num" data-stat-trend>–</p>
+            <p class="stat-sub num" data-stat-week></p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat">
+              <p class="stat-label">To goal</p>
+              <p class="stat-value stat-small num" data-stat-togo>–</p>
+            </div>
+            <div class="stat" data-stat-when-box>
+              <p class="stat-label">Reaching goal</p>
+              <p class="stat-value stat-small num" data-stat-when>–</p>
+              <p class="stat-sub" data-stat-when-sub></p>
+            </div>
+            <div class="stat">
+              <p class="stat-label">Since the start</p>
+              <p class="stat-value stat-small num" data-stat-since>–</p>
+            </div>
+            <div class="stat">
+              <p class="stat-label">Weigh-ins</p>
+              <p class="stat-value stat-small num" data-stat-count>–</p>
+            </div>
+          </div>
+          <div class="recent">
+            <p class="stat-label">Recent weigh-ins</p>
+            <ol class="recent-list" data-recent></ol>
+          </div>
+        </aside>
+      </section>
+
+      <section class="screen screen-chart" data-screen="chart" aria-label="Chart" hidden>
+        <div class="chart-card card chart-card-full">
+          <div class="chart-head">
+            <h2 class="screen-title" data-range-title>Last 90 days</h2>
+            <div class="segmented" role="group" aria-label="Range">
+              <button type="button" data-range="90" aria-pressed="true">90 days</button>
+              <button type="button" data-range="365" aria-pressed="false">Year</button>
+              <button type="button" data-range="all" aria-pressed="false">All</button>
+            </div>
+          </div>
+          <div class="chart-host" data-chart="range"></div>
+        </div>
+        <div class="log-list card">
+          <div class="log-list-head">
+            <h2 class="screen-title">Weigh-ins</h2>
+            <p class="log-list-sub">Above or below the trend that day</p>
+          </div>
+          <ol class="entries" data-entries></ol>
+        </div>
+      </section>
+
+      <section class="screen screen-settings" data-screen="settings" aria-label="Settings" hidden>
+        <div class="setting card">
+          <h2 class="setting-title">Units</h2>
+          <p class="setting-text">Every weigh-in converts when you switch.</p>
+          <div class="segmented segmented-wide" role="group" aria-label="Units">
+            <button type="button" data-units="kg" aria-pressed="true">Kilograms</button>
+            <button type="button" data-units="lb" aria-pressed="false">Pounds</button>
+          </div>
+        </div>
+        <form class="setting card" data-goal-form>
+          <h2 class="setting-title">Goal</h2>
+          <p class="setting-text">The dashed line on the chart, and the date the trend reaches it.</p>
+          <div class="goal-row">
+            <label class="goal-field">
+              <span class="visually-hidden">Goal weight</span>
+              <input class="goal-input num" data-goal-input type="text" inputmode="decimal" autocomplete="off">
+              <span class="goal-unit" data-unit>kg</span>
+            </label>
+            <button class="button" type="submit">Save goal</button>
+          </div>
+          <p class="setting-status" data-goal-status aria-live="polite"></p>
+        </form>
+        <div class="setting card">
+          <h2 class="setting-title">Your weigh-ins</h2>
+          <p class="setting-text">They live in this browser. Export saves a file you can import on another device.</p>
+          <div class="data-row">
+            <button class="button" type="button" data-export>Export</button>
+            <label class="button button-quiet">
+              Import
+              <input class="visually-hidden" data-import type="file" accept="application/json,.json">
+            </label>
+          </div>
+          <p class="setting-status" data-data-status aria-live="polite"></p>
+        </div>
+        <div class="setting card setting-about">
+          <h2 class="setting-title">How the line is drawn</h2>
+          <p class="setting-text" data-about>Each weigh-in moves the trend a tenth of the way toward the scale, so water and salt wash out and only the real change stays. The goal date follows the trend's last seven days.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
