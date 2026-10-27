@@ -1,0 +1,1288 @@
+/* Layout and components. Every color is a token from theme.css. */
+
+/* The ring's color at the block's current heat, cool at the start and warm at the end. The dial and the live
+   block on the strip both read it, so the two halves of the screen warm together. */
+:root {
+  --ring-color: color-mix(in oklch, var(--ring-cool), var(--ring-warm) calc(var(--heat, 0) * 100%));
+  --ring-glow: color-mix(in oklch, var(--ring-warm) calc(var(--halo-opacity) * 150%), transparent);
+  /* A finished block is a whole ring unrolled: cool where it began, warm where it ended. */
+  --block-fill: linear-gradient(90deg in oklch, var(--ring-cool) 12%, var(--ring-warm) 100%);
+}
+
+/* The mesh: four radial gradients whose centers drift through registered custom properties. Each color circles the
+   screen once in 40 s, a corner every ten seconds, so the drift reads in any ten seconds of watching. */
+@property --m1x { syntax: "<percentage>"; inherits: false; initial-value: 18.8%; }
+@property --m1y { syntax: "<percentage>"; inherits: false; initial-value: 20.5%; }
+@property --m2x { syntax: "<percentage>"; inherits: false; initial-value: 75.7%; }
+@property --m2y { syntax: "<percentage>"; inherits: false; initial-value: 25.6%; }
+@property --m3x { syntax: "<percentage>"; inherits: false; initial-value: 73.2%; }
+@property --m3y { syntax: "<percentage>"; inherits: false; initial-value: 72%; }
+@property --m4x { syntax: "<percentage>"; inherits: false; initial-value: 20%; }
+@property --m4y { syntax: "<percentage>"; inherits: false; initial-value: 78.4%; }
+
+.mesh {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-mesh);
+  pointer-events: none;
+  opacity: var(--mesh-opacity);
+  background-color: var(--mesh-base);
+  background-image:
+    radial-gradient(52% 50% at var(--m1x) var(--m1y), var(--mesh-1), transparent 70%),
+    radial-gradient(48% 54% at var(--m2x) var(--m2y), var(--mesh-2), transparent 70%),
+    radial-gradient(54% 48% at var(--m3x) var(--m3y), var(--mesh-3), transparent 70%),
+    radial-gradient(50% 54% at var(--m4x) var(--m4y), var(--mesh-4), transparent 70%);
+  animation: mesh-drift var(--motion-mesh) linear infinite;
+}
+
+@keyframes mesh-drift {
+  0%, 100% { --m1x: 18.8%; --m1y: 20.5%; --m2x: 75.7%; --m2y: 25.6%; --m3x: 73.2%; --m3y: 72%; --m4x: 20%; --m4y: 78.4%; }
+  8.33% { --m1x: 39.4%; --m1y: 12.4%; --m2x: 90.8%; --m2y: 39.6%; --m3x: 58.5%; --m3y: 79.9%; --m4x: 14.7%; --m4y: 59%; }
+  16.67% { --m1x: 59%; --m1y: 18%; --m2x: 92.4%; --m2y: 60.8%; --m3x: 40.2%; --m3y: 84.7%; --m4x: 18.9%; --m4y: 42.1%; }
+  25% { --m1x: 72.6%; --m1y: 28.6%; --m2x: 78%; --m2y: 76.5%; --m3x: 19.4%; --m3y: 78.9%; --m4x: 26.3%; --m4y: 27.5%; }
+  33.33% { --m1x: 83.8%; --m1y: 41.4%; --m2x: 58.7%; --m2y: 80.9%; --m3x: 8.2%; --m3y: 60.6%; --m4x: 39.8%; --m4y: 13.9%; }
+  41.67% { --m1x: 89.6%; --m1y: 60.1%; --m2x: 41.7%; --m2y: 79.4%; --m3x: 13.2%; --m3y: 40.7%; --m4x: 61.3%; --m4y: 9.9%; }
+  50% { --m1x: 81.2%; --m1y: 79.5%; --m2x: 24.3%; --m2y: 74.4%; --m3x: 26.8%; --m3y: 28%; --m4x: 80%; --m4y: 21.6%; }
+  58.33% { --m1x: 60.6%; --m1y: 87.6%; --m2x: 9.2%; --m2y: 60.4%; --m3x: 41.5%; --m3y: 20.1%; --m4x: 85.3%; --m4y: 41%; }
+  66.67% { --m1x: 41%; --m1y: 82%; --m2x: 7.6%; --m2y: 39.2%; --m3x: 59.8%; --m3y: 15.3%; --m4x: 81.1%; --m4y: 57.9%; }
+  75% { --m1x: 27.4%; --m1y: 71.4%; --m2x: 22%; --m2y: 23.5%; --m3x: 80.6%; --m3y: 21.1%; --m4x: 73.7%; --m4y: 72.5%; }
+  83.33% { --m1x: 16.2%; --m1y: 58.6%; --m2x: 41.3%; --m2y: 19.1%; --m3x: 91.8%; --m3y: 39.4%; --m4x: 60.2%; --m4y: 86.1%; }
+  91.67% { --m1x: 10.4%; --m1y: 39.9%; --m2x: 58.3%; --m2y: 20.6%; --m3x: 86.8%; --m3y: 59.3%; --m4x: 38.7%; --m4y: 90.1%; }
+}
+
+.is-hidden .mesh {
+  animation-play-state: paused;
+}
+
+.no-mesh .mesh,
+.no-mesh-motion .mesh {
+  animation: none;
+}
+
+.no-mesh .mesh {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh {
+    animation: none;
+  }
+}
+
+/* Page frame */
+.app {
+  position: relative;
+  z-index: var(--z-app);
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.timer {
+  min-height: 100dvh;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  padding: calc(var(--space-5) + env(safe-area-inset-top)) calc(var(--space-4) + env(safe-area-inset-right))
+    var(--space-4) calc(var(--space-4) + env(safe-area-inset-left));
+}
+
+.hello {
+  text-align: center;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.hello__greet {
+  font-family: var(--font-display);
+  font-size: clamp(1.625rem, 3.2vw + 0.6rem, 2.5rem);
+  font-weight: 650;
+  font-stretch: 82%;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.hello__sub {
+  color: var(--color-muted);
+  font-size: var(--text-md);
+  text-wrap: pretty;
+}
+
+/* The ring */
+.dial {
+  --ring-size: min(80vw, 40dvh, 560px);
+  position: relative;
+  width: var(--ring-size);
+  aspect-ratio: 1;
+  flex: none;
+  view-transition-name: dial;
+}
+
+.is-running .dial {
+  --ring-size: min(90vw, 60dvh, 640px);
+}
+
+.dial__halo {
+  position: absolute;
+  inset: -14%;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, var(--ring-color), transparent);
+  opacity: calc(var(--halo-opacity) * (1 + var(--final, 0) * 1.3));
+  pointer-events: none;
+}
+
+/* A block's last seconds: main.js runs --final from 0 to 1, and the drained track, the halo, and an ember horizon
+   under the field burn up together, so the end reads before the clock does. The halo above and the track below
+   read it too. */
+.mesh::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(110% 62% at 50% 104%, var(--ring-warm), transparent 72%);
+  opacity: calc(var(--final, 0) * 0.42);
+}
+
+/* The finish: the drained ring snaps back to full on the spring, a ring of light blooms out of it, and the
+   halo flares warm. main.js sets .is-complete on the root for the length of it. */
+.dial__bloom {
+  position: absolute;
+  inset: -4%;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, transparent 74%, var(--ring-warm) 86%, transparent 97%);
+  opacity: 0;
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.dial__bloom::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: var(--radius-full);
+  background: radial-gradient(closest-side, var(--ring-warm), transparent);
+  opacity: 0;
+}
+
+.ring__flash {
+  fill: none;
+  stroke: var(--ring-warm);
+  stroke-width: 15;
+  opacity: 0;
+  transform-origin: 200px 200px;
+}
+
+.is-complete .dial__bloom {
+  animation:
+    bloom-spread 1500ms var(--ease-out) both,
+    bloom-fade 1500ms linear both;
+}
+
+.is-complete .dial__bloom::after {
+  animation: bloom-core 1600ms linear both;
+}
+
+.is-complete .ring__flash {
+  animation: ring-flash 1200ms cubic-bezier(0.25, 0.6, 0.4, 1) both;
+}
+
+.is-complete .ring__fill {
+  animation: ring-snap 620ms var(--ease-spring) both;
+}
+
+.is-complete .ring__svg {
+  animation: dial-snap 720ms var(--ease-spring) both;
+}
+
+.is-complete .ring__ticks {
+  animation: ticks-flash 1100ms var(--ease-out) both;
+}
+
+@keyframes bloom-spread {
+  from {
+    transform: scale(0.96);
+  }
+  to {
+    transform: scale(1.6);
+  }
+}
+
+@keyframes bloom-fade {
+  from {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes bloom-core {
+  from {
+    opacity: 0;
+  }
+  12% {
+    opacity: calc(var(--halo-opacity) * 1.8);
+  }
+  50% {
+    opacity: calc(var(--halo-opacity) * 0.8);
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ring-flash {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    stroke-width: 15;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.14);
+    stroke-width: 1;
+  }
+}
+
+@keyframes ring-snap {
+  from {
+    stroke-dasharray: 0 1169;
+  }
+}
+
+@keyframes dial-snap {
+  from {
+    transform: scale(0.93);
+  }
+}
+
+@keyframes ticks-flash {
+  from,
+  20% {
+    stroke: var(--ring-warm);
+    opacity: 1;
+  }
+}
+
+.ring {
+  appearance: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.ring:focus-visible {
+  outline-offset: 6px;
+}
+
+.ring__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ring__track,
+.ring__fill {
+  fill: none;
+  stroke-width: 15;
+}
+
+.ring__track {
+  stroke: color-mix(in oklab, var(--ring-track), var(--ring-warm) calc(var(--final, 0) * 48%));
+}
+
+.ring__fill {
+  stroke: var(--ring-color);
+  stroke-linecap: round;
+}
+
+.ring__fill.is-empty {
+  visibility: hidden;
+}
+
+.ring__ticks {
+  stroke: var(--ring-tick);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.ring__ticks .is-major {
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.ring__sec {
+  fill: var(--color-text);
+  transform-origin: 200px 200px;
+}
+
+.ring__sec.is-off {
+  visibility: hidden;
+}
+
+.ring__face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--ring-size) * 0.025);
+  max-width: 72%;
+  text-align: center;
+}
+
+.ring__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(1rem, calc(var(--ring-size) * 0.06), 1.75rem);
+  font-weight: 560;
+  font-stretch: 88%;
+}
+
+.ring__time {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: calc(var(--ring-size) * 0.215);
+  font-weight: 300;
+  line-height: 1;
+}
+
+.ring__time.is-long {
+  font-size: calc(var(--ring-size) * 0.158);
+}
+
+.ring__state {
+  max-width: 78%;
+  min-height: 1.5em;
+  line-height: 1.35;
+  text-wrap: balance;
+  color: var(--color-muted);
+  font-size: clamp(0.875rem, calc(var(--ring-size) * 0.04), 1.0625rem);
+}
+
+/* The setup under the ring */
+.setup {
+  width: min(100%, 460px);
+  display: grid;
+  gap: var(--space-4);
+}
+
+.setup__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.chip {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  font-size: var(--text-md);
+  transition-property: background-color, color, border-color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.chip__unit {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.minutes {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+}
+
+.minutes:focus-within {
+  border-color: var(--color-text);
+}
+
+.minutes input {
+  width: 3.2em;
+  border: 0;
+  background: none;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  appearance: textfield;
+}
+
+/* No spinner: it takes the digits' room, and the chips and the keyboard already set the length. */
+.minutes input::-webkit-inner-spin-button,
+.minutes input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.minutes span {
+  opacity: 0.7;
+}
+
+.label-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  font-size: var(--text-md);
+  text-align: center;
+}
+
+.label-input::placeholder {
+  color: var(--color-muted);
+}
+
+.label-input:focus {
+  outline: none;
+  border-color: var(--color-text);
+}
+
+.start,
+.button {
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-full);
+  font-size: var(--text-md);
+  font-weight: 600;
+  transition-property: transform, background-color, opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.start {
+  min-height: 56px;
+  border: 0;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.start:active,
+.button:active {
+  transform: scale(0.97);
+}
+
+.button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.button--accent {
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Pause and give up, under the ring while a block runs. */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.controls .button {
+  min-width: 132px;
+  background: var(--color-surface);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.is-paused .controls__main {
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.controls .button.is-armed {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.is-running .hello,
+.is-running .setup {
+  display: none;
+}
+
+/* Today and the week */
+.record__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.record__title h2 {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  font-stretch: 85%;
+}
+
+.record__total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.strip {
+  --strip-h: 30px;
+  position: relative;
+  height: var(--strip-h);
+  border-radius: var(--radius-full);
+  background: var(--ring-track);
+}
+
+.strip--today {
+  margin-bottom: calc(var(--space-5) + 4px);
+}
+
+.strip__tick {
+  position: absolute;
+  top: 30%;
+  bottom: 30%;
+  left: calc(var(--x) * 1%);
+  width: 1.5px;
+  margin-left: -0.75px;
+  border-radius: 1px;
+  background: var(--ring-tick);
+  opacity: 0.55;
+}
+
+/* A tick under a block, or within reach of one or of the now line, steps aside (record.js fitStrip). */
+.strip__tick.is-covered {
+  visibility: hidden;
+}
+
+.strip__hour {
+  position: absolute;
+  top: 100%;
+  left: calc(var(--x) * 1%);
+  padding-top: 6px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.strip__hour.is-first {
+  transform: none;
+}
+
+.strip__hour.is-last {
+  transform: translateX(-100%);
+}
+
+/* However short, a block is a whole pill: never narrower than twice its height (--block-min). */
+.strip__block {
+  --block-min: 32px;
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: calc(var(--x) * 1%);
+  width: max(var(--block-min), calc(var(--w) * 1%));
+  border-radius: var(--radius-full);
+  background: var(--block-fill);
+  box-shadow:
+    inset 0 1px 0 var(--sheen),
+    0 0 14px -2px var(--ring-glow);
+  transform-origin: left center;
+}
+
+/* The block under way: the dial's own stroke, at the dial's own heat. It ends just short of the now line, so a
+   block only minutes old is still a whole pill beside the line rather than cut by it. */
+.strip__block.is-live {
+  left: calc((var(--x) + var(--w)) * 1% - 3px);
+  margin-left: calc(-1 * max(var(--block-min), calc(var(--w) * 1%)));
+  background: var(--ring-color);
+  box-shadow:
+    inset 0 1px 0 var(--sheen),
+    0 0 16px -1px color-mix(in oklch, var(--ring-color) calc(var(--halo-opacity) * 200%), transparent);
+}
+
+/* Each block grows out from its start with the spring, today first and then the week, a row at a time. */
+.strip__block.is-grow {
+  animation: block-grow var(--motion-land) var(--ease-spring) both;
+  animation-delay: calc(200ms + var(--row, 0) * 140ms + var(--i, 0) * 55ms);
+}
+
+@keyframes block-grow {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* The block that just ended slides down onto the strip and flares as the ring blooms. */
+.strip__block.is-landed {
+  animation:
+    block-land var(--motion-land) var(--ease-spring) 320ms both,
+    block-flare 1400ms var(--ease-out) 320ms both;
+}
+
+@keyframes block-land {
+  from {
+    opacity: 0;
+    transform: translateY(-160%) scale(0.8);
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+@keyframes block-flare {
+  from,
+  12% {
+    box-shadow:
+      inset 0 1px 0 var(--sheen),
+      0 0 30px 6px var(--ring-warm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strip__block.is-grow,
+  .strip__block.is-landed {
+    animation: block-fade 200ms ease-out both;
+  }
+}
+
+@keyframes block-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Now: the dial's seconds dot on a hairline. */
+.strip__now {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: calc(var(--x) * 1%);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--color-text);
+}
+
+.strip__now::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: var(--radius-full);
+  background: var(--color-text);
+}
+
+.blocks li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.blocks__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--block-fill);
+  box-shadow: 0 0 10px var(--ring-glow);
+}
+
+.blocks li.is-grow {
+  animation: row-rise var(--motion-slow) var(--ease-out) both;
+  animation-delay: calc(260ms + var(--i, 0) * 70ms);
+}
+
+.blocks li.is-landed {
+  animation: row-rise var(--motion-land) var(--ease-spring) 420ms both;
+}
+
+@keyframes row-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.blocks__what {
+  display: grid;
+  min-width: 0;
+}
+
+.blocks__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 560;
+}
+
+.blocks__when,
+.blocks__dur {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+
+.blocks__dur {
+  color: var(--color-text);
+}
+
+.blocks__empty {
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.week__rows {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.week__row {
+  display: grid;
+  grid-template-columns: 2.6em minmax(0, 1fr) 4.6em;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 32px;
+}
+
+.week__day {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.week__row.is-today .week__day {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.week__row .strip {
+  --strip-h: 18px;
+}
+
+.week__row .strip__block {
+  --block-min: 20px;
+  top: 4px;
+  bottom: 4px;
+  box-shadow:
+    inset 0 1px 0 var(--sheen),
+    0 0 10px -2px var(--ring-glow);
+}
+
+.week__hours {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.week__bar {
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--ring-track);
+}
+
+.week__bar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--block-fill);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left center;
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+
+.week__bar.is-grow span {
+  animation: bar-grow var(--motion-land) var(--ease-spring) both;
+  animation-delay: calc(300ms + var(--row, 0) * 140ms);
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.week__sum {
+  margin-top: var(--space-4);
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.week__sum strong {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.io {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.io__note {
+  flex-basis: 100%;
+  min-height: 1.5em;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.io__note.is-error {
+  color: var(--color-danger);
+}
+
+/* Phone: the record is a card of the week under the ring that opens into a sheet with today's list and
+   Export and Import. It sits in the page's flow, clear of the home bar and the notch. */
+.peek {
+  position: relative;
+  z-index: var(--z-peek);
+  width: 100%;
+  display: grid;
+  gap: var(--space-3);
+  padding: 10px var(--space-4) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background:
+    radial-gradient(90% 60% at 0% 0%, color-mix(in oklch, var(--ring-color) calc(var(--halo-opacity) * 60%), transparent), transparent),
+    color-mix(in srgb, var(--color-bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--shadow-2);
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.peek:active {
+  transform: scale(0.985);
+}
+
+.peek__grab {
+  justify-self: center;
+  width: 36px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-muted);
+  opacity: 0.45;
+}
+
+.peek__rows {
+  display: grid;
+  gap: 6px;
+}
+
+.peek .week__row {
+  grid-template-columns: 3.1em minmax(0, 1fr) 3.3em;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.peek .week__row .strip {
+  --strip-h: 12px;
+}
+
+.peek .week__row .strip__block {
+  --block-min: 16px;
+  top: 2px;
+  bottom: 2px;
+}
+
+.peek .week__bar {
+  display: none;
+}
+
+.peek__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-md);
+}
+
+.peek__head strong {
+  font-weight: 650;
+}
+
+.peek__total {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.week__row .strip__now {
+  top: -4px;
+  bottom: -4px;
+}
+
+.week__row .strip__now::before {
+  display: none;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-scrim);
+  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-height: 90dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-5) calc(var(--space-5) + env(safe-area-inset-right))
+    calc(var(--space-6) + env(safe-area-inset-bottom)) calc(var(--space-5) + env(safe-area-inset-left));
+  border-radius: 24px 24px 0 0;
+  background:
+    radial-gradient(90% 36% at 0% 0%, color-mix(in oklch, var(--ring-color) calc(var(--halo-opacity) * 70%), transparent), transparent),
+    radial-gradient(80% 30% at 100% 100%, color-mix(in oklch, var(--ring-warm) calc(var(--halo-opacity) * 45%), transparent), transparent),
+    var(--color-bg);
+  box-shadow: var(--shadow-2);
+  transform: translateY(100%);
+  visibility: hidden;
+  transition:
+    transform 340ms var(--ease-drawer),
+    visibility 0s linear 340ms;
+}
+
+.is-sheet-open .sheet {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 340ms var(--ease-drawer),
+    visibility 0s;
+}
+
+.is-sheet-open .scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sheet__close {
+  align-self: flex-end;
+  min-height: 40px;
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) calc(var(--space-5) * -1) 0;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .is-sheet-open .sheet {
+    transition: visibility 0s;
+  }
+}
+
+/* Desktop: the timer on the left, today and the week on the right. */
+@media (min-width: 960px) {
+  /* The ring and the panel are one composition, centred together with a fixed gutter between them. */
+  .app {
+    --panel-w: clamp(400px, 34vw, 600px);
+    --gutter: clamp(32px, 4vw, 96px);
+    --room: calc(100vw - var(--panel-w) - var(--gutter) - 2 * var(--space-6));
+    grid-template-columns: auto var(--panel-w);
+    justify-content: center;
+    align-items: center;
+    column-gap: var(--gutter);
+    padding: 0 var(--space-6);
+  }
+
+  /* Unclipped, so the ring's halo spills into the gutter instead of ending in a hard edge. */
+  .timer {
+    overflow: visible;
+    padding: var(--space-6) 0;
+    gap: var(--space-5);
+  }
+
+  .dial {
+    --ring-size: min(52dvh, calc(var(--room) * 0.8), 560px);
+  }
+
+  .is-running .dial {
+    --ring-size: min(calc(100dvh - 190px), var(--room), 880px);
+  }
+
+  .week__row {
+    min-height: 38px;
+  }
+
+  .week__row .strip {
+    --strip-h: 20px;
+  }
+
+  .week__row .strip__block {
+    --block-min: 24px;
+  }
+
+  .record {
+    position: sticky;
+    top: 0;
+    max-height: 100dvh;
+    padding: var(--space-5) 0;
+    display: flex;
+  }
+
+  /* The record on a desktop: the dial's glass, lit from its corner by the ring's own color. */
+  .sheet {
+    position: static;
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+    border-radius: 28px;
+    background:
+      radial-gradient(90% 46% at 0% 0%, color-mix(in oklch, var(--ring-color) calc(var(--halo-opacity) * 70%), transparent), transparent),
+      radial-gradient(80% 40% at 100% 100%, color-mix(in oklch, var(--ring-warm) calc(var(--halo-opacity) * 45%), transparent), transparent),
+      var(--color-surface);
+    box-shadow: var(--shadow-2);
+    transform: none;
+    visibility: visible;
+    transition: none;
+  }
+
+  .record__total {
+    font-size: var(--text-3xl);
+  }
+
+  .peek,
+  .scrim,
+  .sheet__close {
+    display: none;
+  }
+}
+
+/* A tall desktop: the strips grow with the room instead of spacing out. */
+@media (min-width: 960px) and (min-height: 1000px) {
+  .strip--today {
+    --strip-h: 40px;
+  }
+
+  .strip--today .strip__block {
+    --block-min: 40px;
+    top: 10px;
+    bottom: 10px;
+  }
+
+  .week__rows {
+    gap: var(--space-2);
+  }
+
+  .week__row {
+    min-height: 44px;
+  }
+
+  .week__row .strip {
+    --strip-h: 28px;
+  }
+
+  .week__row .strip__block {
+    --block-min: 28px;
+    top: 7px;
+    bottom: 7px;
+  }
+
+  .week__day,
+  .week__hours {
+    font-size: var(--text-md);
+  }
+}
+
+::view-transition-group(dial) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}
+
+.ring__sec {
+  transform: rotate(var(--sec, 0deg));
+}
+
+.io__import {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+#import-file:focus-visible + .io__import {
+  outline: 2px solid var(--color-text);
+  outline-offset: 3px;
+}
+
+/* Phone: the timer above, the week card below it, the card lifted clear of the home bar. */
+@media (max-width: 959px) {
+  .app {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .timer {
+    flex: 1 0 auto;
+    min-height: 0;
+    gap: var(--space-4);
+  }
+
+  .record {
+    padding: 0 calc(var(--space-3) + env(safe-area-inset-right)) max(28px, calc(env(safe-area-inset-bottom) + var(--space-3)))
+      calc(var(--space-3) + env(safe-area-inset-left));
+  }
+
+  .dial {
+    --ring-size: min(74vw, 36dvh, 420px);
+  }
+
+  .setup {
+    gap: var(--space-3);
+  }
+
+  .setup__row {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .chip,
+  .minutes {
+    min-height: 40px;
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .minutes input {
+    width: 2em;
+    font-size: var(--text-md);
+  }
+
+  .label-input {
+    min-height: 44px;
+  }
+}
+
+/* Phone at rest on a short screen: the setup needs the room, so the card keeps only today's row. */
+@media (max-width: 959px) and (orientation: portrait) and (max-height: 899px) {
+  html:not(.is-running) .peek .week__row:not(.is-today) {
+    display: none;
+  }
+}
+
+/* Phone on its side: the ring and its controls on the left, the week card on the right, both padded in from
+   the notch and the home bar on either side. */
+@media (max-width: 959px) and (orientation: landscape) and (max-height: 600px) {
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 46%);
+    align-items: center;
+    min-height: 100dvh;
+    padding: 0 max(44px, calc(env(safe-area-inset-right) + var(--space-3))) 0 max(44px, calc(env(safe-area-inset-left) + var(--space-3)));
+    column-gap: var(--space-5);
+  }
+
+  .timer {
+    min-height: 100dvh;
+    padding: max(var(--space-4), env(safe-area-inset-top)) 0 max(var(--space-4), env(safe-area-inset-bottom));
+    gap: var(--space-3);
+  }
+
+  .dial,
+  .is-running .dial {
+    --ring-size: min(calc(100dvh - 124px), 44vw);
+  }
+
+  .record {
+    padding: max(var(--space-4), env(safe-area-inset-top)) 0 max(var(--space-4), env(safe-area-inset-bottom));
+  }
+
+  /* Here the week is a floating card, not a sheet pulled up from the bottom edge: no handle. */
+  .peek {
+    padding-top: var(--space-4);
+  }
+
+  .peek__grab {
+    display: none;
+  }
+}

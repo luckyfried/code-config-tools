@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"name": "Sam", "blockLengths": [25, 50, 90], "labels": ["writing", "code", "reading", "planning"], "dayStart": 6, "dayEnd": 24, "chime": "soft", "theme": "auto", "sample": true};

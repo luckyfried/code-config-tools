@@ -1,0 +1,30 @@
+/* Mono: black, white type, one amber accent, and no mesh. */
+:root {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #0c0c0c;
+  --color-surface-2: #181818;
+  --color-text: #ededed;
+  --color-muted: #8c8c8c;
+  --color-accent: #ffb000;
+  --color-on-accent: #000000;
+  --color-danger: #ff6b5e;
+  --color-ok: #ededed;
+  --color-border: #262626;
+  --shadow-1: none;
+  --shadow-2: none;
+
+  --ring-cool: #ededed;
+  --ring-warm: #ffb000;
+  --ring-track: #1d1d1d;
+  --ring-tick: #6a6a6a;
+  --halo-opacity: 0;
+  --sheen: rgba(255, 255, 255, 0);
+
+  --mesh-base: #000000;
+  --mesh-1: #000000;
+  --mesh-2: #000000;
+  --mesh-3: #000000;
+  --mesh-4: #000000;
+  --mesh-opacity: 0;
+}

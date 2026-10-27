@@ -1,0 +1,4 @@
+/* Auto: dawn in the light color scheme, dusk in the dark one. run.py copies this file to theme.css beside
+   index.html, so both imports resolve from there. */
+@import url("themes/dawn.css");
+@import url("themes/dusk.css") (prefers-color-scheme: dark);

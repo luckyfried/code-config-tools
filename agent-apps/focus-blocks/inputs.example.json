@@ -1,0 +1,20 @@
+{
+  "name": "Sam",
+  "blockLengths": [25, 50, 90],
+  "labels": ["writing", "code", "reading", "planning"],
+  "dayStart": 6,
+  "dayEnd": 24,
+  "chime": "soft",
+  "theme": "auto",
+  "sample": true,
+  "_notes": {
+    "name": "The first name in the greeting, like \"Good morning, Sam\". Up to 40 characters.",
+    "blockLengths": "One to five block lengths in minutes, offered as quick picks. The first is the default.",
+    "labels": "Up to six one-word things the person focuses on, offered as quick picks beside free text.",
+    "dayStart": "The hour the day strip starts, 0 to 23.",
+    "dayEnd": "The hour the day strip ends, 1 to 24, at least four hours after dayStart.",
+    "chime": "\"soft\" plays a short two-note chime when a block ends; \"off\" stays silent.",
+    "theme": "\"dusk\" (indigo and ember, light text), \"dawn\" (cream and ink), \"mono\" (black with one accent), or \"auto\" (dawn on a light device, dusk on a dark one).",
+    "sample": "true fills a first visit with a sample week and a block in its last seconds; false starts empty. Leave it out for a real start."
+  }
+}

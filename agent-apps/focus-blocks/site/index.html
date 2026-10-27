@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Focus Blocks</title>
+  <meta name="description" content="A focus timer that paints your day as blocks of deep work.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/bricolage-grotesque-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/app.css">
+</head>
+<body>
+  <div class="mesh" aria-hidden="true"></div>
+
+  <div class="app">
+    <main class="timer" id="timer">
+      <header class="hello">
+        <h1 class="hello__greet" id="greet">Good morning</h1>
+        <p class="hello__sub" id="hello-sub">Pick a length and start a block.</p>
+      </header>
+
+      <div class="dial" id="dial">
+        <div class="dial__halo" aria-hidden="true"></div>
+        <div class="dial__bloom" aria-hidden="true"></div>
+        <button class="ring" id="ring" type="button" aria-label="Start the block">
+          <svg class="ring__svg" viewBox="0 0 400 400" aria-hidden="true">
+            <g class="ring__ticks" id="ticks"></g>
+            <circle class="ring__track" cx="200" cy="200" r="186"></circle>
+            <circle class="ring__fill" id="ring-fill" cx="200" cy="200" r="186" transform="rotate(-90 200 200)"></circle>
+            <circle class="ring__flash" cx="200" cy="200" r="186"></circle>
+            <g class="ring__sec is-off" id="ring-sec"><circle cx="200" cy="52" r="4.5"></circle></g>
+          </svg>
+          <span class="ring__face">
+            <span class="ring__label" id="ring-label">Focus</span>
+            <span class="ring__time" id="ring-time">25:00</span>
+            <span class="ring__state" id="ring-state">Tap or press space to start</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="controls" id="controls" hidden>
+        <button class="button controls__main" id="pause" type="button">Pause</button>
+        <button class="button" id="give-up" type="button">Give up</button>
+      </div>
+
+      <form class="setup" id="setup" autocomplete="off">
+        <div class="setup__row" id="lengths" role="group" aria-label="Block length">
+          <label class="minutes">
+            <span class="visually-hidden">Minutes</span>
+            <input id="minutes" type="number" inputmode="numeric" min="1" max="240" step="1" value="25">
+            <span>min</span>
+          </label>
+        </div>
+        <label class="visually-hidden" for="label">What this block is for</label>
+        <input class="label-input" id="label" type="text" maxlength="40" placeholder="What is this block for?" enterkeyhint="go">
+        <div class="setup__row" id="label-picks" role="group" aria-label="Quick picks"></div>
+        <button class="start" id="start" type="submit">Start</button>
+      </form>
+    </main>
+
+    <aside class="record" id="record" aria-label="Today and this week">
+      <button class="peek" id="peek" type="button" aria-controls="sheet" aria-expanded="false">
+        <span class="peek__grab" aria-hidden="true"></span>
+        <span class="peek__head"><strong>This week</strong><span class="peek__total" id="peek-total">0 min</span></span>
+        <span class="peek__rows" id="peek-rows"></span>
+      </button>
+      <div class="scrim" id="scrim"></div>
+      <div class="sheet" id="sheet" role="region" aria-label="Today and this week">
+        <button class="sheet__close" id="sheet-close" type="button">Close</button>
+        <section class="today" aria-labelledby="today-title">
+          <div class="record__title">
+            <h2 id="today-title">Today</h2>
+            <span class="record__total" id="today-total">0 min</span>
+          </div>
+          <div class="strip strip--today" id="today-strip"></div>
+          <ol class="blocks" id="today-list"></ol>
+        </section>
+        <section class="week" aria-labelledby="week-title">
+          <div class="record__title">
+            <h2 id="week-title">This week</h2>
+            <span class="record__total" id="week-total">0 min</span>
+          </div>
+          <ol class="week__rows" id="week-rows"></ol>
+          <p class="week__sum" id="week-sum"></p>
+          <div class="io">
+            <button class="button" id="export" type="button">Export</button>
+            <input class="visually-hidden" id="import-file" type="file" accept="application/json,.json">
+            <label class="button io__import" for="import-file">Import</label>
+            <p class="io__note" id="io-note" role="status"></p>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

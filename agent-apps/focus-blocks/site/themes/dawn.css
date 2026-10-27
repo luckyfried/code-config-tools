@@ -1,0 +1,30 @@
+/* Dawn: first light on cream paper, peach and sky in the mesh; ink text. */
+:root {
+  color-scheme: light;
+  --color-bg: #f7f1e8;
+  --color-surface: rgba(255, 255, 255, 0.5);
+  --color-surface-2: rgba(255, 255, 255, 0.82);
+  --color-text: #1a1e3a;
+  --color-muted: #5d5f7a;
+  --color-accent: #1a1e3a;
+  --color-on-accent: #fbf7f0;
+  --color-danger: #b4321c;
+  --color-ok: #1f7a52;
+  --color-border: rgba(26, 30, 58, 0.13);
+  --shadow-1: 0 1px 2px rgba(60, 40, 20, 0.08), 0 4px 12px rgba(60, 40, 20, 0.06);
+  --shadow-2: 0 2px 6px rgba(60, 40, 20, 0.08), 0 18px 48px rgba(60, 40, 20, 0.12);
+
+  --ring-cool: #2c6fd1;
+  --ring-warm: #e2471c;
+  --ring-track: rgba(26, 30, 58, 0.09);
+  --ring-tick: rgba(26, 30, 58, 0.45);
+  --halo-opacity: 0.22;
+  --sheen: rgba(255, 255, 255, 0.5);
+
+  --mesh-base: #f7f0e5;
+  --mesh-1: #ffbd92;
+  --mesh-2: #aecdf2;
+  --mesh-3: #f7d77a;
+  --mesh-4: #eda9bd;
+  --mesh-opacity: 1;
+}
