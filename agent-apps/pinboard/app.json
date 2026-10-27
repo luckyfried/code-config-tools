@@ -1,0 +1,17 @@
+{
+  "id": "01a16277-f511-7b23-a133-cd959bc3398c",
+  "version": "2026-10-21",
+  "name": "Pinboard",
+  "shortDescription": "A wall of things you and your agent found, sorted with a tap.",
+  "description": "A pinboard of visual cards: each pin an image with its title, the link it came from, a note, tags, and a board. Your agent adds what it finds; you keep, set aside, move, or ask for more like any pin with one tap, and the agent's finds arrive beside the pin that asked. Boards are yours to name, like a kitchen, a trip, or a brand. Every pin and every choice is kept in your project's own data folder on your computer.",
+  "category": "lifestyle",
+  "subcategory": "Inspiration",
+  "useCase": "product-discovery",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/pinboard",
+  "setup": "Asks what your boards are for and what kinds of things to look for. No keys or accounts are needed. Your pins and choices stay in your project's data folder on your computer; the page loads only the pictures your pins name."
+}

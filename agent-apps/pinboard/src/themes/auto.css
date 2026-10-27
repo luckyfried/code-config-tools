@@ -1,0 +1,65 @@
+/* Auto: Gallery in a light room, Dusk in a dark one. */
+:root {
+  color-scheme: light;
+  --background: oklch(0.985 0.002 90);
+  --foreground: oklch(0.2 0.005 60);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.005 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.005 60);
+  --primary: oklch(0.22 0.005 60);
+  --primary-foreground: oklch(0.985 0.002 90);
+  --secondary: oklch(0.955 0.004 90);
+  --secondary-foreground: oklch(0.25 0.005 60);
+  --muted: oklch(0.955 0.004 90);
+  --muted-foreground: oklch(0.5 0.008 60);
+  --accent: oklch(0.94 0.006 90);
+  --accent-foreground: oklch(0.22 0.005 60);
+  --destructive: oklch(0.56 0.2 27);
+  --border: oklch(0.9 0.004 90);
+  --swatch-ring: var(--border);
+  --input: oklch(0.88 0.004 90);
+  --ring: oklch(0.6 0.01 60);
+  --radius: 0.5rem;
+  --kept: oklch(0.58 0.21 27);
+  --kept-foreground: oklch(0.99 0 0);
+  --asking: oklch(0.62 0.13 250);
+  --pin-shadow: 0 1px 0 oklch(0.2 0 0 / 0.04), 0 1px 2px oklch(0.2 0 0 / 0.06);
+  --pin-shadow-lift: 0 10px 28px -8px oklch(0.2 0 0 / 0.22), 0 2px 6px oklch(0.2 0 0 / 0.08);
+  --pin-radius: 0.375rem;
+  --scrim: oklch(0.15 0 0 / 0.55);
+  --display-font: "Instrument Serif", Georgia, serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: oklch(0.19 0.008 55);
+    --foreground: oklch(0.93 0.015 80);
+    --card: oklch(0.24 0.01 55);
+    --card-foreground: oklch(0.93 0.015 80);
+    --popover: oklch(0.25 0.011 55);
+    --popover-foreground: oklch(0.93 0.015 80);
+    --primary: oklch(0.82 0.13 72);
+    --primary-foreground: oklch(0.2 0.02 55);
+    --secondary: oklch(0.27 0.012 55);
+    --secondary-foreground: oklch(0.9 0.015 80);
+    --muted: oklch(0.27 0.012 55);
+    --muted-foreground: oklch(0.7 0.02 75);
+    --accent: oklch(0.3 0.014 55);
+    --accent-foreground: oklch(0.93 0.015 80);
+    --destructive: oklch(0.68 0.17 30);
+    --border: oklch(0.32 0.012 55);
+    --swatch-ring: oklch(0.92 0.01 70 / 0.45);
+    --input: oklch(0.35 0.012 55);
+    --ring: oklch(0.82 0.13 72 / 0.6);
+    --radius: 0.75rem;
+    --kept: oklch(0.82 0.14 72);
+    --kept-foreground: oklch(0.22 0.03 55);
+    --asking: oklch(0.78 0.1 200);
+    --pin-shadow: 0 1px 2px oklch(0 0 0 / 0.4);
+    --pin-shadow-lift: 0 18px 40px -12px oklch(0 0 0 / 0.7), 0 0 0 1px oklch(0.82 0.13 72 / 0.18);
+    --pin-radius: 0.875rem;
+    --scrim: oklch(0.08 0.01 55 / 0.7);
+    --display-font: "Instrument Serif", Georgia, serif;
+  }
+}

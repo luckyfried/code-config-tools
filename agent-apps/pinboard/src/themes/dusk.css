@@ -1,0 +1,32 @@
+/* Dusk: a deep warm gray room after the lights are lowered, with amber where a pin is kept. */
+:root {
+  color-scheme: dark;
+  --background: oklch(0.19 0.008 55);
+  --foreground: oklch(0.93 0.015 80);
+  --card: oklch(0.24 0.01 55);
+  --card-foreground: oklch(0.93 0.015 80);
+  --popover: oklch(0.25 0.011 55);
+  --popover-foreground: oklch(0.93 0.015 80);
+  --primary: oklch(0.82 0.13 72);
+  --primary-foreground: oklch(0.2 0.02 55);
+  --secondary: oklch(0.27 0.012 55);
+  --secondary-foreground: oklch(0.9 0.015 80);
+  --muted: oklch(0.27 0.012 55);
+  --muted-foreground: oklch(0.7 0.02 75);
+  --accent: oklch(0.3 0.014 55);
+  --accent-foreground: oklch(0.93 0.015 80);
+  --destructive: oklch(0.68 0.17 30);
+  --border: oklch(0.32 0.012 55);
+  --swatch-ring: oklch(0.92 0.01 70 / 0.45);
+  --input: oklch(0.35 0.012 55);
+  --ring: oklch(0.82 0.13 72 / 0.6);
+  --radius: 0.75rem;
+  --kept: oklch(0.82 0.14 72);
+  --kept-foreground: oklch(0.22 0.03 55);
+  --asking: oklch(0.78 0.1 200);
+  --pin-shadow: 0 1px 2px oklch(0 0 0 / 0.4);
+  --pin-shadow-lift: 0 18px 40px -12px oklch(0 0 0 / 0.7), 0 0 0 1px oklch(0.82 0.13 72 / 0.18);
+  --pin-radius: 0.875rem;
+  --scrim: oklch(0.08 0.01 55 / 0.7);
+  --display-font: "Instrument Serif", Georgia, serif;
+}
