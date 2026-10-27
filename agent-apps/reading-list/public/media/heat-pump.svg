@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+<defs>
+<linearGradient id="warm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f08a4b"/><stop offset="1" stop-color="#c2452d"/></linearGradient>
+<filter id="grain" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="37" stitchTiles="stitch"/>
+<feColorMatrix type="saturate" values="0"/>
+<feComponentTransfer><feFuncA type="table" tableValues="0 0.16"/></feComponentTransfer>
+</filter>
+</defs>
+<rect width="1000" height="1000" fill="url(#warm)"/>
+<rect x="170" y="300" width="660" height="520" rx="40" fill="#e9efe6"/>
+<circle cx="430" cy="560" r="190" fill="#24443a"/>
+<ellipse cx="430" cy="470" rx="50" ry="95" fill="#9ccf8f" transform="rotate(0 430 560)"/>
+<ellipse cx="430" cy="470" rx="50" ry="95" fill="#9ccf8f" transform="rotate(72 430 560)"/>
+<ellipse cx="430" cy="470" rx="50" ry="95" fill="#9ccf8f" transform="rotate(144 430 560)"/>
+<ellipse cx="430" cy="470" rx="50" ry="95" fill="#9ccf8f" transform="rotate(216 430 560)"/>
+<ellipse cx="430" cy="470" rx="50" ry="95" fill="#9ccf8f" transform="rotate(288 430 560)"/>
+<circle cx="430" cy="560" r="36" fill="#e9efe6"/>
+<path d="M690,420 q40,-40 0,-80 q-40,-40 0,-80" fill="none" stroke="#24443a" stroke-width="16" stroke-linecap="round" transform="translate(0,0)"/>
+<path d="M690,540 q40,-40 0,-80 q-40,-40 0,-80" fill="none" stroke="#24443a" stroke-width="16" stroke-linecap="round" transform="translate(0,0)"/>
+<path d="M690,660 q40,-40 0,-80 q-40,-40 0,-80" fill="none" stroke="#24443a" stroke-width="16" stroke-linecap="round" transform="translate(0,0)"/>
+<path d="M260,250 q30,-50 0,-100 q-30,-50 0,-100" fill="none" stroke="#fff5e0" stroke-width="18" stroke-linecap="round"/>
+<path d="M500,250 q30,-50 0,-100 q-30,-50 0,-100" fill="none" stroke="#fff5e0" stroke-width="18" stroke-linecap="round"/>
+<path d="M740,250 q30,-50 0,-100 q-30,-50 0,-100" fill="none" stroke="#fff5e0" stroke-width="18" stroke-linecap="round"/>
+<rect width="1000" height="1000" filter="url(#grain)"/>
+</svg>

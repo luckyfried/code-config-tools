@@ -1,0 +1,17 @@
+{
+  "id": "01a1653b-409c-731d-9c2d-fd0a6d443179",
+  "version": "2026-10-21",
+  "name": "Reading List",
+  "shortDescription": "Your agent's news finds on a front page you sort with a swipe or a key.",
+  "description": "A front page of the stories your agent found for you, laid out like a broadsheet: the lead story across the top, the rest packed tall, wide, and small in their topic's colors. Send a story to read later and it folds into the stack in the corner; skip it and the page closes the gap; ask for more like it and your agent finds more on its next visit; ask it to go deeper and it writes you a longer brief, which opens the story into a long read with the other coverage at its foot. Swipe on a phone, hover or press L, S, M, or D on a desktop. Each story says where the agent is with your choice. The stories and your choices stay in a folder on your computer.",
+  "category": "news",
+  "subcategory": "Reading",
+  "useCase": "content-writing",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/reading-list",
+  "setup": "Your agent asks for your first name, which sits in the masthead, the topics you want to read about with a color for each, the publications to look in first and any to leave out, how many stories a day at most, and whether you want the light broadsheet look, the dark late edition, or the one that follows your device. No keys are needed. Your agent finds the stories itself and reads each one it adds. Your stories and choices stay in data/reading-list/ in your project, on your computer."
+}

@@ -1,0 +1,43 @@
+/* Broadsheet: newsprint cream, black ink, and one red rule. */
+:root {
+  color-scheme: light;
+  --scheme: light;
+  --background: oklch(0.948 0.02 86);
+  --foreground: oklch(0.17 0.012 60);
+  --card: oklch(0.962 0.017 86);
+  --card-foreground: oklch(0.17 0.012 60);
+  --popover: oklch(0.962 0.017 86);
+  --popover-foreground: oklch(0.17 0.012 60);
+  --primary: oklch(0.17 0.012 60);
+  --primary-foreground: oklch(0.962 0.017 86);
+  --secondary: oklch(0.91 0.022 84);
+  --secondary-foreground: oklch(0.17 0.012 60);
+  --muted: oklch(0.915 0.02 84);
+  --muted-foreground: oklch(0.4 0.018 60);
+  --accent: oklch(0.905 0.024 84);
+  --accent-foreground: oklch(0.17 0.012 60);
+  --destructive: oklch(0.5 0.19 27);
+  --border: oklch(0.17 0.012 60 / 20%);
+  --input: oklch(0.17 0.012 60 / 30%);
+  --ring: oklch(0.52 0.2 27 / 75%);
+  --radius: 0.125rem;
+  --rule: oklch(0.52 0.2 27);
+  --rule-foreground: oklch(0.975 0.012 86);
+  --column-rule: oklch(0.17 0.012 60 / 26%);
+  --heavy-rule: oklch(0.17 0.012 60);
+  --duo-ink: oklch(0.19 0.02 60);
+  --duo-light: oklch(0.97 0.02 86);
+  --topic-lift: 0%;
+  --newsgray: oklch(0.72 0.006 80);
+  --ripple-blend: multiply;
+  --ripple-alpha: 0.38;
+  --stack: oklch(0.17 0.012 60);
+  --stack-foreground: oklch(0.962 0.017 86);
+  --stack-sheet: oklch(0.985 0.01 86);
+  --card-lift: 0 1px 0 oklch(0.17 0.012 60 / 8%), 0 18px 30px -22px oklch(0.25 0.03 60 / 55%);
+  --swipe-later: oklch(0.17 0.012 60);
+  --swipe-skip: oklch(0.6 0.006 80);
+  --swipe-foreground: oklch(0.962 0.017 86);
+  --grain-opacity: 0.07;
+  --shadow-ink: oklch(0.2 0.02 60 / 50%);
+}

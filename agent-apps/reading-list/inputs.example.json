@@ -1,0 +1,328 @@
+{
+  "name": "Maya",
+  "topics": [
+    { "id": "planet", "name": "Planet", "color": "#2E8B57" },
+    { "id": "cities", "name": "Cities", "color": "#2F64B5" },
+    { "id": "science", "name": "Science", "color": "#D2492A" },
+    { "id": "culture", "name": "Culture", "color": "#C08A1E" }
+  ],
+  "sources": {
+    "favor": ["The Meridian Ledger", "Harbor & Field", "The Northline Post"],
+    "leave_out": ["The Daily Clickwheel"]
+  },
+  "per_day": 12,
+  "theme": "auto",
+  "sample": {
+    "articles": [
+      {
+        "id": "river-floods-on-purpose",
+        "headline": "The river that learned to flood on purpose",
+        "source": "The Meridian Ledger",
+        "link": "https://news.example.com/meridian/river-floods-on-purpose",
+        "image": "media/river.svg",
+        "color": "#2E8B57",
+        "topic": "planet",
+        "summary": [
+          "Engineers on the Lowen opened its old levees and let the spring floods spread across four thousand acres of farmland again.",
+          "Three years in, the towns downstream have had their driest springs on record while the fields came back richer.",
+          "Farmers who fought the plan now lease their low ground to the river and grow on the silt it leaves behind."
+        ],
+        "minutes": 14,
+        "published_at": "2026-10-22T06:10:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": ["Your top story: it touches both Planet and Cities, and two of your favored papers ran it."]
+      },
+      {
+        "id": "bacteria-bricks",
+        "headline": "Inside the lab teaching bacteria to build bricks",
+        "source": "Harbor & Field",
+        "link": "https://news.example.com/harbor-field/bacteria-bricks",
+        "image": "media/bricks.svg",
+        "color": "#D2492A",
+        "topic": "science",
+        "summary": [
+          "A team in Leeds grows bricks in a week by feeding sand and urea to bacteria that cement the grains together.",
+          "The bricks need no kiln, so each one carries about a tenth of the carbon of a fired clay brick.",
+          "A housing trust has ordered enough for twelve homes, the first real test outside the lab."
+        ],
+        "minutes": 9,
+        "published_at": "2026-10-22T05:30:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": {
+          "paragraphs": [
+            "The Leeds group's bricks start as wet sand in a mold. A strain of soil bacteria eats urea and leaves calcium carbonate behind, the same mineral that holds a sea cliff together, and in five to seven days the sand is stone. Nothing is fired, so the energy that a clay brick spends in a kiln never gets spent.",
+            "The open question is strength over time. The lab's oldest bricks are three years old and test at about two thirds of a fired brick, which is enough for a two-story house and not yet for anything taller. The housing trust's twelve homes will carry sensors in their walls for a decade.",
+            "Cost is the other half. The bricks are about forty percent dearer today, almost all of it in the urea, and the team is now growing them on urine collected from a festival, which it says brings the price below clay at scale."
+          ],
+          "coverage": [
+            { "headline": "Living concrete passes its first winter", "source": "The Northline Post", "link": "https://news.example.com/northline/living-concrete-winter" },
+            { "headline": "What a kiln costs the planet, brick by brick", "source": "The Meridian Ledger", "link": "https://news.example.com/meridian/kiln-costs" },
+            { "headline": "The festival that turns its toilets into building stock", "source": "Lamplight Weekly", "link": "https://news.example.com/lamplight/festival-building-stock" }
+          ],
+          "at": "2026-10-22T07:40:00Z"
+        },
+        "agent_notes": ["You asked to go deeper on this one yesterday; the brief is below."]
+      },
+      {
+        "id": "night-bus-map",
+        "headline": "A night-bus map redrawn by the people who ride it",
+        "source": "The Northline Post",
+        "link": "https://news.example.com/northline/night-bus-map",
+        "image": "media/night-bus.svg",
+        "color": "#2F64B5",
+        "topic": "cities",
+        "summary": [
+          "Riders on Halden's night buses spent a year marking where they actually wait, walk, and change.",
+          "The new map drops two routes nobody used and adds a loop past the hospitals and the bakeries.",
+          "Late-night ridership is up a fifth since it launched in June."
+        ],
+        "minutes": 7,
+        "published_at": "2026-10-22T04:45:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "typewriter-repair",
+        "headline": "The last typewriter repair shop on Delancey keeps a waiting list",
+        "source": "Lamplight Weekly",
+        "link": "https://news.example.com/lamplight/typewriter-repair",
+        "image": "media/typewriter.svg",
+        "color": "#C08A1E",
+        "topic": "culture",
+        "summary": [
+          "Ruth Abend has fixed typewriters on Delancey Street since 1979 and now books repairs four months out.",
+          "Most of her customers are under thirty."
+        ],
+        "minutes": 5,
+        "published_at": "2026-10-22T03:20:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "kelp-farmers",
+        "headline": "Kelp farmers are quietly outgrowing the fishing fleet",
+        "source": "Harbor & Field",
+        "link": "https://news.example.com/harbor-field/kelp-farmers",
+        "image": "media/kelp.svg",
+        "color": "#2E8B57",
+        "topic": "planet",
+        "summary": [
+          "Along the Maine coast, kelp leases now outnumber new lobster licenses three to one.",
+          "The crop needs no feed, no fresh water, and no fertilizer, and it pulls nitrogen out of the bays it grows in."
+        ],
+        "minutes": 8,
+        "published_at": "2026-10-22T02:50:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "silent-birdsong",
+        "headline": "What a year of quiet did to a city's birdsong",
+        "source": "Orbit Daily",
+        "link": "https://news.example.com/orbit/silent-birdsong",
+        "image": "media/birdsong.svg",
+        "color": "#D2492A",
+        "topic": "science",
+        "summary": [
+          "When traffic fell by half, the sparrows of San Lorenzo started singing softer, lower, and with more notes.",
+          "The researchers had twenty years of recordings from the same rooftops to compare against.",
+          "Now that the cars are back, the songs have stayed richer than they were before."
+        ],
+        "minutes": 11,
+        "published_at": "2026-10-21T22:15:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "four-day-school-week",
+        "headline": "The four-day school week reaches its first big city",
+        "source": "The Civic Almanac",
+        "link": "https://news.example.com/civic-almanac/four-day-school-week",
+        "image": "media/school-week.svg",
+        "color": "#2F64B5",
+        "topic": "cities",
+        "summary": [
+          "Brightwater's schools move to a Monday-to-Thursday week in January, with longer days and Fridays for clubs and tutoring.",
+          "Rural districts that tried it kept their teachers longer and saw no drop in test scores.",
+          "Parents are split on what happens to the youngest children on Fridays."
+        ],
+        "minutes": 10,
+        "published_at": "2026-10-21T20:40:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": "night-bus-map",
+        "deep": null,
+        "agent_notes": ["Found while looking for more like the night-bus map: another city that asked the people it serves first."]
+      },
+      {
+        "id": "wall-label-novel",
+        "headline": "A novel written entirely in museum wall labels",
+        "source": "The Small Hours",
+        "link": "https://news.example.com/small-hours/wall-label-novel",
+        "image": "media/wall-labels.svg",
+        "color": "#C08A1E",
+        "topic": "culture",
+        "summary": [
+          "Ines Varga's new book is two hundred labels for paintings that do not exist, and together they tell one family's story.",
+          "A gallery in Porto has hung the labels on empty walls."
+        ],
+        "minutes": 6,
+        "published_at": "2026-10-21T18:05:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "heat-pumps-outsell",
+        "headline": "Heat pumps outsold furnaces again, and the gap widened",
+        "source": "The Meridian Ledger",
+        "link": "https://news.example.com/meridian/heat-pumps-outsell",
+        "image": "media/heat-pump.svg",
+        "color": "#2E8B57",
+        "topic": "planet",
+        "summary": [
+          "For the fourth year running, more homes installed a heat pump than a gas furnace.",
+          "Cold-climate models that work at minus twenty-five drove most of the growth."
+        ],
+        "minutes": 4,
+        "published_at": "2026-10-21T16:30:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "dust-ring",
+        "headline": "The telescope that sees through dust found a second ring",
+        "source": "Orbit Daily",
+        "link": "https://news.example.com/orbit/dust-ring",
+        "image": "media/dust-ring.svg",
+        "color": "#D2492A",
+        "topic": "science",
+        "summary": [
+          "Looking in infrared, astronomers found a second ring of young planets forming around a star four hundred light years away.",
+          "The two rings orbit in opposite directions, which no model of planet birth predicted."
+        ],
+        "minutes": 7,
+        "published_at": "2026-10-21T14:10:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "library-kitchens",
+        "headline": "Why every new library is being built with a kitchen",
+        "source": "The Civic Almanac",
+        "link": "https://news.example.com/civic-almanac/library-kitchens",
+        "image": "media/library.svg",
+        "color": "#2F64B5",
+        "topic": "cities",
+        "summary": [
+          "Nine of the ten libraries opening this year include a teaching kitchen, and the waiting lists for cooking classes are longer than the ones for books.",
+          "Librarians say the kitchens bring in families who never came for the shelves.",
+          "Most of them check out a book on the way home."
+        ],
+        "minutes": 8,
+        "published_at": "2026-10-21T11:00:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "new",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      },
+      {
+        "id": "choirs-growing",
+        "headline": "Choirs are the fastest-growing club in the country",
+        "source": "Lamplight Weekly",
+        "link": "https://news.example.com/lamplight/choirs-growing",
+        "image": "media/choir.svg",
+        "color": "#C08A1E",
+        "topic": "culture",
+        "summary": [
+          "Community choirs added more members last year than running clubs, book clubs, and chess clubs combined.",
+          "Most new singers had never sung in public before.",
+          "Directors say the draw is an hour a week where nobody looks at a phone."
+        ],
+        "minutes": 6,
+        "published_at": "2026-10-21T09:20:00Z",
+        "found_at": "2026-10-22T07:02:00Z",
+        "status": "later",
+        "like": null,
+        "deep": null,
+        "agent_notes": []
+      }
+    ],
+    "inbox": [
+      {
+        "id": "sample-kelp-deeper",
+        "action": "deeper",
+        "target": "articles/kelp-farmers",
+        "status": "pending",
+        "at": "2026-10-22T07:51:00Z",
+        "result": null
+      },
+      {
+        "id": "sample-bus-more",
+        "action": "more",
+        "target": "articles/night-bus-map",
+        "status": "completed",
+        "at": "2026-10-22T07:12:00Z",
+        "result": { "next": "find more like this article" }
+      },
+      {
+        "id": "sample-choir-later",
+        "action": "later",
+        "target": "articles/choirs-growing",
+        "status": "completed",
+        "at": "2026-10-22T07:14:00Z",
+        "result": { "status": "later" }
+      }
+    ],
+    "landing": {
+      "id": "kelp-farmers",
+      "deep": {
+        "paragraphs": [
+          "Maine issued forty-one new kelp leases this year against thirteen new lobster licenses, and most of the new growers are lobstermen themselves. Kelp grows on ropes from November to May, the months a lobster boat sits idle, so the same boat, crew, and dock work all year.",
+          "The crop asks for nothing: no feed, no fresh water, no fertilizer. A hectare of kelp pulls about a quarter of a ton of nitrogen out of the water each season, and two bays with heavy farm runoff have asked growers to set lines there on purpose.",
+          "The hard part is selling it. Most of the harvest goes into fertilizer and cattle feed at low prices, and growers are betting on a processing plant in Portland that opens next spring to turn more of it into food."
+        ],
+        "coverage": [
+          { "headline": "The lobster boats that work all winter now", "source": "The Northline Post", "link": "https://news.example.com/northline/lobster-boats-winter" },
+          { "headline": "Can seaweed clean a bay? Two towns are finding out", "source": "The Meridian Ledger", "link": "https://news.example.com/meridian/seaweed-clean-bay" },
+          { "headline": "A kelp plant for Portland, by the numbers", "source": "Harbor & Field", "link": "https://news.example.com/harbor-field/kelp-plant-numbers" }
+        ],
+        "at": "2026-10-22T08:05:00Z"
+      }
+    }
+  },
+  "_notes": {
+    "name": "Whose paper this is; the masthead reads \"<name>'s Reading List\".",
+    "topics": "The sections, in the order the section index shows them: an id the articles name, a name, and a color for its pictures.",
+    "sources": "favor: publications the agent looks in first; leave_out: publications it never adds.",
+    "per_day": "How many stories a day the agent adds at most.",
+    "theme": "broadsheet (light newsprint), late-edition (dark), or auto (broadsheet in a light room, late edition in a dark one).",
+    "sample": "The stories the page shows before the agent has added any: articles, the choices on them (inbox), and one brief that lands while the page plays (landing). The agent replaces them with real ones."
+  }
+}

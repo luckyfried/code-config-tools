@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+<defs>
+<linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe6d6"/><stop offset="1" stop-color="#d7c6aa"/></linearGradient>
+<filter id="grain" x="0" y="0" width="100%" height="100%">
+<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="31" stitchTiles="stitch"/>
+<feColorMatrix type="saturate" values="0"/>
+<feComponentTransfer><feFuncA type="table" tableValues="0 0.16"/></feComponentTransfer>
+</filter>
+</defs>
+<rect width="1200" height="900" fill="url(#wall)"/>
+<rect y="760" width="1200" height="140" fill="#6d5a45"/>
+<rect x="102" y="122" width="336" height="416" fill="#2a211a"/><rect x="120" y="140" width="300" height="380" fill="#c65d3b"/><circle cx="300.0" cy="292.0" r="66" fill="#f6efe2" opacity="0.85"/><rect x="210.0" y="580" width="120.0" height="60" fill="#fbf7ef"/><rect x="222.0" y="596" width="90.0" height="8" fill="#2a211a"/><rect x="222.0" y="614" width="60.0" height="8" fill="#2a211a"/>
+<rect x="482" y="182" width="256" height="296" fill="#2a211a"/><rect x="500" y="200" width="220" height="260" fill="#2f4858"/><circle cx="632.0" cy="304.0" r="48" fill="#f6efe2" opacity="0.85"/><rect x="566.0" y="520" width="88.0" height="60" fill="#fbf7ef"/><rect x="574.8" y="536" width="66.0" height="8" fill="#2a211a"/><rect x="574.8" y="554" width="44.0" height="8" fill="#2a211a"/>
+<rect x="782" y="102" width="316" height="456" fill="#2a211a"/><rect x="800" y="120" width="280" height="420" fill="#e3b23c"/><circle cx="968.0" cy="288.0" r="62" fill="#f6efe2" opacity="0.85"/><rect x="884.0" y="600" width="112.0" height="60" fill="#fbf7ef"/><rect x="895.2" y="616" width="84.0" height="8" fill="#2a211a"/><rect x="895.2" y="634" width="56.0" height="8" fill="#2a211a"/>
+<rect width="1200" height="900" filter="url(#grain)"/>
+</svg>
