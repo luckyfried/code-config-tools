@@ -1,0 +1,226 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter/opsz.css";
+
+/* Every color lives in theme.css (one of src/themes/); this file maps those names and holds no values. */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-headline: var(--headline);
+  --color-band: var(--band);
+  --color-band-border: var(--band-border);
+  --color-column: var(--column);
+  --color-column-border: var(--column-border);
+  --color-card-border: var(--card-border);
+  --color-won: var(--won);
+  --color-lost: var(--lost);
+  --color-age-track: var(--age-track);
+  --color-stage: var(--stage);
+  --shadow-card: var(--card-shadow);
+  --shadow-lift: var(--lift-shadow);
+  --shadow-hover: var(--hover-shadow);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image: var(--glow);
+    background-repeat: no-repeat;
+    font-feature-settings: "cv11", "ss03";
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* A stage's color: the hue and chroma the inputs give, the lightness kept inside the theme's range, at its chroma share. */
+[data-stage] {
+  --stage: oklch(from var(--stage-raw, gray) clamp(var(--stage-l-min), l, var(--stage-l-max)) calc(c * var(--stage-chroma)) h);
+}
+
+/* A company's mark: a disc lit from the top left in a hue from its name, a second shape in a deeper tone of the same
+   hue (which shape comes from the name too), and the initial in white. */
+[data-mark] {
+  --mark-hi: oklch(var(--mark-l1) var(--mark-chroma) var(--hue));
+  --mark-lo: oklch(var(--mark-l2) calc(var(--mark-chroma) * 1.05) calc(var(--hue) + 24));
+  background: radial-gradient(120% 120% at 28% 18%, var(--mark-hi), var(--mark-lo));
+  color: var(--mark-ink);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.35), inset 0 -2px 4px oklch(0 0 0 / 0.18), 0 2px 5px -1px oklch(from var(--mark-lo) 0.3 c h / 0.45);
+  text-shadow: 0 1px 1px oklch(0 0 0 / 0.25);
+}
+[data-mark] .mark-shape {
+  fill: oklch(from var(--mark-lo) calc(l - 0.06) c h / 0.7);
+}
+
+/* A stage's column: a tray washed with its stage's color, strongest under the header, and brighter while a card is over it. */
+.stage-column {
+  background:
+    linear-gradient(to bottom, color-mix(in oklab, var(--stage) 13%, transparent), transparent 9rem),
+    color-mix(in oklab, var(--column), var(--stage) 3%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--stage) 30%, transparent);
+}
+.stage-pill {
+  background: color-mix(in oklab, var(--stage) 16%, transparent);
+  color: color-mix(in oklab, var(--stage), var(--foreground) 35%);
+}
+
+/* The funnel: a soft colored shadow under its body, and each count in ink or white, whichever stands out on its stage. */
+.funnel-body {
+  filter: drop-shadow(0 10px 14px var(--funnel-shadow));
+}
+.funnel-mouth {
+  fill: oklch(from var(--funnel-inside) l c h);
+}
+.funnel-count {
+  color: oklch(from var(--stage) clamp(0.2, calc((0.7 - l) * 100), 0.995) 0.02 280);
+}
+
+/* The Won tile: a tray washed in the win's green. */
+.close-won {
+  background:
+    linear-gradient(to bottom, color-mix(in oklab, var(--won) 16%, transparent), transparent 10rem),
+    color-mix(in oklab, var(--column), var(--won) 4%);
+}
+
+/* A deal card: a white (or lit navy) face over a soft colored shadow, raised a little more under the pointer. */
+.deal-face {
+  background: var(--card-sheen);
+  box-shadow: var(--card-shadow);
+}
+@media (hover: hover) {
+  .deal-card:hover .deal-face {
+    box-shadow: var(--hover-shadow);
+    transform: translateY(-1px);
+  }
+}
+
+/* The days-in-stage ring stays neutral for a week, warms to amber at two weeks and to red at thirty days. Mixed in
+   oklab, so the way from a cool grey to amber runs through desaturated tans, never round the hue wheel through pink. */
+[data-age-ring] {
+  --age: color-mix(
+    in oklab,
+    color-mix(in oklab, var(--age-fresh), var(--age-warm) calc(var(--to-warm) * 100%)),
+    var(--age-stale) calc(var(--to-stale) * 100%)
+  );
+}
+
+/* The rolling headline: each digit a strip of 0 to 9 that slides to its place. */
+.roll {
+  display: inline-flex;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+.roll-char,
+.roll-digit {
+  display: block;
+  height: 1lh;
+}
+.roll-digit {
+  overflow: clip;
+  mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+}
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--digit) * -1lh));
+  transition: transform 720ms var(--ease-out-strong);
+}
+.roll-strip > span {
+  height: 1lh;
+}
+
+.no-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.snap-x-board {
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.snap-x-board::-webkit-scrollbar {
+  display: none;
+}
+/* The stage chips: the side padding stays clear, so a chip scrolled past the left edge never shows as a sliver there,
+   and one running off the right edge fades out. */
+.chip-row {
+  mask-image: linear-gradient(to right, transparent 0.5rem, black 1rem, black calc(100% - 1rem), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll-strip {
+    transition: none;
+  }
+}
+
+#fx {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  overflow: clip;
+}
+#fx > * {
+  pointer-events: none;
+}
+.confetti {
+  position: fixed;
+  display: block;
+}

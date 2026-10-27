@@ -1,0 +1,17 @@
+{
+  "id": "01a17a1a-c9f8-756c-9a50-b0236eed0c92",
+  "version": "2026-10-21",
+  "name": "Deal Board",
+  "shortDescription": "A small sales pipeline whose weighted value moves as your deals do.",
+  "description": "A one-person sales board. Stages are columns, deals are cards, and the headline is the weighted value of the pipeline: each deal's value times its stage's chance of closing. Drag a deal to a later stage and the number rolls to its new total as the card lands. Each card shows how long the deal has sat in its stage with a ring that warms from neutral to amber to red. A win flies off the board in a burst of confetti, a loss fades into the Lost drawer, and a funnel and a ninety-day won-and-lost chart sit beside the headline, with the win rate and the average time to close. A List view sorts every deal by value, age, or next step. Deals are saved in the browser, with Export and Import to move them or to hand them to your agent for a weekly summary.",
+  "category": "business",
+  "subcategory": "Sales pipeline",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/deal-board",
+  "setup": "Your agent asks, in one message: what stages a deal goes through for you, or whether to use five standard ones (lead, qualified, proposal, negotiation, closing); what currency you sell in; and which deals are open right now, with a rough value and stage for each. It can also ask what you have won or lost lately, so the ninety-day chart starts with your own history. No keys or accounts are needed. Your deals stay in the browser you open the board in; Export saves them to a file you can move or give to your agent."
+}
