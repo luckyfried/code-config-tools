@@ -1,0 +1,118 @@
+/* Midnight: blue-hour linen and indigo by day; deep navy and old gold by night. Tokens only. */
+:root {
+  color-scheme: light;
+  --color-bg: #e6e9f1;
+  --color-surface: #f6f7fb;
+  --color-surface-2: #d7dcea;
+  --color-text: #131933;
+  --color-muted: #525a77;
+  --color-accent: #2b3c8a;
+  --color-on-accent: #f4f5ff;
+  --color-danger: #b03a3a;
+  --color-ok: #2f6a52;
+  --color-border: #c3c9da;
+  --color-glow: rgba(255, 255, 255, 0.9);
+  --color-shade: rgba(20, 26, 60, 0.10);
+  --color-track: #c9cfdf;
+  --particle-1: #ffffff;
+  --particle-2: #c3cdf0;
+  --particle-3: #e4c27f;
+  --particle-blend: normal;
+  --map-land: #dfe3ee;
+  --map-water: #b9c7e3;
+  --map-park: #cfd9cc;
+  --map-road: #fbfcff;
+  --map-minor: #cdd3e2;
+  --map-label: #8d95b0;
+  --shadow-1: 0 1px 2px rgba(20, 26, 60, 0.08), 0 4px 14px rgba(20, 26, 60, 0.08);
+  --shadow-2: 0 2px 6px rgba(20, 26, 60, 0.10), 0 24px 60px -12px rgba(20, 26, 60, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #090d1e;
+    --color-surface: #111733;
+    --color-surface-2: #1a2145;
+    --color-text: #efe9da;
+    --color-muted: #9aa0bd;
+    --color-accent: #e3bf74;
+    --color-on-accent: #1a1404;
+    --color-danger: #f08a7e;
+    --color-ok: #8fd1b0;
+    --color-border: #252d54;
+    --color-glow: rgba(120, 140, 255, 0.16);
+    --color-shade: rgba(0, 0, 0, 0.4);
+    --color-track: #232b50;
+    --particle-1: #fff6e0;
+    --particle-2: #e3bf74;
+    --particle-3: #aab6ff;
+    --particle-blend: add;
+    --map-land: #0f1530;
+    --map-water: #0a1c3a;
+    --map-park: #132a2a;
+    --map-road: #2a3463;
+    --map-minor: #1a2246;
+    --map-label: #5c6694;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 30px 70px -10px rgba(0, 0, 0, 0.7);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #090d1e;
+  --color-surface: #111733;
+  --color-surface-2: #1a2145;
+  --color-text: #efe9da;
+  --color-muted: #9aa0bd;
+  --color-accent: #e3bf74;
+  --color-on-accent: #1a1404;
+  --color-danger: #f08a7e;
+  --color-ok: #8fd1b0;
+  --color-border: #252d54;
+  --color-glow: rgba(120, 140, 255, 0.16);
+  --color-shade: rgba(0, 0, 0, 0.4);
+  --color-track: #232b50;
+  --particle-1: #fff6e0;
+  --particle-2: #e3bf74;
+  --particle-3: #aab6ff;
+  --particle-blend: add;
+  --map-land: #0f1530;
+  --map-water: #0a1c3a;
+  --map-park: #132a2a;
+  --map-road: #2a3463;
+  --map-minor: #1a2246;
+  --map-label: #5c6694;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 30px 70px -10px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #e6e9f1;
+  --color-surface: #f6f7fb;
+  --color-surface-2: #d7dcea;
+  --color-text: #131933;
+  --color-muted: #525a77;
+  --color-accent: #2b3c8a;
+  --color-on-accent: #f4f5ff;
+  --color-danger: #b03a3a;
+  --color-ok: #2f6a52;
+  --color-border: #c3c9da;
+  --color-glow: rgba(255, 255, 255, 0.9);
+  --color-shade: rgba(20, 26, 60, 0.10);
+  --color-track: #c9cfdf;
+  --particle-1: #ffffff;
+  --particle-2: #c3cdf0;
+  --particle-3: #e4c27f;
+  --particle-blend: normal;
+  --map-land: #dfe3ee;
+  --map-water: #b9c7e3;
+  --map-park: #cfd9cc;
+  --map-road: #fbfcff;
+  --map-minor: #cdd3e2;
+  --map-label: #8d95b0;
+  --shadow-1: 0 1px 2px rgba(20, 26, 60, 0.08), 0 4px 14px rgba(20, 26, 60, 0.08);
+  --shadow-2: 0 2px 6px rgba(20, 26, 60, 0.10), 0 24px 60px -12px rgba(20, 26, 60, 0.3);
+}

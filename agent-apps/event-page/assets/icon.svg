@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2d1a1d"/>
+      <stop offset="1" stop-color="#16100e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="#f6d0d6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#f6d0d6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <g fill="#eba9b3">
+    <ellipse cx="118" cy="120" rx="16" ry="9" transform="rotate(-30 118 120)"/>
+    <ellipse cx="398" cy="96" rx="12" ry="7" transform="rotate(24 398 96)" opacity="0.8"/>
+    <ellipse cx="420" cy="300" rx="15" ry="8" transform="rotate(-50 420 300)"/>
+    <ellipse cx="92" cy="330" rx="11" ry="6" transform="rotate(40 92 330)" opacity="0.7"/>
+    <ellipse cx="330" cy="420" rx="13" ry="7" transform="rotate(12 330 420)" opacity="0.85"/>
+  </g>
+  <g fill="#f3e8db" font-family="Georgia, 'Times New Roman', serif" text-anchor="middle">
+    <text x="256" y="262" font-size="150" font-style="italic">&amp;</text>
+    <text x="256" y="370" font-size="58" letter-spacing="6">06/12</text>
+  </g>
+  <g fill="#211815" stroke="#3b2e28" stroke-width="2">
+    <rect x="176" y="398" width="34" height="48" rx="7"/>
+    <rect x="214" y="398" width="34" height="48" rx="7"/>
+    <rect x="264" y="398" width="34" height="48" rx="7"/>
+    <rect x="302" y="398" width="34" height="48" rx="7"/>
+  </g>
+  <g fill="#f3e8db" font-family="Georgia, serif" font-size="34" text-anchor="middle">
+    <text x="193" y="434">2</text><text x="231" y="434">3</text><text x="281" y="434">0</text><text x="319" y="434">2</text>
+  </g>
+  <path d="M176 422h72M264 422h72" stroke="#16100e" stroke-width="2"/>
+</svg>

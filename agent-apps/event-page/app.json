@@ -1,0 +1,17 @@
+{
+  "id": "01a163e1-7dcd-7ecc-b09d-6ba4bd336500",
+  "version": "2026-10-21",
+  "name": "Event Page",
+  "shortDescription": "A cinematic page for your wedding, party, or reunion, with RSVP by message.",
+  "description": "Makes the page you send to every guest. The names arrive in large type while scattered digits fly in and settle into the date, petals, confetti, embers, or lanterns drift on the wind behind them, and flip tiles count down to the start. Scrolling down, photos open with a wipe and drift as they pass, the schedule's line draws itself and lights each stop, and the map tilts in as a pin drops onto the venue and the route glows. Guests find where to stay, the registry, an Add to calendar file, and a short reply form that opens a filled text or email to the hosts. On phones a Details sheet holds the schedule and the places to stay. Pick from four themes, each with a light and a dark look that follows the guest's setting. It is a folder of plain files you can host anywhere.",
+  "category": "social",
+  "subcategory": "Invitations",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/event-page",
+  "setup": "Your agent asks, in one message, for the names, what kind of event it is (wedding, birthday, party, or reunion), the date and start time, the place's name and street address, the plan for the day, a few lines of your story, a folder of photos, places for guests to stay, a registry link if you have one, the phone number or email that replies go to and the date to reply by, and which theme you like: ivory, midnight, garden, or neon. No accounts or keys are needed, and everything stays in your project folder."
+}

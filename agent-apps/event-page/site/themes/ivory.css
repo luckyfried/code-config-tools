@@ -1,0 +1,118 @@
+/* Ivory: bone paper and claret ink by day; candlelight on dark walnut by night. Tokens only. */
+:root {
+  color-scheme: light;
+  --color-bg: #f2eee7;
+  --color-surface: #fbf8f3;
+  --color-surface-2: #e7dfd3;
+  --color-text: #231d1a;
+  --color-muted: #6c5f55;
+  --color-accent: #8a2c43;
+  --color-on-accent: #fff6f3;
+  --color-danger: #a23a2a;
+  --color-ok: #3f6b4a;
+  --color-border: #d6cbbd;
+  --color-glow: rgba(255, 252, 246, 0.95);
+  --color-shade: rgba(70, 45, 30, 0.10);
+  --color-track: #ddd2c4;
+  --particle-1: #f3b9c3;
+  --particle-2: #e48c9c;
+  --particle-3: #fff3f1;
+  --particle-blend: normal;
+  --map-land: #ebe3d6;
+  --map-water: #c3d3d8;
+  --map-park: #d4dcc2;
+  --map-road: #fffdf8;
+  --map-minor: #ddd3c4;
+  --map-label: #b29f8c;
+  --shadow-1: 0 1px 2px rgba(60, 40, 28, 0.08), 0 4px 14px rgba(60, 40, 28, 0.08);
+  --shadow-2: 0 2px 6px rgba(60, 40, 28, 0.10), 0 24px 60px -12px rgba(60, 40, 28, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #16100e;
+    --color-surface: #211815;
+    --color-surface-2: #2d221e;
+    --color-text: #f3e8db;
+    --color-muted: #b4a292;
+    --color-accent: #eba9b3;
+    --color-on-accent: #2a0e15;
+    --color-danger: #f08a76;
+    --color-ok: #9ccaa4;
+    --color-border: #3b2e28;
+    --color-glow: rgba(255, 190, 140, 0.16);
+    --color-shade: rgba(0, 0, 0, 0.35);
+    --color-track: #3a2d27;
+    --particle-1: #f6d0d6;
+    --particle-2: #e6919f;
+    --particle-3: #ffe9d2;
+    --particle-blend: normal;
+    --map-land: #221916;
+    --map-water: #1a2a32;
+    --map-park: #25301f;
+    --map-road: #4a3a31;
+    --map-minor: #30251f;
+    --map-label: #7c675a;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.45), 0 30px 70px -10px rgba(0, 0, 0, 0.6);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #16100e;
+  --color-surface: #211815;
+  --color-surface-2: #2d221e;
+  --color-text: #f3e8db;
+  --color-muted: #b4a292;
+  --color-accent: #eba9b3;
+  --color-on-accent: #2a0e15;
+  --color-danger: #f08a76;
+  --color-ok: #9ccaa4;
+  --color-border: #3b2e28;
+  --color-glow: rgba(255, 190, 140, 0.16);
+  --color-shade: rgba(0, 0, 0, 0.35);
+  --color-track: #3a2d27;
+  --particle-1: #f6d0d6;
+  --particle-2: #e6919f;
+  --particle-3: #ffe9d2;
+  --particle-blend: normal;
+  --map-land: #221916;
+  --map-water: #1a2a32;
+  --map-park: #25301f;
+  --map-road: #4a3a31;
+  --map-minor: #30251f;
+  --map-label: #7c675a;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.45), 0 30px 70px -10px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f2eee7;
+  --color-surface: #fbf8f3;
+  --color-surface-2: #e7dfd3;
+  --color-text: #231d1a;
+  --color-muted: #6c5f55;
+  --color-accent: #8a2c43;
+  --color-on-accent: #fff6f3;
+  --color-danger: #a23a2a;
+  --color-ok: #3f6b4a;
+  --color-border: #d6cbbd;
+  --color-glow: rgba(255, 252, 246, 0.95);
+  --color-shade: rgba(70, 45, 30, 0.10);
+  --color-track: #ddd2c4;
+  --particle-1: #f3b9c3;
+  --particle-2: #e48c9c;
+  --particle-3: #fff3f1;
+  --particle-blend: normal;
+  --map-land: #ebe3d6;
+  --map-water: #c3d3d8;
+  --map-park: #d4dcc2;
+  --map-road: #fffdf8;
+  --map-minor: #ddd3c4;
+  --map-label: #b29f8c;
+  --shadow-1: 0 1px 2px rgba(60, 40, 28, 0.08), 0 4px 14px rgba(60, 40, 28, 0.08);
+  --shadow-2: 0 2px 6px rgba(60, 40, 28, 0.10), 0 24px 60px -12px rgba(60, 40, 28, 0.28);
+}

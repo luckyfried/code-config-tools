@@ -1,0 +1,118 @@
+/* Neon: bright pink, aqua, and gold on lilac by day; the same lights on violet black by night. Tokens only. */
+:root {
+  color-scheme: light;
+  --color-bg: #f6eff9;
+  --color-surface: #ffffff;
+  --color-surface-2: #ece0f4;
+  --color-text: #1d0e2a;
+  --color-muted: #685576;
+  --color-accent: #cf1a7c;
+  --color-on-accent: #ffffff;
+  --color-danger: #c42a2a;
+  --color-ok: #0f8a7a;
+  --color-border: #ddcbe8;
+  --color-glow: rgba(255, 220, 245, 0.9);
+  --color-shade: rgba(60, 10, 70, 0.10);
+  --color-track: #e2d2ec;
+  --particle-1: #ff3d9a;
+  --particle-2: #12c8d0;
+  --particle-3: #ffc531;
+  --particle-blend: normal;
+  --map-land: #f0e4f6;
+  --map-water: #c6ecf1;
+  --map-park: #e0f0d0;
+  --map-road: #ffffff;
+  --map-minor: #e3d3ec;
+  --map-label: #a78bb8;
+  --shadow-1: 0 1px 2px rgba(60, 10, 70, 0.08), 0 4px 14px rgba(60, 10, 70, 0.10);
+  --shadow-2: 0 2px 6px rgba(60, 10, 70, 0.10), 0 24px 60px -12px rgba(110, 20, 120, 0.32);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #0d0617;
+    --color-surface: #170c25;
+    --color-surface-2: #231236;
+    --color-text: #f8eeff;
+    --color-muted: #b8a5cb;
+    --color-accent: #ff4fa3;
+    --color-on-accent: #22041a;
+    --color-danger: #ff7a7a;
+    --color-ok: #3ee6c4;
+    --color-border: #331f49;
+    --color-glow: rgba(255, 60, 170, 0.18);
+    --color-shade: rgba(0, 0, 0, 0.45);
+    --color-track: #2e1c43;
+    --particle-1: #ff4fa3;
+    --particle-2: #2de2e6;
+    --particle-3: #ffd23f;
+    --particle-blend: add;
+    --map-land: #140a22;
+    --map-water: #0b1e33;
+    --map-park: #14261f;
+    --map-road: #3a2257;
+    --map-minor: #231436;
+    --map-label: #7d5ea0;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 0 0 1px rgba(255, 79, 163, 0.10), 0 30px 70px -10px rgba(0, 0, 0, 0.7);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0d0617;
+  --color-surface: #170c25;
+  --color-surface-2: #231236;
+  --color-text: #f8eeff;
+  --color-muted: #b8a5cb;
+  --color-accent: #ff4fa3;
+  --color-on-accent: #22041a;
+  --color-danger: #ff7a7a;
+  --color-ok: #3ee6c4;
+  --color-border: #331f49;
+  --color-glow: rgba(255, 60, 170, 0.18);
+  --color-shade: rgba(0, 0, 0, 0.45);
+  --color-track: #2e1c43;
+  --particle-1: #ff4fa3;
+  --particle-2: #2de2e6;
+  --particle-3: #ffd23f;
+  --particle-blend: add;
+  --map-land: #140a22;
+  --map-water: #0b1e33;
+  --map-park: #14261f;
+  --map-road: #3a2257;
+  --map-minor: #231436;
+  --map-label: #7d5ea0;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 0 0 1px rgba(255, 79, 163, 0.10), 0 30px 70px -10px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f6eff9;
+  --color-surface: #ffffff;
+  --color-surface-2: #ece0f4;
+  --color-text: #1d0e2a;
+  --color-muted: #685576;
+  --color-accent: #cf1a7c;
+  --color-on-accent: #ffffff;
+  --color-danger: #c42a2a;
+  --color-ok: #0f8a7a;
+  --color-border: #ddcbe8;
+  --color-glow: rgba(255, 220, 245, 0.9);
+  --color-shade: rgba(60, 10, 70, 0.10);
+  --color-track: #e2d2ec;
+  --particle-1: #ff3d9a;
+  --particle-2: #12c8d0;
+  --particle-3: #ffc531;
+  --particle-blend: normal;
+  --map-land: #f0e4f6;
+  --map-water: #c6ecf1;
+  --map-park: #e0f0d0;
+  --map-road: #ffffff;
+  --map-minor: #e3d3ec;
+  --map-label: #a78bb8;
+  --shadow-1: 0 1px 2px rgba(60, 10, 70, 0.08), 0 4px 14px rgba(60, 10, 70, 0.10);
+  --shadow-2: 0 2px 6px rgba(60, 10, 70, 0.10), 0 24px 60px -12px rgba(110, 20, 120, 0.32);
+}

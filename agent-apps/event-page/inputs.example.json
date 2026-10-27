@@ -1,0 +1,33 @@
+{
+  "_notes": "Copy this file to event-page.inputs.json in your project folder and change what you like. names: one to four names, shown big at the top. kind: wedding, birthday, party, or reunion; it picks the wind layer (petals, confetti, embers, or lanterns) and the words. line: the words under the names (optional; the kind picks them otherwise). date: 2027-06-12T16:30, or 2027-06-12 for a day with no start time. place: name and address; lat and lon draw the map (leave them out for an address card). schedule: the day's stops in order. story: a blank line starts a new paragraph. photos: a folder beside this file; the file names become the captions. stay: places to stay, each with a name and an optional url and note. registryUrl: optional. rsvp: a phone, an email, or both, and an optional reply-by date. theme: ivory, midnight, garden, or neon.",
+  "names": ["Iris", "Theo"],
+  "kind": "wedding",
+  "date": "2027-06-12T16:30",
+  "place": {
+    "name": "Hollow Oak Orchard",
+    "address": "2210 Gravenstein Hwy N, Sebastopol, CA 95472",
+    "lat": 38.4196,
+    "lon": -122.8417
+  },
+  "schedule": [
+    { "time": "4:30 pm", "what": "The ceremony, under the old oak" },
+    { "time": "5:15 pm", "what": "Cider and small plates in the orchard" },
+    { "time": "6:30 pm", "what": "Dinner at the long table" },
+    { "time": "8:00 pm", "what": "Toasts, cake, and dancing under the lights" },
+    { "time": "11:00 pm", "what": "Last song and sparklers" }
+  ],
+  "story": "We met in a borrowed kitchen in 2019, both reaching for the last good knife. Theo let Iris have it, then asked for it back an hour later, and we have been cooking side by side ever since.\n\nThe orchard is where we had our first picnic and, five summers later, where Theo asked. We cannot think of a better place to spend a long June evening with everyone we love.",
+  "photos": "photos",
+  "stay": [
+    { "name": "The Barlow Inn", "url": "https://example.com/barlow-inn", "note": "Ten minutes away; ask for the Iris & Theo rate" },
+    { "name": "Sebastopol Farmhouse Rooms", "url": "https://example.com/farmhouse", "note": "Walking distance to the orchard" },
+    { "name": "Russian River Cabins", "url": "https://example.com/river-cabins", "note": "Twenty minutes, by the water" }
+  ],
+  "registryUrl": "https://example.com/iris-and-theo",
+  "rsvp": {
+    "phone": "+1 707 555 0142",
+    "email": "iris.and.theo@example.com",
+    "deadline": "2027-05-01"
+  },
+  "theme": "ivory"
+}
