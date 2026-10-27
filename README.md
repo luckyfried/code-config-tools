@@ -6,11 +6,16 @@ Code, Codex, Muse, and GPT Dot.
 
 ## Layout
 
-`skills/` holds one directory per skill (the directory name is the skill name and `SKILL.md` is its
-instructions), `rules/` one Markdown file per rule, `output-styles/` one Markdown file per style,
-`hooks/` one directory per hook, `mcp-configs/` one JSON file per group of MCP servers, `settings/`
-one settings fragment per toolkit, and `statusline/` the statusline preset. A skill adapted from
-another project carries that project's license in its own folder.
+- `skills/`: one directory per skill. The directory name is the skill name and `SKILL.md` is its
+  instructions.
+- `rules/`: one Markdown file per rule.
+- `output-styles/`: one Markdown file per style.
+- `hooks/`: one directory per hook.
+- `mcp-configs/`: one JSON file per group of MCP servers.
+- `settings/`: one settings fragment per toolkit.
+- `statusline/`: the statusline preset.
+
+A skill adapted from another project carries that project's license in its own folder.
 
 ## License
 
