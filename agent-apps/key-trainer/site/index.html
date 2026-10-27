@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Key Trainer</title>
+  <meta name="description" content="A typing trainer with a keyboard heat map of your weak keys.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/jetbrains-mono/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/inter/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/drill.css">
+  <link rel="stylesheet" href="./styles/keyboard.css">
+  <link rel="stylesheet" href="./styles/cards.css">
+  <script src="./config.js"></script>
+  <script src="./boot.js"></script>
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="top">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect class="brand-edge" x="3" y="6" width="26" height="23" rx="6"/>
+          <rect class="brand-cap" x="3" y="3" width="26" height="23" rx="6"/>
+          <rect class="brand-dot" x="12" y="18" width="8" height="2.4" rx="1.2"/>
+        </svg>
+        <div class="brand-words">
+          <span class="brand-name">Key Trainer</span>
+          <span class="greet" id="greet">Good day.</span>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Screens">
+        <button class="tab" type="button" data-view="drill" aria-current="page">Drill</button>
+        <button class="tab" type="button" data-view="history">History</button>
+        <button class="tab" type="button" data-view="settings">Settings</button>
+      </nav>
+      <button class="icon-btn" type="button" id="theme-btn" aria-label="Switch between light and dark">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><g class="sun"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g><path class="moon" d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+    </header>
+
+    <main class="views">
+      <section class="view view-drill is-active" id="view-drill" aria-label="Drill">
+        <div class="stage card" id="stage">
+          <div class="stage-bar">
+            <div class="clock" aria-live="off">
+              <span class="clock-time num" id="clock">1:00</span>
+              <span class="clock-label" id="clock-label">a minute</span>
+            </div>
+            <dl class="live">
+              <div><dt>wpm</dt><dd class="num" id="live-wpm">0</dd></div>
+              <div><dt>accuracy</dt><dd class="num" id="live-acc">100%</dd></div>
+            </dl>
+            <div class="chips">
+              <span class="chip" id="chip-mode">Prose</span>
+              <span class="chip" id="chip-layout">QWERTY</span>
+            </div>
+          </div>
+          <div class="line-wrap" id="line-wrap">
+            <div class="line" id="line">
+              <div class="line-track" id="track"></div>
+              <span class="caret" id="caret" aria-hidden="true"></span>
+            </div>
+            <div class="progress" aria-hidden="true"><span class="progress-fill" id="progress"></span></div>
+            <p class="hint" id="hint">Sample run. Start typing to take over.</p>
+          </div>
+          <textarea class="sink" id="sink" aria-label="Type the passage here" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" rows="1"></textarea>
+
+          <div class="results" id="results" aria-live="polite" hidden>
+            <div class="results-head">
+              <h2 class="results-title" id="results-title">Your drill</h2>
+              <p class="results-sub" id="results-sub"></p>
+            </div>
+            <div class="results-figures">
+              <div class="figure figure-wpm"><span class="figure-value num" id="res-wpm">0</span><span class="figure-unit">wpm</span></div>
+              <div class="figure"><span class="figure-value num" id="res-acc">0</span><span class="figure-unit">% accuracy</span></div>
+            </div>
+            <div class="results-keys">
+              <div class="keylist">
+                <h3>Slowest keys</h3>
+                <ol class="caps" id="res-slow"></ol>
+              </div>
+              <div class="keylist">
+                <h3>Most missed</h3>
+                <ol class="caps" id="res-missed"></ol>
+              </div>
+            </div>
+            <div class="results-actions">
+              <button class="btn btn-primary" type="button" id="btn-again">Go again</button>
+              <button class="btn" type="button" id="btn-weak">Practice weak keys</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="history-card card" id="history-card" aria-label="Last 30 days">
+          <div class="card-head">
+            <h2>Last 30 days</h2>
+            <span class="status" id="hist-status"></span>
+          </div>
+          <div class="chart" id="chart-side"></div>
+          <dl class="totals" id="totals-side"></dl>
+        </aside>
+
+        <div class="board" id="board">
+          <div class="kb" id="kb-drill"></div>
+          <div class="kb-foot">
+            <p class="kb-note" id="kb-note">Next key lights up as you go</p>
+            <div class="heat-legend" aria-hidden="true">
+              <span>Fewer errors</span><span class="heat-ramp"></span><span>More</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view view-history" id="view-history" aria-label="History" hidden>
+        <div class="card hist-main">
+          <div class="card-head">
+            <h2>Speed and accuracy</h2>
+            <span class="status" id="hist-status-2"></span>
+          </div>
+          <div class="chart chart-big" id="chart-main"></div>
+          <div class="chart-key" aria-hidden="true">
+            <span class="swatch swatch-wpm"></span>Words per minute
+            <span class="swatch swatch-acc"></span>Accuracy
+            <span class="swatch swatch-touch"></span>Touch
+          </div>
+        </div>
+        <dl class="totals totals-big card" id="totals-main"></dl>
+        <div class="card hist-heat">
+          <div class="card-head">
+            <h2>Your weak keys</h2>
+            <button class="btn btn-small" type="button" id="btn-weak-2">Practice them</button>
+          </div>
+          <div class="kb kb-small" id="kb-history"></div>
+          <ol class="caps caps-row" id="weak-list"></ol>
+        </div>
+        <div class="card hist-list">
+          <div class="card-head"><h2>Recent drills</h2></div>
+          <ol class="drills" id="drill-list"></ol>
+        </div>
+      </section>
+
+      <section class="view view-settings" id="view-settings" aria-label="Settings" hidden>
+        <div class="card settings">
+          <fieldset class="field">
+            <legend>Keyboard layout</legend>
+            <div class="seg seg-wrap" id="set-layout" role="radiogroup"></div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Practice</legend>
+            <div class="seg" id="set-mode" role="radiogroup">
+              <button type="button" role="radio" data-value="prose">Prose</button>
+              <button type="button" role="radio" data-value="code">Code</button>
+            </div>
+            <p class="field-note" id="mode-note">Plain sentences with capitals and punctuation.</p>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Drill length</legend>
+            <div class="seg" id="set-seconds" role="radiogroup">
+              <button type="button" role="radio" data-value="30">30 seconds</button>
+              <button type="button" role="radio" data-value="60">1 minute</button>
+              <button type="button" role="radio" data-value="120">2 minutes</button>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Theme</legend>
+            <div class="seg" id="set-theme" role="radiogroup">
+              <button type="button" role="radio" data-value="">Default</button>
+              <button type="button" role="radio" data-value="dark">Terminal</button>
+              <button type="button" role="radio" data-value="light">Paper</button>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Your history</legend>
+            <p class="field-note">Your drills stay in this browser. Export them to move them to another one.</p>
+            <div class="row-actions">
+              <button class="btn" type="button" id="btn-export">Export history</button>
+              <label class="btn" for="file-import">Import history</label>
+              <input class="file" type="file" id="file-import" accept="application/json,.json">
+            </div>
+            <p class="field-note status-line" id="io-status" aria-live="polite"></p>
+          </fieldset>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="./badge.js"></script>
+</body>
+</html>

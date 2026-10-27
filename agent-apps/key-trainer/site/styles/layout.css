@@ -1,0 +1,267 @@
+/* The page frame: the header, the three views, and how the drill view composes on a phone, a phone on its side,
+   and a desktop. */
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--space-3) + var(--safe-top)) calc(var(--space-4) + var(--safe-right)) calc(var(--space-5) + var(--safe-bottom)) calc(var(--space-4) + var(--safe-left));
+  gap: var(--space-4);
+}
+
+/* Header */
+
+.top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "brand theme"
+    "tabs tabs";
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.brand {
+  grid-area: brand;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.brand-edge {
+  fill: var(--color-key-edge);
+}
+.brand-cap {
+  fill: var(--color-key);
+  stroke: var(--color-key-edge);
+  stroke-width: 0.6;
+}
+.brand-dot {
+  fill: var(--color-accent);
+}
+
+.brand-words {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  min-width: 0;
+}
+.brand-name {
+  font-weight: 650;
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+}
+.greet {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabs {
+  grid-area: tabs;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+
+.tab {
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  transition-property: background-color, color, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: ease;
+}
+.tab[aria-current="page"] {
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+.icon-btn {
+  grid-area: theme;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+.icon-btn:active {
+  transform: scale(0.96);
+}
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.icon-btn .sun {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.icon-btn .moon {
+  fill: var(--color-text);
+  opacity: 0;
+}
+[data-scheme="dark"] .icon-btn .sun {
+  opacity: 0;
+}
+[data-scheme="dark"] .icon-btn .moon {
+  opacity: 1;
+}
+
+/* Views */
+
+.views {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.view {
+  flex: 1;
+  min-height: 0;
+}
+
+.view-drill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "stage"
+    "board"
+    "side";
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.stage {
+  grid-area: stage;
+}
+.history-card {
+  grid-area: side;
+}
+.board {
+  grid-area: board;
+}
+
+.view-history {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.view-settings {
+  display: grid;
+  align-content: start;
+  justify-items: stretch;
+}
+
+/* A phone on its side: the line beside the keyboard, the history below. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .app {
+    gap: var(--space-3);
+    padding-top: calc(var(--space-2) + var(--safe-top));
+  }
+  .top {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "brand tabs theme";
+  }
+  .tabs {
+    justify-self: end;
+    width: min(100%, 360px);
+  }
+  .view-drill {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas:
+      "stage board"
+      "side side";
+    align-items: stretch;
+  }
+  .view-history {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* Desktop: the line and the history across the top, the keyboard as the lower half. */
+@media (min-width: 900px) and (min-height: 541px) {
+  .app {
+    height: 100dvh;
+    padding: calc(var(--space-5) + var(--safe-top)) calc(var(--space-6) + var(--safe-right)) calc(var(--space-5) + var(--safe-bottom)) calc(var(--space-6) + var(--safe-left));
+    gap: var(--space-5);
+  }
+  .top {
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas: "brand tabs theme";
+  }
+  .tabs {
+    width: 360px;
+  }
+  .view-drill {
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 27vw, 460px);
+    grid-template-rows: clamp(250px, 31vh, 330px) minmax(0, 1fr);
+    grid-template-areas:
+      "stage side"
+      "board board";
+    gap: var(--space-5);
+    align-content: stretch;
+  }
+  .view-history {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    grid-template-areas:
+      "main heat"
+      "totals heat"
+      "list list";
+    gap: var(--space-5);
+    overflow-y: auto;
+    padding-bottom: var(--space-4);
+  }
+  .hist-main {
+    grid-area: main;
+  }
+  .totals-big {
+    grid-area: totals;
+  }
+  .hist-heat {
+    grid-area: heat;
+  }
+  .hist-list {
+    grid-area: list;
+  }
+  .view-settings {
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 1000px) {
+  html {
+    font-size: 18px;
+  }
+  .app {
+    padding-left: calc(var(--space-7) + var(--safe-left));
+    padding-right: calc(var(--space-7) + var(--safe-right));
+  }
+  .view-drill {
+    grid-template-columns: minmax(0, 1fr) clamp(380px, 26vw, 520px);
+  }
+}

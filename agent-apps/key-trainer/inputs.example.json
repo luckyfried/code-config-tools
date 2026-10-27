@@ -1,0 +1,16 @@
+{
+  "name": "Sam",
+  "layout": "qwerty",
+  "mode": "prose",
+  "passages": [],
+  "drillSeconds": 60,
+  "theme": "auto",
+  "_notes": {
+    "name": "The name in the greeting at the top of the page.",
+    "layout": "The keyboard the person types on: qwerty, qwertz, azerty, dvorak, or colemak. The on-screen keyboard is drawn in this layout.",
+    "mode": "prose for sentences, or code for short programs that keep their indentation, brackets, and symbols.",
+    "passages": "The person's own texts to practice, one string each. Leave the list empty to use the built-in set.",
+    "drillSeconds": "How long one drill runs, in seconds. 60 is a minute.",
+    "theme": "auto follows the device (Paper when light, Terminal when dark), terminal is black with a green caret, paper is white with an ink caret."
+  }
+}

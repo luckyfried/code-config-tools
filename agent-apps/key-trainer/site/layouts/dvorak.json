@@ -1,0 +1,340 @@
+{
+ "id": "dvorak",
+ "name": "Dvorak",
+ "form": "ansi",
+ "rows": [
+  [
+   {
+    "code": "Backquote",
+    "base": "`",
+    "shift": "~"
+   },
+   {
+    "code": "Digit1",
+    "base": "1",
+    "shift": "!"
+   },
+   {
+    "code": "Digit2",
+    "base": "2",
+    "shift": "@"
+   },
+   {
+    "code": "Digit3",
+    "base": "3",
+    "shift": "#"
+   },
+   {
+    "code": "Digit4",
+    "base": "4",
+    "shift": "$"
+   },
+   {
+    "code": "Digit5",
+    "base": "5",
+    "shift": "%"
+   },
+   {
+    "code": "Digit6",
+    "base": "6",
+    "shift": "^"
+   },
+   {
+    "code": "Digit7",
+    "base": "7",
+    "shift": "&"
+   },
+   {
+    "code": "Digit8",
+    "base": "8",
+    "shift": "*"
+   },
+   {
+    "code": "Digit9",
+    "base": "9",
+    "shift": "("
+   },
+   {
+    "code": "Digit0",
+    "base": "0",
+    "shift": ")"
+   },
+   {
+    "code": "Minus",
+    "base": "[",
+    "shift": "{"
+   },
+   {
+    "code": "Equal",
+    "base": "]",
+    "shift": "}"
+   },
+   {
+    "code": "Backspace",
+    "w": 2,
+    "label": "backspace",
+    "glyph": "⌫"
+   }
+  ],
+  [
+   {
+    "code": "Tab",
+    "w": 1.5,
+    "label": "tab",
+    "glyph": "⇥",
+    "base": "\t"
+   },
+   {
+    "code": "KeyQ",
+    "base": "'",
+    "shift": "\""
+   },
+   {
+    "code": "KeyW",
+    "base": ",",
+    "shift": "<"
+   },
+   {
+    "code": "KeyE",
+    "base": ".",
+    "shift": ">"
+   },
+   {
+    "code": "KeyR",
+    "base": "p",
+    "shift": "P"
+   },
+   {
+    "code": "KeyT",
+    "base": "y",
+    "shift": "Y"
+   },
+   {
+    "code": "KeyY",
+    "base": "f",
+    "shift": "F"
+   },
+   {
+    "code": "KeyU",
+    "base": "g",
+    "shift": "G"
+   },
+   {
+    "code": "KeyI",
+    "base": "c",
+    "shift": "C"
+   },
+   {
+    "code": "KeyO",
+    "base": "r",
+    "shift": "R"
+   },
+   {
+    "code": "KeyP",
+    "base": "l",
+    "shift": "L"
+   },
+   {
+    "code": "BracketLeft",
+    "base": "/",
+    "shift": "?"
+   },
+   {
+    "code": "BracketRight",
+    "base": "=",
+    "shift": "+"
+   },
+   {
+    "code": "Backslash",
+    "base": "\\",
+    "shift": "|",
+    "w": 1.5
+   }
+  ],
+  [
+   {
+    "code": "CapsLock",
+    "w": 1.75,
+    "label": "caps lock",
+    "glyph": "⇪"
+   },
+   {
+    "code": "KeyA",
+    "base": "a",
+    "shift": "A"
+   },
+   {
+    "code": "KeyS",
+    "base": "o",
+    "shift": "O"
+   },
+   {
+    "code": "KeyD",
+    "base": "e",
+    "shift": "E"
+   },
+   {
+    "code": "KeyF",
+    "base": "u",
+    "shift": "U"
+   },
+   {
+    "code": "KeyG",
+    "base": "i",
+    "shift": "I"
+   },
+   {
+    "code": "KeyH",
+    "base": "d",
+    "shift": "D"
+   },
+   {
+    "code": "KeyJ",
+    "base": "h",
+    "shift": "H"
+   },
+   {
+    "code": "KeyK",
+    "base": "t",
+    "shift": "T"
+   },
+   {
+    "code": "KeyL",
+    "base": "n",
+    "shift": "N"
+   },
+   {
+    "code": "Semicolon",
+    "base": "s",
+    "shift": "S"
+   },
+   {
+    "code": "Quote",
+    "base": "-",
+    "shift": "_"
+   },
+   {
+    "code": "Enter",
+    "w": 2.25,
+    "label": "enter",
+    "glyph": "⏎",
+    "base": "\n"
+   }
+  ],
+  [
+   {
+    "code": "ShiftLeft",
+    "w": 2.25,
+    "label": "shift",
+    "glyph": "⇧"
+   },
+   {
+    "code": "KeyZ",
+    "base": ";",
+    "shift": ":"
+   },
+   {
+    "code": "KeyX",
+    "base": "q",
+    "shift": "Q"
+   },
+   {
+    "code": "KeyC",
+    "base": "j",
+    "shift": "J"
+   },
+   {
+    "code": "KeyV",
+    "base": "k",
+    "shift": "K"
+   },
+   {
+    "code": "KeyB",
+    "base": "x",
+    "shift": "X"
+   },
+   {
+    "code": "KeyN",
+    "base": "b",
+    "shift": "B"
+   },
+   {
+    "code": "KeyM",
+    "base": "m",
+    "shift": "M"
+   },
+   {
+    "code": "Comma",
+    "base": "w",
+    "shift": "W"
+   },
+   {
+    "code": "Period",
+    "base": "v",
+    "shift": "V"
+   },
+   {
+    "code": "Slash",
+    "base": "z",
+    "shift": "Z"
+   },
+   {
+    "code": "ShiftRight",
+    "w": 2.75,
+    "label": "shift",
+    "glyph": "⇧"
+   }
+  ],
+  [
+   {
+    "code": "ControlLeft",
+    "w": 1.5,
+    "label": "ctrl",
+    "glyph": "ctrl"
+   },
+   {
+    "code": "MetaLeft",
+    "w": 1.25,
+    "label": "super",
+    "glyph": "❖"
+   },
+   {
+    "code": "AltLeft",
+    "w": 1.25,
+    "label": "alt",
+    "glyph": "alt"
+   },
+   {
+    "code": "Space",
+    "w": 6.25,
+    "label": "",
+    "glyph": "",
+    "base": " "
+   },
+   {
+    "code": "AltRight",
+    "w": 1.25,
+    "label": "alt",
+    "glyph": "alt"
+   },
+   {
+    "code": "MetaRight",
+    "w": 1.0,
+    "label": "fn",
+    "glyph": "fn"
+   },
+   {
+    "code": "ContextMenu",
+    "w": 1.0,
+    "label": "menu",
+    "glyph": "≡"
+   },
+   {
+    "code": "ControlRight",
+    "w": 1.5,
+    "label": "ctrl",
+    "glyph": "ctrl"
+   }
+  ]
+ ]
+}

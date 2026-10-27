@@ -1,0 +1,17 @@
+{
+  "id": "01a17db8-2582-7824-9b44-1487e9634bd2",
+  "version": "2026-10-21",
+  "name": "Key Trainer",
+  "shortDescription": "A typing trainer with a keyboard heat map of your weak keys.",
+  "description": "Practice typing on prose or code in your own keyboard layout. The passage runs as one line while an on-screen keyboard lights the next key and flashes the one you hit by mistake. After each drill the keyboard turns into a heat map of your error rate per key, and one tap builds a drill from your weakest keys. Speed and accuracy are kept per day in your browser, with a thirty-day chart, and you can export and import your history.",
+  "category": "education",
+  "subcategory": "Typing",
+  "useCase": "content-writing",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/key-trainer",
+  "setup": "Your agent asks which keyboard layout you use (QWERTY, QWERTZ, AZERTY, Dvorak, or Colemak), whether you want to practice prose or code, and for a couple of passages you'd like to type, or it uses the built-in set. It can also set your name for the greeting, the drill length, and a light or dark look. No keys or accounts are needed. Your drill history stays in the browser you practice in; Export and Import in Settings move it."
+}

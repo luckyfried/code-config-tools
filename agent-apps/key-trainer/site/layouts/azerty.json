@@ -1,0 +1,357 @@
+{
+ "id": "azerty",
+ "name": "AZERTY (French)",
+ "form": "iso",
+ "rows": [
+  [
+   {
+    "code": "Backquote",
+    "base": "²",
+    "shift": "²"
+   },
+   {
+    "code": "Digit1",
+    "base": "&",
+    "shift": "1"
+   },
+   {
+    "code": "Digit2",
+    "base": "é",
+    "shift": "2",
+    "alt": "~"
+   },
+   {
+    "code": "Digit3",
+    "base": "\"",
+    "shift": "3",
+    "alt": "#"
+   },
+   {
+    "code": "Digit4",
+    "base": "'",
+    "shift": "4",
+    "alt": "{"
+   },
+   {
+    "code": "Digit5",
+    "base": "(",
+    "shift": "5",
+    "alt": "["
+   },
+   {
+    "code": "Digit6",
+    "base": "-",
+    "shift": "6",
+    "alt": "|"
+   },
+   {
+    "code": "Digit7",
+    "base": "è",
+    "shift": "7",
+    "alt": "`"
+   },
+   {
+    "code": "Digit8",
+    "base": "_",
+    "shift": "8",
+    "alt": "\\"
+   },
+   {
+    "code": "Digit9",
+    "base": "ç",
+    "shift": "9",
+    "alt": "^"
+   },
+   {
+    "code": "Digit0",
+    "base": "à",
+    "shift": "0",
+    "alt": "@"
+   },
+   {
+    "code": "Minus",
+    "base": ")",
+    "shift": "°",
+    "alt": "]"
+   },
+   {
+    "code": "Equal",
+    "base": "=",
+    "shift": "+",
+    "alt": "}"
+   },
+   {
+    "code": "Backspace",
+    "w": 2,
+    "label": "backspace",
+    "glyph": "⌫"
+   }
+  ],
+  [
+   {
+    "code": "Tab",
+    "w": 1.5,
+    "label": "tab",
+    "glyph": "⇥",
+    "base": "\t"
+   },
+   {
+    "code": "KeyQ",
+    "base": "a",
+    "shift": "A"
+   },
+   {
+    "code": "KeyW",
+    "base": "z",
+    "shift": "Z"
+   },
+   {
+    "code": "KeyE",
+    "base": "e",
+    "shift": "E"
+   },
+   {
+    "code": "KeyR",
+    "base": "r",
+    "shift": "R"
+   },
+   {
+    "code": "KeyT",
+    "base": "t",
+    "shift": "T"
+   },
+   {
+    "code": "KeyY",
+    "base": "y",
+    "shift": "Y"
+   },
+   {
+    "code": "KeyU",
+    "base": "u",
+    "shift": "U"
+   },
+   {
+    "code": "KeyI",
+    "base": "i",
+    "shift": "I"
+   },
+   {
+    "code": "KeyO",
+    "base": "o",
+    "shift": "O"
+   },
+   {
+    "code": "KeyP",
+    "base": "p",
+    "shift": "P"
+   },
+   {
+    "code": "BracketLeft",
+    "base": "^",
+    "shift": "¨"
+   },
+   {
+    "code": "BracketRight",
+    "base": "$",
+    "shift": "£",
+    "alt": "¤"
+   },
+   {
+    "code": "Enter",
+    "w": 1.5,
+    "label": "enter",
+    "glyph": "⏎",
+    "iso": true,
+    "base": "\n"
+   }
+  ],
+  [
+   {
+    "code": "CapsLock",
+    "w": 1.75,
+    "label": "caps lock",
+    "glyph": "⇪"
+   },
+   {
+    "code": "KeyA",
+    "base": "q",
+    "shift": "Q"
+   },
+   {
+    "code": "KeyS",
+    "base": "s",
+    "shift": "S"
+   },
+   {
+    "code": "KeyD",
+    "base": "d",
+    "shift": "D"
+   },
+   {
+    "code": "KeyF",
+    "base": "f",
+    "shift": "F"
+   },
+   {
+    "code": "KeyG",
+    "base": "g",
+    "shift": "G"
+   },
+   {
+    "code": "KeyH",
+    "base": "h",
+    "shift": "H"
+   },
+   {
+    "code": "KeyJ",
+    "base": "j",
+    "shift": "J"
+   },
+   {
+    "code": "KeyK",
+    "base": "k",
+    "shift": "K"
+   },
+   {
+    "code": "KeyL",
+    "base": "l",
+    "shift": "L"
+   },
+   {
+    "code": "Semicolon",
+    "base": "m",
+    "shift": "M"
+   },
+   {
+    "code": "Quote",
+    "base": "ù",
+    "shift": "%"
+   },
+   {
+    "code": "Backslash",
+    "base": "*",
+    "shift": "µ"
+   }
+  ],
+  [
+   {
+    "code": "ShiftLeft",
+    "w": 1.25,
+    "label": "shift",
+    "glyph": "⇧"
+   },
+   {
+    "code": "IntlBackslash",
+    "base": "<",
+    "shift": ">"
+   },
+   {
+    "code": "KeyZ",
+    "base": "w",
+    "shift": "W"
+   },
+   {
+    "code": "KeyX",
+    "base": "x",
+    "shift": "X"
+   },
+   {
+    "code": "KeyC",
+    "base": "c",
+    "shift": "C"
+   },
+   {
+    "code": "KeyV",
+    "base": "v",
+    "shift": "V"
+   },
+   {
+    "code": "KeyB",
+    "base": "b",
+    "shift": "B"
+   },
+   {
+    "code": "KeyN",
+    "base": "n",
+    "shift": "N"
+   },
+   {
+    "code": "KeyM",
+    "base": ",",
+    "shift": "?"
+   },
+   {
+    "code": "Comma",
+    "base": ";",
+    "shift": "."
+   },
+   {
+    "code": "Period",
+    "base": ":",
+    "shift": "/"
+   },
+   {
+    "code": "Slash",
+    "base": "!",
+    "shift": "§"
+   },
+   {
+    "code": "ShiftRight",
+    "w": 2.75,
+    "label": "shift",
+    "glyph": "⇧"
+   }
+  ],
+  [
+   {
+    "code": "ControlLeft",
+    "w": 1.5,
+    "label": "ctrl",
+    "glyph": "ctrl"
+   },
+   {
+    "code": "MetaLeft",
+    "w": 1.25,
+    "label": "super",
+    "glyph": "❖"
+   },
+   {
+    "code": "AltLeft",
+    "w": 1.25,
+    "label": "alt",
+    "glyph": "alt"
+   },
+   {
+    "code": "Space",
+    "w": 6.25,
+    "label": "",
+    "glyph": "",
+    "base": " "
+   },
+   {
+    "code": "AltRight",
+    "w": 1.25,
+    "label": "alt gr",
+    "glyph": "alt"
+   },
+   {
+    "code": "MetaRight",
+    "w": 1.0,
+    "label": "fn",
+    "glyph": "fn"
+   },
+   {
+    "code": "ContextMenu",
+    "w": 1.0,
+    "label": "menu",
+    "glyph": "≡"
+   },
+   {
+    "code": "ControlRight",
+    "w": 1.5,
+    "label": "ctrl",
+    "glyph": "ctrl"
+   }
+  ]
+ ]
+}
