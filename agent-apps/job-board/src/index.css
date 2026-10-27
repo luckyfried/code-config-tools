@@ -1,0 +1,468 @@
+@import "tailwindcss" source(".");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/public-sans";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Color values live in src/themes/<name>.css, served as ./theme.css; this file maps them and holds structure. */
+@theme inline {
+  --font-sans: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Bricolage Grotesque Variable", var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-yes: var(--yes);
+  --color-later: var(--later);
+  --color-no: var(--no);
+  --color-lane: var(--lane);
+  --color-note: var(--note);
+  --color-note-foreground: var(--note-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.34, 1.32, 0.5, 1);
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 520ms;
+  --dur-move: 420ms;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 1rem;
+  }
+}
+
+/* The board */
+.lane {
+  background: var(--lane);
+  box-shadow: inset 0 0 0 1px var(--lane-edge);
+}
+
+/* A card: its company's color washes down from the top edge into the paper. --hue is set per card. */
+.job-card {
+  position: relative;
+  background:
+    linear-gradient(to bottom, oklch(var(--wash-l) var(--wash-c) var(--hue, 250)), var(--card) 6.5rem) top / 100% 6.5rem no-repeat,
+    var(--card);
+  color: var(--card-foreground);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  transition-property: opacity, filter, box-shadow;
+  transition-duration: var(--dur-move), var(--dur-move), var(--dur-base);
+  transition-timing-function: var(--ease-out);
+  touch-action: pan-y;
+  transform: translateX(var(--dx, 0px)) rotate(var(--dr, 0deg));
+}
+.job-card[data-variant="hero"] {
+  border-radius: calc(var(--radius) * 2);
+  background:
+    linear-gradient(to bottom, oklch(var(--wash-l) var(--wash-c) var(--hue, 250)), var(--card) 9rem) top / 100% 9rem no-repeat,
+    var(--card);
+  box-shadow: var(--hero-shadow);
+}
+.job-card[data-launched] { opacity: 0; transition: none; }
+.job-card[data-shown="later"] {
+  opacity: var(--later-dim);
+  filter: saturate(0.55);
+}
+.job-card[data-shown="later"]:hover,
+.job-card[data-shown="later"]:focus-within { opacity: 1; filter: none; }
+.job-card:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.job-card[data-dragging] { transition: none; box-shadow: var(--card-lift); }
+.job-card[data-returning] { transition: transform var(--dur-base) var(--ease-out); }
+.card-lift {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--card-lift);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The company mark */
+.mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 30%;
+  background: linear-gradient(145deg, oklch(calc(var(--mark-l) + 0.07) var(--mark-c) var(--hue, 250)), oklch(var(--mark-l) var(--mark-c) calc(var(--hue, 250) + 16)));
+  color: var(--mark-fg);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 var(--mark-shine), 0 1px 2px var(--mark-drop), 0 6px 14px -8px oklch(var(--mark-l) var(--mark-c) var(--hue, 250));
+}
+.mark[data-size="lg"] { width: 3.25rem; height: 3.25rem; font-size: 1.3rem; }
+.mark[data-size="sm"] { width: 2.25rem; height: 2.25rem; font-size: 0.875rem; }
+
+/* The pay, set as a figure */
+.pay-figure {
+  font-family: var(--font-heading);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--pay);
+}
+.pay-figure[data-size="lg"] { font-size: clamp(2.5rem, 2.1rem + 1.2vw, 3.25rem); }
+.pay-figure[data-size="md"] { font-size: 1.5rem; letter-spacing: -0.03em; }
+.pay-figure .cur {
+  font-size: 0.5em;
+  font-weight: 600;
+  vertical-align: 0.72em;
+  margin-right: 0.06em;
+  color: var(--muted-foreground);
+  letter-spacing: 0;
+}
+.pay-figure .unit { font-size: 0.62em; font-weight: 550; margin-left: 0.02em; letter-spacing: -0.01em; }
+.pay-figure .dash { font-weight: 300; margin: 0 0.14em; color: var(--muted-foreground); }
+.pay-figure .rest {
+  display: block;
+  margin-top: 0.35rem;
+  font: 500 0.875rem/1.3 var(--font-sans);
+  letter-spacing: 0;
+  color: var(--muted-foreground);
+}
+
+.place-chip {
+  flex: none;
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  background: var(--chip-bg);
+  color: var(--foreground);
+}
+
+.facts li { position: relative; padding-left: 1.1rem; }
+.facts li::before {
+  content: "";
+  position: absolute;
+  left: 0.15rem;
+  top: 0.5em;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: oklch(var(--mark-l) var(--mark-c) var(--hue, 250));
+}
+
+.btn-yes,
+.btn-yes:hover {
+  background: var(--yes);
+  color: var(--on-yes);
+  border-color: transparent;
+}
+.btn-yes:hover { filter: brightness(1.06); }
+
+/* The stamp a card shows as it is swiped, and keeps in flight. */
+.stamp {
+  position: absolute;
+  top: 1.4rem;
+  z-index: 2;
+  padding: 0.15rem 0.6rem;
+  border: 3px solid currentColor;
+  border-radius: 0.5rem;
+  font: 800 1.5rem/1.1 var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  background: var(--card);
+}
+.stamp.yes { left: 1.25rem; color: var(--yes); opacity: var(--reveal-yes, 0); transform: rotate(-12deg); }
+.stamp.no { right: 1.25rem; color: var(--no); opacity: var(--reveal-no, 0); transform: rotate(12deg); }
+
+/* The pile of new openings: every card in one cell, the ones under the top showing their bottom edges. */
+.deck {
+  display: grid;
+  padding-bottom: 1.75rem;
+}
+.deck > .deck-slot { grid-area: 1 / 1; display: flex; flex-direction: column; }
+.deck .job-card { flex: 1; }
+.job-card[data-depth] {
+  transform-origin: 50% 100%;
+  transition-property: transform, opacity, box-shadow;
+  transition-duration: var(--dur-slow), var(--dur-base), var(--dur-base);
+  transition-timing-function: var(--ease-spring), var(--ease-out), var(--ease-out);
+}
+.job-card[data-depth="0"] { z-index: 3; transition-delay: 40ms; }
+.job-card[data-depth="1"] {
+  z-index: 2;
+  transform: translateY(0.875rem) scale(0.95);
+  transition-delay: 90ms;
+}
+.job-card[data-depth="2"] {
+  z-index: 1;
+  transform: translateY(1.75rem) scale(0.9);
+  transition-delay: 140ms;
+}
+.job-card[data-depth]:not([data-depth="0"]) { pointer-events: none; box-shadow: var(--deck-edge); }
+.job-card[data-depth] > * { transition: opacity var(--dur-base) var(--ease-out) 180ms; }
+.job-card[data-depth]:not([data-depth="0"]) > * { opacity: 0; transition-delay: 0ms; }
+/* The darker paper of the cards under the top one. */
+.job-card[data-depth]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--deck-shade);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.job-card[data-depth="1"]::after { opacity: 0.6; }
+.job-card[data-depth="2"]::after { opacity: 1; }
+.job-card[data-depth][data-dragging] { transition: none; }
+/* A card that joins the pile after the board has opened rises into its place. */
+@starting-style {
+  .job-card[data-depth="0"] { opacity: 0; transform: translateY(1.25rem) scale(0.97); }
+  .job-card[data-depth="1"] { opacity: 0; transform: translateY(1.875rem) scale(0.93); }
+  .job-card[data-depth="2"] { opacity: 0; transform: translateY(2.5rem) scale(0.86); }
+}
+
+/* The copy of a card in flight to its column. */
+.ghost {
+  position: fixed;
+  left: var(--gx);
+  top: var(--gy);
+  width: var(--gw);
+  height: var(--gh);
+  margin: 0;
+  z-index: 60;
+  pointer-events: none;
+  transition: none;
+  transform-origin: 50% 50%;
+  box-shadow: var(--card-lift);
+  will-change: transform, opacity;
+}
+
+/* A column's count steps up when a card lands in it. */
+@keyframes count-pop {
+  0% { transform: translateY(-0.35em) scale(1.25); opacity: 0.3; }
+  100% { transform: none; opacity: 1; }
+}
+.count-pop { display: inline-block; animation: count-pop var(--dur-slow) var(--ease-out) both; }
+
+/* A phone on its side: the header and the column tabs on the left, the column on the right. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .phone-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    column-gap: 0.5rem;
+  }
+  .phone-side {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100dvh;
+    overflow-y: auto;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .phone-main { padding-top: max(1rem, env(safe-area-inset-top)); }
+  /* The top card keeps its choices on the first screen: the facts and the note wait in the card's detail. */
+  .phone-main > .swipe-hint,
+  .job-card[data-variant="hero"] :is(.facts, .note) { display: none; }
+  .phone-side h1 { -webkit-line-clamp: 2; font-size: 1.1875rem; }
+  .phone-side .brief { display: block; margin-top: 0.75rem; padding-bottom: 0.25rem; }
+  .brief .facts li::before { top: 0.45em; }
+  .job-card[data-variant="hero"] { gap: 0.75rem; padding: 1rem 1.25rem; }
+  .job-card[data-variant="hero"] .pay-figure[data-size="lg"] { font-size: 2.25rem; }
+}
+
+/* A lane that holds more than it shows ends at its last whole card; the count below it says what is further down. */
+.lane-scroll {
+  padding-bottom: 0.75rem;
+  max-height: var(--fit, none);
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 0.25rem;
+}
+.lane-scroll > .lane-list > * { scroll-snap-align: start; }
+
+/* The open tab on a phone stands clear of its track in either look. */
+.tab-on {
+  background: var(--tab-on);
+  box-shadow: 0 0 0 1px var(--tab-on-edge), 0 1px 3px oklch(0 0 0 / 18%);
+}
+
+/* The board opens: the header settles, the columns come up, then each card rises into place, one column after
+   another. Everything waits, hidden, until the board's type has loaded ([data-go]). Individual translate and scale
+   compose with the transform a card's pile depth and swipe already use. */
+@keyframes rise-in {
+  from { opacity: 0; translate: 0 10px; }
+}
+@keyframes lane-in {
+  from { opacity: 0; }
+}
+@keyframes card-in {
+  from { opacity: 0; translate: 0 28px; scale: 0.96; }
+}
+.rise { animation: rise-in var(--dur-slow) var(--ease-out) backwards; }
+.lane { animation: lane-in var(--dur-slow) var(--ease-out) 80ms backwards; }
+.brief { animation: rise-in var(--dur-slow) var(--ease-out) 380ms backwards; }
+.card-enter {
+  animation: card-in 700ms var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 10) * 115ms + 260ms);
+}
+.rise,
+.lane,
+.brief,
+.card-enter { animation-play-state: paused; }
+[data-go] :is(.rise, .lane, .brief, .card-enter) { animation-play-state: running; }
+
+/* The swipe underlay on a phone */
+.swipe-under {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.25rem;
+  pointer-events: none;
+}
+.swipe-under .yes { color: var(--yes); opacity: var(--reveal-yes, 0); }
+.swipe-under .no { color: var(--no); opacity: var(--reveal-no, 0); }
+
+/* The state chip: it breathes while the agent works and lands with a check when done. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem 0.2rem 0.45rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  background: var(--chip-bg);
+  color: var(--foreground);
+  position: relative;
+}
+.chip .dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+  flex: none;
+}
+.chip:is([data-state="waiting"], [data-state="agent"]) { background: var(--working-bg); color: var(--working-fg); }
+.chip:is([data-state="waiting"], [data-state="agent"]) .dot {
+  background: var(--working-fg);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+.chip:is([data-state="waiting"], [data-state="agent"])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 14px 1px var(--glow);
+  animation: glow 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.chip[data-state="applied"] { background: var(--done-bg); color: var(--done-fg); }
+.chip[data-state="failed"] { background: var(--no-soft); color: var(--no); }
+.chip .check { width: 0.9rem; height: 0.9rem; flex: none; }
+.chip .check path { stroke-dasharray: 16; stroke-dashoffset: 0; }
+.chip[data-landed] { animation: land 420ms var(--ease-out); }
+.chip[data-landed] .check path { animation: draw 380ms 90ms var(--ease-out) both; }
+@keyframes breathe {
+  0%, 100% { transform: scale(0.75); opacity: 0.55; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+@keyframes glow {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 1; }
+}
+@keyframes land {
+  0% { transform: scale(0.9); }
+  55% { transform: scale(1.08); }
+  100% { transform: none; }
+}
+@keyframes draw { from { stroke-dashoffset: 16; } }
+
+.note {
+  background: var(--note);
+  color: var(--note-foreground);
+  border-radius: calc(var(--radius) * 0.8);
+}
+
+/* The key a choice also answers to, on its button. */
+.key-hint {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.3rem;
+  padding: 0 0.25rem;
+  font: 600 0.75rem/1 var(--font-sans);
+  border-radius: 0.3rem;
+  border: 1px solid currentColor;
+  opacity: 0.55;
+}
+.btn-yes .key-hint { opacity: 0.75; }
+
+.brief { display: none; }
+
+.pad-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+.pad-safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --dur-move: 0ms; }
+  .rise,
+  .lane,
+  .brief,
+  .card-enter,
+  .count-pop { animation: none; }
+  .chip .dot,
+  .chip::after,
+  .chip[data-landed],
+  .chip[data-landed] .check path { animation: none; }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "01a1628c-6345-7e42-abef-f94005e3df42",
+  "version": "2026-10-21",
+  "name": "Job Board",
+  "shortDescription": "Your agent finds openings; you sort them with a tap, a swipe, or a key.",
+  "description": "A board of the job openings your agent found for you, each on its own card with the role, the company, the pay, where it is, and what stands out. Tap yes, no, or later, swipe on a phone, or press Y, N, or L on a desktop, and the card moves to its column. Your agent reads your choices when you ask, and before it applies anywhere it asks you first. Each card shows where the agent is with your choice, its notes on the opening, and every choice you made. The openings and choices stay in a folder on your computer.",
+  "category": "productivity",
+  "subcategory": "Careers",
+  "useCase": "product-discovery",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/job-board",
+  "setup": "Your agent asks for your first name, the kind of role you want in one sentence (the title, the place or remote, and the pay), which sits at the top of the board, and whether you want the paper look, the night look, or the one that follows your device. No keys are needed and no outside service is used. Your openings and choices stay in data/job-board/ in your project, on your computer, and the agent applies to a job only after it asks you in the conversation."
+}
