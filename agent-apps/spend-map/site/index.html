@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Spend Map</title>
+  <meta name="description" content="A month of spending as a flow: income on the left, categories in the middle, the merchants that took the most on the right.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="./boot.js"></script>
+  <script src="./config.js"></script>
+  <script src="./data.js"></script>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/fonts.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/flow.css">
+  <link rel="stylesheet" href="./styles/months.css">
+  <link rel="stylesheet" href="./styles/table.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <div class="app" data-screen="map">
+    <header class="bar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true">
+          <path class="brand-mark-a" d="M3 5.5h3.5c6 0 7 7.5 15 7.5H25"/>
+          <path class="brand-mark-b" d="M3 5.5h3.5c6 0 6 11.5 15 11.5H25"/>
+          <path class="brand-mark-c" d="M3 5.5h3.5c6 0 5 15.5 15 15.5H25"/>
+        </svg>
+        <span class="brand-name">Spend Map</span>
+        <span class="brand-range" data-slot="range"></span>
+      </div>
+      <nav class="screens" aria-label="Screens">
+        <button class="screen-tab" type="button" data-go="map" aria-current="page">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 5h3c4 0 5 5 9 5h3M2.5 5h3c4 0 4 9 9 9h3"/></svg>
+          <span>Map</span>
+        </button>
+        <button class="screen-tab" type="button" data-go="months">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16.5V9M8 16.5V4.5M12 16.5V7.5M16 16.5V11"/></svg>
+          <span>Months</span>
+        </button>
+        <button class="screen-tab" type="button" data-go="categories">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14M7 3.5v13"/></svg>
+          <span>Categories</span>
+        </button>
+      </nav>
+      <button class="theme-switch" type="button" data-action="theme" aria-label="Switch to dark">
+        <svg class="icon icon-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7z"/></svg>
+        <svg class="icon icon-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.4"/><path d="M10 1.75v2M10 16.25v2M1.75 10h2M16.25 10h2M4.17 4.17l1.41 1.41M14.42 14.42l1.41 1.41M4.17 15.83l1.41-1.41M14.42 5.58l1.41-1.41"/></svg>
+      </button>
+    </header>
+
+    <section class="hero" aria-label="This month">
+      <div class="hero-figure">
+        <h1 class="month-title" data-slot="month-title"></h1>
+        <p class="total-line">
+          <span class="total" data-slot="total"></span>
+          <span class="total-word">spent</span>
+        </p>
+        <dl class="facts">
+          <div class="fact"><dt>Income</dt><dd class="num" data-slot="income"></dd></div>
+          <div class="fact"><dt data-slot="kept-word">Saved</dt><dd class="num" data-slot="kept"></dd></div>
+          <div class="fact fact-top"><dt>Most went to</dt><dd data-slot="top"></dd></div>
+        </dl>
+      </div>
+      <div class="month-tabs" role="tablist" aria-label="Month" data-slot="month-tabs"></div>
+    </section>
+
+    <main class="screens-body">
+      <section class="screen screen-map" data-screen-panel="map" aria-label="Where the money went">
+        <div class="flow" data-slot="flow">
+          <svg class="sankey" role="img" aria-label="Money flowing from income through categories to merchants">
+            <defs>
+              <filter id="glow" x="-20%" y="-40%" width="140%" height="180%" color-interpolation-filters="sRGB">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+                <feComponentTransfer in="blur" result="soft"><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+                <feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <g class="gradients"></g>
+            </defs>
+            <g class="links"></g>
+            <g class="nodes"></g>
+            <g class="labels"></g>
+            <g class="tag" aria-hidden="true">
+              <rect class="tag-box" rx="8"/>
+              <text class="tag-amount"></text>
+              <text class="tag-route"></text>
+            </g>
+          </svg>
+        </div>
+        <div class="merchants" data-slot="merchants" aria-live="polite" hidden></div>
+        <div class="strip" data-slot="strip" aria-label="Spending by month"></div>
+      </section>
+
+      <section class="screen screen-months" data-screen-panel="months" aria-label="Months" hidden>
+        <div class="months-head">
+          <h2 class="screen-title">Every month, by category</h2>
+          <ul class="legend" data-slot="legend"></ul>
+        </div>
+        <div class="chart" data-slot="chart"></div>
+      </section>
+
+      <section class="screen screen-categories" data-screen-panel="categories" aria-label="Categories" hidden>
+        <div class="table-wrap">
+          <table class="cats">
+            <caption class="screen-title" data-slot="table-caption"></caption>
+            <thead>
+              <tr>
+                <th scope="col" class="col-name"><button type="button" class="sort" data-sort="label">Category</button></th>
+                <th scope="col" class="col-spent"><button type="button" class="sort" data-sort="spent">Spent</button></th>
+                <th scope="col" class="col-share"><button type="button" class="sort" data-sort="share">Share of spending</button></th>
+                <th scope="col" class="col-avg"><button type="button" class="sort" data-sort="avg">Average a month</button></th>
+                <th scope="col" class="col-top">Most at</th>
+              </tr>
+            </thead>
+            <tbody data-slot="rows"></tbody>
+            <tfoot data-slot="foot"></tfoot>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

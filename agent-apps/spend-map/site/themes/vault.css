@@ -1,0 +1,40 @@
+/* Vault: near black with a cool cast. Ribbons run at their full chroma, lifted to glow against the dark, with a faint
+   bloom of their own color. run.py writes this block into theme.css under the selectors the chosen theme needs. */
+:root {
+  --look: vault;
+  color-scheme: dark;
+  --color-bg: #080A10;
+  --color-surface: #0F131C;
+  --color-surface-2: #171C28;
+  --color-text: #EDF0F7;
+  --color-muted: #8E96A8;
+  --color-accent: #9DB8FF;
+  --color-on-accent: #0A0F1E;
+  --color-danger: #FF7A70;
+  --color-ok: #5BD69A;
+  --color-border: #222938;
+  --color-income: #E4E9F4;
+  --color-saved: #5F6880;
+  --color-other: #6B7385;
+  --grid-line: rgb(237 240 247 / 0.07);
+  --plate-opacity: 0.2;
+  --page-wash: radial-gradient(90% 70% at 50% 0%, #121828 0%, #0A0D15 55%, #07090E 100%);
+  --panel-edge: 0 0 0 1px rgb(237 240 247 / 0.05);
+  --ribbon-opacity: 0.86;
+  --ribbon-blend: screen;
+  --ribbon-filter: url(#glow);
+  --chroma-scale: 1;
+  --lightness-min: 0.66;
+  --lightness-max: 0.8;
+  --merchant-lift: -0.14;
+  --merchant-chroma: 0.78;
+  --node-opacity: 1;
+  --color-on-seg: #0A0D15;
+  --tag-shadow: drop-shadow(0 8px 20px rgb(0 0 0 / 0.6));
+  --income-line: rgb(237 240 247 / 0.6);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --shadow-1: 0 1px 0 rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.5);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 0.45), 0 18px 40px -12px rgb(0 0 0 / 0.7);
+}

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1A2033"/>
+      <stop offset="1" stop-color="#0B0E17"/>
+    </linearGradient>
+    <linearGradient id="r1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E9EDF7"/>
+      <stop offset="1" stop-color="#4F7BFF"/>
+    </linearGradient>
+    <linearGradient id="r2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E9EDF7"/>
+      <stop offset="1" stop-color="#2FCB7A"/>
+    </linearGradient>
+    <linearGradient id="r3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E9EDF7"/>
+      <stop offset="1" stop-color="#FF8A4C"/>
+    </linearGradient>
+    <linearGradient id="r4" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E9EDF7"/>
+      <stop offset="1" stop-color="#D45CC0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill-opacity="0.9">
+    <path d="M118 120 C 260 120, 252 112, 394 112 L 394 196 C 252 196, 260 204, 118 204 Z" fill="url(#r1)"/>
+    <path d="M118 204 C 260 204, 252 232, 394 232 L 394 296 C 252 296, 260 268, 118 268 Z" fill="url(#r2)"/>
+    <path d="M118 268 C 260 268, 252 332, 394 332 L 394 374 C 252 374, 260 310, 118 310 Z" fill="url(#r3)"/>
+    <path d="M118 310 C 260 310, 252 410, 394 410 L 394 436 C 252 436, 260 352, 118 352 Z" fill="url(#r4)"/>
+  </g>
+  <rect x="96" y="120" width="22" height="232" rx="5" fill="#F4F6FB"/>
+  <rect x="394" y="112" width="22" height="84" rx="5" fill="#4F7BFF"/>
+  <rect x="394" y="232" width="22" height="64" rx="5" fill="#2FCB7A"/>
+  <rect x="394" y="332" width="22" height="42" rx="5" fill="#FF8A4C"/>
+  <rect x="394" y="410" width="22" height="26" rx="5" fill="#D45CC0"/>
+</svg>

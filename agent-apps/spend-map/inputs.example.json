@@ -1,0 +1,294 @@
+{
+  "csvFile": "sample/checking-export.csv",
+  "columns": {
+    "date": "Posting Date",
+    "description": "Description",
+    "amount": "Amount"
+  },
+  "dateFormat": "%m/%d/%Y",
+  "amountSign": "negative-is-spend",
+  "currency": "USD",
+  "rules": [
+    {
+      "match": "NORTHWIND LABS PAYROLL",
+      "category": "income",
+      "merchant": "Northwind Labs"
+    },
+    {
+      "match": "STRIPE TRANSFER",
+      "category": "income",
+      "merchant": "Freelance"
+    },
+    {
+      "match": "TRANSFER TO SAV",
+      "category": "ignore"
+    },
+    {
+      "match": "ALDER PROPERTY",
+      "category": "home",
+      "merchant": "Rent"
+    },
+    {
+      "match": "PGANDE",
+      "category": "home",
+      "merchant": "PG&E"
+    },
+    {
+      "match": "COMCAST",
+      "category": "home",
+      "merchant": "Xfinity"
+    },
+    {
+      "match": "LEMONADE",
+      "category": "home",
+      "merchant": "Lemonade"
+    },
+    {
+      "match": "TRADER JOE",
+      "category": "groceries",
+      "merchant": "Trader Joe's"
+    },
+    {
+      "match": "SAFEWAY",
+      "category": "groceries",
+      "merchant": "Safeway"
+    },
+    {
+      "match": "RAINBOW GROCERY",
+      "category": "groceries",
+      "merchant": "Rainbow Grocery"
+    },
+    {
+      "match": "WHOLEFDS",
+      "category": "groceries",
+      "merchant": "Whole Foods"
+    },
+    {
+      "match": "BI-RITE",
+      "category": "groceries",
+      "merchant": "Bi-Rite"
+    },
+    {
+      "match": "BLUE BOTTLE",
+      "category": "eating-out",
+      "merchant": "Blue Bottle"
+    },
+    {
+      "match": "SIGHTGLASS",
+      "category": "eating-out",
+      "merchant": "Sightglass"
+    },
+    {
+      "match": "TARTINE",
+      "category": "eating-out",
+      "merchant": "Tartine"
+    },
+    {
+      "match": "DOORDASH",
+      "category": "eating-out",
+      "merchant": "DoorDash"
+    },
+    {
+      "match": "CHIPOTLE",
+      "category": "eating-out",
+      "merchant": "Chipotle"
+    },
+    {
+      "match": "ZUNI",
+      "category": "eating-out",
+      "merchant": "Zuni Café"
+    },
+    {
+      "match": "NOPALITO",
+      "category": "eating-out",
+      "merchant": "Nopalito"
+    },
+    {
+      "match": "PINE STATE",
+      "category": "eating-out",
+      "merchant": "Pine State Biscuits"
+    },
+    {
+      "match": "CLIPPER",
+      "category": "getting-around",
+      "merchant": "Clipper"
+    },
+    {
+      "match": "LYFT",
+      "category": "getting-around",
+      "merchant": "Lyft"
+    },
+    {
+      "match": "UBER",
+      "category": "getting-around",
+      "merchant": "Uber"
+    },
+    {
+      "match": "SHELL OIL",
+      "category": "getting-around",
+      "merchant": "Shell"
+    },
+    {
+      "match": "SFMTA",
+      "category": "getting-around",
+      "merchant": "Parking"
+    },
+    {
+      "match": "AMAZON",
+      "category": "shopping",
+      "merchant": "Amazon"
+    },
+    {
+      "match": "TARGET",
+      "category": "shopping",
+      "merchant": "Target"
+    },
+    {
+      "match": "REI #",
+      "category": "shopping",
+      "merchant": "REI"
+    },
+    {
+      "match": "UNIQLO",
+      "category": "shopping",
+      "merchant": "Uniqlo"
+    },
+    {
+      "match": "APPLE.COM",
+      "category": "shopping",
+      "merchant": "Apple"
+    },
+    {
+      "match": "SPOTIFY",
+      "category": "fun",
+      "merchant": "Spotify"
+    },
+    {
+      "match": "NETFLIX",
+      "category": "fun",
+      "merchant": "Netflix"
+    },
+    {
+      "match": "ALAMO",
+      "category": "fun",
+      "merchant": "Alamo Drafthouse"
+    },
+    {
+      "match": "STEAMGAMES",
+      "category": "fun",
+      "merchant": "Steam"
+    },
+    {
+      "match": "EVENTBRITE",
+      "category": "fun",
+      "merchant": "Eventbrite"
+    },
+    {
+      "match": "GREEN APPLE",
+      "category": "fun",
+      "merchant": "Green Apple Books"
+    },
+    {
+      "match": "POWELLS",
+      "category": "fun",
+      "merchant": "Powell's Books"
+    },
+    {
+      "match": "MISSION CLIFFS",
+      "category": "health",
+      "merchant": "Mission Cliffs"
+    },
+    {
+      "match": "WALGREENS",
+      "category": "health",
+      "merchant": "Walgreens"
+    },
+    {
+      "match": "ONE MEDICAL",
+      "category": "health",
+      "merchant": "One Medical"
+    },
+    {
+      "match": "AMTRAK",
+      "category": "travel",
+      "merchant": "Amtrak"
+    },
+    {
+      "match": "ALASKA AIR",
+      "category": "travel",
+      "merchant": "Alaska Airlines"
+    },
+    {
+      "match": "AIRBNB",
+      "category": "travel",
+      "merchant": "Airbnb"
+    },
+    {
+      "match": "HERTZ",
+      "category": "travel",
+      "merchant": "Hertz"
+    },
+    {
+      "match": "UNITED AIRLINES",
+      "category": "travel",
+      "merchant": "United"
+    }
+  ],
+  "categories": [
+    {
+      "id": "home",
+      "label": "Home",
+      "color": "#3466F0"
+    },
+    {
+      "id": "groceries",
+      "label": "Groceries",
+      "color": "#22A35E"
+    },
+    {
+      "id": "eating-out",
+      "label": "Eating out",
+      "color": "#EE6B3B"
+    },
+    {
+      "id": "getting-around",
+      "label": "Getting around",
+      "color": "#13A3A8"
+    },
+    {
+      "id": "shopping",
+      "label": "Shopping",
+      "color": "#9B5CE6"
+    },
+    {
+      "id": "fun",
+      "label": "Fun",
+      "color": "#E8A92A"
+    },
+    {
+      "id": "health",
+      "label": "Health",
+      "color": "#E04848"
+    },
+    {
+      "id": "travel",
+      "label": "Travel",
+      "color": "#C64AB0"
+    }
+  ],
+  "months": 6,
+  "showMerchants": true,
+  "theme": "auto",
+  "_notes": {
+    "csvFile": "The bank's CSV export, as a path relative to this inputs file. sample/checking-export.csv is the six-month sample that ships with the app.",
+    "columns": "The export's column names: date, description, and amount; category when the export has one (Mint, YNAB, and Monarch do); debit and credit instead of amount when amountSign is debit-credit-columns.",
+    "dateFormat": "A strptime pattern for the date column: %m/%d/%Y for 09/18/2026, %Y-%m-%d for 2026-09-18, %d.%m.%Y for 18.09.2026.",
+    "amountSign": "negative-is-spend (most banks), positive-is-spend (most card exports), or debit-credit-columns (money out and money in in two columns).",
+    "currency": "The currency the amounts are in, as a three-letter code: USD, EUR, GBP, CAD.",
+    "rules": "Checked in order against each description, ignoring case; the first whose match appears in it wins. category is a category id, income, or ignore (a transfer between the person's own accounts). merchant is the name shown for it; without one the page cleans up the description.",
+    "categories": "Four to eight, in the person's own words: id (lowercase, used by rules), label, and a hex color. Spending no rule matches is shown as Other.",
+    "months": "How many months back from the newest month in the export the page covers.",
+    "showMerchants": "true names merchants and payers on the page; false shows each category's merchants as one group, for a page hosted in public.",
+    "theme": "auto follows the device's light or dark setting; ledger is paper white; vault is near black."
+  }
+}

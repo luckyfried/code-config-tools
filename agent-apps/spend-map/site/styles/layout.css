@@ -1,0 +1,256 @@
+/* The frame: the bar, the month's figure and month tabs, and the screens. Desktop fills the window; the phone
+   scrolls, with the screen tabs pinned to the bottom. */
+.app {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-7) var(--space-2);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-right: auto;
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.brand-mark-a { stroke: var(--color-text); }
+.brand-mark-b { stroke: var(--color-text); opacity: 0.55; }
+.brand-mark-c { stroke: var(--color-text); opacity: 0.28; }
+
+.brand-name {
+  font-size: var(--text-lg);
+  font-weight: 680;
+  letter-spacing: -0.01em;
+}
+
+.brand-range {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.screens {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+}
+
+.screen-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 560;
+  color: var(--color-muted);
+  transition-property: color, background-color, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: ease;
+}
+.screen-tab[aria-current="page"] {
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--panel-edge), var(--shadow-1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .screen-tab:hover { color: var(--color-text); }
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.theme-switch {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  transition: color var(--motion-fast) ease, background-color var(--motion-fast) ease;
+}
+.theme-switch .icon-sun { display: none; }
+.theme-switch.is-dark .icon-sun { display: block; }
+.theme-switch.is-dark .icon-moon { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .theme-switch:hover { color: var(--color-text); background: var(--color-surface-2); }
+}
+.theme-switch:active, .screen-tab:active, .month-tab:active { transform: scale(0.97); }
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-7) var(--space-4);
+}
+
+.month-title {
+  font-size: var(--text-lg);
+  font-weight: 560;
+  color: var(--color-muted);
+  line-height: 1.2;
+}
+
+.total-line {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.total {
+  font-family: var(--font-display);
+  font-size: var(--text-total);
+  font-weight: 660;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.total-word {
+  font-size: var(--text-xl);
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin-top: var(--space-3);
+}
+.fact { display: flex; align-items: baseline; gap: var(--space-2); }
+.fact dt { font-size: var(--text-sm); color: var(--color-muted); }
+.fact dd { font-size: var(--text-md); font-weight: 620; }
+
+.month-tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+}
+
+/* The months strip and chart pick the month on Map and Months; the pill picks it where neither is, on Categories. */
+.app:not([data-screen="categories"]) .month-tabs { display: none; }
+
+.month-tab {
+  min-width: 64px;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 560;
+  color: var(--color-muted);
+  transition-property: color, background-color, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: ease;
+}
+.month-tab[aria-selected="true"] {
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: var(--panel-edge), var(--shadow-1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .month-tab:hover { color: var(--color-text); }
+}
+
+.screens-body {
+  min-height: 0;
+  padding: 0 var(--space-7) var(--space-5);
+}
+
+.screen { height: 100%; }
+
+.screen-title {
+  font-size: var(--text-lg);
+  font-weight: 620;
+  text-align: left;
+  text-wrap: balance;
+}
+
+/* Desktop: everything in one window. */
+@media (min-width: 900px) and (min-height: 620px) {
+  .app { height: 100dvh; }
+}
+
+/* Phone: the figure on top, the months strip leading the map, the screen tabs at the bottom. */
+@media (max-width: 759px) {
+  .app {
+    min-height: 100dvh;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  .bar {
+    padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) 0;
+    gap: var(--space-3);
+  }
+  .brand-range { display: none; }
+  .screens {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-tabbar);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom));
+    border-radius: 0;
+    background: var(--color-surface);
+    box-shadow: 0 -1px 0 var(--color-border);
+  }
+  .screen-tab {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 54px;
+    padding: 0;
+    font-size: var(--text-xs);
+    border-radius: var(--radius-md);
+  }
+  .screen-tab[aria-current="page"] { background: var(--color-surface-2); box-shadow: none; }
+  .screen-tab .icon { width: 20px; height: 20px; }
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-4) var(--space-3);
+  }
+  .month-title { font-size: var(--text-md); }
+  .total-word { font-size: var(--text-lg); }
+  .facts { gap: var(--space-1) var(--space-4); margin-top: var(--space-2); }
+  .fact dt { font-size: var(--text-xs); }
+  .fact dd { font-size: var(--text-sm); }
+  .fact-top { display: none; }
+  .month-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+  .month-tab { min-width: 0; padding: 0; min-height: 36px; }
+  .screens-body { padding: 0 var(--space-4) var(--space-4); }
+  .screen { height: auto; }
+}

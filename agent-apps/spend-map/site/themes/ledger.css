@@ -1,0 +1,40 @@
+/* Ledger: paper white and ink. Ribbons sit at 80 % of their color's chroma and multiply where they cross, like ink
+   on paper; axes are hairlines. run.py writes this block into theme.css under the selectors the chosen theme needs. */
+:root {
+  --look: ledger;
+  color-scheme: light;
+  --color-bg: #F2F3EF;
+  --color-surface: #FCFCFA;
+  --color-surface-2: #E8EAE4;
+  --color-text: #151922;
+  --color-muted: #5E6573;
+  --color-accent: #1F3FB8;
+  --color-on-accent: #FFFFFF;
+  --color-danger: #B3261E;
+  --color-ok: #1D7A4C;
+  --color-border: #D5D8D0;
+  --color-income: #1B2130;
+  --color-saved: #8C93A1;
+  --color-other: #9AA0A8;
+  --grid-line: rgb(21 25 34 / 0.09);
+  --plate-opacity: 0.16;
+  --page-wash: linear-gradient(180deg, #F7F8F5 0%, #F2F3EF 38%, #ECEEE8 100%);
+  --panel-edge: 0 0 0 1px rgb(21 25 34 / 0.06);
+  --ribbon-opacity: 0.72;
+  --ribbon-blend: multiply;
+  --ribbon-filter: none;
+  --chroma-scale: 0.8;
+  --lightness-min: 0.5;
+  --lightness-max: 0.7;
+  --merchant-lift: 0.13;
+  --merchant-chroma: 0.62;
+  --node-opacity: 1;
+  --color-on-seg: #FFFFFF;
+  --tag-shadow: drop-shadow(0 6px 14px rgb(21 25 34 / 0.18));
+  --income-line: rgb(21 25 34 / 0.55);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --shadow-1: 0 1px 0 rgb(21 25 34 / 0.04), 0 1px 3px rgb(21 25 34 / 0.06);
+  --shadow-2: 0 2px 4px rgb(21 25 34 / 0.05), 0 12px 32px -8px rgb(21 25 34 / 0.16);
+}

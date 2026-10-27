@@ -1,0 +1,17 @@
+{
+  "id": "01a163fb-d08f-7670-bce1-3dddc3e8c1ef",
+  "version": "2026-10-21",
+  "name": "Spend Map",
+  "shortDescription": "Your bank export drawn as a flow: income to categories to merchants.",
+  "description": "Spend Map reads the CSV export from your bank and draws each month as a flow. Income comes in on the left, splits into your own categories in the middle, and runs out to the merchants that took the most on the right, each ribbon as wide as the money it carries. The map draws itself on, and switching months slides every ribbon to its new width, so a costly month shows at a glance. The month's total rolls up in large figures beside what came in and what you kept. Hover or tap any ribbon to light it and read its amount. On a phone the map runs from income to categories, and tapping a category lists its merchants and their amounts under the map. A Months screen stacks every month by category against its income, and a Categories screen lists the month's totals, their share of spending, and the monthly average, sorted any way you like. It comes in a light ledger look and a dark vault look and works on a phone and a desktop.",
+  "category": "finance",
+  "subcategory": "Spending analysis",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/spend-map",
+  "setup": "Asks which bank the export comes from and where the CSV file is, then reads its header to fill in the date, description, and amount columns. Asks for the categories you think in, with a color for each if you care, and writes the rules that sort merchants into them. Asks how many months to show and whether merchant names should appear on a page you plan to put online. No keys or accounts are needed. The page holds monthly totals by category and merchant, and never a single transaction."
+}

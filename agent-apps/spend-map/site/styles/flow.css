@@ -1,0 +1,179 @@
+/* The Sankey and the months strip under it (above it on the phone). */
+.screen-map {
+  display: grid;
+  grid-template-rows: minmax(420px, 1fr) auto;
+  gap: var(--space-3);
+}
+
+.flow {
+  position: relative;
+  min-height: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--panel-edge), var(--shadow-2);
+  overflow: hidden;
+}
+
+.sankey {
+  position: absolute;
+  inset: var(--space-5) var(--space-5);
+  width: calc(100% - 2 * var(--space-5));
+  height: calc(100% - 2 * var(--space-5));
+  overflow: visible;
+  touch-action: manipulation;
+  font-family: var(--font-sans);
+}
+
+.links { filter: var(--ribbon-filter); }
+
+.link {
+  fill: none;
+  opacity: var(--ribbon-opacity);
+  mix-blend-mode: var(--ribbon-blend);
+  transition: opacity var(--motion-fast) ease;
+}
+.is-focus .link { opacity: 0.25; }
+.is-focus .link.is-hot { opacity: 1; }
+
+.node { rx: 2px; opacity: var(--node-opacity); transition: opacity var(--motion-fast) ease; }
+.is-focus .node:not(.is-hot) { opacity: 0.35; }
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--color-text);
+  pointer-events: none;
+  transition: opacity var(--motion-fast) ease;
+}
+.label-0 .label-name, .label-1 .label-name { font-size: 14px; }
+.label-amount { fill: var(--color-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.label-2 { font-size: 12.5px; font-weight: 520; }
+.label-saved .label-name, .label-other .label-name { fill: var(--color-muted); }
+.is-focus .label:not(.is-hot) { opacity: 0.3; }
+.is-compact .label { pointer-events: auto; cursor: pointer; }
+.label.is-picked .label-name { font-weight: 760; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+/* The clear room right of each category node: a tint of its color that the category's label sits on. */
+.plate { fill-opacity: var(--plate-opacity); transition: opacity var(--motion-fast) ease; }
+.is-focus .plate:not(.is-hot) { opacity: 0.35; }
+
+.tag { opacity: 0; pointer-events: none; transition: opacity var(--motion-fast) ease; }
+.tag.is-on { opacity: 1; }
+.tag-box { fill: var(--color-surface); stroke: var(--color-border); stroke-width: 1px; filter: var(--tag-shadow); }
+.tag-amount { font-size: 17px; font-weight: 680; fill: var(--color-text); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.tag-route { font-size: 12px; font-weight: 500; fill: var(--color-muted); text-anchor: middle; }
+
+/* The narrow map's merchant list for one category. */
+.merchants {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--panel-edge), var(--shadow-1);
+}
+.merchants-head { display: flex; align-items: center; gap: var(--space-2); }
+.merchants-dot { flex: none; width: 10px; height: 10px; border-radius: var(--radius-full); background: var(--seg); }
+.merchants-title { font-size: var(--text-md); font-weight: 650; }
+.merchants-total { margin-left: auto; font-size: var(--text-md); font-weight: 650; font-variant-numeric: tabular-nums; }
+.merchants-note { margin-top: var(--space-1); font-size: var(--text-xs); color: var(--color-muted); }
+.merchants-list { display: grid; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.merchant { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: var(--space-1) var(--space-3); }
+.merchant-name { font-size: var(--text-sm); font-weight: 560; overflow-wrap: anywhere; }
+.merchant-amount { font-size: var(--text-sm); font-weight: 620; font-variant-numeric: tabular-nums; }
+.merchant-rest .merchant-name { color: var(--color-muted); }
+.merchant-bar { grid-column: 1 / -1; height: 4px; border-radius: var(--radius-full); background: var(--color-surface-2); overflow: hidden; }
+.merchant-fill { display: block; width: calc(var(--w) * 100%); height: 100%; border-radius: inherit; background: var(--seg); }
+
+.strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  height: 112px;
+}
+
+.mbar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3) var(--space-2);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition-property: background-color, box-shadow;
+  transition-duration: var(--motion-base);
+  transition-timing-function: ease;
+}
+.mbar.is-on { background: var(--color-surface); box-shadow: var(--panel-edge), var(--shadow-1); }
+/* A month that is not picked keeps its name and total in the muted text color; only its bar is dimmed. */
+.strip .mbar:not(.is-on) .mbar-plot { opacity: 0.5; transition: opacity var(--motion-base) ease; }
+.strip .mbar:not(.is-on) .mbar-total { color: var(--color-muted); }
+.strip .mbar.is-on .mbar-name { color: var(--color-text); }
+@media (hover: hover) and (pointer: fine) {
+  .strip .mbar:hover .mbar-plot { opacity: 1; }
+}
+
+.mbar-plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 0;
+}
+
+.mbar-col {
+  display: flex;
+  flex-direction: column-reverse;
+  width: min(72%, 132px);
+  height: calc(var(--h) * 100%);
+  border-radius: 3px;
+  overflow: hidden;
+  transform-origin: 50% 100%;
+  animation: rise var(--motion-draw) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+.mbar .mbar-col { --i: inherit; }
+
+.mbar-seg {
+  position: relative;
+  flex: var(--share) 1 0;
+  min-height: 1px;
+  background: var(--seg);
+}
+.mbar-seg + .mbar-seg { box-shadow: 0 1px 0 var(--color-surface); }
+
+.mbar-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+}
+.mbar-name { color: var(--color-muted); font-weight: 560; }
+.mbar-total { font-weight: 620; }
+
+.strip .mbar-income { display: none; }
+
+@keyframes rise {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mbar-col { animation: none; }
+}
+
+/* Phone: the strip leads, then the map from income to categories, then the picked category's merchants. */
+@media (max-width: 759px) {
+  .screen-map { display: flex; flex-direction: column; gap: var(--space-3); }
+  .strip { order: -1; height: 86px; gap: var(--space-1); }
+  .mbar { padding: var(--space-1) var(--space-1) var(--space-1); gap: var(--space-1); }
+  .mbar-col { width: 70%; }
+  .mbar-foot { flex-direction: column; align-items: center; gap: 0; font-size: var(--text-xs); }
+  .flow { height: 420px; flex: none; border-radius: var(--radius-md); }
+  .sankey {
+    inset: var(--space-4) var(--space-3);
+    width: calc(100% - 2 * var(--space-3));
+    height: calc(100% - 2 * var(--space-4));
+  }
+}
