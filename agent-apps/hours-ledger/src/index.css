@@ -1,0 +1,412 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* Every color value lives in theme.css (one of src/themes/); this file maps the variables and sets structure. */
+
+@custom-variant dark (&:is(.dark *));
+/* A phone on its side: wide and short, where the timer lays out in two halves to fit one screen. */
+@custom-variant short (@media (orientation: landscape) and (max-height: 520px));
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-readout: var(--readout);
+  --color-rule: var(--rule);
+  --color-heat: var(--heat);
+  --color-heat-empty: var(--heat-empty);
+  --color-brass: var(--brass);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --shadow-surface: var(--surface-shadow);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+}
+
+/* The page is lit from the top left, so surfaces read as objects on a desk rather than boxes on a fill. */
+body {
+  background:
+    radial-gradient(120% 70% at 12% -10%, var(--page-glow), transparent 60%),
+    radial-gradient(90% 60% at 100% 110%, var(--page-shade), transparent 70%),
+    var(--background);
+  background-attachment: fixed;
+}
+
+/* A panel: a lit surface with a highlight on its top edge and a soft shadow under it. */
+.surface {
+  background: linear-gradient(to bottom, var(--card), var(--card-2));
+  box-shadow: var(--surface-shadow);
+}
+
+/* The timer: an enamel or machined housing, a recessed glass face lit from behind, keys that press in. */
+.housing {
+  background: linear-gradient(170deg, var(--housing-top), var(--housing-bottom));
+  box-shadow: var(--housing-shadow);
+}
+.face {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--face-ink);
+  background:
+    radial-gradient(90% 120% at 18% 0%, color-mix(in oklab, var(--c) 34%, transparent), transparent 62%),
+    radial-gradient(70% 90% at 85% 110%, color-mix(in oklab, var(--brass) 16%, transparent), transparent 70%),
+    linear-gradient(to bottom, var(--face-top), var(--face-bottom));
+  box-shadow: var(--face-lip);
+  transition: background-color var(--dur-slow) ease;
+}
+/* The glass: a sheen across the upper half and a fine bright line where the light catches its top edge. */
+.face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(172deg, oklch(1 0 0 / 0.11) 0%, oklch(1 0 0 / 0.035) 38%, transparent 39%),
+    linear-gradient(to bottom, oklch(1 0 0 / 0.16), transparent 2px);
+}
+.face > * {
+  position: relative;
+  z-index: 2;
+}
+/* The running client's color across the top of the face, glowing down into the glass; it fades to the next client. */
+.face > .band {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  height: 7px;
+  background-color: var(--c);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.4),
+    inset 0 -1px 0 oklch(0 0 0 / 0.18),
+    0 0 26px 4px color-mix(in oklab, var(--c) 55%, transparent);
+  transition:
+    background-color var(--dur-slow) ease,
+    box-shadow var(--dur-slow) ease;
+}
+[data-running="false"] .face > .band {
+  background-color: color-mix(in oklab, var(--face-ink) 16%, transparent);
+  box-shadow: none;
+}
+@media (min-width: 1024px) {
+  .face > .band {
+    height: 9px;
+  }
+}
+.face-muted {
+  color: var(--face-muted);
+}
+.lit {
+  color: var(--face-ink);
+  text-shadow:
+    0 0 1px color-mix(in oklab, var(--face-ink) 60%, transparent),
+    0 0 18px var(--glow),
+    0 0 42px color-mix(in oklab, var(--c) 45%, transparent);
+}
+.unlit {
+  color: color-mix(in oklab, var(--face-ink) 26%, transparent);
+}
+.tick {
+  fill: color-mix(in oklab, var(--face-ink) 16%, transparent);
+}
+.tick-on {
+  fill: var(--c);
+  filter: drop-shadow(0 0 3px var(--c));
+}
+.key {
+  background: linear-gradient(to bottom, var(--key-top), var(--key-bottom));
+  box-shadow: var(--key-shadow);
+  transition:
+    transform var(--dur-fast) var(--ease-out-strong),
+    box-shadow var(--dur-fast) ease;
+}
+.key:active,
+.key[aria-pressed="true"] {
+  background: linear-gradient(to bottom, var(--key-bottom), var(--key-top));
+  box-shadow: var(--key-pressed), 0 0 0 1.5px var(--c);
+  transform: translateY(1px);
+}
+
+:root {
+  --dur-fast: 120ms;
+  --dur-slow: 400ms;
+}
+
+/* The running dot breathes while a timer runs and stops with it. */
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.62);
+    opacity: 0.55;
+  }
+}
+@keyframes halo {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+.breathe {
+  animation: breathe 2.4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+.halo {
+  animation: halo 2.4s var(--ease-out-strong) infinite;
+}
+
+/* A finished timer drops from the card into the day's list. */
+@keyframes drop-in {
+  from {
+    transform: translateY(-56px) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.drop-in {
+  animation: drop-in 520ms var(--ease-out-strong) both;
+}
+
+/*
+ * The load, in one sequence: the timer sets down (0 ms), the panels follow (80 ms apart), the face lights (240 ms),
+ * the week's bars stack client by client, day after day (from 320 ms), each day's total lands on its bar, and the
+ * month strip fills left to right (from 760 ms), today's cell ringing last.
+ */
+@keyframes arrive {
+  from {
+    transform: translateY(14px) scale(0.985);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.arrive {
+  animation: arrive 620ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+@keyframes light-up {
+  0% {
+    opacity: 0;
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+.light-up {
+  animation: light-up 700ms ease-out 240ms both;
+}
+@keyframes rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.rise {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: rise 440ms cubic-bezier(0.34, 1.32, 0.64, 1) both;
+  animation-delay: calc(var(--d, 0) * 70ms + var(--s, 0) * 130ms + 320ms);
+}
+@keyframes land {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.land {
+  transform-box: fill-box;
+  animation: land 360ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--d, 0) * 70ms + var(--s, 0) * 130ms + 640ms);
+}
+@keyframes fill-up {
+  from {
+    transform: scaleY(0);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+.fill-up {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: fill-up 420ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 24ms + 760ms);
+}
+@keyframes ring {
+  0% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ring-in {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring 420ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 24ms + 1100ms);
+}
+@keyframes tint-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.tint-in {
+  animation: tint-in 600ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 18ms + 300ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe,
+  .halo,
+  .rise,
+  .land,
+  .fill-up,
+  .ring-in,
+  .arrive,
+  .light-up,
+  .drop-in,
+  .tint-in {
+    animation: none;
+  }
+  .key,
+  .face > .band {
+    transition: none;
+  }
+}
+
+/* The heat strip's six steps: the empty cell, up through the theme's middle tone, to its full heat. */
+.heat-0 { fill: var(--heat-empty); }
+.heat-1 { fill: color-mix(in oklab, var(--heat-mid) 38%, var(--heat-empty)); }
+.heat-2 { fill: color-mix(in oklab, var(--heat-mid) 78%, var(--heat-empty)); }
+.heat-3 { fill: color-mix(in oklab, var(--heat) 30%, var(--heat-mid)); }
+.heat-4 { fill: color-mix(in oklab, var(--heat) 66%, var(--heat-mid)); }
+.heat-5 { fill: var(--heat); }
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The clock in a time field is drawn by the browser in the theme's color-scheme; it sits at the muted ink. */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.6;
+}
+
+/* The statement sheet: 11 / 13 / 18 / 28, hairline rules, wide margins. */
+.paper {
+  background: var(--card);
+  color: var(--card-foreground);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "cv11";
+}
+
+@page {
+  size: letter;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: var(--card) !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .paper {
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .print-flat {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    gap: 0 !important;
+  }
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

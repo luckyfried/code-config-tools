@@ -1,0 +1,17 @@
+{
+  "id": "01a163dd-ef0a-7ad2-afb5-9c62830bd933",
+  "version": "2026-10-21",
+  "name": "Hours Ledger",
+  "shortDescription": "Start a timer per client, see your week fill in, and print a clean statement.",
+  "description": "A time tracker for freelancers that lives in one web page. A big timer card counts the hours for the client in hand, with a dot that breathes while it runs; tap another client and the finished block slides into the day's list as the new one starts. The week stacks each day's hours by client color, and a heat strip shows the whole month at a glance. Pick a client and a period and the statement lays out every entry, the rounded hours, the rate, and the total on a printable page. Hours stay in your browser, with CSV and JSON export. Your agent asks for your clients, their rates and colors, your currency, and how you round, then builds the page.",
+  "category": "business",
+  "subcategory": "Time tracking",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/hours-ledger",
+  "setup": "Ask the person, in one message: Who are your clients, and what is your hourly rate for each? What currency do you bill in? Do you round time on statements to 6 minutes, 15 minutes, or not at all?\n\nThen copy inputs.example.json from the app folder to hours-ledger.inputs.json in the project folder and edit it: name (as it goes on statements), currency, the clients list (each with an id, a name, a rate, and a color), rounding (0, 6, or 15), weekStart (mon or sun), theme (studio, ledger, or auto), and statementNote for payment terms. Set sample to false for a ledger that opens empty. Delete the _notes object if you like; it only explains the keys.\n\nRun python3 <app folder>/scripts/run.py from the project folder. It writes out/hours-ledger/, which any static file server can host."
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Maya Okafor Design",
+  "currency": "USD",
+  "clients": [
+    { "id": "northwind", "name": "Northwind Studio", "rate": 120, "color": "#3f6fa8" },
+    { "id": "harbor-pine", "name": "Harbor & Pine", "rate": 95, "color": "#c8533a" },
+    { "id": "fieldnote", "name": "Fieldnote Coffee", "rate": 85, "color": "#5f8f4e" },
+    { "id": "ostrander", "name": "Ostrander Legal", "rate": 140, "color": "#8a5a96" }
+  ],
+  "rounding": 15,
+  "weekStart": "mon",
+  "theme": "auto",
+  "sample": true,
+  "statementNote": "Payment due within 14 days by bank transfer. Thank you for the work.",
+  "_notes": {
+    "name": "The person or studio named at the top of every statement.",
+    "currency": "Three-letter currency code for rates and statement totals, such as USD, EUR, or GBP.",
+    "clients": "One object per client: id (lowercase letters, digits, and hyphens; entries are stored by it, so keep it once hours exist), name (as printed on the statement), rate (per hour, in currency), and color (six-digit hex, used for the client's bars and chip).",
+    "rounding": "Minutes each entry rounds up to on a statement: 0 bills to the minute, 6 is tenths of an hour, 15 is quarter hours. Entries always keep their exact time, and the person can change this in Settings.",
+    "weekStart": "mon or sun: the first day of the Week view and of the calendars.",
+    "theme": "studio (warm graphite, bone readout, brass glow), ledger (cream paper, blue-black ink, brass), or auto (follows the device). Statements print on ledger paper in every theme.",
+    "sample": "true fills a first visit with five weeks of example hours and a running timer, so the page shows what it does; false opens empty. Clear all hours in Settings removes them.",
+    "statementNote": "Optional line at the foot of every statement, such as payment terms."
+  }
+}
