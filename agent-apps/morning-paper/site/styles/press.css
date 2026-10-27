@@ -1,0 +1,127 @@
+/* The press: the masthead sets from hairline to black, the rules draw out, and a halftone edge wipes down each
+   column as its type is inked. A cover of bare paper sits over every block and slides down and away; its top edge
+   is a halftone screen whose dots open as it passes. Only the cover's transform moves. Reduced motion skips all of
+   it and the page is simply set. */
+
+@property --press-delay {
+  syntax: "<time>";
+  inherits: true;
+  initial-value: 0ms;
+}
+
+@property --press-dur {
+  syntax: "<time>";
+  inherits: true;
+  initial-value: 760ms;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .is-pressing .press:not(.is-printed) {
+    position: relative;
+    overflow: clip;
+    overflow-clip-margin: calc(var(--gap, 16px) / 2 + 2px);
+  }
+
+  /* The cover's top edge is a halftone screen drawn with gradients: rows of paper dots that grow from specks to a
+     solid sheet over --band, so the type reads through a dot screen as the edge passes down the column. */
+  .is-pressing .press:not(.is-printed)::after {
+    --band: 140px;
+    --p: var(--press-paper, var(--color-bg));
+    content: "";
+    position: absolute;
+    z-index: 3;
+    inset-inline: -2px;
+    top: calc(var(--band) * -1);
+    height: calc(100% + var(--band) + 2px);
+    background:
+      radial-gradient(circle, var(--p) 0.5px, transparent 1.1px) 0 0 / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 0.85px, transparent 1.45px) 5px 10px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 1.28px, transparent 1.88px) 0 20px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 1.74px, transparent 2.34px) 5px 30px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 2.23px, transparent 2.83px) 0 40px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 2.73px, transparent 3.33px) 5px 50px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 3.25px, transparent 3.85px) 0 60px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 3.79px, transparent 4.39px) 5px 70px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 4.33px, transparent 4.93px) 0 80px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 4.89px, transparent 5.49px) 5px 90px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 5.45px, transparent 6.05px) 0 100px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 6.03px, transparent 6.63px) 5px 110px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 6.61px, transparent 7.21px) 0 120px / 10px 10px repeat-x,
+      radial-gradient(circle, var(--p) 7.2px, transparent 7.8px) 5px 130px / 10px 10px repeat-x,
+      linear-gradient(var(--p), var(--p)) 0 var(--band) / 100% 100% no-repeat;
+    pointer-events: none;
+    transform: translateY(0);
+    animation: press-wipe var(--press-dur) linear var(--press-delay) both paused;
+  }
+
+  .is-pressing .press.is-inking::after {
+    animation-play-state: running;
+  }
+
+  /* The masthead: each letter lands at hairline weight, holds a beat, then runs to black, one after another. */
+  .is-pressing .mast-letter {
+    animation:
+      mast-ink 280ms linear calc(120ms + var(--i, 0) * 72ms) both,
+      mast-set 1600ms cubic-bezier(0.55, 0, 0.35, 1) calc(120ms + var(--i, 0) * 72ms) both;
+  }
+
+  .is-pressing .masthead.is-waiting {
+    opacity: 0;
+  }
+
+  .is-pressing .masthead.is-waiting .mast-letter {
+    animation-play-state: paused;
+  }
+
+  .is-pressing .motto {
+    animation: motto-in 700ms var(--ease-out) 1400ms both;
+  }
+
+  .is-pressing .dateline {
+    animation: rule-draw 1100ms var(--ease-out) 300ms both;
+  }
+
+  .is-pressing .dateline > * {
+    animation: motto-in 600ms var(--ease-out) 950ms both;
+  }
+}
+
+@keyframes press-wipe {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes mast-ink {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes mast-set {
+  0%,
+  14% {
+    font-weight: 100;
+  }
+  100% {
+    font-weight: var(--mast-weight);
+  }
+}
+
+@keyframes motto-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rule-draw {
+  from {
+    clip-path: inset(0 50% 0 50%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}

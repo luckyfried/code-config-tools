@@ -1,0 +1,5 @@
+/* The printed sheet; the run rewrites this file for the paper size in the inputs. */
+@page {
+  size: A4;
+  margin: 12mm 12mm 14mm;
+}

@@ -1,0 +1,459 @@
+{
+ "edition": "sample",
+ "setAt": "2026-10-26T06:00:00-05:00",
+ "day": "2026-10-26",
+ "stories": [
+  {
+   "id": "cities-turn-empty-lots-into-gardens-that-drink-t",
+   "section": "World",
+   "source": "Harper Wire",
+   "title": "Cities turn empty lots into gardens that drink the storm",
+   "summary": "From river towns to port cities, planners are trading pavement for soil, betting that planted ground can hold the heavy rains the drains no longer handle.",
+   "body": [
+    "When the last big storm stalled over the river valley in September, the water had nowhere to go. It ran off roofs and parking lots, filled the storm drains in under an hour, and backed up into basements on both sides of the bridge. Three blocks from the worst of it, a vacant lot planted the spring before with switchgrass, sedges, and a shallow gravel basin stayed almost dry at the curb.",
+    "That lot is now the model for a plan more than a dozen cities signed this autumn: buy or lease empty parcels, lift the pavement, and plant them as rain gardens that hold water long enough for the ground to take it in. Engineers call it slowing the water down. Neighbors mostly call it the garden.",
+    "“A drain moves water somewhere else. A garden keeps it where it fell,” said Mara Ellison, who chairs the regional water board and has spent two years walking lots with a soil probe. “We are not giving up on pipes. We are giving the pipes a rest.”",
+    "The numbers are modest one lot at a time. A garden the size of two house plots can hold the runoff from roughly a city block in an ordinary storm. Strung together along a street, the gardens begin to matter: the board’s early survey found that streets with three or more of them flooded less often and drained hours sooner.",
+    "The plan leans on volunteers for planting and on schools for upkeep, and it leaves room for what each block wants on top of the basin: benches, fruit trees, a shed for tools. The first forty lots break ground before the frost; the rest are planted in the spring."
+   ],
+   "link": null,
+   "published": "2026-10-26T05:10:00-05:00",
+   "image": {
+    "src": "sample/images/garden.jpg",
+    "width": 1920,
+    "height": 1277,
+    "alt": "Raised beds and young plants in a community garden",
+    "caption": "A community garden on a former vacant lot in the Lower Ninth Ward of New Orleans.",
+    "credit": "U.S. Department of Agriculture"
+   }
+  },
+  {
+   "id": "night-trains-return-to-the-northern-line-after-a",
+   "section": "World",
+   "source": "Valley Ledger",
+   "title": "Night trains return to the northern line after a decade away",
+   "summary": "Sleeper cars will run three nights a week between the coast and the mountain towns from December, with fold-down beds, a dining car, and fares that undercut the last flight of the evening.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T04:40:00-05:00",
+   "image": null
+  },
+  {
+   "id": "ports-agree-to-quieter-engines-in-harbor-waters",
+   "section": "World",
+   "source": "Harper Wire",
+   "title": "Ports agree to quieter engines in harbor waters",
+   "summary": "Ships calling at the busiest harbors will slow down and plug into shore power within two miles of the docks, a change people living along the waterfront have asked for since the container terminals doubled in size.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T03:55:00-05:00",
+   "image": null
+  },
+  {
+   "id": "a-border-market-keeps-its-saturday-on-both-banks",
+   "section": "World",
+   "source": "Valley Ledger",
+   "title": "A border market keeps its Saturday on both banks of the river",
+   "summary": "Traders on either side of the river have run one shared market for forty years. This weekend the footbridge that carries it reopened after a summer of repairs, and every stall was taken by seven in the morning.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T18:20:00-05:00",
+   "image": null
+  },
+  {
+   "id": "island-ferry-keeps-a-winter-timetable-for-the-fi",
+   "section": "World",
+   "source": "Harper Wire",
+   "title": "Island ferry keeps a winter timetable for the first time",
+   "summary": "The boat to the outer islands will make a daily crossing through January, ending the long winter gap for the families who live there year round and the nurses who visit them.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T16:05:00-05:00",
+   "image": null
+  },
+  {
+   "id": "survey-of-mountain-glaciers-finds-the-smallest-r",
+   "section": "World",
+   "source": "Valley Ledger",
+   "title": "Survey of mountain glaciers finds the smallest retreating fastest",
+   "summary": "Ice fields under a square mile lost the most ground over the past decade, a new count shows, with the sharpest change felt in villages that depend on their summer melt for water.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T13:30:00-05:00",
+   "image": null
+  },
+  {
+   "id": "the-repair-cafe-comes-of-age",
+   "section": "Technology",
+   "source": "Workbench Weekly",
+   "title": "The repair café comes of age",
+   "summary": "What began as a folding table in a church hall now runs in forty neighborhoods, fixing toasters, laptops, and bicycles on Saturday mornings, and teaching their owners to do it themselves.",
+   "body": [
+    "What began as a folding table in a church hall now runs in forty neighborhoods, fixing toasters, laptops, and bicycles on Saturday mornings, and teaching their owners to do it themselves.",
+    "Volunteers keep a ledger of every repair. Last year it ran to eleven thousand entries, from a 1960s radio to a child’s scooter, and two in three left the table working."
+   ],
+   "link": null,
+   "published": "2026-10-26T05:30:00-05:00",
+   "image": null
+  },
+  {
+   "id": "a-rewritten-bus-timetable-fits-on-a-phone",
+   "section": "Technology",
+   "source": "The Circuit",
+   "title": "A rewritten bus timetable fits on a phone",
+   "summary": "Volunteers turned a ninety-page printed schedule into a single page that shows the next three buses from any stop, and the transit office has adopted it as the official version.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T02:15:00-05:00",
+   "image": null
+  },
+  {
+   "id": "battery-makers-agree-on-one-label-for-recycling",
+   "section": "Technology",
+   "source": "Workbench Weekly",
+   "title": "Battery makers agree on one label for recycling",
+   "summary": "A shared mark on every cell will say what is inside and how it comes apart, so recyclers can recover the metals instead of shredding everything together.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T21:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "the-volunteers-who-keep-the-worlds-clocks-in-tim",
+   "section": "Technology",
+   "source": "The Circuit",
+   "title": "The volunteers who keep the world’s clocks in time",
+   "summary": "A handful of people look after the code that sets the time on billions of devices. A new fund will pay two of them to work on it full time for the next three years.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T17:45:00-05:00",
+   "image": null
+  },
+  {
+   "id": "a-printer-driver-small-enough-for-a-floppy-disk",
+   "section": "Technology",
+   "source": "The Circuit",
+   "title": "A printer driver small enough for a floppy disk",
+   "summary": "A hobbyist wrote a driver for old dot-matrix printers in under a megabyte, and readers are using it to print their morning news on tractor-feed paper.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T14:10:00-05:00",
+   "image": null
+  },
+  {
+   "id": "open-map-finishes-tracing-every-footpath-in-the-",
+   "section": "Technology",
+   "source": "Workbench Weekly",
+   "title": "Open map finishes tracing every footpath in the county",
+   "summary": "Two hundred volunteers spent the summer walking and tracing trails. The map is free for anyone to use, print, or fold into a pocket.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T11:25:00-05:00",
+   "image": null
+  },
+  {
+   "id": "a-comet-bright-enough-for-binoculars-will-cross-",
+   "section": "Science",
+   "source": "Field Notes",
+   "title": "A comet bright enough for binoculars will cross the evening sky",
+   "summary": "Spotted in summer by an amateur observer, the comet is brightening on schedule and should sit low in the west after sunset through mid-November, best seen well away from city lights.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T04:00:00-05:00",
+   "image": {
+    "src": "sample/images/comet.jpg",
+    "width": 1920,
+    "height": 1280,
+    "alt": "A comet with a long tail above the curve of the Earth",
+    "caption": "Comet NEOWISE, seen from the International Space Station in July 2020.",
+    "credit": "NASA"
+   }
+  },
+  {
+   "id": "bees-trade-dances-for-fanning-when-the-hive-runs",
+   "section": "Science",
+   "source": "Field Notes",
+   "title": "Bees trade dances for fanning when the hive runs hot",
+   "summary": "Hives fitted with tiny thermometers show workers spending more time cooling the comb and less time dancing directions on hot days, and the colonies that switch fastest store the most honey.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T01:30:00-05:00",
+   "image": null
+  },
+  {
+   "id": "long-nights-bring-the-winter-stars-back",
+   "section": "Science",
+   "source": "Night Sky Desk",
+   "title": "Long nights bring the winter stars back",
+   "summary": "By the end of the month Orion clears the eastern horizon before midnight, and the Pleiades are up by early evening, a small, bright cluster worth a look before bed.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T20:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "why-the-first-frost-makes-carrots-sweet",
+   "section": "Science",
+   "source": "Field Notes",
+   "title": "Why the first frost makes carrots sweet",
+   "summary": "When nights turn cold, carrots, kale, and parsnips convert starch to sugar, a natural antifreeze that protects their cells and makes the autumn harvest taste sweeter.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T15:40:00-05:00",
+   "image": null
+  },
+  {
+   "id": "sea-floor-map-fills-a-gap-the-size-of-a-small-co",
+   "section": "Science",
+   "source": "Field Notes",
+   "title": "Sea floor map fills a gap the size of a small country",
+   "summary": "A research ship spent six weeks crossing the same patch of ocean, mapping ridges, slopes, and an underwater canyon that no chart showed before.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T10:15:00-05:00",
+   "image": null
+  },
+  {
+   "id": "the-owl-count-needs-listeners",
+   "section": "Science",
+   "source": "Night Sky Desk",
+   "title": "The owl count needs listeners",
+   "summary": "The yearly survey asks for an hour in the dark, a notebook, and an ear for the difference between a barred owl’s call and a great horned owl’s hoot.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T08:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "libraries-stretch-their-evening-hours-as-the-nig",
+   "section": "Culture",
+   "source": "Common Room Review",
+   "title": "Libraries stretch their evening hours as the nights draw in",
+   "summary": "Reading rooms in a dozen cities will stay open until ten on weeknights through the winter, with study tables, warm lamps, and a late lending desk for people who work days.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T05:00:00-05:00",
+   "image": {
+    "src": "sample/images/reading-room.jpg",
+    "width": 1920,
+    "height": 1281,
+    "alt": "A domed reading room with rows of desks under a ring of arches",
+    "caption": "The Main Reading Room of the Library of Congress in Washington.",
+    "credit": "Carol M. Highsmith"
+   }
+  },
+  {
+   "id": "four-hundred-voices-learn-one-song-in-an-afterno",
+   "section": "Culture",
+   "source": "Common Room Review",
+   "title": "Four hundred voices learn one song in an afternoon",
+   "summary": "No auditions and no sheet music: the pop-up choir met at two, learned a four-part harmony by ear, and sang it on the steps of the town hall at five.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T00:45:00-05:00",
+   "image": null
+  },
+  {
+   "id": "a-film-festival-that-only-shows-movies-made-with",
+   "section": "Culture",
+   "source": "Common Room Review",
+   "title": "A film festival that only shows movies made within a mile",
+   "summary": "Every entry was shot inside the same square mile. Forty films, the longest nine minutes, the shortest a single shot of the bakery opening its shutters.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T19:30:00-05:00",
+   "image": null
+  },
+  {
+   "id": "a-first-novel-about-a-lighthouse-keeper-is-the-s",
+   "section": "Culture",
+   "source": "Common Room Review",
+   "title": "A first novel about a lighthouse keeper is the season’s surprise",
+   "summary": "The book was turned down eleven times. It has now been reprinted four times since August, mostly on the word of booksellers pressing it into readers’ hands.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T16:50:00-05:00",
+   "image": null
+  },
+  {
+   "id": "the-museum-opens-its-storerooms-one-night-a-mont",
+   "section": "Culture",
+   "source": "Common Room Review",
+   "title": "The museum opens its storerooms one night a month",
+   "summary": "Ninety-five in every hundred objects never reach the galleries. On the first Thursday, curators walk small groups through the shelves and take questions until the lights go out.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T12:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "radio-drama-finds-a-new-audience-on-the-night-bu",
+   "section": "Culture",
+   "source": "Common Room Review",
+   "title": "Radio drama finds a new audience on the night bus",
+   "summary": "A weekly half-hour serial written for the late shift now has riders staying on past their stops to hear how it ends.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T09:20:00-05:00",
+   "image": null
+  },
+  {
+   "id": "harper-rowing-club-takes-the-river-title-by-a-bo",
+   "section": "Sport",
+   "source": "Harper Sports Desk",
+   "title": "Harper Rowing Club takes the river title by a bow’s length",
+   "summary": "The eight trailed for most of the course, found a second wind under the railway bridge, and crossed the line a bow’s length ahead in the closest final the regatta has seen.",
+   "body": [
+    "The eight trailed for most of the course, found a second wind under the railway bridge, and crossed the line a bow’s length ahead in the closest final the regatta has seen.",
+    "“We stopped looking at them and started listening to the cox,” said the stroke, still soaked, as the crew carried the boat up the slip."
+   ],
+   "link": null,
+   "published": "2026-10-26T05:20:00-05:00",
+   "image": null
+  },
+  {
+   "id": "youth-league-adds-a-girls-division-after-record-",
+   "section": "Sport",
+   "source": "Harper Sports Desk",
+   "title": "Youth league adds a girls’ division after record sign-ups",
+   "summary": "More than three hundred players signed up for the under-12 season, enough for eight new teams and a Saturday schedule that starts at eight.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-26T02:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "the-marathon-that-crosses-five-covered-bridges",
+   "section": "Sport",
+   "source": "Harper Sports Desk",
+   "title": "The marathon that crosses five covered bridges",
+   "summary": "Runners will pass through every covered bridge in the county on a route that follows the old mill road, with the finish line at the fairground gates.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T18:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "chess-clubs-oldest-member-wins-the-autumn-open-a",
+   "section": "Sport",
+   "source": "Harper Sports Desk",
+   "title": "Chess club’s oldest member wins the autumn open at 91",
+   "summary": "She lost her first game, won the next six, and finished with a bishop sacrifice the rest of the club spent the evening replaying.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T15:00:00-05:00",
+   "image": null
+  },
+  {
+   "id": "groundskeepers-ready-the-pitch-for-the-first-fro",
+   "section": "Sport",
+   "source": "Harper Sports Desk",
+   "title": "Groundskeepers ready the pitch for the first frost",
+   "summary": "Covers go on tonight. The crew has three nights of lows below freezing in the forecast and a home match on Saturday.",
+   "body": null,
+   "link": null,
+   "published": "2026-10-25T11:00:00-05:00",
+   "image": null
+  }
+ ],
+ "wiki": {
+  "date": "2026-10-26",
+  "onThisDay": [
+   {
+    "year": 2004,
+    "text": "Rockstar Games released Grand Theft Auto: San Andreas, considered one of the best video games ever made, in North America.",
+    "link": "https://en.wikipedia.org/wiki/Rockstar_Games"
+   },
+   {
+    "year": 1994,
+    "text": "Israel and Jordan signed a peace treaty, settling relations between the two countries and pledging that neither would allow its territory to become a staging ground for military strikes by a third country.",
+    "link": "https://en.wikipedia.org/wiki/Israel%E2%80%93Jordan_peace_treaty"
+   },
+   {
+    "year": 1977,
+    "text": "Somali hospital cook Ali Maow Maalin began displaying symptoms of smallpox, becoming the last person known to be naturally infected by the disease.",
+    "link": "https://en.wikipedia.org/wiki/Ali_Maow_Maalin"
+   },
+   {
+    "year": 1921,
+    "text": "The Chicago Theatre (pictured), the oldest surviving grand movie palace, opened.",
+    "link": "https://en.wikipedia.org/wiki/Chicago_Theatre"
+   },
+   {
+    "year": 1892,
+    "text": "Ida B. Wells (pictured) began publishing her research on lynching in the United States, for which she was posthumously awarded a Pulitzer Prize in 2020.",
+    "link": "https://en.wikipedia.org/wiki/Ida_B._Wells"
+   },
+   {
+    "year": 1863,
+    "text": "The Football Association, world's first governing body of association football, was founded in London.",
+    "link": "https://en.wikipedia.org/wiki/The_Football_Association"
+   }
+  ],
+  "mostRead": {
+   "date": "2026-10-25",
+   "articles": [
+    {
+     "title": "2026 Brazilian general election",
+     "description": "",
+     "extract": "General elections were held in Brazil on 4 October 2026 to elect the president, vice president, members of the National Congress, the governors, vice governors and legislative assemblies of all federative units, and the district council of Fernando de Noronha. As no candidate for president received more than half of the valid votes in the first round, a runoff election was held on 25 October.",
+     "views": 271783,
+     "link": "https://en.wikipedia.org/wiki/2026_Brazilian_general_election"
+    },
+    {
+     "title": "2026 Serbian parliamentary election",
+     "description": "",
+     "extract": "Early parliamentary elections were held in Serbia on 25 October 2026 to elect members of the National Assembly. The elections were originally due by December 2027; Aleksandar Vučić, then the president of Serbia, dissolved the National Assembly and called the elections on 9 September 2026, on the proposal of the government. The Student List won the election with a projected absolute majority of seats, defeating the Serbian Progressive Party (SNS), which had been in power since 2012. According to preliminary results from the Republic Electoral Commission (RIK), with 96.9% of polling stations counted, the Student List won 53.3% of the valid votes and the SNS-led \"Aleksandar Vučić – United Serbia\" list 39.7%; the final CeSID–Ipsos projection gave them 140 and 103 seats respectively, while no other list crossed the electoral threshold apart from national minority lists. Turnout was 68.85%, about ten percentage points higher than in 2023. Vučić conceded defeat on election night.",
+     "views": 242482,
+     "link": "https://en.wikipedia.org/wiki/2026_Serbian_parliamentary_election"
+    },
+    {
+     "title": "Clayface (film)",
+     "description": "2026 DC Studios film",
+     "extract": "Clayface is a 2026 American body horror psychological thriller film based on the eponymous character from DC Comics. Directed by James Watkins from a screenplay by Mike Flanagan and Hossein Amini, it is the third film in the DC Universe (DCU). Tom Rhys Harries stars as Matt Hagen / Clayface, alongside Naomi Ackie, David Dencik, Max Minghella, and Eddie Marsan. In the film, after becoming disfigured by a mobster (Dencik), Hagen turns to a scientist (Ackie) who transforms his body into clay to restore his former look. While pursuing revenge, he begins to lose his sanity as he is unable to recognize himself. It is produced by Matt Reeves and Lynn Harris alongside James Gunn and Peter Safran of DC Studios.",
+     "views": 207969,
+     "link": "https://en.wikipedia.org/wiki/Clayface_(film)"
+    },
+    {
+     "title": "Elizabeth Holmes",
+     "description": "American businesswoman (born 1984)",
+     "extract": "Elizabeth Anne Holmes is an American businesswoman convicted of fraud in connection with her health technology company Theranos. Holmes founded Theranos in 2003, and its valuation soared in the early 2010s after it claimed to have revolutionized blood testing by developing methods that needed only very small volumes of blood, such as from a fingerprick. In 2015, Forbes named Holmes the youngest and wealthiest self-made female billionaire in the United States on the basis of a $9 billion valuation of Theranos. In the following year, as accusations of fraud about Theranos's claims began to surface, Forbes revised its estimate of Holmes's net worth to zero, and Fortune named her in its feature article on \"The World's 19 Most Disappointing Leaders\".",
+     "views": 193621,
+     "link": "https://en.wikipedia.org/wiki/Elizabeth_Holmes"
+    },
+    {
+     "title": "Jailer 2",
+     "description": "2026 Indian film by Nelson Dilipkumar",
+     "extract": "Jailer 2 is a 2026 Indian Tamil-language action comedy film written and directed by Nelson Dilipkumar. It was produced by Kalanithi Maran through Sun Pictures. A sequel to Jailer (2023), the film stars Rajinikanth, Ramya Krishnan, Yogi Babu, Mirnaa and Rithvik reprising their roles from the predecessor, with S. J. Suryah, Mithun Chakraborty, Suraj Venjaramoodu and Vidya Balan joining the cast.",
+     "views": 186875,
+     "link": "https://en.wikipedia.org/wiki/Jailer_2"
+    },
+    {
+     "title": "You Can See Everything",
+     "description": "2026 documentary film",
+     "extract": "You Can See Everything is a 2026 American meta-documentary film directed by Nathan Fielder and Lance Oppenheim. It follows Elizabeth Holmes, the founder of the defunct health technology company Theranos, and her partner Billy Evans, who invited a film crew to document them beginning in the weeks before Holmes began serving a United States federal prison sentence for defrauding investors.",
+     "views": 159715,
+     "link": "https://en.wikipedia.org/wiki/You_Can_See_Everything"
+    }
+   ]
+  },
+  "picture": {
+   "src": "sample/images/picture-of-the-day.jpg",
+   "width": 1920,
+   "height": 1280,
+   "caption": "Horses grazing at Trunkol meadow in the Himalayas of India. The meadow is situated on the way to the sacred Gangabal Lake in Jammu and Kashmir.",
+   "credit": "UnpetitproleX, CC BY 4.0, via Wikimedia Commons",
+   "link": "https://commons.wikimedia.org/wiki/File:Horses_grazing_at_Trunkol_meadow,_Jammu_and_Kashmir,_India_(crop).jpg"
+  }
+ },
+ "weather": {
+  "place": "Harper",
+  "units": "fahrenheit",
+  "code": 2,
+  "temperature": 54,
+  "high": 63,
+  "low": 41,
+  "wind": 11,
+  "isDay": true
+ }
+}

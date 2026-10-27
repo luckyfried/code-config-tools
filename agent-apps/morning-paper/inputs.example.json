@@ -1,0 +1,37 @@
+{
+  "_notes": {
+    "masthead": "The paper's name, set across the top of the front page.",
+    "motto": "One short line under the masthead; leave it empty for none.",
+    "sources": "Where the stories come from. Each has an id (used by sections), a name (printed in bylines), and either a feed address in url (RSS or Atom), or kind \"hackernews\" for Hacker News's front page, or kind \"guardian\" with a Guardian section such as \"world\" (needs GUARDIAN_API_KEY).",
+    "sections": "The paper's sections, in the order they are printed. The first section's top story leads the front page. Each lists the ids of the sources that fill it.",
+    "location": "Where the reader is, for the weather ear: lat and lon in degrees, and the place name to print.",
+    "paper": "\"A4\" or \"Letter\": the sheet the print view is set for.",
+    "theme": "\"broadsheet\" (cream newsprint; the evening edition in dark mode), \"tabloid\" (white stock, a red-top masthead, heavy headlines), or \"evening\" (cream on ink at any hour).",
+    "units": "\"fahrenheit\" or \"celsius\" for the weather ear.",
+    "live": "true fetches today's stories from the sources when the run starts, and the weather, On this day, Most read, and the picture of the day when the page opens. false prints the sample edition that ships with the app, with no network at all."
+  },
+  "masthead": "The Harper Times",
+  "motto": "Printed fresh for one reader, every morning",
+  "sources": [
+    { "id": "bbc-world", "name": "BBC News", "url": "https://feeds.bbci.co.uk/news/world/rss.xml" },
+    { "id": "npr", "name": "NPR", "url": "https://feeds.npr.org/1001/rss.xml" },
+    { "id": "ars", "name": "Ars Technica", "url": "https://feeds.arstechnica.com/arstechnica/index" },
+    { "id": "hn", "name": "Hacker News", "kind": "hackernews" },
+    { "id": "nasa", "name": "NASA", "url": "https://www.nasa.gov/news-release/feed/" },
+    { "id": "quanta", "name": "Quanta Magazine", "url": "https://www.quantamagazine.org/feed/" },
+    { "id": "guardian-culture", "name": "The Guardian", "url": "https://www.theguardian.com/culture/rss" },
+    { "id": "bbc-sport", "name": "BBC Sport", "url": "https://feeds.bbci.co.uk/sport/rss.xml" }
+  ],
+  "sections": [
+    { "name": "World", "sources": ["bbc-world", "npr"] },
+    { "name": "Technology", "sources": ["ars", "hn"] },
+    { "name": "Science", "sources": ["nasa", "quanta"] },
+    { "name": "Culture", "sources": ["guardian-culture"] },
+    { "name": "Sport", "sources": ["bbc-sport"] }
+  ],
+  "location": { "name": "Harper", "lat": 37.2867, "lon": -98.0259 },
+  "paper": "Letter",
+  "theme": "broadsheet",
+  "units": "fahrenheit",
+  "live": false
+}

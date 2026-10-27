@@ -1,0 +1,17 @@
+{
+  "id": "01a17b1b-9d30-7fdc-b6f7-7d67d34c3b15",
+  "version": "2026-10-21",
+  "name": "Morning Paper",
+  "shortDescription": "Your own morning paper, typeset fresh each day and ready to print.",
+  "description": "A newspaper front page with your own masthead, set from the news sources you choose and sorted into the sections you name. It carries a weather ear for where you live, On this day, the most-read article, and the picture of the day from Wikipedia. The page prints itself as it opens: the masthead sets from hairline to black, and a halftone edge wipes down each column as the type is inked. A six-column broadsheet on a desktop, a two-column tabloid on a phone, three looks (cream broadsheet, red-top tabloid, and the evening edition in cream on ink), and a print view set for A4 or Letter. Tap any story for its summary and a link to the full piece. Your inputs and the day's paper stay in your own project folder.",
+  "category": "news",
+  "subcategory": "Daily digest",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/morning-paper",
+  "setup": "Your agent asks, in one message: what the paper should be called and its motto; which news sources go in which sections (any RSS or Atom feed, Hacker News, or the Guardian); where you are, for the weather ear; broadsheet, tabloid, or evening; and A4 or Letter paper. No keys are needed. If you want the Guardian's own feed of a section, your agent asks for a Guardian developer key through csc key set as GUARDIAN_API_KEY, never in chat; it is used only when the paper is set and never written into the page. Your inputs and each day's paper stay in your project folder."
+}

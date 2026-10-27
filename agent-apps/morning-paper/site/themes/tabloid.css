@@ -1,0 +1,156 @@
+/* Tabloid: bright white stock, heavy black, and a red-top masthead band. Dark is the late edition on black. Tokens only. */
+:root {
+  color-scheme: light;
+  --font-display: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-body: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-sans: "Libre Franklin", "Franklin Gothic Medium", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-headline: var(--font-sans);
+  --headline-weight: 800;
+  --headline-lead-weight: 900;
+  --headline-soft: 0;
+  --mast-weight: 900;
+  --mast-wonk: 0;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 400ms;
+  --motion-press: 760ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ease-press: cubic-bezier(0.45, 0.05, 0.25, 1);
+  --color-bg: #fbfaf6;
+  --color-surface: #f1efe8;
+  --color-surface-2: #e6e3da;
+  --color-text: #0a0a0a;
+  --color-muted: #4f4c47;
+  --color-accent: #d0141b;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3101a;
+  --color-ok: #1e6b34;
+  --color-border: #0a0a0a;
+  --color-hairline: #bdb9b0;
+  --mast-bg: #d0141b;
+  --mast-fg: #ffffff;
+  --shadow-1: 0 1px 0 #dedad0, 0 6px 14px -8px #00000055;
+  --shadow-2: 0 18px 40px -16px #00000066;
+  --photo-filter: saturate(1.15) contrast(1.06);
+  --photo-screen: 0.12;
+  --edition-label: "Morning Edition";
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #0c0c0d;
+    --color-surface: #161618;
+    --color-surface-2: #202023;
+    --color-text: #f4f2ec;
+    --color-muted: #a8a49b;
+    --color-accent: #ff3b3f;
+    --color-on-accent: #0c0c0d;
+    --color-danger: #ff6b6b;
+    --color-ok: #7fd18f;
+    --color-border: #f4f2ec;
+    --color-hairline: #3d3d40;
+    --mast-bg: #d0141b;
+    --mast-fg: #ffffff;
+    --shadow-1: 0 1px 0 #26262a, 0 8px 18px -8px #000000cc;
+    --shadow-2: 0 18px 40px -12px #000000dd;
+    --photo-filter: saturate(1.05) contrast(1.04) brightness(0.9);
+    --photo-screen: 0.18;
+    --edition-label: "Evening Edition";
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #fbfaf6;
+  --color-surface: #f1efe8;
+  --color-surface-2: #e6e3da;
+  --color-text: #0a0a0a;
+  --color-muted: #4f4c47;
+  --color-accent: #d0141b;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3101a;
+  --color-ok: #1e6b34;
+  --color-border: #0a0a0a;
+  --color-hairline: #bdb9b0;
+  --mast-bg: #d0141b;
+  --mast-fg: #ffffff;
+  --shadow-1: 0 1px 0 #dedad0, 0 6px 14px -8px #00000055;
+  --shadow-2: 0 18px 40px -16px #00000066;
+  --photo-filter: saturate(1.15) contrast(1.06);
+  --photo-screen: 0.12;
+  --edition-label: "Morning Edition";
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0c0c0d;
+  --color-surface: #161618;
+  --color-surface-2: #202023;
+  --color-text: #f4f2ec;
+  --color-muted: #a8a49b;
+  --color-accent: #ff3b3f;
+  --color-on-accent: #0c0c0d;
+  --color-danger: #ff6b6b;
+  --color-ok: #7fd18f;
+  --color-border: #f4f2ec;
+  --color-hairline: #3d3d40;
+  --mast-bg: #d0141b;
+  --mast-fg: #ffffff;
+  --shadow-1: 0 1px 0 #26262a, 0 8px 18px -8px #000000cc;
+  --shadow-2: 0 18px 40px -12px #000000dd;
+  --photo-filter: saturate(1.05) contrast(1.04) brightness(0.9);
+  --photo-screen: 0.18;
+  --edition-label: "Evening Edition";
+}
+
+@media print {
+  :root,
+  [data-theme] {
+    color-scheme: light;
+    --color-bg: #fbfaf6;
+    --color-surface: #f1efe8;
+    --color-surface-2: #e6e3da;
+    --color-text: #0a0a0a;
+    --color-muted: #4f4c47;
+    --color-accent: #d0141b;
+    --color-on-accent: #ffffff;
+    --color-danger: #b3101a;
+    --color-ok: #1e6b34;
+    --color-border: #0a0a0a;
+    --color-hairline: #bdb9b0;
+    --mast-bg: #d0141b;
+    --mast-fg: #ffffff;
+    --shadow-1: 0 1px 0 #dedad0, 0 6px 14px -8px #00000055;
+    --shadow-2: 0 18px 40px -16px #00000066;
+    --photo-filter: saturate(1.15) contrast(1.06);
+    --photo-screen: 0.12;
+    --edition-label: "Morning Edition";
+  }
+}

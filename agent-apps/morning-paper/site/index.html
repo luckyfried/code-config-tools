@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" class="is-pressing">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>The Harper Times</title>
+    <meta name="description" content="Your own morning paper, set fresh each day and ready to print.">
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+    <link rel="preload" href="./fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./fonts/libre-franklin-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./theme.css">
+    <link rel="stylesheet" href="./styles/fonts.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/page.css">
+    <link rel="stylesheet" href="./styles/press.css">
+    <link rel="stylesheet" href="./styles/print.css">
+    <link rel="stylesheet" href="./paper.css">
+    <script src="./config.js"></script>
+    <script type="module" src="./app.js"></script>
+    <script src="./badge.js" defer></script>
+  </head>
+  <body>
+    <div class="paper">
+      <header class="masthead-row">
+        <aside class="ear ear-weather press" id="weather" aria-label="Weather"></aside>
+        <div class="mast">
+          <h1 class="masthead is-waiting" id="masthead">The Harper Times</h1>
+          <p class="motto" id="motto">Printed fresh for one reader, every morning</p>
+        </div>
+        <aside class="ear ear-edition press" id="edition" aria-label="This edition">
+          <p class="ear-kicker" id="edition-label">Morning Edition</p>
+          <p class="ear-line" id="edition-count"></p>
+          <p class="ear-line ear-status" id="edition-status"></p>
+        </aside>
+      </header>
+      <div class="dateline">
+        <span class="dateline-vol" id="volume"></span>
+        <time class="dateline-date" id="dateline" datetime="2026-10-26">Monday, October 26, 2026</time>
+        <span class="dateline-set">
+          <span id="set-at"></span>
+          <button class="print-btn" type="button" id="print">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 6V1.75h8V6M4 12H2.25a.75.75 0 0 1-.75-.75v-4.5A.75.75 0 0 1 2.25 6h11.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75H12"/><path d="M4 9.5h8v4.75H4z"/></svg>
+            Print
+          </button>
+        </span>
+      </div>
+      <main class="front" id="front"></main>
+      <div id="sections"></div>
+      <footer class="colophon" id="colophon"></footer>
+    </div>
+    <dialog class="story-view" id="story-view" aria-labelledby="clipping-title">
+      <article class="clipping">
+        <div class="clipping-top">
+          <p class="kicker" id="clipping-kicker"></p>
+          <button class="close-btn" type="button" id="clipping-close" aria-label="Close the story">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+          </button>
+        </div>
+        <h2 class="head clipping-title" id="clipping-title"></h2>
+        <p class="byline" id="clipping-byline"></p>
+        <div id="clipping-photo"></div>
+        <div class="prose" id="clipping-body"></div>
+        <p class="clipping-link" id="clipping-link"></p>
+      </article>
+    </dialog>
+  </body>
+</html>

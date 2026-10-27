@@ -1,0 +1,229 @@
+/* The paper on paper: no motion, no buttons, ink on light stock, four columns set in points. The page size and
+   margins are in paper.css, which the run writes for A4 or Letter. */
+@media print {
+  html {
+    font-size: 9pt;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body {
+    min-height: 0;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .press::after,
+  .print-btn,
+  .story-view,
+  .code-config-toast,
+  .index-box {
+    display: none !important;
+  }
+
+  .press {
+    overflow: visible !important;
+  }
+
+  .paper {
+    --cols: 4;
+    --gap: 5mm;
+    --pad: 0;
+    --body-size: 8.6pt;
+    --brief-size: 8.4pt;
+    max-width: none;
+    padding: 0;
+  }
+
+  .masthead-row {
+    grid-template-columns: 34mm minmax(0, 1fr) 34mm;
+    grid-template-areas: "wx mast ed";
+    align-items: center;
+    padding-block: 0 2mm;
+  }
+
+  .ear {
+    min-height: 0;
+    padding: 2mm 2.5mm;
+    font-size: 7.4pt;
+  }
+
+  .ear-edition {
+    text-align: start;
+    align-items: flex-start;
+  }
+
+  .wx-temp {
+    font-size: 15pt;
+  }
+
+  .masthead {
+    --mast-max: 48pt;
+  }
+
+  .motto {
+    font-size: 9pt;
+  }
+
+  .dateline {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas: "vol date set";
+    font-size: 7.6pt;
+  }
+
+  .dateline-date {
+    font-size: 9pt;
+  }
+
+  .front {
+    margin-top: 3mm;
+    row-gap: 4mm;
+    grid-template-areas:
+      "lead lead lead right"
+      "left potd potd second"
+      "left potd potd second";
+  }
+
+  .cell-lead::before {
+    content: none;
+  }
+
+  .cell-left::before,
+  .cell-right::before,
+  .cell-potd::before,
+  .cell-second::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: calc(var(--gap) / -2);
+    border-inline-start: var(--rule);
+  }
+
+  .cell-left::before {
+    content: none;
+  }
+
+  .lead-head {
+    font-size: 25pt;
+  }
+
+  .deck {
+    font-size: 11pt;
+  }
+
+  .lead-body {
+    columns: 3;
+  }
+
+  .lead-photo .photo-frame {
+    --ratio: 2 / 1;
+  }
+
+  .pull {
+    font-size: 12pt;
+  }
+
+  .second-stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .second-head,
+  .band-top .head {
+    font-size: 14pt;
+  }
+
+  .top-read-title {
+    font-size: 12pt;
+  }
+
+  .box-head,
+  .potd-label {
+    font-size: 10.5pt;
+  }
+
+  .box + .box {
+    margin-top: 5mm;
+  }
+
+  .potd figcaption {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .kicker,
+  .byline,
+  .caption,
+  .photo figcaption,
+  .band-sources,
+  .read-views,
+  .colophon {
+    font-size: 7pt;
+  }
+
+  .band {
+    margin-top: 6mm;
+  }
+
+  .band-name {
+    font-size: 18pt;
+  }
+
+  .band-flag {
+    margin-bottom: 3mm;
+  }
+
+  .band-top {
+    grid-column: 1 / 2;
+  }
+
+  .band-briefs {
+    grid-column: 2 / -1;
+    columns: 3;
+  }
+
+  .brief-head {
+    font-size: 10pt;
+  }
+
+  .brief,
+  .lead-top,
+  .photo,
+  .pull,
+  .otd-list li,
+  .read-list li,
+  .second-stack > .story {
+    break-inside: avoid;
+  }
+
+  .head,
+  .box-head,
+  .band-flag {
+    break-after: avoid;
+  }
+
+  .story:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .head a::after {
+    content: none;
+  }
+
+  .head a {
+    text-decoration: none;
+  }
+
+  :focus-visible {
+    outline: none;
+  }
+
+  .colophon {
+    margin-top: 6mm;
+    padding-top: 2mm;
+  }
+}
