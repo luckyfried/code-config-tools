@@ -1,0 +1,71 @@
+/* Iron: a black gym floor under one warm light; ember red for the work, the bar in chrome, gold for a record. */
+:root {
+  color-scheme: dark;
+  --background: oklch(0.15 0.008 45);
+  --foreground: oklch(0.955 0.008 75);
+  --card: oklch(0.195 0.01 45);
+  --card-foreground: oklch(0.955 0.008 75);
+  --popover: oklch(0.215 0.011 45);
+  --popover-foreground: oklch(0.955 0.008 75);
+  --primary: oklch(0.6 0.2 31);
+  --primary-foreground: oklch(0.985 0.006 80);
+  --secondary: oklch(0.258 0.012 45);
+  --secondary-foreground: oklch(0.95 0.008 75);
+  --muted: oklch(0.24 0.011 45);
+  --muted-foreground: oklch(0.7 0.016 65);
+  --accent: oklch(0.28 0.014 45);
+  --accent-foreground: oklch(0.955 0.008 75);
+  --destructive: oklch(0.66 0.2 25);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.68 0.17 35);
+  --radius: 0.75rem;
+  --surface-2: oklch(0.228 0.011 45);
+
+  --pr: oklch(0.84 0.15 85);
+  --pr-foreground: oklch(0.24 0.05 75);
+  --pr-glow: oklch(0.86 0.15 88 / 0.36);
+  --pr-halo: oklch(0.84 0.15 85 / 0.24);
+  --pr-chip-shadow: 0 0 18px oklch(0.84 0.15 85 / 0.45);
+  --pr-blend: screen;
+  --pr-sweep-core: oklch(0.82 0.16 82 / 0.75);
+  --pr-sweep-soft: oklch(0.7 0.14 75 / 0.38);
+
+  --map-base: oklch(0.235 0.01 45);
+  --map-0: oklch(0.285 0.012 45);
+  --map-1: oklch(0.38 0.06 35);
+  --map-2: oklch(0.5 0.12 32);
+  --map-3: oklch(0.62 0.18 32);
+  --map-4: oklch(0.75 0.17 48);
+  --map-gap: var(--card);
+
+  --rest: oklch(0.7 0.18 38);
+  --rest-glow: 0 0 10px oklch(0.68 0.19 35 / 0.75), 0 0 2px oklch(0.85 0.1 50);
+  --chart-line: oklch(0.8 0.05 70);
+  --chart-point: oklch(0.8 0.05 70);
+  --chart-grid: oklch(1 0 0 / 7%);
+  --chart-halo-filter: blur(2px);
+
+  --stage: oklch(0.13 0.008 45);
+  --stage-floor: oklch(0.11 0.008 45);
+  --stage-spot: oklch(0.36 0.04 60 / 0.85);
+  --stage-edge: oklch(1 0 0 / 6%);
+  --stage-fg: oklch(0.97 0.008 80);
+  --stage-muted: oklch(0.72 0.02 65);
+  --stage-shadow: oklch(0 0 0 / 0.75);
+
+  --plate-red: oklch(0.58 0.2 27);
+  --plate-blue: oklch(0.55 0.14 255);
+  --plate-yellow: oklch(0.82 0.15 90);
+  --plate-green: oklch(0.6 0.14 150);
+  --plate-white: oklch(0.92 0.005 80);
+  --plate-chrome: oklch(0.72 0.01 70);
+  --chrome-hi: oklch(0.97 0.004 80);
+  --chrome-mid: oklch(0.7 0.01 70);
+  --chrome-lo: oklch(0.36 0.01 60);
+  --clamp: oklch(0.28 0.012 45);
+  --shade-light: oklch(1 0 0 / 0.3);
+  --shade-dark: oklch(0 0 0 / 0.45);
+
+  --card-shadow: inset 0 1px 0 oklch(1 0 0 / 0.045), 0 0 0 1px oklch(1 0 0 / 0.06), 0 18px 40px -24px oklch(0 0 0 / 0.85);
+}

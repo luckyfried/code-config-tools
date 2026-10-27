@@ -1,0 +1,17 @@
+{
+  "id": "01a17304-1abd-76d3-8226-b741f14d53ff",
+  "version": "2026-10-21",
+  "name": "Lift Log",
+  "shortDescription": "Log sets between lifts and watch your strength curve climb.",
+  "description": "Lift Log is a strength training log built for a phone on a gym bench. Pick the lift, set the weight and reps with big steppers that speed up when you hold them, and log the set; \"+ set\" repeats the last one, and the bar sits large at the top: as the weight changes, the plates for each side slide on and stop against the collar.\n\nBeat your best estimated one-rep max and a gold sweep crosses the whole screen and a PR chip pops in. A thin bar across the top of the screen drains over your rest and ends with a two-tone chime. History shows every set by date and each lift's e1RM curve, with a glowing dot on every record. Week shades a front and back body map, fourteen muscles, by the sets each got this week, with sets and volume per muscle.\n\nOn a laptop it opens as three panes: your week and your lifts, the session, and the chart for the lift you picked. Every set stays in your browser; Settings exports and imports the log as a file and switches between kilograms and pounds.",
+  "category": "health-fitness",
+  "subcategory": "Strength training",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/lift-log",
+  "setup": "Kilograms or pounds? What are your main lifts, and what plates do you have? How long do you like to rest between sets? No keys or accounts are needed. Your sets stay in the browser you log them in, and Settings exports them as a file when you want to move them or have your agent look at how the month went."
+}

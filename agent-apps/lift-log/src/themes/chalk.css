@@ -1,0 +1,71 @@
+/* Chalk: chalk-dusted paper and graphite type, iron red for the work, the bar on a dark platform; amber gold for a record. */
+:root {
+  color-scheme: light;
+  --background: oklch(0.955 0.009 75);
+  --foreground: oklch(0.22 0.012 50);
+  --card: oklch(0.99 0.004 80);
+  --card-foreground: oklch(0.22 0.012 50);
+  --popover: oklch(0.99 0.004 80);
+  --popover-foreground: oklch(0.22 0.012 50);
+  --primary: oklch(0.5 0.185 29);
+  --primary-foreground: oklch(0.985 0.006 80);
+  --secondary: oklch(0.93 0.01 72);
+  --secondary-foreground: oklch(0.24 0.012 50);
+  --muted: oklch(0.94 0.009 72);
+  --muted-foreground: oklch(0.47 0.016 55);
+  --accent: oklch(0.925 0.012 70);
+  --accent-foreground: oklch(0.24 0.012 50);
+  --destructive: oklch(0.52 0.2 27);
+  --border: oklch(0.88 0.012 70);
+  --input: oklch(0.84 0.014 68);
+  --ring: oklch(0.55 0.15 32);
+  --radius: 0.75rem;
+  --surface-2: oklch(0.97 0.007 78);
+
+  --pr: oklch(0.78 0.155 76);
+  --pr-foreground: oklch(0.27 0.07 60);
+  --pr-glow: oklch(0.86 0.15 82 / 0.6);
+  --pr-halo: oklch(0.78 0.155 76 / 0.28);
+  --pr-chip-shadow: 0 1px 0 oklch(0.55 0.13 60 / 0.35), 0 6px 14px -6px oklch(0.6 0.15 60 / 0.6);
+  --pr-blend: multiply;
+  --pr-sweep-core: oklch(0.82 0.17 80 / 0.85);
+  --pr-sweep-soft: oklch(0.88 0.13 85 / 0.45);
+
+  --map-base: oklch(0.905 0.012 70);
+  --map-0: oklch(0.955 0.012 70);
+  --map-1: oklch(0.87 0.055 50);
+  --map-2: oklch(0.75 0.12 40);
+  --map-3: oklch(0.62 0.17 33);
+  --map-4: oklch(0.5 0.18 28);
+  --map-gap: var(--card);
+
+  --rest: oklch(0.5 0.185 29);
+  --rest-glow: none;
+  --chart-line: oklch(0.3 0.014 50);
+  --chart-point: oklch(0.3 0.014 50);
+  --chart-grid: oklch(0.22 0.012 50 / 8%);
+  --chart-halo-filter: blur(1.5px);
+
+  --stage: oklch(0.235 0.012 50);
+  --stage-floor: oklch(0.205 0.012 50);
+  --stage-spot: oklch(0.42 0.03 65 / 0.9);
+  --stage-edge: oklch(1 0 0 / 7%);
+  --stage-fg: oklch(0.97 0.008 80);
+  --stage-muted: oklch(0.76 0.02 70);
+  --stage-shadow: oklch(0 0 0 / 0.6);
+
+  --plate-red: oklch(0.55 0.2 27);
+  --plate-blue: oklch(0.5 0.14 258);
+  --plate-yellow: oklch(0.8 0.15 88);
+  --plate-green: oklch(0.55 0.14 150);
+  --plate-white: oklch(0.94 0.004 80);
+  --plate-chrome: oklch(0.72 0.01 70);
+  --chrome-hi: oklch(0.97 0.004 80);
+  --chrome-mid: oklch(0.72 0.01 70);
+  --chrome-lo: oklch(0.42 0.01 60);
+  --clamp: oklch(0.3 0.012 50);
+  --shade-light: oklch(1 0 0 / 0.32);
+  --shade-dark: oklch(0 0 0 / 0.42);
+
+  --card-shadow: 0 0 0 1px oklch(0.22 0.02 50 / 0.06), 0 1px 2px oklch(0.22 0.02 50 / 0.07), 0 14px 32px -20px oklch(0.25 0.04 45 / 0.35);
+}
