@@ -1,0 +1,65 @@
+/* The page: one column on a phone, Today beside the Year from 700 px, and a wider Today panel on big screens. */
+.page {
+  --gutter: var(--space-4);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-6);
+  padding:
+    calc(env(safe-area-inset-top) + var(--space-2))
+    calc(env(safe-area-inset-right) + var(--gutter))
+    calc(env(safe-area-inset-bottom) + var(--space-8))
+    calc(env(safe-area-inset-left) + var(--gutter));
+}
+
+.today {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.year {
+  min-width: 0;
+}
+
+@media (min-width: 700px) {
+  .page {
+    --gutter: clamp(24px, 3.4vw, 72px);
+    --left: clamp(320px, 33vw, 560px);
+    grid-template-columns: var(--left) minmax(0, 1fr);
+    column-gap: clamp(32px, 4vw, 88px);
+    align-items: start;
+    padding-top: calc(env(safe-area-inset-top) + var(--space-6));
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--space-6));
+    min-height: 100dvh;
+  }
+
+  .today {
+    position: sticky;
+    top: var(--space-6);
+    padding: var(--space-6);
+    border-radius: 28px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-edge);
+    box-shadow: var(--shadow-2);
+  }
+
+  .year {
+    padding-top: var(--space-2);
+  }
+}
+
+/* A phone on its side: Today spans the screen so the dial, the streak and every chip share one row, and the Year follows below. */
+@media (min-width: 700px) and (max-height: 560px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-6);
+    padding-top: calc(env(safe-area-inset-top) + var(--space-4));
+  }
+
+  .today {
+    position: static;
+    padding: var(--space-4) var(--space-5);
+    gap: var(--space-3);
+  }
+}

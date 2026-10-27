@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Habit Rings</title>
+  <meta name="description" content="Close your rings every day and watch a year of streaks fill in.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css" id="theme">
+  <script src="./boot.js"></script>
+  <link rel="stylesheet" href="./styles/fonts.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/today.css">
+  <link rel="stylesheet" href="./styles/year.css">
+  <link rel="stylesheet" href="./styles/sheet.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <div class="page">
+    <section class="today" aria-label="Today">
+      <header class="top">
+        <div class="hello">
+          <h1 class="greeting">Habit Rings</h1>
+          <p class="date-line"></p>
+        </div>
+        <button class="icon-btn settings-open" type="button" aria-label="Settings" aria-haspopup="dialog">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>
+        </button>
+      </header>
+
+      <div class="streak">
+        <p class="streak-figure">
+          <span class="odometer" role="img" aria-label="0 days"></span>
+          <span class="streak-unit">days in a row with every ring closed</span>
+        </p>
+        <p class="streak-line" aria-live="polite"></p>
+      </div>
+
+      <div class="dial-block">
+        <button class="day-step day-prev" type="button" aria-label="Previous day">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg>
+        </button>
+        <div class="dial" aria-describedby="day-label">
+          <div class="dial-glow" aria-hidden="true"></div>
+          <div class="dial-face" aria-hidden="true"></div>
+          <svg class="dial-svg" viewBox="0 0 240 240" role="img" aria-label="Rings"></svg>
+          <p class="dial-center" aria-hidden="true"></p>
+        </div>
+        <button class="day-step day-next" type="button" aria-label="Next day">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg>
+        </button>
+        <p class="day-label" id="day-label" aria-live="polite">Today</p>
+      </div>
+
+      <ul class="chips" aria-label="Habits"></ul>
+    </section>
+
+    <section class="year" aria-labelledby="year-title">
+      <header class="year-head">
+        <h2 class="year-title" id="year-title">Your year</h2>
+        <p class="status" hidden>Sample year</p>
+        <div class="legend" aria-hidden="true">
+          <span class="legend-word">1 day</span>
+          <span class="legend-cells"><i class="cell s1"></i><i class="cell s2"></i><i class="cell s3"></i><i class="cell s4"></i></span>
+          <span class="legend-word">a week running</span>
+        </div>
+      </header>
+      <ol class="habit-rows"></ol>
+    </section>
+  </div>
+
+  <div class="tip" role="status" hidden>
+    <p class="tip-date"></p>
+    <ul class="tip-list"></ul>
+  </div>
+
+  <dialog class="sheet" aria-labelledby="sheet-title">
+    <form class="sheet-body" method="dialog">
+      <header class="sheet-head">
+        <h2 class="sheet-title" id="sheet-title">Settings</h2>
+        <button class="icon-btn sheet-close" value="close" aria-label="Close settings">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+        </button>
+      </header>
+
+      <fieldset class="field">
+        <legend class="field-name">Week starts on</legend>
+        <div class="segments">
+          <label class="segment"><input type="radio" name="weekStart" value="mon"><span>Monday</span></label>
+          <label class="segment"><input type="radio" name="weekStart" value="sun"><span>Sunday</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="field-name">Theme</legend>
+        <div class="segments segments-4">
+          <label class="segment"><input type="radio" name="theme" value="auto"><span>System</span></label>
+          <label class="segment"><input type="radio" name="theme" value="paper"><span>Paper</span></label>
+          <label class="segment"><input type="radio" name="theme" value="ink"><span>Ink</span></label>
+          <label class="segment"><input type="radio" name="theme" value="neon"><span>Neon</span></label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <h3 class="field-name">Your days</h3>
+        <p class="field-note">They stay in this browser. Save a copy to move them to another one, then load it there.</p>
+        <div class="actions">
+          <button class="btn btn-primary export" type="button">Save a copy</button>
+          <label class="btn import-label">Load a copy<input class="import" type="file" accept="application/json,.json"></label>
+        </div>
+        <button class="btn btn-quiet clear-sample" type="button" hidden>Clear the sample year</button>
+        <p class="sheet-status" role="status"></p>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./badge.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "Sam",
+  "habits": [
+    { "id": "water", "label": "Water", "icon": "water", "target": 8 },
+    { "id": "run", "label": "Run", "icon": "run" },
+    { "id": "read", "label": "Read", "icon": "read" },
+    { "id": "stretch", "label": "Stretch", "icon": "stretch" },
+    { "id": "journal", "label": "Journal", "icon": "write" }
+  ],
+  "weekStart": "mon",
+  "theme": "auto",
+  "nudgeHour": 20,
+  "sample": true,
+  "_notes": {
+    "name": "The name in the greeting, as in \"Good morning, Sam\". Leave it empty for a plain greeting.",
+    "habits": "One to eight habits, in the order of the rings from the outside in. The dial draws the first five; the rest sit as chips with their own small ring. Each one has an id (lowercase letters, digits, and hyphens; it is how a day records the habit, so keep it once you start), a label of one or two words, and an icon: water, run, walk, bike, lift, stretch, breathe, read, write, sleep, sun, leaf, sprout, cup, pill, heart, music, code, talk, no-phone, spark, or check. A color like \"#ff6a3d\" replaces the theme's ring color for that habit. A target from 2 to 99 makes a countable habit, like 8 glasses of water: each tap fills one step of the ring.",
+    "weekStart": "\"mon\" or \"sun\": the first row of every year map. It can also be changed in the page's Settings.",
+    "theme": "\"auto\" follows the device between paper (light) and ink (dark); \"ink\", \"paper\", or \"neon\" picks one. It can also be changed in the page's Settings.",
+    "nudgeHour": "An hour from 0 to 23. While the page is open past it with rings still open, the headline says so.",
+    "sample": "true shows a made-up year of history until it is cleared in Settings; false starts with an empty year."
+  }
+}

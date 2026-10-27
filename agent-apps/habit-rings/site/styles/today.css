@@ -1,0 +1,539 @@
+/* Today: the greeting, the streak headline, the dial of rings, and the chip row. */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 52px;
+}
+
+.hello {
+  min-width: 0;
+}
+
+.greeting {
+  font-size: var(--text-lg);
+  font-weight: 620;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.date-line {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.settings-open {
+  margin-right: calc(var(--space-2) * -1);
+  flex: none;
+}
+
+/* The headline: the streak, rolled up like an odometer in tabular figures. */
+.streak {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.streak-figure {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.odometer {
+  display: inline-flex;
+  font-family: var(--font-display);
+  font-size: clamp(76px, 22vw, 96px);
+  font-weight: 720;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum", "cv11";
+  height: 0.92em;
+  overflow: hidden;
+  padding-right: 0.04em;
+}
+
+.digit {
+  display: block;
+  height: 1em;
+  margin-top: -0.04em;
+}
+
+.digit-strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--at, 0) * -1em));
+}
+
+.digit-strip > span {
+  display: block;
+  height: 1em;
+  line-height: 1;
+}
+
+.streak-unit {
+  max-width: 13ch;
+  padding-bottom: 0.35em;
+  color: var(--color-muted);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.streak-line {
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.4;
+  min-height: 1.4em;
+}
+
+.streak-line.is-nudge {
+  color: var(--color-accent);
+}
+
+/* The dial: concentric rings, one per habit, drawn clockwise from twelve o'clock. */
+.dial-block {
+  display: grid;
+  grid-template-columns: 44px var(--dial) 44px;
+  grid-template-areas:
+    "prev dial next"
+    ". label .";
+  justify-content: center;
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: var(--space-2);
+  --dial: min(240px, calc(100vw - 2 * var(--space-4) - 2 * 44px - 2 * var(--space-3)));
+}
+
+.day-prev {
+  grid-area: prev;
+}
+
+.day-next {
+  grid-area: next;
+}
+
+.day-step {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  color: var(--color-muted);
+  transition-property: opacity, background-color, color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.day-step:disabled {
+  opacity: 0.22;
+}
+
+.day-step:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .day-step:not(:disabled):hover {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+  }
+}
+
+.day-label {
+  grid-area: label;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-label.is-past {
+  color: var(--color-accent);
+}
+
+.dial {
+  grid-area: dial;
+  position: relative;
+  width: var(--dial);
+  aspect-ratio: 1;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.dial-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--dial-face);
+  box-shadow: var(--dial-shade);
+}
+
+.dial-glow {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--glow-color, var(--color-accent)), transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dial-svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: translateX(var(--drag, 0px));
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+
+.dial.is-dragging .dial-svg {
+  transition: none;
+}
+
+.dial-svg .ring-g {
+  transform-box: view-box;
+  transform-origin: 120px 120px;
+}
+
+.dial-svg .track,
+.dial-svg .ring {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.dial-svg .track {
+  stroke: color-mix(in oklab, var(--hue) var(--track-mix), var(--dial-face));
+}
+
+.dial-svg .ring {
+  color: var(--hue);
+  stroke: currentColor;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: var(--offset, 100);
+  filter: var(--ring-glow);
+  transition: stroke-dashoffset var(--motion-slow) var(--ease-out), opacity var(--motion-fast) linear;
+}
+
+.dial-svg .ring.is-empty {
+  opacity: 0;
+}
+
+.dial-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: var(--color-muted);
+  font-size: calc(var(--dial) * 0.075);
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.dial-center .icon {
+  width: calc(var(--dial) * 0.13);
+  height: calc(var(--dial) * 0.13);
+  stroke-width: 2.4;
+  color: var(--color-text);
+}
+
+/* The chips: one per habit, a 44 px target or more, its own small ring around its icon. */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.chip {
+  --hue: var(--color-accent);
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 60px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-1);
+  transition-property: background-color, border-color, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.chip.is-closed {
+  background: color-mix(in oklab, var(--hue) 13%, var(--color-surface));
+  border-color: color-mix(in oklab, var(--hue) 30%, transparent);
+}
+
+.chip:has(.chip-main:active) {
+  transform: scale(0.97);
+}
+
+.chip-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border-radius: inherit;
+  text-align: left;
+}
+
+.chip-ring {
+  flex: none;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  color: var(--hue);
+}
+
+.chip-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chip-ring .track,
+.chip-ring .arc {
+  fill: none;
+  stroke-width: 3.6;
+  stroke-linecap: round;
+}
+
+.chip-ring .track {
+  stroke: color-mix(in oklab, var(--hue) 22%, transparent);
+}
+
+.chip-ring .arc {
+  stroke: currentColor;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: var(--offset, 100);
+  transition: stroke-dashoffset var(--motion-slow) var(--ease-out), opacity var(--motion-fast) linear;
+}
+
+.chip-ring .arc.is-empty {
+  opacity: 0;
+}
+
+.chip-ring .glyph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--hue);
+}
+
+.chip-ring .glyph .icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+.chip-ring .glyph b {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.chip-text {
+  display: grid;
+  min-width: 0;
+}
+
+.chip-label {
+  font-weight: 620;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-sub {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chip.is-closed .chip-sub {
+  color: var(--color-text);
+}
+
+.chip-key {
+  display: none;
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 700px) {
+  .chip-key {
+    display: inline-block;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: color-mix(in oklab, var(--hue) 45%, transparent);
+  }
+}
+
+.chip-less {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  color: var(--color-muted);
+  border-left: 1px solid var(--color-border);
+}
+
+.chip-less[hidden] {
+  display: none;
+}
+
+.chip-less .icon {
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip-less:hover {
+    color: var(--color-text);
+  }
+}
+
+@media (min-width: 700px) {
+  .today {
+    gap: var(--space-5);
+  }
+
+  .dial-block {
+    --dial: clamp(220px, calc(var(--left) - 2 * var(--space-6) - 2 * 44px - 2 * var(--space-3)), 400px);
+  }
+
+  .odometer {
+    font-size: clamp(84px, 8vw, 132px);
+  }
+
+  .chip {
+    background: var(--color-surface-2);
+    box-shadow: none;
+  }
+
+  .chip.is-closed {
+    background: color-mix(in oklab, var(--hue) 16%, var(--color-surface-2));
+  }
+}
+
+/* Seven or eight habits on a wide screen: a smaller dial and shorter chips keep Today on one screen. */
+@media (min-width: 700px) and (min-height: 561px) {
+  .has-many .dial-block {
+    --dial: clamp(200px, calc(var(--left) - 2 * var(--space-6) - 2 * 44px - 2 * var(--space-3)), 260px);
+  }
+
+  .has-many .chip {
+    min-height: 52px;
+  }
+
+  .has-many .chip-ring {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* A phone on its side: the dial, the streak and the chips side by side, every chip whole in a two-column grid. */
+@media (min-width: 700px) and (max-height: 560px) {
+  .today {
+    grid-template-columns: auto minmax(150px, 1fr) minmax(0, 2fr);
+    grid-template-areas:
+      "top top top"
+      "dial streak chips";
+    align-items: center;
+    column-gap: var(--space-5);
+    row-gap: var(--space-3);
+  }
+
+  .top {
+    grid-area: top;
+    min-height: 44px;
+  }
+
+  .streak {
+    grid-area: streak;
+    align-self: center;
+  }
+
+  .streak-figure {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .streak-unit {
+    padding-bottom: 0;
+    font-size: var(--text-sm);
+  }
+
+  .streak-line {
+    font-size: var(--text-sm);
+  }
+
+  .odometer {
+    font-size: 64px;
+  }
+
+  .dial-block {
+    grid-area: dial;
+    --dial: 148px;
+    grid-template-columns: var(--dial);
+    grid-template-areas:
+      "dial"
+      "label";
+  }
+
+  .day-step {
+    display: none;
+  }
+
+  .chips {
+    grid-area: chips;
+  }
+
+  .chip {
+    min-height: 48px;
+  }
+
+  .chip-main {
+    padding-right: var(--space-4);
+  }
+
+  .chip-ring {
+    width: 32px;
+    height: 32px;
+  }
+
+  .chip-key {
+    display: none;
+  }
+}

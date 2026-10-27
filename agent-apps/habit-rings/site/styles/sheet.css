@@ -1,0 +1,226 @@
+/* The Settings sheet: up from the bottom on a phone, a panel at the right on a wider screen. */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(88dvh, 640px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2);
+  overflow: auto;
+}
+
+.sheet::backdrop {
+  background: var(--backdrop);
+}
+
+.sheet[open] {
+  animation: sheet-up var(--motion-slow) var(--ease-drawer);
+}
+
+.sheet[open]::backdrop {
+  animation: fade-in var(--motion-base) var(--ease-out);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-side {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.sheet-body {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5) calc(env(safe-area-inset-bottom) + var(--space-6));
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-title {
+  font-size: var(--text-xl);
+  font-weight: 650;
+}
+
+.sheet-close {
+  margin-right: calc(var(--space-2) * -1);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field-name {
+  font-size: var(--text-sm);
+  font-weight: 620;
+  color: var(--color-muted);
+  margin-bottom: var(--space-2);
+}
+
+fieldset.field > .field-name {
+  float: left;
+  width: 100%;
+}
+
+.field-note {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  margin-top: calc(var(--space-2) * -1);
+}
+
+.segments {
+  clear: both;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--color-surface-2);
+}
+
+.segments-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.segment {
+  position: relative;
+  display: grid;
+}
+
+.segment input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.segment span {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border-radius: 10px;
+  font-size: var(--text-sm);
+  font-weight: 580;
+  color: var(--color-muted);
+  transition-property: background-color, color, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.segment input:checked + span {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+.segment input:focus-visible + span {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--text-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition-property: transform, background-color;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  border-color: transparent;
+  color: var(--color-on-accent);
+}
+
+.btn-quiet {
+  justify-self: start;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: none;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+.btn-quiet[hidden] {
+  display: none;
+}
+
+.import-label input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.import-label:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.sheet-status {
+  min-height: 1.4em;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+@media (min-width: 700px) {
+  .sheet {
+    inset: var(--space-4) var(--space-4) auto auto;
+    width: 400px;
+    max-height: calc(100dvh - 2 * var(--space-4));
+    border-radius: 24px;
+    border: 1px solid var(--panel-edge);
+  }
+
+  .sheet[open] {
+    animation: sheet-side var(--motion-base) var(--ease-out);
+  }
+
+  .sheet-body {
+    padding: var(--space-4) var(--space-5) var(--space-5);
+  }
+}
