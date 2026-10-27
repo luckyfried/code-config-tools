@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "clink": {
+      "command": "csc",
+      "args": ["clink"]
+    }
+  }
+}

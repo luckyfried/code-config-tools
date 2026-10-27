@@ -1,6 +1,6 @@
 ---
 name: fanout-codex
-description: Fan out HARD parallel coding work to codex (a strong, free coding model) as backgrounded MCP tasks — no subagents, no wrapper. The main session writes task-spec md files ONCE, then fires one mcp__pal__clink(cli_name="codex") call per unit in a single message; the harness runs them concurrently and auto-backgrounds each, and codex edits the repo directly. Use for reasoning-heavy units - math, ML, data science, architecture, performance, idiomatic/best-practices setup. Usage - /fanout-codex [count]. Defaults to as many units as the work decomposes into.
+description: Fan out HARD parallel coding work to codex (a strong, free coding model) as backgrounded MCP tasks — no subagents, no wrapper. The main session writes task-spec md files ONCE, then fires one mcp__clink__clink(cli_name="codex", write=true) call per unit in a single message; the harness runs them concurrently and auto-backgrounds each, and codex edits the repo directly. Use for reasoning-heavy units - math, ML, data science, architecture, performance, idiomatic/best-practices setup. Usage - /fanout-codex [count]. Defaults to as many units as the work decomposes into.
 ---
 
 # Fan-out codex
@@ -9,14 +9,14 @@ Delegate **complex** coding work to **codex** — a strong coding model (above S
 **free**) — running headless with web search. The expensive Anthropic model (you) only orchestrates; the
 hard implementation runs on codex, in parallel across many units.
 
-**No subagents, no wrapper.** Each unit is one `mcp__pal__clink` call with `cli_name: "codex"`. pal
-annotates `clink` `readOnlyHint: true`, so every clink call you emit **in a single message** runs
-concurrently, and any call still running past the auto-background threshold moves to a background task
+**No subagents, no wrapper.** Each unit is one `mcp__clink__clink` call with `cli_name: "codex"` and
+`write: true`. The `clink` tool is annotated `readOnlyHint: true`, so every clink call you emit **in a
+single message** runs concurrently, and any call still running past the auto-background threshold moves to a background task
 that notifies you on completion. N parallel codex units, zero Anthropic agents, no intermediate script.
 
-pal's `codex` client (`conf/cli_clients/codex.json`) runs the `codex` CLI with web search enabled and
-approvals + sandbox bypassed, so codex edits the real repo and runs commands directly. pal's launch
-command sources the MCP bearer-token env, so codex's own MCP servers authenticate.
+clink runs the `codex` CLI under a codex login from the csc account pool, in your project folder with
+your session's own toolkit (the same MCP servers, skills, and keys). With `write: true` codex edits the
+real repo and runs commands directly.
 
 ## fanout-codex vs fanout-zai — pick the right tier
 
@@ -38,17 +38,18 @@ You (main session) are the expensive model. Don't copy a unit's instructions int
 1. **You** write each unit's spec to a **task-spec `.md` file on disk** — once.
 2. You fire one clink call per unit, passing the spec file's absolute path in `absolute_file_paths`
    and only a one-line directive in `prompt`.
-3. pal hands the spec to codex; the spec text never re-enters your context. codex edits the repo
+3. clink hands the spec to codex; the spec text never re-enters your context. codex edits the repo
    directly and its final message returns as the clink result (inline, or via the background-task
    notification if it ran long).
 
 ```
 main session ──writes spec once──> thoughts/shared/agent-comms/<slug>/task-NN.md
      │                                          │
-     │ mcp__pal__clink(cli_name="codex",        │ absolute_file_paths=[task-NN.md]
+     │ mcp__clink__clink(cli_name="codex",      │ absolute_file_paths=[task-NN.md]
+     │   write=true,                            │
      │   prompt="execute the attached spec")    ▼
      ▼                                    codex (web search + MCP)
- pal clink ──────────────────────────────> edits repo, runs commands ──> disk
+ clink ──────────────────────────────────> edits repo, runs commands ──> disk
      │                                                                    │
      └──> clink result / bg-task notification (codex's <SUMMARY>) ◄───────┘
 ```
@@ -62,10 +63,10 @@ merge, last writer wins). When you decompose, every unit MUST own a **disjoint s
 file → same unit, or sequence them — never two parallel units on one file. State the file partition
 explicitly before launching.
 
-**2. Bound the blast radius — the spec is the only guard.** codex runs with approvals and sandbox
-bypassed: it can edit any file and run any command. Every task-spec MUST list the exact files codex may
+**2. Bound the blast radius — the spec is the only guard.** With `write: true` codex can edit any file
+and run any command. Every task-spec MUST list the exact files codex may
 edit and an explicit "do NOT touch anything else, do not run destructive commands." For a read-only
-analysis unit, say so in the spec ("do not modify any file") — there is no sandbox flag doing it for you.
+analysis unit, leave `write` off: codex then runs in its read-only sandbox.
 
 **3. Specify the goal, not every keystroke.** Unlike zai, codex is strong — over-dictating wastes its
 capability. Give it the **objective, the hard constraints, the interfaces it must honor, and concrete
@@ -138,11 +139,12 @@ End your reply with `<SUMMARY>` listing every file you changed, key decisions, a
 
 ## Step 4: Launch the units — all clink calls in ONE message
 
-Emit **one `mcp__pal__clink` call per unit, all in a single message**:
+Emit **one `mcp__clink__clink` call per unit, all in a single message**:
 
 ```
-mcp__pal__clink(
+mcp__clink__clink(
   cli_name = "codex",
+  write    = true,
   prompt   = "Execute the coding task described in the attached task-spec file. It states the goal,
               the constraints, the exact files you may edit, what you must NOT touch, and the
               acceptance criteria. Make the edits directly in the repository. Edit ONLY the files the

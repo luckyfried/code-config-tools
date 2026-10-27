@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "claude": {
+    "schemaVersion": 1,
+    "permissions": {
+      "defaultMode": "auto"
+    },
+    "skipAutoPermissionPrompt": true,
+    "effortLevel": "high",
+    "outputStyle": "Structured Engineering",
+    "extraSettings": "{\n  \"env\": {\n    \"CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS\": \"5000\"\n  }\n}\n"
+  },
+  "codex": {
+    "schemaVersion": 1,
+    "approval_policy": "never",
+    "sandbox_mode": "workspace-write",
+    "model_reasoning_effort": "high",
+    "extraSettings": "web_search = \"live\"\n"
+  }
+}

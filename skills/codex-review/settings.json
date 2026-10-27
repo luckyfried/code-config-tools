@@ -1,0 +1,5 @@
+{
+  "env": {
+    "CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS": "5000"
+  }
+}
