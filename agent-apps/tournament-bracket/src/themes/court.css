@@ -1,0 +1,55 @@
+/* Court: maple hardwood under gym lights, lines in court-paint navy, the winners' path in game-ball orange. */
+:root {
+  color-scheme: light;
+  --scheme: light;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --display-weight: 880;
+  --display-tracking: 0.015em;
+  --radius: 0.45rem;
+
+  --background: #e8c592;
+  --backdrop: radial-gradient(ellipse 80% 60% at 50% 0%, rgb(255 246 226 / 0.65), transparent 70%),
+    repeating-linear-gradient(90deg, rgb(122 70 22 / 0.09) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(90deg, transparent 0 31px, rgb(255 236 200 / 0.18) 31px 64px, transparent 64px 96px),
+    linear-gradient(180deg, #edcd9f, #ddb37a);
+  --foreground: #1a2a4a;
+  --card: #fff7ea;
+  --card-foreground: #1a2a4a;
+  --popover: #fff7ea;
+  --popover-foreground: #1a2a4a;
+  --primary: #1c3a6e;
+  --primary-foreground: #fff7ea;
+  --secondary: #f3dcb6;
+  --secondary-foreground: #1a2a4a;
+  --muted: #f0d7ad;
+  --muted-foreground: #6b4a26;
+  --accent: #f6e2c0;
+  --accent-foreground: #1a2a4a;
+  --destructive: #c8202f;
+  --border: #c99a5e;
+  --input: #c99a5e;
+  --ring: #1c3a6e;
+
+  --line: rgb(28 58 110 / 0.62);
+  --line-live: #e2531a;
+  --line-width: 2px;
+  --live-glow: none;
+  --chip: #fff7ea;
+  --chip-foreground: #1a2a4a;
+  --chip-border: #c99a5e;
+  --chip-empty: rgb(255 247 234 / 0.45);
+  --chip-tint: 12%;
+  --tint-ink: 0%;
+  --seed: #7a5a35;
+  --lost-tint: 5%;
+  --lost-ink: 58%;
+  --lift: 0%;
+  --upset: #d6213c;
+  --upset-foreground: #ffffff;
+  --win: #e2531a;
+  --banner-accent: #1c3a6e;
+  --banner-shadow: 3px 3px 0 rgb(226 83 26 / 0.45);
+  --surface: rgb(255 247 234 / 0.9);
+  --surface-shadow: 0 1px 0 rgb(122 70 22 / 0.12), 0 10px 22px -14px rgb(90 50 10 / 0.6);
+}

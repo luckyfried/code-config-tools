@@ -1,0 +1,54 @@
+/* Broadcast: a game-night graphics package, near-black studio, every chip filled with its entrant's own color. */
+:root {
+  color-scheme: dark;
+  --scheme: dark;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --display-weight: 900;
+  --display-tracking: 0.025em;
+  --radius: 0.4rem;
+
+  --background: #06080e;
+  --backdrop: radial-gradient(ellipse 70% 50% at 50% -8%, rgb(70 96 255 / 0.32), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgb(255 45 85 / 0.12), transparent 70%),
+    linear-gradient(180deg, #0a0e19, #04050a);
+  --foreground: #f4f6fb;
+  --card: #10141f;
+  --card-foreground: #f4f6fb;
+  --popover: #10141f;
+  --popover-foreground: #f4f6fb;
+  --primary: #79f2ff;
+  --primary-foreground: #04050a;
+  --secondary: #1a2030;
+  --secondary-foreground: #f4f6fb;
+  --muted: #1a2030;
+  --muted-foreground: #96a0b8;
+  --accent: #1f2638;
+  --accent-foreground: #f4f6fb;
+  --destructive: #ff2d55;
+  --border: rgb(244 246 251 / 0.1);
+  --input: rgb(244 246 251 / 0.16);
+  --ring: #79f2ff;
+
+  --line: rgb(150 165 215 / 0.34);
+  --line-live: #79f2ff;
+  --line-width: 2px;
+  --live-glow: drop-shadow(0 0 5px rgb(121 242 255 / 0.85));
+  --chip: #121726;
+  --chip-foreground: #f4f6fb;
+  --chip-border: rgb(255 255 255 / 0.1);
+  --chip-empty: rgb(18 23 38 / 0.6);
+  --chip-tint: 86%;
+  --tint-ink: 100%;
+  --seed: #f4f6fb;
+  --lost-tint: 14%;
+  --lost-ink: 64%;
+  --lift: 100%;
+  --upset: #ff2d55;
+  --upset-foreground: #ffffff;
+  --win: #ffd400;
+  --banner-accent: #79f2ff;
+  --banner-shadow: 0 0 26px rgb(121 242 255 / 0.5);
+  --surface: rgb(16 20 31 / 0.86);
+  --surface-shadow: 0 0 0 1px rgb(121 242 255 / 0.04), 0 14px 32px -18px rgb(0 0 0 / 0.9);
+}

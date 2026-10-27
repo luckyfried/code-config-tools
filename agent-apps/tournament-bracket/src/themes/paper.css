@@ -1,0 +1,53 @@
+/* Paper: a printed bracket on graph paper, inked in navy, the winners' lines in red pencil and upsets in highlighter. */
+:root {
+  color-scheme: light;
+  --scheme: light;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --display-weight: 820;
+  --display-tracking: 0.01em;
+  --radius: 0.5rem;
+
+  --background: #f7f4ec;
+  --backdrop: linear-gradient(to right, rgb(58 104 170 / 0.08) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(to bottom, rgb(58 104 170 / 0.08) 1px, transparent 1px) 0 0 / 22px 22px;
+  --foreground: #18212f;
+  --card: #fffdf8;
+  --card-foreground: #18212f;
+  --popover: #fffdf8;
+  --popover-foreground: #18212f;
+  --primary: #18212f;
+  --primary-foreground: #fffdf8;
+  --secondary: #ebe6d8;
+  --secondary-foreground: #18212f;
+  --muted: #ebe6d8;
+  --muted-foreground: #5d6472;
+  --accent: #f1ead2;
+  --accent-foreground: #18212f;
+  --destructive: #c43420;
+  --border: #d9d2bf;
+  --input: #cfc7b2;
+  --ring: #3a68aa;
+
+  --line: rgb(24 33 47 / 0.42);
+  --line-live: #c8361e;
+  --line-width: 1.6px;
+  --live-glow: none;
+  --chip: #fffdf8;
+  --chip-foreground: #18212f;
+  --chip-border: #cbc3ae;
+  --chip-empty: rgb(255 253 248 / 0.55);
+  --chip-tint: 0%;
+  --tint-ink: 0%;
+  --seed: #6b7280;
+  --lost-tint: 0%;
+  --lost-ink: 55%;
+  --lift: 0%;
+  --upset: #ffd400;
+  --upset-foreground: #18212f;
+  --win: #c8361e;
+  --banner-accent: #ffd400;
+  --banner-shadow: 3px 3px 0 rgb(255 212 0 / 0.9);
+  --surface: #fffdf8;
+  --surface-shadow: 0 1px 0 rgb(24 33 47 / 0.06), 0 6px 18px -10px rgb(24 33 47 / 0.25);
+}

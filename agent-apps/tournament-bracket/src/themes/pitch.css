@@ -1,0 +1,53 @@
+/* Pitch: a mown field at night, chalk-white lines, the winners' path in floodlight white, the champion in gold. */
+:root {
+  color-scheme: dark;
+  --scheme: dark;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --display-weight: 860;
+  --display-tracking: 0.02em;
+  --radius: 0.5rem;
+
+  --background: #0e3a21;
+  --backdrop: radial-gradient(ellipse 90% 55% at 50% -5%, rgb(220 255 220 / 0.16), transparent 70%),
+    repeating-linear-gradient(90deg, #114628 0 90px, #0e3b22 90px 180px);
+  --foreground: #f2f7ef;
+  --card: #0b2c19;
+  --card-foreground: #f2f7ef;
+  --popover: #0b2c19;
+  --popover-foreground: #f2f7ef;
+  --primary: #f4d24a;
+  --primary-foreground: #0b2c19;
+  --secondary: #164d2e;
+  --secondary-foreground: #f2f7ef;
+  --muted: #164d2e;
+  --muted-foreground: #a9c7b2;
+  --accent: #1a5634;
+  --accent-foreground: #f2f7ef;
+  --destructive: #ff6b4a;
+  --border: rgb(242 247 239 / 0.16);
+  --input: rgb(242 247 239 / 0.22);
+  --ring: #f4d24a;
+
+  --line: rgb(242 247 239 / 0.42);
+  --line-live: #ffffff;
+  --line-width: 2px;
+  --live-glow: drop-shadow(0 0 3px rgb(255 255 255 / 0.7));
+  --chip: #0a2615;
+  --chip-foreground: #f2f7ef;
+  --chip-border: rgb(242 247 239 / 0.2);
+  --chip-empty: rgb(10 38 21 / 0.5);
+  --chip-tint: 20%;
+  --tint-ink: 0%;
+  --seed: #a9c7b2;
+  --lost-tint: 8%;
+  --lost-ink: 60%;
+  --lift: 100%;
+  --upset: #ff5a36;
+  --upset-foreground: #ffffff;
+  --win: #f4d24a;
+  --banner-accent: #f4d24a;
+  --banner-shadow: 0 3px 22px rgb(0 0 0 / 0.55);
+  --surface: rgb(8 34 19 / 0.82);
+  --surface-shadow: 0 12px 28px -16px rgb(0 0 0 / 0.8);
+}

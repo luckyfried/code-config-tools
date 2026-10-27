@@ -1,0 +1,110 @@
+/* Paper: a printed bracket on graph paper, inked in navy, the winners' lines in red pencil and upsets in highlighter. */
+:root {
+  color-scheme: light;
+  --scheme: light;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --display-weight: 820;
+  --display-tracking: 0.01em;
+  --radius: 0.5rem;
+
+  --background: #f7f4ec;
+  --backdrop: linear-gradient(to right, rgb(58 104 170 / 0.08) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(to bottom, rgb(58 104 170 / 0.08) 1px, transparent 1px) 0 0 / 22px 22px;
+  --foreground: #18212f;
+  --card: #fffdf8;
+  --card-foreground: #18212f;
+  --popover: #fffdf8;
+  --popover-foreground: #18212f;
+  --primary: #18212f;
+  --primary-foreground: #fffdf8;
+  --secondary: #ebe6d8;
+  --secondary-foreground: #18212f;
+  --muted: #ebe6d8;
+  --muted-foreground: #5d6472;
+  --accent: #f1ead2;
+  --accent-foreground: #18212f;
+  --destructive: #c43420;
+  --border: #d9d2bf;
+  --input: #cfc7b2;
+  --ring: #3a68aa;
+
+  --line: rgb(24 33 47 / 0.42);
+  --line-live: #c8361e;
+  --line-width: 1.6px;
+  --live-glow: none;
+  --chip: #fffdf8;
+  --chip-foreground: #18212f;
+  --chip-border: #cbc3ae;
+  --chip-empty: rgb(255 253 248 / 0.55);
+  --chip-tint: 0%;
+  --tint-ink: 0%;
+  --seed: #6b7280;
+  --lost-tint: 0%;
+  --lost-ink: 55%;
+  --lift: 0%;
+  --upset: #ffd400;
+  --upset-foreground: #18212f;
+  --win: #c8361e;
+  --banner-accent: #ffd400;
+  --banner-shadow: 3px 3px 0 rgb(255 212 0 / 0.9);
+  --surface: #fffdf8;
+  --surface-shadow: 0 1px 0 rgb(24 33 47 / 0.06), 0 6px 18px -10px rgb(24 33 47 / 0.25);
+}
+
+@media (prefers-color-scheme: dark) {
+/* Broadcast: a game-night graphics package, near-black studio, every chip filled with its entrant's own color. */
+:root {
+  color-scheme: dark;
+  --scheme: dark;
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --display-weight: 900;
+  --display-tracking: 0.025em;
+  --radius: 0.4rem;
+
+  --background: #06080e;
+  --backdrop: radial-gradient(ellipse 70% 50% at 50% -8%, rgb(70 96 255 / 0.32), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgb(255 45 85 / 0.12), transparent 70%),
+    linear-gradient(180deg, #0a0e19, #04050a);
+  --foreground: #f4f6fb;
+  --card: #10141f;
+  --card-foreground: #f4f6fb;
+  --popover: #10141f;
+  --popover-foreground: #f4f6fb;
+  --primary: #79f2ff;
+  --primary-foreground: #04050a;
+  --secondary: #1a2030;
+  --secondary-foreground: #f4f6fb;
+  --muted: #1a2030;
+  --muted-foreground: #96a0b8;
+  --accent: #1f2638;
+  --accent-foreground: #f4f6fb;
+  --destructive: #ff2d55;
+  --border: rgb(244 246 251 / 0.1);
+  --input: rgb(244 246 251 / 0.16);
+  --ring: #79f2ff;
+
+  --line: rgb(150 165 215 / 0.34);
+  --line-live: #79f2ff;
+  --line-width: 2px;
+  --live-glow: drop-shadow(0 0 5px rgb(121 242 255 / 0.85));
+  --chip: #121726;
+  --chip-foreground: #f4f6fb;
+  --chip-border: rgb(255 255 255 / 0.1);
+  --chip-empty: rgb(18 23 38 / 0.6);
+  --chip-tint: 86%;
+  --tint-ink: 100%;
+  --seed: #f4f6fb;
+  --lost-tint: 14%;
+  --lost-ink: 64%;
+  --lift: 100%;
+  --upset: #ff2d55;
+  --upset-foreground: #ffffff;
+  --win: #ffd400;
+  --banner-accent: #79f2ff;
+  --banner-shadow: 0 0 26px rgb(121 242 255 / 0.5);
+  --surface: rgb(16 20 31 / 0.86);
+  --surface-shadow: 0 0 0 1px rgb(121 242 255 / 0.04), 0 14px 32px -18px rgb(0 0 0 / 0.9);
+}
+}

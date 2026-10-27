@@ -1,0 +1,17 @@
+{
+  "id": "01a163f5-f0bb-7110-888c-87032263e7da",
+  "version": "2026-10-21",
+  "name": "Tournament Bracket",
+  "shortDescription": "A living bracket for your league or office pool, with picks and results.",
+  "description": "A bracket page for 4 to 64 entrants, single elimination with seeds and byes. On load the lines draw themselves and the results so far play out in order: each winner slides into the next round, an upset flashes the seed that fell, the pool reorders as points land, and the champion's name springs up letter by letter under a burst of confetti. Everyone in the pool makes their picks on the page, one person at a time, and you enter results and scores as the games finish. The pool scores 1 point a pick in round one, doubling each round. Big screen mode fills a TV with the whole bracket and the standings for game day. Phones show one round at a time with snap scrolling and the whole bracket under pinch zoom. Five looks: auto, court, pitch, paper, and broadcast, which fills each chip with its entrant's color.",
+  "category": "sports",
+  "subcategory": "Tournaments",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/tournament-bracket",
+  "setup": "Your agent asks, in one message, what the tournament is called, the entrants in seed order (best first), who is in the pool, any results so far, and which look you want: auto, court, pitch, paper, or broadcast. It writes the inputs file, builds the page, and serves it. No accounts or keys are needed, and the bracket stays in your project folder."
+}

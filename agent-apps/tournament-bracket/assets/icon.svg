@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#3550d8"/>
+      <stop offset="1" stop-color="#070a12"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <g fill="none" stroke="#5d6a94" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M118 128H170V200H214"/>
+    <path d="M118 272H170V200"/>
+    <path d="M394 240H342V312H298"/>
+    <path d="M394 384H342V312"/>
+  </g>
+  <g fill="none" stroke="#79f2ff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M214 200H236V256H256"/>
+    <path d="M298 312H276V256H256"/>
+  </g>
+  <rect x="62" y="108" width="72" height="40" rx="9" fill="#e8590c"/>
+  <rect x="62" y="252" width="72" height="40" rx="9" fill="#1f6feb"/>
+  <rect x="378" y="220" width="72" height="40" rx="9" fill="#fab005"/>
+  <rect x="378" y="364" width="72" height="40" rx="9" fill="#0ca678"/>
+  <path d="M216 132h80v20c0 30-18 50-40 54-22-4-40-24-40-54z" fill="#ffd400"/>
+  <path d="M216 142h-22c0 22 12 34 26 36M296 142h22c0 22-12 34-26 36" fill="none" stroke="#ffd400" stroke-width="10" stroke-linecap="round"/>
+  <rect x="246" y="204" width="20" height="22" fill="#ffd400"/>
+  <rect x="228" y="224" width="56" height="14" rx="4" fill="#ffd400"/>
+</svg>
