@@ -1,0 +1,28 @@
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 16px/1.5 system-ui, sans-serif;
+}
+
+.tests {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.summary {
+  font-weight: 700;
+}
+
+.cases li {
+  padding: var(--space-1) 0;
+}
+
+.cases .pass::marker {
+  color: var(--color-ok);
+}
+
+.cases .fail {
+  color: var(--color-danger);
+}

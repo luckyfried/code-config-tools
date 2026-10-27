@@ -1,0 +1,555 @@
+/* Buttons, the moment card (2048, and no moves left), and the settings sheet. */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  font-weight: 600;
+  font-size: var(--text-md);
+  white-space: nowrap;
+  transition-property: transform, background-color, opacity;
+  transition-duration: var(--motion-fast), var(--motion-base), var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.button svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.button:disabled {
+  opacity: 0.42;
+  cursor: default;
+  box-shadow: none;
+}
+
+.button-primary {
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.button-quiet {
+  background: transparent;
+  box-shadow: none;
+}
+
+.button-danger {
+  border-color: transparent;
+  background: var(--color-danger);
+  color: var(--color-on-accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button:hover:not(:disabled):not(.button-primary):not(.button-danger),
+  .icon-button:hover {
+    background: var(--color-surface-2);
+  }
+
+  .button-primary:hover {
+    filter: brightness(1.06);
+  }
+}
+
+/* The moment: clear of the tray, so the cube that made it rises and turns over a dimmed board with nothing on it.
+   On a phone it takes the place of the game buttons; on a wide screen it sits under the tray; on a phone on its side,
+   in the column beside it. */
+.moment {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  justify-items: center;
+  padding: 0 max(env(safe-area-inset-right), var(--space-4)) max(env(safe-area-inset-bottom), var(--space-3))
+    max(env(safe-area-inset-left), var(--space-4));
+  pointer-events: none;
+  z-index: 10;
+}
+
+.moment[hidden] {
+  display: none;
+}
+
+.moment-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "kicker kicker"
+    "title title"
+    "line line"
+    "actions actions";
+  align-items: center;
+  column-gap: var(--space-4);
+  width: min(100%, 520px);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-2);
+  text-align: left;
+  pointer-events: auto;
+  animation: moment-in 460ms var(--ease-out) 120ms both;
+}
+
+.moment.is-leaving .moment-card {
+  animation: moment-out 140ms var(--ease-out) both;
+}
+
+@keyframes moment-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes moment-out {
+  to {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+}
+
+.moment-kicker {
+  grid-area: kicker;
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.moment-title {
+  grid-area: title;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 86%;
+  font-size: var(--text-4xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.moment-line {
+  grid-area: line;
+  margin: var(--space-1) 0 var(--space-4);
+  color: var(--color-muted);
+  text-wrap: balance;
+}
+
+.moment-actions {
+  grid-area: actions;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.moment-actions .button {
+  flex: 1;
+}
+
+/* While the moment is up on a phone, the card stands where the game buttons were. */
+.has-moment .dock,
+.has-moment .ladder {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--motion-base) var(--ease-out), visibility 0s linear var(--motion-base);
+}
+
+@media (min-width: 1024px) and (min-height: 600px) {
+  .moment {
+    left: var(--slot-left, 0);
+    right: auto;
+    bottom: auto;
+    top: calc(var(--tray-bottom, 60vh) + var(--space-6));
+    width: var(--slot-width, 100%);
+    padding: 0;
+  }
+
+  .moment-card {
+    grid-template-areas:
+      "kicker actions"
+      "title actions"
+      "line actions";
+    width: auto;
+    max-width: 100%;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .moment-line {
+    margin: var(--space-1) 0 0;
+  }
+
+  .moment-actions .button {
+    flex: none;
+  }
+
+  .has-moment .dock {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .has-moment .ladder {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .moment {
+    left: calc(var(--tray-right, 66vw) + var(--space-4));
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    padding: var(--space-3) max(env(safe-area-inset-right), var(--space-4)) var(--space-3) 0;
+  }
+
+  .moment-card {
+    width: 100%;
+    padding: var(--space-4);
+  }
+
+  .moment-title {
+    font-size: var(--text-3xl);
+  }
+
+  .moment-line {
+    margin-bottom: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .moment-actions {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .has-moment .dock {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Settings: a sheet from the bottom on a phone, a panel in the middle on a wide screen. */
+.sheet {
+  width: min(100% - 24px, 460px);
+  max-height: min(100dvh - 24px, 720px);
+  margin: auto auto max(env(safe-area-inset-bottom), 12px);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2);
+  overflow: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  opacity: 0;
+  transform: translateY(24px);
+  transition-property: opacity, transform, overlay, display;
+  transition-duration: 220ms;
+  transition-timing-function: var(--ease-out);
+  transition-behavior: allow-discrete;
+}
+
+.sheet[open] {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  .sheet[open] {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+.sheet::backdrop {
+  background: var(--color-scrim);
+}
+
+@media (min-width: 720px) and (min-height: 600px) {
+  .sheet {
+    margin: auto;
+  }
+}
+
+.sheet-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-2xl);
+}
+
+.field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.field legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+}
+
+.field-reset {
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.reset-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.reset-confirm[hidden] {
+  display: none;
+}
+
+.segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--color-key);
+}
+
+.segmented label,
+.look {
+  position: relative;
+  cursor: pointer;
+}
+
+.segmented input,
+.look input,
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented span {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: var(--text-md);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition-property: background-color, color, box-shadow;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.segmented input:checked + span {
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-1);
+  color: var(--color-text);
+}
+
+.segmented input:focus-visible + span,
+.look input:focus-visible ~ .look-ramp,
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.looks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.look {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  font-weight: 600;
+}
+
+.look-ramp {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  width: 100%;
+  aspect-ratio: 1.3;
+  padding: 8px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: var(--swatch-tray, var(--color-key));
+  transition: border-color var(--motion-base) var(--ease-out);
+}
+
+.look-ramp i {
+  border-radius: 6px;
+  background: var(--swatch, var(--color-border));
+}
+
+.look input:checked ~ .look-ramp {
+  border-color: var(--color-accent);
+}
+
+.look-name {
+  font-size: var(--text-sm);
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+
+.switch-track {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--color-border);
+  transition: background-color var(--motion-base) var(--ease-out);
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--color-surface-2);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--motion-base) var(--ease-out);
+}
+
+.switch input:checked + .switch-track {
+  background: var(--color-accent);
+}
+
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(20px);
+}
+
+.sheet-foot {
+  display: grid;
+  margin-top: var(--space-2);
+}
+
+/* The page without WebGL: a CSS grid of cubes in the slot, with the same colors and the same motion. */
+.dom-board {
+  position: fixed;
+  left: var(--slot-left, 0);
+  top: var(--slot-top, 0);
+  width: var(--slot-size, 0);
+  height: var(--slot-size, 0);
+  padding: 3%;
+  border-radius: 6%;
+  background: var(--scene-tray);
+  box-shadow: var(--shadow-2), inset 0 0 0 2px var(--scene-rim);
+}
+
+.dom-board[hidden] {
+  display: none;
+}
+
+.dom-cell,
+.dom-cube {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 14%;
+}
+
+.dom-cell {
+  background: var(--scene-socket);
+  transform: translate(var(--x), var(--y));
+}
+
+.dom-cube {
+  display: grid;
+  place-items: center;
+  background: var(--cube-bg);
+  color: var(--cube-ink);
+  box-shadow: inset 0 -6px 0 var(--color-shade), var(--shadow-1);
+  font-family: var(--font-display);
+  font-weight: 760;
+  font-stretch: 88%;
+  font-size: var(--cube-font);
+  transform: translate(var(--x), var(--y)) scale(var(--s, 1));
+  transition-property: transform, opacity;
+  transition-duration: 110ms, 100ms;
+  transition-timing-function: var(--ease-out);
+}
+
+.dom-cube.is-new {
+  animation: dom-drop 260ms var(--ease-spring) both;
+}
+
+.dom-cube.is-merged {
+  animation: dom-pop 280ms var(--ease-spring) both;
+}
+
+@keyframes dom-drop {
+  from {
+    opacity: 0;
+    transform: translate(var(--x), calc(var(--y) - 30%)) scale(0.9);
+  }
+}
+
+@keyframes dom-pop {
+  40% {
+    transform: translate(var(--x), var(--y)) scale(1.15);
+  }
+}

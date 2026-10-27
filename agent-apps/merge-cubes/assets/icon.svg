@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="46%" r="55%">
+      <stop offset="0" stop-color="#4a3418"/>
+      <stop offset="1" stop-color="#090b14"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6c8"/>
+      <stop offset="1" stop-color="#f2c040"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#glow)"/>
+  <rect x="36" y="44" width="184" height="176" rx="26" fill="#06070b" stroke="#f2c14e" stroke-width="4"/>
+  <rect x="52" y="60" width="72" height="68" rx="14" fill="#e9e0cd"/>
+  <rect x="52" y="120" width="72" height="12" rx="6" fill="#bfae8c"/>
+  <rect x="132" y="60" width="72" height="68" rx="14" fill="#ec8333"/>
+  <rect x="132" y="120" width="72" height="12" rx="6" fill="#b85a1f"/>
+  <rect x="52" y="140" width="72" height="68" rx="14" fill="#f5ca4a"/>
+  <rect x="52" y="200" width="72" height="10" rx="5" fill="#c09224"/>
+  <rect x="132" y="140" width="72" height="68" rx="14" fill="url(#gold)"/>
+  <rect x="132" y="200" width="72" height="10" rx="5" fill="#d7a52e"/>
+</svg>

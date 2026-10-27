@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Merge Cubes</title>
+    <meta name="description" content="Swipe glowing cubes together; matching cubes merge and light the board." />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="preload" href="./fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin />
+    <link id="theme" rel="stylesheet" href="./theme.css" />
+    <script src="./boot.js"></script>
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/hud.css" />
+    <link rel="stylesheet" href="./styles/panels.css" />
+    <script src="./config.js"></script>
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+    </script>
+    <link rel="modulepreload" href="./vendor/three.module.min.js" />
+    <link rel="modulepreload" href="./vendor/three.core.min.js" />
+    <script type="module" src="./game/main.js"></script>
+    <script src="./badge.js" defer></script>
+  </head>
+  <body>
+    <canvas class="stage" data-stage aria-hidden="true"></canvas>
+    <div class="dom-board" data-dom-board hidden></div>
+
+    <main class="app" data-app>
+      <header class="masthead">
+        <h1 class="title" data-title>Merge Cubes</h1>
+        <button class="icon-button" type="button" data-open-settings aria-label="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /></svg>
+        </button>
+      </header>
+
+      <section class="scores is-waiting" aria-label="Score">
+        <div class="score">
+          <span class="score-label">Score</span>
+          <span class="score-value" data-score>0</span>
+          <span class="score-gain" data-gain aria-hidden="true"></span>
+        </div>
+        <div class="score score-best">
+          <span class="score-label">Best</span>
+          <span class="score-value" data-best>0</span>
+        </div>
+      </section>
+
+      <div class="slot" data-slot>
+        <p class="hint" data-hint hidden></p>
+      </div>
+
+      <nav class="dock" aria-label="Game">
+        <button class="button" type="button" data-undo disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6 4 11l5 5" /><path d="M4 11h10a6 6 0 0 1 0 12h-3" /></svg>
+          <span>Undo</span>
+        </button>
+        <button class="button button-primary" type="button" data-new>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9" /><path d="M20 4v5h-5" /></svg>
+          <span>New game</span>
+        </button>
+      </nav>
+
+      <section class="keys" aria-label="Keys">
+        <p class="keys-row"><span class="keys-caps"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span><span>Slide the cubes</span></p>
+        <p class="keys-row"><span class="keys-caps"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>Same, left hand</span></p>
+        <p class="keys-row"><span class="keys-caps"><kbd>U</kbd></span><span>Undo one move</span></p>
+        <p class="keys-row"><span class="keys-caps"><kbd>N</kbd></span><span>Start over</span></p>
+      </section>
+
+      <section class="ladder" aria-labelledby="ladder-title">
+        <h2 class="ladder-title" id="ladder-title" data-ladder-title>Toward 2048</h2>
+        <ol class="ladder-list" data-ladder></ol>
+      </section>
+    </main>
+
+    <section class="moment" data-moment hidden aria-live="assertive">
+      <div class="moment-card">
+        <p class="moment-kicker" data-moment-kicker></p>
+        <p class="moment-title" data-moment-title></p>
+        <p class="moment-line" data-moment-line></p>
+        <div class="moment-actions">
+          <button class="button" type="button" data-moment-second hidden></button>
+          <button class="button button-primary" type="button" data-moment-first></button>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="sheet" data-settings aria-labelledby="settings-title">
+      <form method="dialog" class="sheet-body">
+        <header class="sheet-head">
+          <h2 id="settings-title">Settings</h2>
+          <button class="icon-button" value="close" aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </header>
+
+        <fieldset class="field">
+          <legend>Board</legend>
+          <div class="segmented" data-size-group>
+            <label><input type="radio" name="size" value="3" /><span>3 × 3</span></label>
+            <label><input type="radio" name="size" value="4" /><span>4 × 4</span></label>
+            <label><input type="radio" name="size" value="5" /><span>5 × 5</span></label>
+            <label><input type="radio" name="size" value="6" /><span>6 × 6</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>Look</legend>
+          <div class="looks" data-theme-group>
+            <label class="look"><input type="radio" name="theme" value="night-gold" /><span class="look-ramp" data-ramp="night-gold"><i></i><i></i><i></i><i></i></span><span class="look-name">Night gold</span></label>
+            <label class="look"><input type="radio" name="theme" value="sorbet" /><span class="look-ramp" data-ramp="sorbet"><i></i><i></i><i></i><i></i></span><span class="look-name">Sorbet</span></label>
+            <label class="look"><input type="radio" name="theme" value="cyber" /><span class="look-ramp" data-ramp="cyber"><i></i><i></i><i></i><i></i></span><span class="look-name">Cyber</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field">
+          <legend>Light</legend>
+          <div class="segmented" data-appearance-group>
+            <label><input type="radio" name="appearance" value="auto" /><span>Auto</span></label>
+            <label><input type="radio" name="appearance" value="light" /><span>Day</span></label>
+            <label><input type="radio" name="appearance" value="dark" /><span>Night</span></label>
+          </div>
+        </fieldset>
+
+        <div class="field field-row">
+          <label class="switch">
+            <input type="checkbox" role="switch" data-sound />
+            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+            <span>Sound</span>
+          </label>
+        </div>
+
+        <div class="field field-row field-reset" data-reset-row>
+          <button class="button button-quiet" type="button" data-reset>Reset best</button>
+          <span class="reset-confirm" data-reset-confirm hidden>
+            <span data-reset-question></span>
+            <button class="button button-danger" type="button" data-reset-yes>Reset</button>
+            <button class="button button-quiet" type="button" data-reset-no>Keep it</button>
+          </span>
+        </div>
+
+        <footer class="sheet-foot">
+          <button class="button button-primary" value="done">Done</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <p class="sr-only" role="status" aria-live="polite" data-live></p>
+  </body>
+</html>

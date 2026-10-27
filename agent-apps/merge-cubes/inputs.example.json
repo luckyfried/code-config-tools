@@ -1,0 +1,14 @@
+{
+  "title": "Merge Cubes",
+  "size": 4,
+  "theme": "night-gold",
+  "labels": "numbers",
+  "sound": true,
+  "_notes": {
+    "title": "The name at the top of the page and on the browser tab, up to 40 characters.",
+    "size": "The board a new visitor starts on: 3, 4, 5, or 6 cubes on a side. Visitors can change it in Settings.",
+    "theme": "night-gold (a dark glass tray, cubes from cream to white-hot gold), sorbet (a pale pearl tray, cubes from milk and mint to coral), or cyber (a black tray, cubes from ice cyan to magenta, with more glow). Each has a day look for light mode and a night look for dark mode.",
+    "labels": "numbers, or a list of twelve short labels shown on the cubes instead of 2, 4, 8, and on up to 4096, such as emoji, team names, or your own milestones. Up to 14 characters each.",
+    "sound": "true to play a rising mallet note for each merge, false to start silent. Visitors can switch it in Settings."
+  }
+}
