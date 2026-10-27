@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Rain Courier</title>
+  <meta name="description" content="Fly a courier drone through a rain-soaked neon city against the clock.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preload" href="./fonts/big-shoulders.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="modulepreload" href="./vendor/three.module.min.js">
+  <link rel="modulepreload" href="./vendor/three.core.min.js">
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+</head>
+<body class="is-dispatch">
+  <canvas id="scene" class="scene" aria-label="A drone flying through a city at night in the rain"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <header class="hud" id="hud" aria-label="Shift">
+    <div class="hud-cluster hud-left">
+      <div class="clock" id="clock">
+        <span class="clock-time" id="clockTime">1:30</span>
+        <span class="clock-bar" aria-hidden="true"><i id="clockBar"></i></span>
+      </div>
+      <button class="objective" id="objective" type="button" aria-label="Show the route">
+        <svg class="objective-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-package" id="objIcon"></use></svg>
+        <span class="objective-text">
+          <span class="objective-kind" id="objKind">Pick up</span>
+          <span class="objective-name" id="objName">Finding a package</span>
+        </span>
+        <span class="objective-dist" id="objDist">–</span>
+        <svg class="objective-arrow" id="objArrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 15-7-4-7 4z"/></svg>
+      </button>
+    </div>
+    <div class="hud-cluster hud-right">
+      <div class="tally">
+        <div class="tally-item">
+          <span class="tally-value" id="delivered">0</span>
+          <span class="tally-label">delivered</span>
+        </div>
+        <div class="tally-item">
+          <span class="tally-value" id="bonus">0</span>
+          <span class="tally-label">near-miss bonus</span>
+        </div>
+      </div>
+      <div class="hud-buttons">
+        <button class="icon-button" id="soundButton" type="button" aria-label="Turn sound off" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sound-on" d="M4 9h4l5-4v14l-5-4H4zM16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="sound-off" d="M4 9h4l5-4v14l-5-4H4zM16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
+        </button>
+        <button class="icon-button" id="pauseButton" type="button" aria-label="Pause">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="keys-hint" id="keysHint">
+      <span class="keycaps"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> fly
+      <span class="keycaps"><kbd>Space</kbd></span> climb
+      <span class="keycaps"><kbd>Shift</kbd></span> drop
+      <span class="keycaps"><kbd>Drag</kbd></span> look
+    </div>
+  </header>
+
+  <div class="touch" id="touch" aria-hidden="true">
+    <div class="stick" id="stick"><span class="stick-ring"></span><span class="stick-knob"></span></div>
+    <div class="lift" id="lift">
+      <svg class="lift-mark lift-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>
+      <span class="lift-knob"></span>
+      <svg class="lift-mark lift-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+
+  <section class="dispatch" id="dispatch" aria-labelledby="title">
+    <div class="dispatch-head">
+      <h1 class="title" id="title">Rain Courier</h1>
+      <p class="dispatch-sub" id="dispatchSub">Night shift over the city</p>
+    </div>
+    <div class="dispatch-card">
+      <div class="live" id="live">
+        <svg class="live-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-package" id="liveIcon"></use></svg>
+        <span class="live-text"><span class="live-kind" id="liveKind">On the route</span><span class="live-name" id="liveName">Finding a package</span></span>
+        <span class="live-dist" id="liveDist">–</span>
+      </div>
+      <p class="dispatch-copy">Hook the package on the lit roof, drop it at the lit balcony across town. Every delivery adds 15 seconds and a crash costs 5. Skim the towers at speed for a near-miss bonus.</p>
+      <dl class="stats">
+        <div><dt>Pilot</dt><dd id="pilotName">Courier</dd></div>
+        <div><dt>Shift</dt><dd id="shiftLength">90 s</dd></div>
+        <div><dt>Best shift</dt><dd id="bestShift">None yet</dd></div>
+      </dl>
+      <button class="primary" id="startButton" type="button">Start shift</button>
+      <p class="controls-line controls-keys">W A S D to fly, Space to climb, Shift to drop, drag to look.</p>
+      <p class="controls-line controls-touch">Left thumb flies, right thumb climbs and drops.</p>
+    </div>
+  </section>
+
+  <section class="over" id="over" aria-labelledby="overTitle" hidden>
+    <div class="over-card">
+      <p class="over-pilot" id="overPilot">Courier</p>
+      <h2 class="over-title" id="overTitle">Shift over</h2>
+      <p class="over-score"><span id="overScore">0</span><span class="over-unit">points</span></p>
+      <dl class="stats over-stats">
+        <div><dt>Delivered</dt><dd id="overDelivered">0</dd></div>
+        <div><dt>Near-miss bonus</dt><dd id="overBonus">0</dd></div>
+        <div><dt>Best shift</dt><dd id="overBest">0</dd></div>
+      </dl>
+      <p class="over-best" id="overNewBest" hidden>A new best shift.</p>
+      <button class="primary" id="againButton" type="button">Fly again</button>
+    </div>
+  </section>
+
+  <section class="pause" id="pause" aria-labelledby="pauseTitle" hidden>
+    <div class="over-card pause-card">
+      <h2 class="over-title" id="pauseTitle">Paused</h2>
+      <button class="primary" id="resumeButton" type="button">Resume</button>
+      <button class="secondary" id="endButton" type="button">End shift</button>
+    </div>
+  </section>
+
+  <svg class="sprites" aria-hidden="true">
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="M12 3l8 4v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10M8 5l8 4"/></symbol>
+    <symbol id="i-balcony" viewBox="0 0 24 24"><path d="M6 3h12v9H6zM12 3v9M3 15h18M5 15v6M9 15v6M15 15v6M19 15v6M3 21h18"/></symbol>
+  </svg>
+
+  <script src="./config.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+  <script type="module" src="./game/main.js"></script>
+  <script src="./badge.js" defer></script>
+</body>
+</html>

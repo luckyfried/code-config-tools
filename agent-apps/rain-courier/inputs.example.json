@@ -1,0 +1,16 @@
+{
+  "title": "Rain Courier",
+  "pilotName": "Sam",
+  "cityName": "Neo Harbor",
+  "theme": "neon",
+  "seed": "monsoon",
+  "shiftSeconds": 90,
+  "_notes": {
+    "title": "The name on the dispatch screen and the browser tab.",
+    "pilotName": "The pilot's name on the dispatch screen and the shift-over card.",
+    "cityName": "The city's name, painted on the biggest rooftop signs and shown on the dispatch screen. Up to 22 characters reads best.",
+    "theme": "The night: neon (pink and cyan signs), amber (sodium streetlight orange with teal signs), or ghost (white and green on black). Each has a dusk look for light mode and a night look for dark mode.",
+    "seed": "Any word. The city's streets, towers, signs, and routes are built from it; the same word always builds the same city.",
+    "shiftSeconds": "How long a shift lasts before deliveries add time, in seconds, from 20 to 600. 90 is the standard shift."
+  }
+}

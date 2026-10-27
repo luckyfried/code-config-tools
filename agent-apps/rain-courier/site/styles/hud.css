@@ -1,0 +1,861 @@
+/* The screens over the scene: dispatch, the shift HUD with touch controls, shift over, and pause. */
+
+/* Safe-area padding every layer shares. */
+:root {
+  --edge-top: max(var(--space-4), env(safe-area-inset-top));
+  --edge-right: max(var(--space-4), env(safe-area-inset-right));
+  --edge-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  --edge-left: max(var(--space-4), env(safe-area-inset-left));
+}
+
+@media (min-width: 900px) {
+  :root {
+    --edge-top: max(var(--space-6), env(safe-area-inset-top));
+    --edge-right: max(var(--space-6), env(safe-area-inset-right));
+    --edge-bottom: max(var(--space-6), env(safe-area-inset-bottom));
+    --edge-left: max(var(--space-6), env(safe-area-inset-left));
+  }
+}
+
+/* ---------- Dispatch ---------- */
+
+.dispatch {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--edge-top) var(--edge-right) 0 var(--edge-left);
+  pointer-events: none;
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-out);
+}
+
+.is-shift .dispatch,
+.is-over .dispatch {
+  opacity: 0;
+  transform: translateY(12px);
+  visibility: hidden;
+  transition-property: opacity, transform, visibility;
+  transition-duration: var(--motion-base);
+}
+
+.dispatch-head {
+  max-width: 14ch;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(3.25rem, 15vw, 4.5rem);
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 0 2px 28px var(--color-bg);
+}
+
+.dispatch-sub {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  text-wrap: balance;
+  text-shadow: 0 1px 16px var(--color-bg);
+}
+
+.dispatch-card {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  margin: 0 calc(-1 * var(--edge-right)) 0 calc(-1 * var(--edge-left));
+  padding: var(--space-5) var(--edge-right) var(--edge-bottom) var(--edge-left);
+  border-top: 1px solid var(--color-glass-edge);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-glass);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+}
+
+.dispatch-card::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: var(--edge-left);
+  width: 56px;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+.dispatch-copy {
+  max-width: 46ch;
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.live {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.live-icon,
+.objective-icon {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.live-text,
+.objective-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.live-kind,
+.objective-kind {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.live-name,
+.objective-name {
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.live-dist,
+.objective-dist {
+  min-width: 4.5ch;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--color-border);
+}
+
+.stats div {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+}
+
+.stats dt {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.stats dd {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.controls-line {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-wrap: balance;
+}
+
+.is-touch .controls-keys,
+.controls-touch {
+  display: none;
+}
+
+.is-touch .controls-touch {
+  display: block;
+}
+
+@media (max-width: 899px) {
+  .dispatch-copy {
+    display: none;
+  }
+
+  /* The bottom badge is 52px tall under 640px and an 80px-high pill above it; the card's last line ends above it. */
+  .dispatch-card {
+    padding-bottom: calc(52px + var(--space-3) + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .dispatch-card {
+    padding-bottom: calc(80px + var(--space-3));
+  }
+}
+
+@media (min-width: 900px) {
+  .dispatch {
+    width: clamp(380px, 32vw, 520px);
+    padding-bottom: var(--edge-bottom);
+  }
+
+  .dispatch-head {
+    max-width: none;
+  }
+
+  .title {
+    font-size: clamp(5rem, 7.2vw, 8.5rem);
+  }
+
+  .dispatch-sub {
+    font-size: clamp(1.5rem, 1.8vw, 2rem);
+  }
+
+  .dispatch-card {
+    margin: 0;
+    padding: var(--space-5);
+    border: 1px solid var(--color-glass-edge);
+    border-radius: var(--radius-lg);
+  }
+
+  .dispatch-card::before {
+    left: var(--space-5);
+  }
+}
+
+@media (min-width: 1800px) {
+  .dispatch {
+    width: clamp(520px, 30vw, 600px);
+  }
+
+  .dispatch-card {
+    padding: var(--space-6);
+    gap: var(--space-5);
+    font-size: var(--text-lg);
+  }
+
+  .stats dd {
+    font-size: var(--text-2xl);
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1099px) {
+  /* Narrow desktops: the centered badge reaches under the card, so the card stands above it. */
+  .dispatch {
+    padding-bottom: calc(80px + var(--space-3));
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  /* Landscape phones at every width: the card moves to the right, fits its content, and centers in the height
+     above the bottom badge (80px tall at most), so the two never overlap. */
+  .dispatch {
+    width: auto;
+    padding-bottom: var(--edge-bottom);
+  }
+
+  .dispatch-head {
+    max-width: 14ch;
+  }
+
+  .title {
+    font-size: 2.75rem;
+  }
+
+  .dispatch-sub {
+    font-size: var(--text-lg);
+  }
+
+  .dispatch-copy {
+    display: none;
+  }
+
+  .dispatch-card {
+    --card-top: var(--edge-top);
+    --card-bottom: max(var(--edge-bottom), calc(80px + var(--space-3)));
+    position: fixed;
+    top: var(--card-top);
+    right: var(--edge-right);
+    bottom: var(--card-bottom);
+    width: min(380px, 52vw);
+    height: fit-content;
+    max-height: calc(100% - var(--card-top) - var(--card-bottom));
+    margin: auto 0;
+    overflow-y: auto;
+    padding: var(--space-4);
+    gap: var(--space-3);
+    font-size: var(--text-md);
+    border: 1px solid var(--color-glass-edge);
+    border-radius: var(--radius-lg);
+  }
+
+  .dispatch-card::before {
+    left: var(--space-4);
+  }
+
+  .stats {
+    padding: var(--space-2) 0;
+  }
+
+  .stats dd {
+    font-size: var(--text-xl);
+  }
+}
+
+@media (max-height: 340px) and (orientation: landscape) {
+  /* The shortest phones: the card drops its controls line and tightens so it still fits above the badge. */
+  .dispatch-card {
+    width: min(380px, 58vw);
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+  }
+
+  .dispatch-card .controls-line {
+    display: none;
+  }
+}
+
+/* ---------- Shift HUD ---------- */
+
+.hud {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--edge-top) var(--edge-right) var(--edge-bottom) var(--edge-left);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition-property: opacity, visibility;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.is-shift .hud {
+  opacity: 1;
+  visibility: visible;
+}
+
+.hud-cluster {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.hud-left {
+  justify-items: start;
+  min-width: 0;
+}
+
+.hud-right {
+  justify-items: end;
+}
+
+.clock {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 7.5ch;
+}
+
+.clock-time {
+  font-family: var(--font-display);
+  font-size: 3.25rem;
+  font-weight: 900;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 18px var(--color-bg);
+}
+
+.clock.is-low .clock-time {
+  color: var(--color-danger);
+}
+
+.clock-bar {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-glass);
+}
+
+.clock-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  transform: scaleX(var(--left, 1));
+  transform-origin: left;
+}
+
+.clock.is-low .clock-bar i {
+  background: var(--color-danger);
+}
+
+.objective {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto 22px;
+  align-items: center;
+  gap: var(--space-3);
+  width: min(360px, 100%);
+  min-height: 56px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-glass-edge);
+  border-radius: var(--radius-md);
+  background: var(--color-glass);
+  box-shadow: var(--shadow-1);
+  text-align: left;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.objective.is-drop .objective-icon,
+.live.is-drop .live-icon {
+  stroke: var(--color-ok);
+}
+
+.objective-arrow {
+  width: 22px;
+  height: 22px;
+  fill: var(--color-accent);
+  transform: rotate(var(--bearing, 0deg));
+}
+
+.tally {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tally-item {
+  display: grid;
+  justify-items: end;
+  min-width: 76px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-glass-edge);
+  border-radius: var(--radius-md);
+  background: var(--color-glass);
+  box-shadow: var(--shadow-1);
+  line-height: 1.1;
+}
+
+.tally-value {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.tally-label {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.hud-buttons {
+  display: flex;
+  gap: var(--space-2);
+  pointer-events: auto;
+}
+
+.sound-off {
+  display: none;
+}
+
+.is-muted .sound-on {
+  display: none;
+}
+
+.is-muted .sound-off {
+  display: inline;
+}
+
+.toasts {
+  position: fixed;
+  top: calc(var(--edge-top) + 150px);
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  width: min(90vw, 420px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-glass);
+  box-shadow: var(--shadow-1);
+  animation: toast-in var(--motion-base) var(--ease-out) both;
+}
+
+.toast.is-leaving {
+  animation: toast-out var(--motion-base) var(--ease-out) both;
+}
+
+.toast-value {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.toast.is-bad .toast-value {
+  color: var(--color-danger);
+}
+
+.toast.is-good .toast-value {
+  color: var(--color-ok);
+}
+
+.toast-label {
+  font-weight: 600;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.keys-hint {
+  position: fixed;
+  bottom: var(--edge-bottom);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-glass);
+  box-shadow: var(--shadow-1);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition-property: opacity;
+  transition-duration: var(--motion-slow);
+}
+
+.keycaps {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: var(--space-2);
+}
+
+.keys-hint.is-done,
+.is-touch .keys-hint {
+  opacity: 0;
+}
+
+@media (min-width: 900px) {
+  .clock-time {
+    font-size: 4.5rem;
+  }
+
+  .objective {
+    width: 380px;
+  }
+
+  .toasts {
+    top: calc(var(--edge-top) + 40px);
+  }
+}
+
+@media (min-width: 1800px) {
+  .clock-time {
+    font-size: 5.5rem;
+  }
+
+  .objective {
+    width: 440px;
+    min-height: 64px;
+    font-size: var(--text-lg);
+  }
+
+  .tally-value {
+    font-size: var(--text-4xl);
+  }
+}
+
+@media (max-width: 899px) {
+  /* Phones: clock and tally share the top row; the objective takes the full width under them. */
+  .hud {
+    grid-template-areas:
+      "clock right"
+      "obj obj";
+    row-gap: var(--space-2);
+  }
+
+  .hud-left {
+    display: contents;
+  }
+
+  .clock {
+    grid-area: clock;
+    align-self: start;
+    justify-self: start;
+  }
+
+  .objective {
+    grid-area: obj;
+    width: 100%;
+  }
+
+  .hud-right {
+    grid-area: right;
+    grid-template-columns: auto auto;
+    align-items: start;
+  }
+
+  .tally {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .tally-item {
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    justify-content: end;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .tally-value {
+    font-size: var(--text-2xl);
+    order: 2;
+  }
+
+  .hud-buttons {
+    flex-direction: column;
+  }
+}
+
+
+/* ---------- Touch controls ---------- */
+
+.touch {
+  position: fixed;
+  inset: auto 0 0 0;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 var(--edge-right) calc(var(--edge-bottom) + var(--space-3)) var(--edge-left);
+  pointer-events: none;
+}
+
+.is-touch.is-shift .touch {
+  display: flex;
+}
+
+.stick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.stick-ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--color-glass-edge);
+  border-radius: 50%;
+  background: var(--color-glass);
+  opacity: 0.75;
+}
+
+.stick-knob,
+.lift-knob {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-glass);
+  box-shadow: var(--shadow-1);
+  transform: translate(var(--knob-x, 0px), var(--knob-y, 0px));
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.is-active .stick-knob,
+.is-active .lift-knob {
+  background: var(--color-accent);
+  transition-duration: 0ms;
+}
+
+.lift {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  place-items: center;
+  width: 84px;
+  height: 196px;
+  border: 2px solid var(--color-glass-edge);
+  border-radius: 42px;
+  background: color-mix(in srgb, var(--color-glass) 75%, transparent);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.lift-knob {
+  grid-row: 2;
+  transform: translateY(var(--knob-y, 0px));
+}
+
+.lift-mark {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lift-up {
+  grid-row: 1;
+}
+
+.lift-down {
+  grid-row: 3;
+}
+
+/* ---------- Shift over and pause ---------- */
+
+.over,
+.pause {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--edge-top) var(--edge-right) var(--edge-bottom) var(--edge-left);
+  background: color-mix(in srgb, var(--color-bg) 35%, transparent);
+}
+
+.over-card {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  width: min(440px, 100%);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border: 1px solid var(--color-glass-edge);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass);
+  box-shadow: var(--shadow-2);
+  animation: card-in var(--motion-slow) var(--ease-out) both;
+}
+
+.over-card::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: var(--space-5);
+  width: 56px;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+.over-pilot {
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.over-title {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 900;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.over-score {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.over-unit {
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.over-best {
+  font-weight: 600;
+  color: var(--color-ok);
+}
+
+.pause-card {
+  width: min(340px, 100%);
+}
+
+@media (max-height: 520px) and (max-width: 899px) {
+  /* Landscape phones: the objective sits under the clock and the thumb controls shrink to fit the height. */
+  .hud {
+    grid-template-areas:
+      "clock right"
+      "obj right";
+  }
+
+  .objective {
+    width: min(340px, 100%);
+  }
+
+  .clock-time {
+    font-size: 2.5rem;
+  }
+
+  .stick {
+    width: 128px;
+    height: 128px;
+  }
+
+  .lift {
+    height: 150px;
+  }
+}

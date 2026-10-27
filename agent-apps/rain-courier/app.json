@@ -1,0 +1,14 @@
+{
+  "id": "01a17a58-24e1-7444-9e69-121a691b2aad",
+  "version": "2026-10-21",
+  "name": "Rain Courier",
+  "shortDescription": "Fly a courier drone through a rain-soaked neon city against the clock.",
+  "description": "A delivery run through a city at night in the rain, built from a word you choose. Hook a package on a lit roof, carry it on a swinging rope to a lit balcony across town, and beat the shift clock: every delivery adds 15 seconds, a crash costs 5, and skimming the towers at speed earns a near-miss bonus. The city's biggest rooftop signs carry your city's name. Rain streaks past the lens, the streets mirror the neon, and thunder lights the skyline. Three nights to pick from, neon, amber, or ghost, each with a dusk look and a night look. Plays on a phone with two thumbs and on a computer with the keyboard and mouse. Your best shift stays on your device.",
+  "category": "games",
+  "subcategory": "3D and WebGL worlds",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": ["assets/shot-1.png", "assets/shot-2.png"],
+  "deploy": "out/rain-courier",
+  "setup": "Your agent asks your name, what the city is called, and which night you want: neon (pink and cyan signs), amber (sodium orange with teal signs), or ghost (white and green on black). You can also give it any word to build the city from, a title for the dispatch screen, and how long a shift lasts. No keys or accounts are needed, and nothing leaves your computer."
+}
