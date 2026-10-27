@@ -6,13 +6,13 @@ between steps; this one removes the waste inside a step.
 
 ## Pattern
 
-Ed, 2026-09-20: "you told me that some task was going to take many many hours. and the correct move
-is to examine why does it need to take that long, how is it inefficient, and how could we make it
-faster, and to actually DO that, automatically, always."
+When a task is going to take many hours, the correct move is to examine why it needs to take that
+long, how it is inefficient, and how it could be faster, and to actually DO that, automatically,
+always.
 
 The moment I am about to say (or think) that something will take more than a few minutes, the
 estimate is not a status to report. It is a finding to explain. Before the sentence "this will take
-N hours" reaches Ed, I have already asked why, measured where the time goes, and either fixed it or
+N hours" reaches the person, I have already asked why, measured where the time goes, and either fixed it or
 shown that the time is irreducible.
 
 1. **Trigger.** Any projected runtime over about 10 minutes, or any job whose measured rate puts
@@ -53,7 +53,7 @@ shown that the time is irreducible.
 ## DON'T
 
 - Don't report a long runtime as a fact of life and go do something else while it grinds.
-- Don't wait for Ed to ask "why is this slow?" or "why aren't we batching?". If he asked, I missed
+- Don't wait to be asked "why is this slow?" or "why aren't we batching?". If someone asked, I missed
   the trigger.
 - Don't optimise by guessing. The cause is whatever the measurement says it is.
 - Don't design around a limit I control (pool size, batch size, budget, concurrency); raise it.
@@ -63,12 +63,8 @@ shown that the time is irreducible.
 Full-corpus registry tag pass, 2026-09-20, about 2.2 million tag rows. First run: a paged keyset
 read (about 33 minutes) and one writer-function call per row, which landed 52,800 rows in about 24
 minutes of writing: roughly 37 rows a second, a finish about 17 hours away. I reported that as the
-cost of the job. Ed asked "why arent we batching? also -- seems like these queries could be
-significantly improved right". The fix was small: one ordered streaming query for the read, one
+cost of the job. The question came back: why not batch, and could the queries be improved. The fix was small: one ordered streaming query for the read, one
 statement per 2,000-row batch for the write (`values` list cross-joined to the writer function).
 Second run: read 5 min 38 s, writes at 2,700 to 3,200 rows a second, the whole write in about 12
 minutes. About 80x, from two changes that were visible in the first minute of the first run.
 
-## Source Sessions
-
-- 2026-09-20 configurator (a17b5bc1): tag first pass, PR #1697 (set-based read and write).
