@@ -1,0 +1,16 @@
+{
+  "title": "Coral Cove",
+  "theme": "reef",
+  "startingFish": ["Clownfish", "Blue tang", "Green chromis"],
+  "cycleMinutes": 60,
+  "pearlRate": "normal",
+  "sound": true,
+  "_notes": {
+    "title": "Required. The tank's name, shown on the plate in the corner and as the page title. Up to 40 characters.",
+    "theme": "Required. One of reef (white sand, coral, tropical fish), river (driftwood, ferns, tetras, and koi), or deep (dark water, vents, and fish that glow).",
+    "startingFish": "Optional. From 1 to 6 fish names from the chosen tank. reef: Clownfish, Blue tang, Green chromis, Royal gramma, Yellow tang, Moorish idol. river: Neon tetra, Harlequin rasbora, Zebra danio, Angelfish, Pearl gourami, Koi. deep: Lanternfish, Hatchetfish, Flashlight fish, Dragonfish, Anglerfish. Schooling kinds arrive as a school. Default: Clownfish, Blue tang, and Green chromis on the reef; Neon tetra, Angelfish, and Koi on the river; Lanternfish, Hatchetfish, and Anglerfish in the deep.",
+    "cycleMinutes": "Optional. How many real minutes one day in the tank lasts, from 5 to 1440. Each visitor can change it in Settings. Default: 60.",
+    "pearlRate": "Optional. One of calm, normal, or fast: how quickly fish drop pearls. Default: normal.",
+    "sound": "Optional. true or false: whether the water, the food, and the pearls make sound when the tank opens. Each visitor can switch it in Settings. Default: true."
+  }
+}

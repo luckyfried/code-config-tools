@@ -1,0 +1,112 @@
+@font-face {
+  font-family: "Fraunces";
+  src: url("../fonts/fraunces-latin-soft-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Nunito";
+  src: url("../fonts/nunito-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 200 1000;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  color: var(--color-text);
+  /* the water the scene paints over, so the first frame is already the tank */
+  background:
+    radial-gradient(120% 70% at 50% 0%, var(--scene-noon-water), transparent 70%),
+    linear-gradient(180deg, var(--scene-noon-water), var(--scene-noon-deep) 78%, var(--scene-sand2));
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.is-night {
+  background:
+    radial-gradient(120% 70% at 50% 0%, var(--scene-night-water), transparent 70%),
+    linear-gradient(180deg, var(--scene-night-water), var(--scene-night-deep) 78%, var(--scene-sand2));
+}
+
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.tank-canvas,
+.showcase-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tank-canvas {
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.showcase-canvas {
+  pointer-events: none;
+  z-index: 31;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}

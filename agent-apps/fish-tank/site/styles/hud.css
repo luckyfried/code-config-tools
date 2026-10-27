@@ -1,0 +1,738 @@
+.icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.glass,
+.plate,
+.bar,
+.sheet,
+.panel,
+.away,
+.hint,
+.toast {
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-edge);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  box-shadow: var(--shadow-1);
+}
+
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* the tank's name on a glass plate in the corner */
+.plate {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + var(--space-4));
+  left: calc(env(safe-area-inset-left) + var(--space-4));
+  max-width: calc(100% - 2 * var(--space-4));
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-5);
+  border-radius: var(--radius-lg);
+}
+
+.plate-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 560;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-size: var(--text-2xl);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.plate-time {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.plate-time .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.plate-moon {
+  display: none;
+}
+
+body.is-night .plate-sun {
+  display: none;
+}
+
+body.is-night .plate-moon {
+  display: block;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 100px);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition: opacity var(--motion-slow) var(--ease-out), transform var(--motion-slow) var(--ease-out);
+}
+
+.hint.is-gone {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
+
+/* the bottom bar */
+.bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + var(--space-5));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-full);
+  pointer-events: auto;
+  box-shadow: var(--shadow-2);
+}
+
+.bar-pearls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 128px;
+  height: 48px;
+  padding: 0 var(--space-4) 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-surface) 70%, transparent);
+}
+
+.bar-count {
+  font-size: var(--text-xl);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.bar-unit {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.bar-pearls.is-bump .bar-count {
+  animation: bump 420ms var(--ease-spring);
+}
+
+@keyframes bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+.pearl-dot {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 30%, var(--scene-pearl) 0 18%, transparent 42%),
+    radial-gradient(circle at 60% 70%, color-mix(in oklab, var(--color-accent) 30%, var(--scene-pearl)) 0%, var(--scene-pearl) 55%, color-mix(in oklab, var(--scene-pearl) 70%, var(--color-muted)) 100%);
+  box-shadow: inset -2px -3px 5px color-mix(in oklab, var(--color-muted) 45%, transparent), 0 0 10px color-mix(in oklab, var(--scene-pearl) 60%, transparent);
+}
+
+.pearl-dot-lg {
+  width: 30px;
+  height: 30px;
+}
+
+.bar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 48px;
+  min-width: 48px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: var(--text-base);
+  font-weight: 800;
+  transition: background-color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+
+.bar-btn:hover {
+  background: color-mix(in oklab, var(--color-surface) 60%, transparent);
+}
+
+.bar-btn:active {
+  transform: scale(0.96);
+}
+
+.bar-btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: 0 4px 16px color-mix(in oklab, var(--color-accent) 45%, transparent);
+}
+
+.bar-btn-primary:hover {
+  background: color-mix(in oklab, var(--color-accent) 88%, var(--color-surface));
+}
+
+.bar-btn-icon {
+  padding: 0;
+  width: 48px;
+}
+
+/* the glass sheet the shop slides in on */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: color-mix(in oklab, var(--color-bg) 22%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.scrim.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sheet {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: 0;
+  width: min(100%, 1080px);
+  height: min(78vh, 720px);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) 0 0;
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: color-mix(in oklab, var(--color-glass) 92%, var(--color-surface));
+  box-shadow: var(--shadow-2);
+  transform: translate(-50%, 104%);
+  visibility: hidden;
+  transition: transform var(--motion-slow) var(--ease-out), visibility 0s linear var(--motion-slow);
+}
+
+.sheet.is-open {
+  transform: translate(-50%, 0);
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.sheet-grip {
+  width: 44px;
+  height: 5px;
+  margin: 0 auto var(--space-2);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-text) 22%, transparent);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-5) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sheet-title,
+.panel-title,
+.away-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variation-settings: "SOFT" 100;
+  font-size: var(--text-2xl);
+  line-height: 1.1;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-surface-2) 70%, transparent);
+}
+
+.tab {
+  height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: var(--text-base);
+  font-weight: 800;
+  color: var(--color-muted);
+  transition: background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+.sheet-pearls {
+  margin: 0 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-surface) 70%, transparent);
+}
+
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-5) calc(env(safe-area-inset-bottom) + var(--space-5));
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-surface) 72%, transparent);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: card-in var(--motion-slow) var(--ease-out) forwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+@keyframes card-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card-view {
+  position: relative;
+  height: 132px;
+  background:
+    radial-gradient(90% 80% at 50% 10%, color-mix(in oklab, var(--scene-noon-water) 70%, var(--color-surface)), transparent 75%),
+    linear-gradient(180deg, color-mix(in oklab, var(--scene-noon-water) 60%, var(--color-surface-2)), color-mix(in oklab, var(--scene-noon-deep) 75%, var(--color-surface-2)));
+}
+
+body.is-night .card-view {
+  background:
+    radial-gradient(90% 80% at 50% 10%, color-mix(in oklab, var(--scene-lamp) 30%, var(--scene-night-water)), transparent 75%),
+    linear-gradient(180deg, var(--scene-night-water), var(--scene-night-deep));
+}
+
+.card-view-tank {
+  display: grid;
+  place-items: end center;
+  padding-bottom: var(--space-4);
+}
+
+.tank-sketch {
+  height: 56px;
+  border: 2px solid color-mix(in oklab, var(--color-surface) 85%, transparent);
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, transparent 18%, color-mix(in oklab, var(--color-surface) 22%, transparent) 18%, color-mix(in oklab, var(--color-surface) 12%, transparent) 82%, color-mix(in oklab, var(--scene-sand) 80%, transparent) 82%);
+}
+
+.card-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  flex: 1;
+}
+
+.card-name {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.card-line {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.card-buy {
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+
+.btn-primary,
+.btn-buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-base);
+  font-weight: 850;
+  transition: transform var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out);
+}
+
+.btn-buy:active,
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-buy .pearl-dot {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-buy:disabled {
+  cursor: default;
+  background: color-mix(in oklab, var(--color-surface-2) 80%, transparent);
+  color: var(--color-muted);
+}
+
+.btn-buy.is-owned:disabled {
+  background: color-mix(in oklab, var(--color-ok) 16%, transparent);
+  color: var(--color-ok);
+}
+
+/* settings and the away card float as glass cards */
+.panel,
+.away {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  top: 50%;
+  width: min(calc(100% - 2 * var(--space-4)), 420px);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--color-glass) 88%, var(--color-surface));
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -46%) scale(0.98);
+  transition: opacity var(--motion-base) var(--ease-out), transform var(--motion-slow) var(--ease-out), visibility 0s linear var(--motion-slow);
+}
+
+.panel.is-open,
+.away.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%);
+  transition-delay: 0s;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.field-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.field-label {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--color-muted);
+}
+
+.field-note {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-surface-2) 80%, transparent);
+}
+
+.seg-btn {
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-weight: 800;
+  color: var(--color-muted);
+}
+
+.seg-btn[aria-checked="true"] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+.select {
+  height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.switch {
+  position: relative;
+  width: 60px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--color-muted) 40%, transparent);
+  transition: background-color var(--motion-base) var(--ease-out);
+}
+
+.switch[aria-checked="true"] {
+  background: var(--color-accent);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--motion-base) var(--ease-spring);
+}
+
+.switch[aria-checked="true"] .switch-knob {
+  transform: translateX(24px);
+}
+
+.away {
+  text-align: center;
+}
+
+.away-text {
+  margin: var(--space-3) 0 var(--space-2);
+  color: var(--color-muted);
+}
+
+.away-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-4xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.toasts {
+  position: fixed;
+  z-index: 40;
+  top: calc(env(safe-area-inset-top) + var(--space-5));
+  right: calc(env(safe-area-inset-right) + var(--space-5));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.toast {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  animation: toast-in var(--motion-slow) var(--ease-spring);
+}
+
+.toast.is-leaving {
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+}
+
+.flyers {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.flyer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+}
+
+@media (max-width: 767px) {
+  .plate {
+    top: calc(env(safe-area-inset-top) + var(--space-4));
+    left: calc(env(safe-area-inset-left) + var(--space-4));
+  }
+
+  .plate-title {
+    font-size: var(--text-2xl);
+  }
+
+  .bar {
+    left: calc(env(safe-area-inset-left) + var(--space-3));
+    right: calc(env(safe-area-inset-right) + var(--space-3));
+    bottom: calc(env(safe-area-inset-bottom) + var(--space-3));
+    transform: none;
+    justify-content: space-between;
+  }
+
+  .bar-pearls {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .bar-unit {
+    display: none;
+  }
+
+  .bar-btn {
+    padding: 0 var(--space-3);
+  }
+
+  .bar-btn-icon {
+    padding: 0;
+  }
+
+  .hint {
+    bottom: calc(env(safe-area-inset-bottom) + 86px);
+  }
+
+  .sheet {
+    height: 82vh;
+  }
+
+  .sheet-head {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: 0 var(--space-4) var(--space-3);
+  }
+
+  .tabs {
+    order: 3;
+    width: 100%;
+  }
+
+  .tab {
+    flex: 1;
+  }
+
+  .sheet-body {
+    padding: var(--space-3) var(--space-4) calc(env(safe-area-inset-bottom) + var(--space-5));
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .card-view {
+    height: 104px;
+  }
+
+  .card-text {
+    padding: var(--space-2) var(--space-3) var(--space-3);
+  }
+
+  .card-name {
+    font-size: var(--text-base);
+  }
+
+  .toasts {
+    top: calc(env(safe-area-inset-top) + 96px);
+    right: calc(env(safe-area-inset-right) + var(--space-4));
+  }
+}
+
+@media (max-width: 359px) {
+  .bar-btn span {
+    display: none;
+  }
+}
+
+/* the plate, the hint, and the bar arrive with the first frame of the tank */
+body:not(.is-live) .plate,
+body:not(.is-live) .hint,
+body:not(.is-live) .bar {
+  opacity: 0;
+}

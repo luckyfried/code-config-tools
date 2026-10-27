@@ -1,0 +1,123 @@
+/* Reef: bright sand, turquoise water, and tropical fish.
+   The --color-* tokens dress the glass bar, the shop, and the cards; the --scene-* tokens light the tank itself
+   (water, sand, plants, and the noon, dusk, and night keys the day cycle moves between). */
+:root {
+  color-scheme: light;
+  --color-bg: #e6f6f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #e3f3f5;
+  --color-text: #0c2a35;
+  --color-muted: #47656f;
+  --color-accent: #ff7f57;
+  --color-on-accent: #2a0e05;
+  --color-danger: #c2362b;
+  --color-ok: #0f7f67;
+  --color-border: rgba(12, 42, 53, 0.14);
+  --color-glass: rgba(255, 255, 255, 0.62);
+  --color-glass-edge: rgba(255, 255, 255, 0.85);
+  --shadow-1: 0 1px 2px rgba(8, 40, 52, 0.12), 0 4px 14px rgba(8, 40, 52, 0.12);
+  --shadow-2: 0 10px 40px rgba(8, 40, 52, 0.22);
+  --scene-noon-water: #37b4c8;
+  --scene-noon-deep: #0a5876;
+  --scene-noon-key: #fff7ea;
+  --scene-dusk-water: #2f6f8c;
+  --scene-dusk-deep: #1b2c50;
+  --scene-dusk-key: #ffab5e;
+  --scene-night-water: #06213f;
+  --scene-night-deep: #010a19;
+  --scene-night-key: #4f7dff;
+  --scene-lamp: #bfe6ff;
+  --scene-sand: #f2deb6;
+  --scene-sand2: #d6b886;
+  --scene-rock: #b7a58e;
+  --scene-plant: #2c9a6b;
+  --scene-plant-tip: #a6e38c;
+  --scene-glow: #7ff6ff;
+  --scene-ray: #fff9e2;
+  --scene-food: #d9772f;
+  --scene-pearl: #fbf3ff;
+  --font-sans: "Nunito", ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-full: 999px;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 400ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #03121b;
+    --color-surface: #0b2430;
+    --color-surface-2: #123241;
+    --color-text: #e4f7fa;
+    --color-muted: #8db2bc;
+    --color-accent: #ffa27f;
+    --color-on-accent: #2a0e05;
+    --color-danger: #ff7b6b;
+    --color-ok: #4fe0b5;
+    --color-border: rgba(228, 247, 250, 0.14);
+    --color-glass: rgba(6, 26, 38, 0.6);
+    --color-glass-edge: rgba(160, 220, 255, 0.18);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 10px 40px rgba(0, 0, 0, 0.55);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #03121b;
+  --color-surface: #0b2430;
+  --color-surface-2: #123241;
+  --color-text: #e4f7fa;
+  --color-muted: #8db2bc;
+  --color-accent: #ffa27f;
+  --color-on-accent: #2a0e05;
+  --color-danger: #ff7b6b;
+  --color-ok: #4fe0b5;
+  --color-border: rgba(228, 247, 250, 0.14);
+  --color-glass: rgba(6, 26, 38, 0.6);
+  --color-glass-edge: rgba(160, 220, 255, 0.18);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 10px 40px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #e6f6f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #e3f3f5;
+  --color-text: #0c2a35;
+  --color-muted: #47656f;
+  --color-accent: #ff7f57;
+  --color-on-accent: #2a0e05;
+  --color-danger: #c2362b;
+  --color-ok: #0f7f67;
+  --color-border: rgba(12, 42, 53, 0.14);
+  --color-glass: rgba(255, 255, 255, 0.62);
+  --color-glass-edge: rgba(255, 255, 255, 0.85);
+  --shadow-1: 0 1px 2px rgba(8, 40, 52, 0.12), 0 4px 14px rgba(8, 40, 52, 0.12);
+  --shadow-2: 0 10px 40px rgba(8, 40, 52, 0.22);
+}

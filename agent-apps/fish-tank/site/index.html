@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Fish Tank</title>
+    <meta name="description" content="A living aquarium that grows while you are away. Feed the fish, gather pearls, and add new fish and decor.">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="preload" href="fonts/nunito-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/fraunces-latin-soft-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="theme.css">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/hud.css">
+    <script src="config.js"></script>
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+    </script>
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <canvas class="tank-canvas" id="tank" aria-label="The aquarium. Tap the water to drop food for the fish."></canvas>
+
+    <div class="hud" id="hud">
+      <header class="plate">
+        <h1 class="plate-title" id="title">Fish Tank</h1>
+        <p class="plate-time" id="daychip">
+          <svg class="icon plate-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+          <svg class="icon plate-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z"/></svg>
+          <span id="daylabel">Noon</span>
+        </p>
+      </header>
+
+      <p class="hint" id="hint" role="status">Tap the water to feed the fish</p>
+
+      <nav class="bar" aria-label="Tank">
+        <div class="bar-pearls" id="pearls">
+          <span class="pearl-dot" aria-hidden="true"></span>
+          <span class="bar-count" id="pearlCount">0</span>
+          <span class="bar-unit">pearls</span>
+        </div>
+        <button class="bar-btn bar-btn-primary" id="feedBtn" type="button" aria-keyshortcuts="F">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><circle cx="15.5" cy="6.5" r="1.8"/><circle cx="12" cy="13" r="2.4"/><circle cx="6.5" cy="17" r="1.7"/><circle cx="17" cy="15.5" r="2"/></svg>
+          <span>Feed</span>
+        </button>
+        <button class="bar-btn" id="shopBtn" type="button" aria-keyshortcuts="S" aria-controls="shop" aria-expanded="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8Z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/></svg>
+          <span>Shop</span>
+        </button>
+        <button class="bar-btn bar-btn-icon" id="settingsBtn" type="button" aria-label="Settings" aria-controls="settings" aria-expanded="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/></svg>
+        </button>
+      </nav>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+
+    <section class="sheet" id="shop" aria-label="Shop" aria-hidden="true" inert>
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <header class="sheet-head">
+        <h2 class="sheet-title">Shop</h2>
+        <div class="tabs" role="tablist" aria-label="What to buy">
+          <button class="tab" role="tab" type="button" id="tabFish" data-tab="fish" aria-selected="true">Fish</button>
+          <button class="tab" role="tab" type="button" id="tabDecor" data-tab="decor" aria-selected="false">Decor</button>
+          <button class="tab" role="tab" type="button" id="tabTank" data-tab="tank" aria-selected="false">Tank</button>
+        </div>
+        <p class="sheet-pearls"><span class="pearl-dot" aria-hidden="true"></span><span id="shopPearls">0</span></p>
+        <button class="close" id="shopClose" type="button" aria-label="Close the shop">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+      <div class="sheet-body" id="shopBody" role="tabpanel">
+        <div class="cards" id="shopCards"></div>
+      </div>
+    </section>
+
+    <canvas class="showcase-canvas" id="showcase" aria-hidden="true"></canvas>
+
+    <section class="panel" id="settings" aria-label="Settings" aria-hidden="true" inert>
+      <header class="panel-head">
+        <h2 class="panel-title">Settings</h2>
+        <button class="close" id="settingsClose" type="button" aria-label="Close settings">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+      <div class="field">
+        <span class="field-label" id="lookLabel">Look</span>
+        <div class="seg" role="radiogroup" aria-labelledby="lookLabel" id="lookSeg">
+          <button class="seg-btn" type="button" role="radio" data-look="auto" aria-checked="true">Auto</button>
+          <button class="seg-btn" type="button" role="radio" data-look="light" aria-checked="false">Light</button>
+          <button class="seg-btn" type="button" role="radio" data-look="dark" aria-checked="false">Dark</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="cycleSel">One day in the tank lasts</label>
+        <select class="select" id="cycleSel">
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="120">2 hours</option>
+          <option value="240">4 hours</option>
+        </select>
+      </div>
+      <div class="field field-row">
+        <span class="field-label" id="soundLabel">Sound</span>
+        <button class="switch" id="soundSw" type="button" role="switch" aria-checked="true" aria-labelledby="soundLabel"><span class="switch-knob"></span></button>
+      </div>
+      <p class="field-note" id="tankNote"></p>
+      <p class="field-note">F feeds, S opens the shop, and Space gathers every pearl on the sand.</p>
+    </section>
+
+    <section class="away" id="away" aria-label="While you were away" aria-hidden="true" inert>
+      <h2 class="away-title">While you were away</h2>
+      <p class="away-text" id="awayText"></p>
+      <p class="away-amount"><span class="pearl-dot pearl-dot-lg" aria-hidden="true"></span><span id="awayAmount">+0</span></p>
+      <button class="btn-primary" id="awayOk" type="button">Gather them</button>
+    </section>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="flyers" id="flyers" aria-hidden="true"></div>
+  </body>
+</html>

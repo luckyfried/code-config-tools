@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  padding: var(--space-6);
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.verdict {
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.verdict.is-pass,
+.is-pass {
+  color: var(--color-ok);
+}
+
+.verdict.is-fail,
+.is-fail {
+  color: var(--color-danger);
+}
+
+.results li {
+  margin-block: var(--space-2);
+}
