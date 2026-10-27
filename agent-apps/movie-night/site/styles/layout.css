@@ -1,0 +1,246 @@
+/* The frame: the scene fills the screen; the bars, the title card, the Tonight panel, and the shelf sit over it. */
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Until the wall has drawn its first frame the page holds on the room itself: backdrop, floor, and the spotlight's beam. */
+.app:not([data-ready]) {
+  background:
+    radial-gradient(ellipse 16% 62% at 50% 0%, color-mix(in srgb, var(--scene-beam) 70%, transparent), transparent),
+    radial-gradient(ellipse 24% 8% at 50% 62%, color-mix(in srgb, var(--scene-pool) 60%, transparent), transparent),
+    linear-gradient(to bottom, var(--scene-sky-top), var(--scene-sky-bottom) 62%, var(--scene-floor) 62%);
+}
+
+.app:not([data-ready]) > * {
+  visibility: hidden;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  z-index: var(--z-stage);
+  cursor: grab;
+}
+
+.stage.is-dragging {
+  cursor: grabbing;
+}
+
+.flatwall {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-flat);
+  touch-action: pan-y;
+}
+
+.scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46%;
+  pointer-events: none;
+  z-index: var(--z-scrim);
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--color-bg) 78%, transparent) 70%, color-mix(in srgb, var(--color-bg) 92%, transparent));
+}
+
+.topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-bar);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--topbar-h);
+  padding: calc(env(safe-area-inset-top) + var(--space-3)) calc(env(safe-area-inset-right) + var(--space-6)) var(--space-3)
+    calc(env(safe-area-inset-left) + var(--space-6));
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-bg) 72%, transparent), transparent);
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.turn {
+  justify-self: end;
+}
+
+/* The title card sits on the floor, under the wall. */
+.card {
+  position: absolute;
+  z-index: var(--z-card);
+  left: calc(env(safe-area-inset-left) + var(--space-7));
+  bottom: calc(env(safe-area-inset-bottom) + var(--space-6));
+  width: min(640px, calc(100vw - var(--space-7) * 2));
+  transition: opacity var(--motion-base) var(--ease-out), transform var(--motion-base) var(--ease-out);
+}
+
+.app[data-panel] .card {
+  width: min(600px, calc(100vw - var(--panel-w) - var(--space-7) * 2));
+}
+
+.app[data-screen="watched"] .card {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+/* Tonight: a panel on the right on a wide screen, a sheet from the bottom on a phone. */
+.tonight {
+  position: absolute;
+  z-index: var(--z-panel);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+  padding: calc(var(--topbar-h) + env(safe-area-inset-top) + var(--space-4)) calc(env(safe-area-inset-right) + var(--space-6))
+    calc(env(safe-area-inset-bottom) + var(--space-6)) var(--space-6);
+  transform: translateX(104%);
+  visibility: hidden;
+  transition: transform var(--motion-slow) var(--ease-drawer), visibility 0s linear var(--motion-slow);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app[data-panel] .tonight {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--motion-slow) var(--ease-drawer), visibility 0s linear 0s;
+}
+
+.wheel-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.wheel {
+  width: min(100%, 380px, 44vh);
+  aspect-ratio: 1;
+  display: block;
+  touch-action: manipulation;
+}
+
+/* Watched: the shelf covers the room. */
+.shelf {
+  position: absolute;
+  z-index: var(--z-shelf);
+  inset: 0;
+  padding: calc(var(--topbar-h) + env(safe-area-inset-top) + var(--space-5)) calc(env(safe-area-inset-right) + var(--space-7))
+    calc(env(safe-area-inset-bottom) + var(--space-7)) calc(env(safe-area-inset-left) + var(--space-7));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.shelf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  gap: var(--space-6) var(--space-5);
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: var(--z-confetti);
+}
+
+/* A phone or a narrow window: the tabs move to the bottom, Tonight becomes a sheet, the card sits above the tabs. */
+@media (max-width: 899px) {
+  :root {
+    --topbar-h: 56px;
+    --tabbar-h: 64px;
+  }
+
+  .topbar {
+    grid-template-columns: 1fr auto;
+    padding-left: calc(env(safe-area-inset-left) + var(--space-4));
+    padding-right: calc(env(safe-area-inset-right) + var(--space-4));
+  }
+
+  .card,
+  .app[data-panel] .card {
+    left: calc(env(safe-area-inset-left) + var(--space-4));
+    right: calc(env(safe-area-inset-right) + var(--space-4));
+    width: auto;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--space-3));
+  }
+
+  /* On a phone the front poster's reflection reaches the title card, so the card stands on a solid floor of its own. */
+  .card::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: calc(-1 * var(--space-4));
+    bottom: calc(-1 * var(--space-4));
+    left: calc(-1 * (env(safe-area-inset-left) + var(--space-4)));
+    right: calc(-1 * (env(safe-area-inset-right) + var(--space-4)));
+    background: linear-gradient(to bottom, transparent, var(--color-bg) var(--space-4));
+    pointer-events: none;
+  }
+
+  .app[data-panel] .card {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+  }
+
+  .tonight {
+    top: auto;
+    left: 0;
+    width: auto;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - var(--tabbar-h) - env(safe-area-inset-bottom) - var(--topbar-h) - env(safe-area-inset-top) - 96px);
+    padding: var(--space-5) calc(env(safe-area-inset-right) + var(--space-4)) var(--space-4) calc(env(safe-area-inset-left) + var(--space-4));
+    gap: var(--space-3);
+    transform: translateY(104%);
+  }
+
+  .wheel {
+    width: min(76vw, 40dvh, 340px);
+  }
+
+  .recent {
+    display: none;
+  }
+
+  .shelf {
+    padding: calc(var(--topbar-h) + env(safe-area-inset-top) + var(--space-3)) calc(env(safe-area-inset-right) + var(--space-4))
+      calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--space-5)) calc(env(safe-area-inset-left) + var(--space-4));
+  }
+
+  .shelf-list {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 899px) and (orientation: landscape) and (max-height: 500px) {
+  .card {
+    width: min(420px, 50vw);
+    right: auto;
+  }
+  .tonight {
+    max-height: calc(100dvh - var(--tabbar-h) - 16px);
+    left: auto;
+    width: min(380px, 50vw);
+  }
+}

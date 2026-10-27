@@ -1,0 +1,159 @@
+/* Arthouse: paper and ink. Light is newsprint under a reading lamp; dark is ink-black stock with a pale lamp. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #e8e7e1;
+  --color-surface: rgb(246 245 241 / 0.92);
+  --color-surface-2: #deddd6;
+  --color-text: #131313;
+  --color-muted: #55534e;
+  --color-accent: #2338c9;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3261e;
+  --color-ok: #2f6b3a;
+  --color-border: rgb(19 19 19 / 0.16);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.1), 0 2px 8px rgb(0 0 0 / 0.06);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 0.1), 0 18px 48px rgb(0 0 0 / 0.14);
+  --heart: #2338c9;
+
+  --scene-backdrop: 2;
+  --scene-sky-top: #d6d4cc;
+  --scene-sky-bottom: #ecebe5;
+  --scene-fold: #bdbab0;
+  --scene-fold-light: #f6f5f0;
+  --scene-floor: #e4e2db;
+  --scene-reflect: 0.2;
+  --scene-fog: #e6e5df;
+  --scene-rim: #ffffff;
+  --scene-rim-strength: 0.25;
+  --scene-halo: 0.1;
+  --scene-beam: #b4d0ff;
+  --scene-beam-strength: 1.05;
+  --scene-additive: 1;
+  --scene-dust: #7fa6e6;
+  --scene-pool: #cfe0ff;
+  --scene-dim: 0.6;
+  --scene-dim-color: #2b2b29;
+  --scene-room-dim: 0.42;
+  --scene-key: 1.04;
+  --scene-shadow: 0.5;
+  --scene-frame: #141414;
+  --scene-stars: 0;
+
+  --wheel-face-a: #141414;
+  --wheel-face-b: #222220;
+  --wheel-ink: #f2f1ec;
+  --wheel-brass-hi: #f6dc9a;
+  --wheel-brass: #c2903f;
+  --wheel-brass-lo: #6a4416;
+  --wheel-bezel: #0b0b0b;
+  --confetti-1: #2338c9;
+  --confetti-2: #131313;
+  --confetti-3: #c2903f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #121212;
+    --color-surface: rgb(24 24 23 / 0.9);
+    --color-surface-2: #22221f;
+    --color-text: #edece6;
+    --color-muted: #a5a39b;
+    --color-accent: #95a2ff;
+    --color-on-accent: #0b0f33;
+    --color-danger: #ff8a7a;
+    --color-ok: #9fd3a6;
+    --color-border: rgb(237 236 230 / 0.16);
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.5), 0 2px 10px rgb(0 0 0 / 0.35);
+    --shadow-2: 0 2px 8px rgb(0 0 0 / 0.5), 0 24px 60px rgb(0 0 0 / 0.6);
+    --heart: #95a2ff;
+
+    --scene-backdrop: 2;
+    --scene-sky-top: #0b0b0b;
+    --scene-sky-bottom: #1b1b19;
+    --scene-fold: #050505;
+    --scene-fold-light: #2c2c29;
+    --scene-floor: #080808;
+    --scene-reflect: 0.4;
+    --scene-fog: #121211;
+    --scene-rim: #f4f2ea;
+    --scene-rim-strength: 0.7;
+    --scene-halo: 0.3;
+    --scene-beam: #f7f4ea;
+    --scene-beam-strength: 0.42;
+    --scene-additive: 1;
+    --scene-dust: #ffffff;
+    --scene-pool: #f2efe4;
+    --scene-dim: 0.72;
+    --scene-dim-color: #0a0a0a;
+    --scene-room-dim: 0;
+    --scene-key: 0.92;
+    --scene-shadow: 0;
+    --scene-frame: #0c0c0c;
+    --scene-stars: 0;
+
+    --wheel-face-a: #101010;
+    --wheel-face-b: #1d1d1b;
+    --wheel-ink: #edece6;
+    --wheel-brass-hi: #f6dc9a;
+    --wheel-brass: #c2903f;
+    --wheel-brass-lo: #5e3c13;
+    --wheel-bezel: #050505;
+    --confetti-1: #95a2ff;
+    --confetti-2: #edece6;
+    --confetti-3: #c2903f;
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #121212;
+  --color-surface: rgb(24 24 23 / 0.9);
+  --color-surface-2: #22221f;
+  --color-text: #edece6;
+  --color-muted: #a5a39b;
+  --color-accent: #95a2ff;
+  --color-on-accent: #0b0f33;
+  --color-danger: #ff8a7a;
+  --color-ok: #9fd3a6;
+  --color-border: rgb(237 236 230 / 0.16);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.5), 0 2px 10px rgb(0 0 0 / 0.35);
+  --shadow-2: 0 2px 8px rgb(0 0 0 / 0.5), 0 24px 60px rgb(0 0 0 / 0.6);
+  --heart: #95a2ff;
+
+  --scene-backdrop: 2;
+  --scene-sky-top: #0b0b0b;
+  --scene-sky-bottom: #1b1b19;
+  --scene-fold: #050505;
+  --scene-fold-light: #2c2c29;
+  --scene-floor: #080808;
+  --scene-reflect: 0.4;
+  --scene-fog: #121211;
+  --scene-rim: #f4f2ea;
+  --scene-rim-strength: 0.7;
+  --scene-halo: 0.3;
+  --scene-beam: #f7f4ea;
+  --scene-beam-strength: 0.42;
+  --scene-additive: 1;
+  --scene-dust: #ffffff;
+  --scene-pool: #f2efe4;
+  --scene-dim: 0.72;
+  --scene-dim-color: #0a0a0a;
+  --scene-room-dim: 0;
+  --scene-key: 0.92;
+  --scene-shadow: 0;
+  --scene-frame: #0c0c0c;
+  --scene-stars: 0;
+
+  --wheel-face-a: #101010;
+  --wheel-face-b: #1d1d1b;
+  --wheel-ink: #edece6;
+  --wheel-brass-hi: #f6dc9a;
+  --wheel-brass: #c2903f;
+  --wheel-brass-lo: #5e3c13;
+  --wheel-bezel: #050505;
+  --confetti-1: #95a2ff;
+  --confetti-2: #edece6;
+  --confetti-3: #c2903f;
+}

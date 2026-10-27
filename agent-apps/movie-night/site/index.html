@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Movie Night</title>
+  <meta name="description" content="Your watch list as a lit poster wall, and a wheel that picks tonight's film.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/bricolage-grotesque-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <div class="app" id="app" data-screen="wall">
+    <canvas class="stage" id="stage" aria-label="Your watch list as a wall of posters. Drag, scroll, or use the arrow keys to move through it."></canvas>
+    <div class="flatwall" id="flatwall" hidden></div>
+    <div class="scrim" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path class="brand-beam" d="M13 3h6l9 24H4z"/>
+          <rect class="brand-poster" x="11" y="12" width="10" height="15" rx="1.5"/>
+        </svg>
+        <span class="brand-name" id="brand-name">Movie Night</span>
+      </div>
+      <nav class="tabs" id="tabs" aria-label="Screens">
+        <button class="tab" type="button" data-go="wall">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="5" height="12" rx="1"/><rect x="9" y="4" width="6" height="16" rx="1"/><rect x="17" y="6" width="5" height="12" rx="1"/></svg>
+          <span>Wall</span>
+        </button>
+        <button class="tab" type="button" data-go="tonight">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 2l2.5 4h-5z"/><circle cx="12" cy="13" r="2"/></svg>
+          <span>Tonight</span>
+        </button>
+        <button class="tab" type="button" data-go="watched">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19h18"/><rect x="5" y="7" width="4" height="12" rx="0.5"/><rect x="10" y="5" width="4" height="14" rx="0.5"/><rect x="15.5" y="8" width="4" height="11" rx="0.5" transform="rotate(8 17.5 13.5)"/></svg>
+          <span>Watched</span>
+        </button>
+      </nav>
+      <button class="turn" id="turn" type="button" aria-live="polite">
+        <span class="turn-initial" id="turn-initial">E</span>
+        <span class="turn-text"><span class="turn-name" id="turn-name">Ed's turn</span><span class="turn-pass" id="turn-pass">Pass to Sam</span></span>
+      </button>
+    </header>
+
+    <section class="card" id="card" aria-live="polite">
+      <p class="card-tag" id="card-tag"></p>
+      <h1 class="card-title" id="card-title">Movie Night</h1>
+      <p class="card-meta"><span class="card-year" id="card-year"></span><span class="card-note" id="card-note"></span></p>
+      <div class="card-hearts" id="card-hearts" aria-label="Hearts"></div>
+      <div class="card-actions">
+        <button class="btn btn-heart" id="btn-heart" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7 4.5c2 0 3.6 1.1 5 2.9 1.4-1.8 3-2.9 5-2.9 3.4 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+          <span id="btn-heart-label">Heart it</span>
+        </button>
+        <button class="btn" id="btn-pick" type="button">Make it tonight's film</button>
+        <button class="btn btn-quiet" id="btn-watched" type="button">Watched</button>
+      </div>
+    </section>
+
+    <aside class="tonight" id="tonight" aria-label="Tonight">
+      <div class="tonight-head">
+        <h2 class="tonight-title">Tonight</h2>
+        <p class="tonight-sub" id="tonight-sub">More hearts, a wider slice.</p>
+      </div>
+      <div class="wheel-wrap">
+        <canvas class="wheel" id="wheel" aria-label="The wheel"></canvas>
+      </div>
+      <p class="tonight-result" id="tonight-result" aria-live="polite"></p>
+      <button class="btn btn-spin" id="btn-spin" type="button">Spin the wheel</button>
+      <div class="recent" id="recent">
+        <h3 class="recent-title">Recent nights</h3>
+        <ol class="recent-list" id="recent-list"></ol>
+      </div>
+    </aside>
+
+    <section class="shelf" id="shelf" aria-label="Watched" hidden>
+      <div class="shelf-head">
+        <div>
+          <h2 class="shelf-title">Watched</h2>
+          <p class="shelf-count" id="shelf-count"></p>
+        </div>
+        <div class="shelf-tools">
+          <button class="btn btn-quiet" id="btn-export" type="button">Export</button>
+          <button class="btn btn-quiet" id="btn-import" type="button">Import</button>
+          <input class="sr-only" id="import-file" type="file" accept="application/json,.json" tabindex="-1">
+        </div>
+      </div>
+      <ol class="shelf-list" id="shelf-list"></ol>
+      <p class="shelf-empty" id="shelf-empty" hidden>Films you mark Watched land here with the date and your stars.</p>
+      <p class="shelf-note" id="shelf-note" aria-live="polite"></p>
+    </section>
+
+    <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+  </div>
+</body>
+</html>

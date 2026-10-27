@@ -1,0 +1,30 @@
+{
+  "_notes": {
+    "title": "The page's name, shown top left. Movie Night when left out.",
+    "people": "Everyone who hearts films on this device, one to eight names. The turn chip passes between them.",
+    "films": "The watch list, in the order the wall shows it. Each film has a title and a year, and can have a note (one line under the title), a poster (a .jpg, .jpeg, .png, or .webp path in your project), and hearts (names from people). A film with no poster key still finds posters/<title-year>.jpg in your project, for example posters/knives-out-2019.jpg.",
+    "theme": "cinema (red velvet and a warm spotlight), drive-in (a night sky and neon), or arthouse (gallery paper and a cool lamp). Each has a light and a dark room, following the device's setting.",
+    "watched": "Films already seen, with the date (2026-10-17) and stars from 0 to 5. They start the Watched shelf; the page adds to it from then on.",
+    "lookupPosters": "true lets the page look up a missing poster on Wikipedia when it is online; false keeps every request on your own server.",
+    "TMDB_READ_TOKEN": "Optional, set with csc key set. When it is set, run.py fetches a poster from TMDB for each film with no poster file and saves it into the page."
+  },
+  "title": "Friday Movie Night",
+  "people": ["Ed", "Sam", "Rosa"],
+  "theme": "cinema",
+  "lookupPosters": false,
+  "films": [
+    { "title": "Arrival", "year": 2016, "note": "Linguist, twelve shells, a message read backward.", "poster": "posters/arrival.jpg", "hearts": ["Sam"] },
+    { "title": "Paddington 2", "year": 2017, "note": "A bear, a pop-up book, and the kindest prison in London.", "poster": "posters/paddington-2.jpg", "hearts": ["Ed", "Sam", "Rosa"] },
+    { "title": "Spirited Away", "year": 2001, "note": "A bathhouse for spirits and a girl who will not forget her name.", "hearts": ["Rosa", "Ed"] },
+    { "title": "The Grand Budapest Hotel", "year": 2014, "note": "A concierge, a stolen painting, and a lot of pink boxes.", "poster": "posters/grand-budapest-hotel.jpg" },
+    { "title": "Jaws", "year": 1975, "note": "You're gonna need a bigger boat.", "hearts": ["Sam"] },
+    { "title": "Amélie", "year": 2001, "note": "Montmartre, a photo booth album, and small kindnesses.", "hearts": [] },
+    { "title": "In the Mood for Love", "year": 2000, "note": "Hong Kong, 1962. Two neighbors, one staircase, many noodles.", "poster": "posters/in-the-mood-for-love.jpg", "hearts": ["Rosa"] },
+    { "title": "Knives Out", "year": 2019, "note": "A dead novelist, a full house, and a donut hole.", "hearts": ["Ed"] }
+  ],
+  "watched": [
+    { "title": "Some Like It Hot", "year": 1959, "date": "2026-10-17", "stars": 5 },
+    { "title": "Moonlight", "year": 2016, "date": "2026-10-10", "stars": 4 },
+    { "title": "The Princess Bride", "year": 1987, "date": "2026-10-03", "stars": 5 }
+  ]
+}
