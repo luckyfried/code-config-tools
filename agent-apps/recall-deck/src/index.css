@@ -1,0 +1,473 @@
+@import "tailwindcss" source(".");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Colors come only from theme.css (src/themes/<name>.css); this file maps them and holds structure and motion. */
+
+@custom-variant dark (&:is(.dark *));
+/* A phone on its side: too short for a strip, a card, and a bar of tabs stacked. */
+@custom-variant short (@media (orientation: landscape) and (max-height: 500px));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Literata Variable", ui-serif, Georgia, serif;
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-warn: var(--warn);
+  --color-right: var(--right);
+  --color-panel: var(--panel);
+  --color-face-ink: var(--face-ink);
+  --color-face-soft: var(--face-soft);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --flip-ms: 520ms;
+  --rise-ms: 420ms;
+  --bar-ms: 400ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --flip-ms: 0ms;
+    --rise-ms: 0ms;
+    --bar-ms: 0ms;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply text-foreground;
+    background: var(--background);
+    background-image: var(--desk);
+    background-attachment: fixed;
+    font-feature-settings: "cv11";
+  }
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The stack: a stage with depth, three cards deep, the top one on top. */
+.stage {
+  perspective: 1200px;
+  perspective-origin: 50% 40%;
+}
+.slot {
+  position: absolute;
+  inset: 0;
+  transition: transform var(--rise-ms) var(--ease-out), opacity var(--rise-ms) var(--ease-out);
+  transform: translate3d(0, calc(var(--depth) * 14px), 0) scale(calc(1 - var(--depth) * 0.045));
+  transform-origin: 50% 100%;
+}
+.slot[data-depth="0"] {
+  z-index: 3;
+}
+.slot[data-depth="1"] {
+  z-index: 2;
+}
+.slot[data-depth="2"] {
+  z-index: 1;
+  opacity: 0.85;
+}
+.slot[data-enter] {
+  animation: slot-in var(--rise-ms) var(--ease-out) both;
+}
+/* On the first open each card rises into place on its own beat, opaque from the first frame. */
+.stack-rise .slot {
+  animation: stack-rise 640ms var(--ease-out) both;
+  animation-delay: calc(var(--depth) * 60ms);
+}
+@keyframes stack-rise {
+  from {
+    transform: translate3d(0, 70px, 0) scale(0.9);
+  }
+}
+/* A card under the top one shows its ruled face and no writing; the writing fades in when it reaches the top. */
+.slot .face > * {
+  transition: opacity 240ms var(--ease-out);
+}
+.slot:not([data-depth="0"]) .face > * {
+  opacity: 0;
+}
+@keyframes slot-in {
+  from {
+    transform: translate3d(0, 44px, 0) scale(0.86);
+    opacity: 0;
+  }
+}
+
+/* The top card moves with the finger: across, and turned a little about its own center. */
+.drag {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(calc(var(--dx, 0) * 1px), calc(var(--dy, 0) * 1px), 0) rotate(calc(var(--dx, 0) * 0.055deg));
+  transition: transform 360ms var(--ease-out);
+  touch-action: pan-y;
+  cursor: grab;
+  /* The tilt and the turn happen in depth: the card narrows toward its far edge as one plane. */
+  perspective: 2400px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.drag[data-live] {
+  transition: none;
+  cursor: grabbing;
+}
+.drag[data-fly] {
+  transition: transform 300ms cubic-bezier(0.4, 0, 1, 1);
+}
+.drop {
+  position: absolute;
+  inset: 8% 6% -4% 6%;
+  border-radius: 24px;
+  background: var(--shadow-drop);
+  filter: blur(22px);
+  opacity: calc(0.35 + min(1, var(--adx, 0) / 160) * 0.45);
+  transform: translate3d(calc(var(--dx, 0) * 0.5px), 18px, 0) scale(calc(0.94 + min(1, var(--adx, 0) / 200) * 0.06));
+  transition: inherit;
+  pointer-events: none;
+}
+.flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateY(calc(var(--ry, 0) * 1deg));
+  transition: transform var(--flip-ms) cubic-bezier(0.45, 0, 0.2, 1);
+}
+.drag[data-live] .flip,
+.flip[data-live] {
+  transition: none;
+}
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+  --face-bg: var(--face);
+  background-color: var(--face-bg);
+  /* The header cover first and the rules second, so a theme's texture, however many layers it has, never shifts them. */
+  background-image: linear-gradient(var(--face-bg) 0 var(--rule-at), transparent 0), var(--face-lines), var(--face-texture);
+  background-position: 0 0, 0 calc(var(--rule-at) + 1px), 0 0, 0 0, 0 0;
+  box-shadow: var(--shadow-card);
+  color: var(--face-ink);
+  overflow: hidden;
+  container-type: size;
+  --rule-at: 64px;
+  --pitch: 32px;
+}
+/* The card's writing sits on its rules: the body starts on a rule, every row is one pitch tall, and each line's
+   baseline is the bottom of its row. --rows is how many rows the content takes, so it centers to the nearest row. */
+.ruled {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: round(down, max(0px, (100cqh - var(--rule-at) - var(--rows) * var(--pitch)) / 2), var(--pitch)) 24px 0;
+  text-align: center;
+}
+.on-rule {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: calc(var(--span, 1) * var(--pitch));
+}
+.on-rule > * {
+  line-height: calc(var(--span, 1) * var(--pitch));
+  text-box: trim-end text alphabetic;
+}
+.face::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--rule-at);
+  height: 2px;
+  background: var(--face-rule);
+}
+.face-back {
+  transform: rotateY(180deg);
+  --face-bg: var(--face-back);
+}
+.face-font-serif {
+  font-family: var(--font-serif);
+}
+.face-font-sans {
+  font-family: var(--font-sans);
+}
+
+/* The two stamps, which ink in as the card crosses toward a side. */
+.stamp {
+  position: absolute;
+  top: 18px;
+  padding: 4px 12px;
+  border: 3px solid currentColor;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.stamp-good {
+  left: 18px;
+  color: var(--stamp-good);
+  transform: rotate(-12deg);
+  opacity: clamp(0, calc(var(--dx, 0) / 110), 1);
+}
+.stamp-again {
+  right: 18px;
+  color: var(--stamp-again);
+  transform: rotate(12deg);
+  opacity: clamp(0, calc(var(--dx, 0) / -110), 1);
+}
+
+/* The diff on the back of a typed card. */
+.diff-missing {
+  color: var(--warn);
+  background: var(--warn-wash);
+  border-bottom: 2px solid var(--warn);
+  border-radius: 2px;
+}
+.diff-extra {
+  color: var(--warn);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  opacity: 0.85;
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: caret 900ms steps(1) infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Grades: four tinted keys. */
+.grade {
+  --tint: var(--grade-3);
+  background: color-mix(in oklch, var(--tint) 14%, var(--card));
+  color: var(--foreground);
+  border: 1px solid color-mix(in oklch, var(--tint) 45%, transparent);
+  transition: transform 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+.grade:hover {
+  background: color-mix(in oklch, var(--tint) 24%, var(--card));
+}
+.grade:active {
+  transform: scale(0.97);
+}
+.grade[data-suggest] {
+  background: var(--tint);
+  color: var(--grade-ink);
+  border-color: var(--tint);
+}
+.grade .grade-dot {
+  background: var(--tint);
+}
+.grade[data-suggest] .grade-dot {
+  background: var(--grade-ink);
+}
+.grade-1 {
+  --tint: var(--grade-1);
+}
+.grade-2 {
+  --tint: var(--grade-2);
+}
+.grade-3 {
+  --tint: var(--grade-3);
+}
+.grade-4 {
+  --tint: var(--grade-4);
+}
+
+/* The forecast's bars ease to their new height whenever the tally changes. */
+.bar {
+  transform-origin: 50% 100%;
+  transform: scaleY(var(--h, 0));
+  transition: transform var(--bar-ms) var(--ease-out);
+  transition-delay: var(--delay, 0ms);
+}
+.bar-due {
+  background: var(--bar);
+}
+.bar-new {
+  background: var(--bar-new);
+}
+.bar-track {
+  background: var(--bar-track);
+}
+
+
+/* The heat strip fills from the oldest day to today. */
+.heat {
+  border-radius: 3px;
+  animation: heat-in 260ms var(--ease-out) both;
+  animation-delay: var(--delay, 0ms);
+}
+.heat[data-l="0"] {
+  background: var(--heat-0);
+}
+.heat[data-l="1"] {
+  background: var(--heat-1);
+}
+.heat[data-l="2"] {
+  background: var(--heat-2);
+}
+.heat[data-l="3"] {
+  background: var(--heat-3);
+}
+.heat[data-l="4"] {
+  background: var(--heat-4);
+}
+.heat[data-today] {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+@keyframes heat-in {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+}
+
+/* Paper: the side column is cut from the same stock as the card: its face, red rule, ruling, ink, and edge. Every
+   row is a whole number of pitches tall from the rule down, so text and bars stand on the lines. */
+.paper {
+  position: relative;
+  --rule-at: 48px;
+  --pitch: 28px;
+  --face-bg: var(--face);
+  border-radius: 12px;
+  background-color: var(--face-bg);
+  background-image:
+    linear-gradient(var(--face-bg) 0 var(--rule-at), transparent 0),
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--pitch) - 1px), var(--face-line) calc(var(--pitch) - 1px) var(--pitch)),
+    var(--face-texture);
+  background-position: 0 0, 0 calc(var(--rule-at) + 1px), 0 0, 0 0, 0 0;
+  /* One more card lies under each, its edge showing below. */
+  box-shadow: 0 5px 0 -2px var(--face-back), 0 5px 0 -1px var(--face-edge), var(--shadow-card);
+  color: var(--face-ink);
+  padding: 0 20px 12px;
+}
+.paper-phone {
+  --rule-at: 34px;
+  --pitch: 22px;
+  padding: 0 14px 8px;
+}
+.paper::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--rule-at);
+  height: 2px;
+  background: var(--face-rule);
+}
+.paper[data-ruled="no"] {
+  background-image: var(--face-texture);
+}
+.paper-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--rule-at);
+}
+.paper-row {
+  display: flex;
+  align-items: flex-end;
+  height: calc(var(--span, 1) * var(--pitch));
+}
+.paper-row > * {
+  text-box: trim-end text alphabetic;
+}
+.paper .bar-track {
+  background: transparent;
+}
+.paper .bars {
+  box-shadow: 0 1px 0 color-mix(in oklch, var(--face-ink) 60%, transparent);
+}
+.paper .bar-due {
+  background: var(--face-ink);
+}
+.paper .bar-new {
+  background: var(--face-rule);
+}
+/* The days are boxes ruled on the card, shaded in, today's ringed in the rule's red. */
+.paper .heat[data-l="0"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--face-line);
+}
+.paper .heat[data-today] {
+  outline: 2px solid var(--face-rule);
+  outline-offset: 2px;
+}
+/* The ledger: one figure a line, its label at the margin and a dotted leader running to it. */
+.ledger-leader {
+  flex: 1;
+  align-self: flex-end;
+  min-width: 16px;
+  margin: 0 10px 3px;
+  border-bottom: 2px dotted color-mix(in oklch, var(--face-soft) 45%, transparent);
+}
