@@ -1,0 +1,17 @@
+{
+  "id": "01a163f9-0b78-79be-ad27-ef4c563112a2",
+  "version": "2026-10-21",
+  "name": "Recipe Box",
+  "shortDescription": "Your agent finds the recipes; you keep, skip, or cook them this week.",
+  "description": "A box of recipes your agent found for you, each a photo card with the dish, its link, the total time, how many it serves, the ingredients, the short steps, and the one line on why the agent picked it. Keep a recipe, skip it, or drag it onto a day of the week on the wooden strip along the bottom. When the week looks right, tap Plan the week: the agent adds up every ingredient for your household, sorts them by aisle, and the shopping list prints up out of the strip like a till receipt, ready to tick off in the store. Every recipe, choice, and list stays on your computer, in your project's own data folder.",
+  "category": "food-drink",
+  "subcategory": "Recipes",
+  "useCase": "product-discovery",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/recipe-box",
+  "setup": "Ask, in one message: what you love to cook, anything you never eat, how many people you cook for, and how many dinners a week you want planned. Then pick a look: kitchen (light), cast iron (dark), or auto, which follows your device. No keys are needed and no service is used: the agent finds recipes with its own tools, and every recipe, choice, and list stays in the project's data folder on your computer."
+}

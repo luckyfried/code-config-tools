@@ -1,0 +1,381 @@
+@import "tailwindcss" source(".");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource/young-serif";
+@import "@fontsource-variable/figtree";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Color values live in src/themes/<name>.css, served as ./theme.css; this file maps them and holds structure. */
+@theme inline {
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Young Serif", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-kept: var(--kept);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --strip-h: 8.25rem;
+  --gap: 1.125rem;
+}
+@media (max-width: 767px) {
+  :root {
+    --strip-h: 7.875rem;
+    --gap: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+}
+
+/* The paper the box sits on. */
+.paper::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: var(--paper-image);
+  background-size: 320px;
+  opacity: var(--paper-opacity);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The box: CSS columns, two on a phone and up to five on a wide screen. */
+.masonry {
+  columns: 2;
+  column-gap: var(--gap);
+}
+@media (min-width: 768px) {
+  .masonry { columns: 3; }
+}
+@media (min-width: 1100px) {
+  .masonry { columns: 4; }
+}
+@media (min-width: 1360px) {
+  .masonry { columns: 5; }
+}
+
+.recipe-card {
+  position: relative;
+  break-inside: avoid;
+  margin-bottom: var(--gap);
+  background: var(--card);
+  color: var(--card-foreground);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  animation: card-in 640ms var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+.recipe-card:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.recipe-card[data-armed] { box-shadow: var(--card-lift); }
+@keyframes card-in {
+  0% { opacity: 0; transform: translateY(28px) scale(0.955) rotate(-0.8deg); }
+  62% { opacity: 1; transform: translateY(-5px) scale(1.012) rotate(0.2deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+.photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius) var(--radius) calc(var(--radius) * 0.4) calc(var(--radius) * 0.4);
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+}
+.photo img[data-loaded] {
+  animation: photo-in 900ms var(--ease-out) both;
+  animation-delay: calc(var(--d, 0ms) + 180ms);
+}
+@keyframes photo-in {
+  from { opacity: 0; transform: scale(1.06); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The ribbon corner on a kept recipe. */
+.ribbon {
+  position: absolute;
+  top: -5px;
+  right: 14px;
+  width: 26px;
+  height: 40px;
+  background: var(--ribbon);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.25));
+  animation: ribbon-in 520ms var(--ease-bounce) both;
+  transform-origin: top;
+}
+.ribbon::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -5px;
+  width: 5px;
+  height: 5px;
+  background: var(--ribbon-fold);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+.day-badge { animation: slot-pop 420ms var(--ease-bounce) both; }
+
+@keyframes ribbon-in {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* The time ring draws itself to the recipe's minutes. */
+.ring-arc {
+  animation: ring-draw 1100ms var(--ease-out) both;
+  animation-delay: calc(var(--d, 0ms) + 260ms);
+}
+@keyframes ring-draw {
+  from { stroke-dashoffset: var(--from); }
+  to { stroke-dashoffset: var(--to); }
+}
+
+/* Keep, skip, and this week, shown on hover or a long press. */
+.choices {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2.25rem 0.5rem 0.5rem;
+  background: linear-gradient(to top, rgb(20 12 6 / 0.72), rgb(20 12 6 / 0));
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .recipe-card:hover .choices,
+  .recipe-card:focus-within .choices {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+.recipe-card[data-open] .choices {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.choice {
+  display: inline-flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px 5px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: rgb(255 255 255 / 0.14);
+  backdrop-filter: blur(6px);
+  transition: background-color 150ms, transform 150ms var(--ease-out);
+}
+.choice:hover:not(:disabled) { background: rgb(255 255 255 / 0.28); }
+.choice:active:not(:disabled) { transform: scale(0.95); }
+.choice:disabled { opacity: 0.55; cursor: not-allowed; }
+.choice[data-on] { background: var(--primary); color: var(--primary-foreground); }
+
+/* The week strip: seven day slots on a wooden shelf, pinned along the bottom. */
+.strip {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 30;
+  height: calc(var(--strip-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: var(--strip-base);
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.22), rgb(255 255 255 / 0) 14%, rgb(0 0 0 / 0) 80%, rgb(0 0 0 / 0.16)), var(--strip-image);
+  background-size: 100% 100%, 1600px 100%;
+  color: var(--strip-ink);
+  border-top: 1px solid var(--strip-edge);
+  box-shadow: 0 -14px 30px -18px rgb(40 20 5 / 0.55);
+}
+/* While the agent works, a band of light sweeps along the shelf; it moves by transform alone. */
+.strip { overflow: hidden; }
+.strip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--glow) 40%, transparent) 50%, transparent);
+  transform: translateX(-100%);
+}
+.strip[data-glow]::after {
+  opacity: 1;
+  animation: strip-sweep 1300ms linear infinite;
+  transition: opacity 300ms;
+}
+.strip[data-glow] {
+  box-shadow: 0 -10px 40px -6px color-mix(in srgb, var(--glow) 70%, transparent), 0 -1px 0 color-mix(in srgb, var(--glow) 80%, transparent);
+  transition: box-shadow 400ms var(--ease-out);
+}
+@keyframes strip-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(270%); }
+}
+.slot {
+  background: var(--slot-well);
+  box-shadow: inset 0 2px 5px var(--slot-well-edge), 0 1px 0 rgb(255 255 255 / 0.18);
+  border-radius: 14px;
+  transition: background-color 160ms, transform 160ms var(--ease-out), box-shadow 160ms;
+}
+.slot[data-today] { background: var(--slot-today); }
+.slot[data-target] {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: inset 0 0 0 2px var(--primary), 0 10px 20px -10px rgb(0 0 0 / 0.5);
+}
+.slot-thumb {
+  animation: slot-pop 560ms var(--ease-bounce) both;
+  box-shadow: 0 4px 10px -3px rgb(0 0 0 / 0.45), 0 0 0 2px var(--card);
+}
+/* A dish lands in its day with a soft bounce. */
+@keyframes slot-pop {
+  0% { transform: scale(0.9); }
+  45% { transform: scale(1.1); }
+  75% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.slot-empty {
+  border: 1.5px dashed var(--strip-ink-soft);
+  opacity: 0.6;
+}
+
+/* The shopping list prints up out of a slot in the shelf like a till receipt. */
+.receipt-slot {
+  position: fixed;
+  z-index: 31;
+  bottom: calc(var(--strip-h) + env(safe-area-inset-bottom) - 4px);
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.7), rgb(0 0 0 / 0.35));
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.2), inset 0 2px 3px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+.receipt-mouth {
+  position: fixed;
+  z-index: 25;
+  bottom: calc(var(--strip-h) + env(safe-area-inset-bottom) - 2px);
+  overflow: hidden;
+  pointer-events: none;
+}
+.receipt {
+  --z: 7px;
+  pointer-events: auto;
+  background: var(--receipt-paper);
+  color: var(--receipt-ink);
+  box-shadow: 0 -2px 24px -6px rgb(0 0 0 / 0.35);
+  -webkit-mask:
+    linear-gradient(#000 0 0) 0 var(--z) / 100% 100% no-repeat,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / calc(2 * var(--z)) var(--z) repeat-x;
+  mask:
+    linear-gradient(#000 0 0) 0 var(--z) / 100% 100% no-repeat,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 0 0 / calc(2 * var(--z)) var(--z) repeat-x;
+}
+.receipt[data-closing] { animation: receipt-tear 380ms var(--ease-in-out) both; }
+@keyframes receipt-tear {
+  to { transform: translateY(100%); }
+}
+.receipt-line {
+  position: relative;
+  transition: opacity 200ms;
+}
+.receipt-line::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 52%;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 340ms var(--ease-out);
+}
+.receipt-line[data-ticked] { opacity: 0.5; }
+.receipt-line[data-ticked]::after { transform: scaleX(1); }
+.dashed-rule {
+  border: 0;
+  border-top: 1.5px dashed var(--receipt-faint);
+}
+
+.status-dot {
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+  50% { opacity: 0.35; }
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--card-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}

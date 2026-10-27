@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<radialGradient id="bg" cx="0.3" cy="0.2" r="1"><stop offset="0" stop-color="#e2583c"/><stop offset="1" stop-color="#b8321f"/></radialGradient>
+<radialGradient id="bowl" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e9dfcc"/></radialGradient>
+<filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<rect x="0" y="392" width="512" height="120" fill="#d9b98a"/>
+<path d="M0 420Q256 412 512 424M0 452Q256 444 512 458M0 486Q256 478 512 490" stroke="#b8925e" stroke-width="4" fill="none"/>
+<rect width="512" height="512" rx="112" fill="none"/>
+<ellipse cx="270" cy="258" rx="150" ry="150" fill="#5a1a0c" opacity="0.45" filter="url(#sh)"/>
+<circle cx="256" cy="240" r="150" fill="url(#bowl)"/>
+<circle cx="256" cy="240" r="118" fill="#f0a830"/>
+<circle cx="256" cy="240" r="118" fill="none" stroke="#000" stroke-opacity="0.12" stroke-width="10"/>
+<circle cx="214" cy="206" r="34" fill="#fbf6ec"/><circle cx="218" cy="210" r="16" fill="#e8840f"/>
+<circle cx="300" cy="270" r="34" fill="#fbf6ec"/><circle cx="304" cy="274" r="16" fill="#e8840f"/>
+<path d="M226 286q30-26 42 6q-34 14-42-6z" fill="#3f8a30"/><path d="M286 196q30-20 38 10q-32 10-38-10z" fill="#3f8a30"/>
+<path d="M150 176A130 130 0 0 1 226 118" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.7"/>
+</svg>
