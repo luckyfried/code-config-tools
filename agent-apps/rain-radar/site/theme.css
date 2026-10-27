@@ -1,0 +1,170 @@
+/* Paper in a light scheme, the night radar in a dark one. Tokens only; site/styles/ never names a color. */
+:root {
+  color-scheme: light;
+  --color-bg: #e9e2d2;
+  --color-surface: rgba(250, 246, 237, 0.92);
+  --color-surface-2: #f3ecdd;
+  --color-text: #22262b;
+  --color-muted: #5f625f;
+  --color-accent: #c23b22;
+  --color-on-accent: #fff8f0;
+  --color-danger: #a8321c;
+  --color-ok: #3f6b4f;
+  --color-border: rgba(60, 52, 38, 0.18);
+  --color-focus: #1f5f8b;
+  --color-scrim: rgba(233, 226, 210, 0);
+  --color-scrim-end: rgba(233, 226, 210, 0.94);
+  --color-track: rgba(60, 52, 38, 0.14);
+  --color-spark: rgba(31, 79, 140, 0.32);
+  --color-spark-line: #1f4f8c;
+  --color-rain-light: #7fb2d6;
+  --color-rain-mid: #2f6db3;
+  --color-rain-heavy: #d9a21b;
+  --color-comet: #c23b22;
+  --color-comet-glow: rgba(194, 59, 34, 0.28);
+
+  --map-water: #c3c9b2;
+  --map-water-deep: #b1b99f;
+  --map-land: #efe7d4;
+  --map-land-2: #e6dbc2;
+  --map-town: #e0cfb0;
+  --map-street: #b8a684;
+  --map-road: #b9733f;
+  --map-shore: #6f7a62;
+  --map-edge: #e9e2d2;
+  --map-tint: #f6ead2;
+  --map-wind: #2c3a4c;
+  --map-cloud: #ffffff;
+  --map-marker: #c23b22;
+  --map-paper: 1;
+
+  --shadow-1: 0 1px 2px rgba(50, 40, 20, 0.12), 0 2px 8px rgba(50, 40, 20, 0.08);
+  --shadow-2: 0 2px 6px rgba(50, 40, 20, 0.12), 0 14px 40px rgba(50, 40, 20, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #04070c;
+    --color-surface: rgba(10, 16, 26, 0.86);
+    --color-surface-2: #121b2a;
+    --color-text: #e8eef6;
+    --color-muted: #8f9db0;
+    --color-accent: #ffcf7a;
+    --color-on-accent: #1b1306;
+    --color-danger: #ff7d6b;
+    --color-ok: #74e0b0;
+    --color-border: rgba(150, 180, 220, 0.14);
+    --color-focus: #8fd3ff;
+    --color-scrim: rgba(4, 7, 12, 0);
+    --color-scrim-end: rgba(4, 7, 12, 0.9);
+    --color-track: rgba(150, 180, 220, 0.12);
+    --color-spark: rgba(90, 190, 255, 0.28);
+    --color-spark-line: #6cc9ff;
+    --color-rain-light: #5fc8ff;
+    --color-rain-mid: #2a7bff;
+    --color-rain-heavy: #ffd84a;
+    --color-comet: #ffcf7a;
+    --color-comet-glow: rgba(255, 207, 122, 0.55);
+
+    --map-water: #0f1a2a;
+    --map-water-deep: #0c1523;
+    --map-land: #0b111a;
+    --map-land-2: #0f1722;
+    --map-town: #172235;
+    --map-street: #2b3d58;
+    --map-road: #4a6890;
+    --map-shore: #2c4566;
+    --map-edge: #04070c;
+    --map-tint: #c8d6ea;
+    --map-wind: #d6e8ff;
+    --map-cloud: #93a6c4;
+    --map-marker: #ffcf7a;
+    --map-paper: 0;
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 18px 48px rgba(0, 0, 0, 0.55);
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #e9e2d2;
+  --color-surface: rgba(250, 246, 237, 0.92);
+  --color-surface-2: #f3ecdd;
+  --color-text: #22262b;
+  --color-muted: #5f625f;
+  --color-accent: #c23b22;
+  --color-on-accent: #fff8f0;
+  --color-danger: #a8321c;
+  --color-ok: #3f6b4f;
+  --color-border: rgba(60, 52, 38, 0.18);
+  --color-focus: #1f5f8b;
+  --color-scrim: rgba(233, 226, 210, 0);
+  --color-scrim-end: rgba(233, 226, 210, 0.94);
+  --color-track: rgba(60, 52, 38, 0.14);
+  --color-spark: rgba(31, 79, 140, 0.32);
+  --color-spark-line: #1f4f8c;
+  --color-rain-light: #7fb2d6;
+  --color-rain-mid: #2f6db3;
+  --color-rain-heavy: #d9a21b;
+  --color-comet: #c23b22;
+  --color-comet-glow: rgba(194, 59, 34, 0.28);
+  --map-water: #c3c9b2;
+  --map-water-deep: #b1b99f;
+  --map-land: #efe7d4;
+  --map-land-2: #e6dbc2;
+  --map-town: #e0cfb0;
+  --map-street: #b8a684;
+  --map-road: #b9733f;
+  --map-shore: #6f7a62;
+  --map-edge: #e9e2d2;
+  --map-tint: #f6ead2;
+  --map-wind: #2c3a4c;
+  --map-cloud: #ffffff;
+  --map-marker: #c23b22;
+  --map-paper: 1;
+  --shadow-1: 0 1px 2px rgba(50, 40, 20, 0.12), 0 2px 8px rgba(50, 40, 20, 0.08);
+  --shadow-2: 0 2px 6px rgba(50, 40, 20, 0.12), 0 14px 40px rgba(50, 40, 20, 0.16);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #04070c;
+  --color-surface: rgba(10, 16, 26, 0.86);
+  --color-surface-2: #121b2a;
+  --color-text: #e8eef6;
+  --color-muted: #8f9db0;
+  --color-accent: #ffcf7a;
+  --color-on-accent: #1b1306;
+  --color-danger: #ff7d6b;
+  --color-ok: #74e0b0;
+  --color-border: rgba(150, 180, 220, 0.14);
+  --color-focus: #8fd3ff;
+  --color-scrim: rgba(4, 7, 12, 0);
+  --color-scrim-end: rgba(4, 7, 12, 0.9);
+  --color-track: rgba(150, 180, 220, 0.12);
+  --color-spark: rgba(90, 190, 255, 0.28);
+  --color-spark-line: #6cc9ff;
+  --color-rain-light: #5fc8ff;
+  --color-rain-mid: #2a7bff;
+  --color-rain-heavy: #ffd84a;
+  --color-comet: #ffcf7a;
+  --color-comet-glow: rgba(255, 207, 122, 0.55);
+  --map-water: #0f1a2a;
+  --map-water-deep: #0c1523;
+  --map-land: #0b111a;
+  --map-land-2: #0f1722;
+  --map-town: #172235;
+  --map-street: #2b3d58;
+  --map-road: #4a6890;
+  --map-shore: #2c4566;
+  --map-edge: #04070c;
+  --map-tint: #c8d6ea;
+  --map-wind: #d6e8ff;
+  --map-cloud: #93a6c4;
+  --map-marker: #ffcf7a;
+  --map-paper: 0;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 18px 48px rgba(0, 0, 0, 0.55);
+}

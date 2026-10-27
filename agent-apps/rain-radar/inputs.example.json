@@ -1,0 +1,20 @@
+{
+  "place": "Portland, Oregon",
+  "lat": 45.5152,
+  "lon": -122.6784,
+  "zoom": "town",
+  "layers": ["radar", "wind"],
+  "units": "imperial",
+  "theme": "auto",
+  "sample": true,
+  "_notes": {
+    "place": "Required. The place the map centers on, as it shows at the top of the screen, up to 80 characters.",
+    "lat": "Required. The place's latitude in degrees, from -85 to 85. Your agent looks it up from the town you name.",
+    "lon": "Required. The place's longitude in degrees, from -180 to 180.",
+    "zoom": "Optional. \"town\" shows about 250 km around the place, \"region\" about 1,000 km. Default: \"town\".",
+    "layers": "Optional. The layers on at the start, from \"radar\", \"wind\", and \"clouds\"; each one switches on and off in Settings. Default: [\"radar\", \"wind\"].",
+    "units": "Optional. \"metric\" for mm/h and km/h, \"imperial\" for in/h and mph. Default: \"metric\".",
+    "theme": "Optional. \"auto\" follows the device: the night map in dark mode and the paper map in light mode. \"dark\" is always the night map, \"paper\" always the paper map. Default: \"auto\".",
+    "sample": "Optional. true plays the sample loop (rain moving in from the west and reaching the place in 24 minutes) over a map drawn for the place, and never asks the live feeds; false shows the live radar, wind, and map. Default: false."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "01a1652f-d360-7cc4-a270-c873eb659740",
+  "version": "2026-10-21",
+  "name": "Rain Radar",
+  "shortDescription": "Live rain radar over your town, looping two hours back and half an hour ahead.",
+  "description": "Rain Radar puts the live rain radar over a map of your town, tilted like the view from a plane, with your place as a pulsing marker in the middle. The last two hours and the next thirty minutes play as one smooth loop: each radar frame melts into the next instead of stepping, and every rain cell glows so it looks like weather rather than squares. A comet runs along the scrubber as the loop plays; drag it, or tap a step, to look at any moment. Thousands of wind streaks flow over the map from the current wind forecast, so you can see which way the rain is heading. A banner at the bottom says what matters, \"Rain arriving in 24 min\" or \"Dry for the next two hours\", and the strip beside it shows the rain expected in the next hour, five minutes to a bar, with its peak. It has a dark night look and a light paper look that follows your device, works on a phone and a desktop, and keeps your place, layers, units, and loop speed on your device. Without a connection it plays a sample loop of a squall line moving in, so the page is never empty.",
+  "category": "weather",
+  "subcategory": "Radar",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/rain-radar",
+  "setup": "Your agent asks: \"Where are you, should the map show your town or your whole region, and do you want the dark look, the paper look, or the one that follows your device?\" It writes the place's name and its latitude and longitude, and can set inches and mph or millimeters and km/h. No accounts or keys are needed: the radar comes from RainViewer and the wind and rain forecast from Open-Meteo, both free. The page is one folder of files you can host anywhere."
+}
