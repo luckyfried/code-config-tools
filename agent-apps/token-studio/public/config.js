@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"brand": {"hue": 262, "chroma": 0.17}, "neutralHue": 255, "typeScaleRatio": 1.25, "baseSize": 16, "spacingBase": 4, "fonts": {"sans": "Inter", "mono": "JetBrains Mono"}, "theme": "auto"};

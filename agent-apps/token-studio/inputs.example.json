@@ -1,0 +1,18 @@
+{
+  "brand": { "hue": 262, "chroma": 0.17 },
+  "neutralHue": 255,
+  "typeScaleRatio": 1.25,
+  "baseSize": 16,
+  "spacingBase": 4,
+  "fonts": { "sans": "Inter", "mono": "JetBrains Mono" },
+  "theme": "auto",
+  "_notes": {
+    "brand": "The starting brand color. Give hue (0 to 360) and chroma (0.02 to 0.37) in OKLCH, or give hex instead, such as \"#3d5afe\", and run.py works out the hue and chroma.",
+    "neutralHue": "The hue that tints the grays, 0 to 360. Close to the brand hue reads calm; far from it reads warm or cool.",
+    "typeScaleRatio": "How much each type step grows over the one below it, 1.067 to 1.618. 1.25 is a major third.",
+    "baseSize": "The body text size in px, 12 to 22.",
+    "spacingBase": "The spacing unit in px, 2 to 8. The steps are 1, 2, 3, 4, 6, 8, 12, and 16 of it.",
+    "fonts": "The font family names written into tokens.css: sans for text, mono for code. The preview uses them when this computer has them.",
+    "theme": "The editor's own look: studio (dark), daylight (light), or auto (follows the device). The preview is painted by the tokens either way."
+  }
+}

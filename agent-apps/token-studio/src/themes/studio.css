@@ -1,0 +1,44 @@
+/* Studio: the editor's chrome in dark. A warm ink room lit only by the colors being made. */
+:root {
+  color-scheme: dark;
+  --background: oklch(0.135 0.006 70);
+  --foreground: oklch(0.94 0.013 84);
+  --panel: oklch(0.168 0.007 70);
+  --panel-edge: oklch(1 0 0 / 9%);
+  --panel-shadow: 1px 0 0 oklch(1 0 0 / 3%) inset;
+  --well: oklch(0.125 0.006 70);
+  --card: oklch(0.2 0.008 70);
+  --card-foreground: oklch(0.94 0.013 84);
+  --popover: oklch(0.21 0.008 70);
+  --popover-foreground: oklch(0.94 0.013 84);
+  --primary: oklch(0.94 0.013 84);
+  --primary-foreground: oklch(0.168 0.007 70);
+  --secondary: oklch(0.235 0.008 70);
+  --secondary-foreground: oklch(0.94 0.013 84);
+  --muted: oklch(0.235 0.008 70);
+  --muted-foreground: oklch(0.7 0.014 80);
+  --accent: oklch(0.25 0.009 70);
+  --accent-foreground: oklch(0.94 0.013 84);
+  --destructive: oklch(0.7 0.18 28);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: oklch(0.94 0.013 84);
+  --chart-1: oklch(0.72 0.15 262);
+  --chart-2: oklch(0.7 0.12 180);
+  --chart-3: oklch(0.7 0.1 120);
+  --chart-4: oklch(0.78 0.14 60);
+  --chart-5: oklch(0.7 0.18 20);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.168 0.007 70);
+  --sidebar-foreground: oklch(0.94 0.013 84);
+  --sidebar-primary: oklch(0.94 0.013 84);
+  --sidebar-primary-foreground: oklch(0.168 0.007 70);
+  --sidebar-accent: oklch(0.25 0.009 70);
+  --sidebar-accent-foreground: oklch(0.94 0.013 84);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.7 0.014 80);
+  --swatch-edge: oklch(1 0 0 / 10%);
+  --thumb: oklch(0.97 0.008 84);
+  --thumb-shadow: 0 1px 4px oklch(0 0 0 / 60%), 0 0 0 1.5px oklch(0 0 0 / 55%);
+  --stage-glow: oklch(0 0 0 / 55%);
+}
