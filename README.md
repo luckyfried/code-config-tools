@@ -1,7 +1,8 @@
 # Code Config tools
 
-Skills, rules, output styles, hooks, MCP configs, settings, and a statusline preset for coding
-agents. Plain files that work with Claude Code, Codex, and Cursor.
+The tools [code-config.com](https://code-config.com) installs: skills, rules, output styles, hooks,
+MCP configs, settings, and a statusline preset for coding agents. Plain files that work with Claude
+Code, Codex, Muse, and GPT Dot.
 
 ## Layout
 
