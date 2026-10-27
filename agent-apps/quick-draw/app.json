@@ -1,0 +1,17 @@
+{
+  "id": "01a17eea-1cf7-7768-a5e0-bcd0df9f3d8a",
+  "version": "2026-10-21",
+  "name": "Quick Draw",
+  "shortDescription": "Two thumbs, one phone, a sunset duel: the first to draw wins.",
+  "description": "A reaction duel on a western street at sundown. Two people hold one phone sideways, a thumb on each half: the street goes quiet, the camera creeps in, a clock ticks, and then DRAW slams onto the screen. The first tap fires, time drops to a tenth while the camera swings round the bullet, and the loser's hat goes flying. A tap before DRAW jams your gun and hands over the round. Every round ends on a wanted poster with the winner's photograph and reaction time in milliseconds, and the series is tallied in bullet holes, best of three, five, or seven. Solo mode puts you against a stranger who draws at 400 ms and gets 20 ms quicker every round, and keeps your best time on the device. On a keyboard, A and L are the two triggers. The town's name is painted on the saloon's banner across the street, and the street can be set at sunset, high noon, or midnight, each with its own light and dark look.",
+  "category": "games",
+  "subcategory": "Rhythm and reflex",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/quick-draw",
+  "setup": ""
+}

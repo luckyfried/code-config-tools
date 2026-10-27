@@ -1,0 +1,14 @@
+{
+  "title": "Quick Draw",
+  "players": ["Rhett", "Cole"],
+  "townName": "Dry Gulch",
+  "theme": "sunset",
+  "bestOf": 5,
+  "_notes": {
+    "title": "The name on the title card, 1 to 40 characters.",
+    "players": "Two names, left then right, each 1 to 14 characters. The left player takes the left half of the screen (or the A key), the right player the right half (or L).",
+    "townName": "Painted on the saloon's canvas banner across the street, and named on the title and the wanted posters. 1 to 28 characters.",
+    "theme": "The time of day: sunset (amber sun, long shadows), noon (white light, short shadows, bleached ground), or midnight (a low moon, blue light, lanterns on the porches). Each has a light and a dark look that follows the device.",
+    "bestOf": "How many rounds a series runs: 3, 5, or 7. The first to win more than half takes it."
+  }
+}

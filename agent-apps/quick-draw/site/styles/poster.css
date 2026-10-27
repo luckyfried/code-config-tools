@@ -1,0 +1,402 @@
+/* The round and series cards: a wanted poster slapped onto the board, a photograph of the winner, the reaction
+   time in big painted digits, the tally as bullet holes, and a stamp. */
+
+.poster {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-card);
+  display: grid;
+  place-items: center;
+  padding:
+    calc(var(--safe-top) + var(--space-4))
+    calc(var(--safe-right) + var(--space-4))
+    calc(var(--safe-bottom) + var(--space-4))
+    calc(var(--safe-left) + var(--space-4));
+  background: radial-gradient(ellipse at 50% 45%, transparent 20%, var(--color-scrim) 100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--motion-slow) var(--ease-out), visibility 0s linear var(--motion-slow);
+}
+
+.poster.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--motion-slow) var(--ease-out), visibility 0s;
+}
+
+.poster__sheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  width: min(100%, 410px);
+  max-height: 100%;
+}
+
+.poster__paper {
+  position: relative;
+  width: 100%;
+  padding: clamp(18px, 3.2vh, 30px) clamp(18px, 5vw, 30px) clamp(18px, 3vh, 26px);
+  color: var(--color-text);
+  text-align: center;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 42%, transparent 55%, color-mix(in srgb, var(--color-paper-edge) 50%, transparent) 100%),
+    radial-gradient(circle at 18% 22%, color-mix(in srgb, var(--color-paper-edge) 16%, transparent), transparent 22%),
+    radial-gradient(circle at 82% 64%, color-mix(in srgb, var(--color-paper-edge) 14%, transparent), transparent 26%),
+    radial-gradient(ellipse 40% 18% at 30% 88%, color-mix(in srgb, var(--color-paper-burn) 12%, transparent), transparent 70%),
+    radial-gradient(circle at 70% 12%, color-mix(in srgb, var(--color-surface) 70%, transparent), transparent 30%),
+    linear-gradient(170deg, var(--color-surface), var(--color-surface-2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-paper-edge) 40%, transparent), inset 0 0 46px color-mix(in srgb, var(--color-paper-burn) 40%, transparent);
+  clip-path: polygon(0 1.2%, 6% 0, 18% 0.9%, 31% 0.2%, 47% 1%, 63% 0, 78% 0.8%, 92% 0.1%, 100% 1.4%, 99.4% 18%, 100% 37%, 99.2% 58%, 100% 79%, 99.5% 98.6%, 88% 100%, 72% 99.1%, 55% 100%, 39% 99.2%, 22% 100%, 7% 99.3%, 0 100%, 0.7% 80%, 0 61%, 0.6% 39%, 0 19%);
+  transform: rotate(-1.4deg);
+}
+
+.poster.is-open .poster__paper {
+  animation: poster-slap 640ms var(--ease-out) both;
+}
+
+/* tossed up from below, it overshoots, flattens against the board, and settles a little crooked */
+@keyframes poster-slap {
+  0% {
+    opacity: 0;
+    transform: translateY(40vh) rotate(9deg) scale(0.92);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-10px) rotate(-3deg) scale(1.03, 0.98);
+  }
+  75% {
+    transform: translateY(3px) rotate(-1deg) scale(0.99, 1.01);
+  }
+  100% {
+    transform: rotate(-1.4deg);
+  }
+}
+
+.poster__nail {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle at 35% 35%, var(--color-hole-rim), var(--color-hole) 70%);
+  box-shadow: 0 2px 3px color-mix(in srgb, var(--color-paper-burn) 60%, transparent);
+}
+
+.poster__head {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 12vw, 4.4rem);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+}
+
+.poster__for {
+  margin: 6px 0 0;
+  padding: 6px 0 8px;
+  border-top: 3px double color-mix(in srgb, var(--color-text) 70%, transparent);
+  border-bottom: 3px double color-mix(in srgb, var(--color-text) 70%, transparent);
+  font-size: var(--text-md);
+  font-weight: 650;
+  text-wrap: balance;
+}
+
+.poster__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.poster__photo {
+  position: relative;
+  width: clamp(130px, 40%, 170px);
+  aspect-ratio: 4 / 5;
+  padding: 5px;
+  background: var(--color-surface);
+  box-shadow: 0 0 0 2px var(--color-text), 0 4px 10px color-mix(in srgb, var(--color-paper-burn) 40%, transparent);
+  transform: rotate(1.2deg);
+}
+
+.poster__portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.9) contrast(1.18) brightness(1.08) saturate(0.85);
+}
+
+.poster__photo::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  background: radial-gradient(ellipse at 50% 40%, transparent 50%, color-mix(in srgb, var(--color-paper-burn) 55%, transparent) 100%);
+  pointer-events: none;
+}
+
+.poster__facts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+}
+
+.poster__name {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poster__time {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.poster__digits {
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 15vw, 5.2rem);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+  text-shadow: 0 2px 0 color-mix(in srgb, var(--color-paper-burn) 30%, transparent);
+}
+
+.poster__unit {
+  font-size: var(--text-xl);
+  font-weight: 750;
+}
+
+.poster__time.is-forfeit .poster__digits {
+  font-size: clamp(2.2rem, 9vw, 3.2rem);
+}
+
+.poster__time.is-forfeit .poster__unit {
+  display: none;
+}
+
+.poster__note {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  text-wrap: balance;
+}
+
+.poster__tally {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1.5px dashed color-mix(in srgb, var(--color-text) 40%, transparent);
+}
+
+.tally-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tally-row__name {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holes--paper .hole {
+  width: 18px;
+  height: 18px;
+  border-color: color-mix(in srgb, var(--color-text) 40%, transparent);
+}
+
+.poster__stamp {
+  position: absolute;
+  top: 34%;
+  right: 6%;
+  padding: 6px 12px 4px;
+  border: 3px solid var(--color-stamp);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 3.6vw, 1.3rem);
+  line-height: 1;
+  color: var(--color-stamp);
+  opacity: 0;
+  transform: rotate(-14deg);
+  mix-blend-mode: multiply;
+}
+
+.poster__stamp:empty {
+  display: none;
+}
+
+.poster.is-open .poster__stamp {
+  animation: stamp 420ms var(--ease-out) 520ms both;
+}
+
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: rotate(-14deg) scale(1.9);
+  }
+  60% {
+    opacity: 0.9;
+    transform: rotate(-14deg) scale(0.94);
+  }
+  100% {
+    opacity: 0.86;
+    transform: rotate(-14deg) scale(1);
+  }
+}
+
+.poster__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.poster.is-open .poster__actions {
+  animation: actions-in 360ms var(--ease-out) 420ms both;
+}
+
+@keyframes actions-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.go--small {
+  min-width: 200px;
+  min-height: 54px;
+  font-size: 1.4rem;
+}
+
+.ghost {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+  font-weight: 650;
+  color: var(--color-on-chrome);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.ghost:active {
+  transform: scale(0.97);
+}
+
+/* wide and short screens: the photograph beside the facts */
+@media (max-height: 640px) and (min-aspect-ratio: 1/1) {
+  .poster__sheet {
+    width: min(100%, 560px);
+    gap: var(--space-2);
+  }
+
+  .poster__paper {
+    padding: 14px 22px 14px;
+  }
+
+  .poster__head {
+    font-size: 2.2rem;
+  }
+
+  .poster__for {
+    padding: 3px 0 4px;
+    font-size: var(--text-sm);
+  }
+
+  .poster__body {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-5);
+    margin-top: var(--space-3);
+  }
+
+  .poster__photo {
+    flex: none;
+    width: 112px;
+  }
+
+  .poster__facts {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .poster__time {
+    justify-content: flex-start;
+  }
+
+  .poster__digits {
+    font-size: 3rem;
+  }
+
+  .poster__name {
+    font-size: 1.5rem;
+  }
+
+  .poster__note {
+    font-size: var(--text-sm);
+  }
+
+  .poster__tally {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+  }
+
+  .poster__stamp {
+    top: 18px;
+    right: 18px;
+  }
+
+  .go--small {
+    min-height: 46px;
+    font-size: 1.2rem;
+  }
+
+  .ghost {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 1100px) and (min-height: 760px) {
+  .poster__sheet {
+    width: 440px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster.is-open .poster__paper {
+    animation: fade-in 240ms linear both;
+  }
+  .poster.is-open .poster__stamp {
+    animation: fade-in 240ms linear 200ms both;
+    opacity: 0.86;
+  }
+  .poster.is-open .poster__actions {
+    animation: fade-in 240ms linear both;
+  }
+}

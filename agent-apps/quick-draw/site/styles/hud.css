@@ -1,0 +1,606 @@
+/* The duel's surface and its heads-up display: the two halves, thumb zones, name plates with bullet-hole tallies,
+   the round, the tool buttons, the DRAW callout, and the white flash. */
+
+/* the two halves: one touch surface, split down the middle */
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  touch-action: none;
+  pointer-events: none;
+}
+
+.is-duel .stage {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.half {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 var(--edge) calc(var(--safe-bottom) + clamp(18px, 6vh, 56px));
+}
+
+.half--left {
+  justify-content: flex-start;
+  padding-left: calc(var(--safe-left) + var(--edge));
+}
+
+.half--right {
+  justify-content: flex-end;
+  padding-right: calc(var(--safe-right) + var(--edge));
+}
+
+.half::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(120% 90% at var(--from, 0%) 100%, color-mix(in srgb, var(--tint) 34%, transparent), transparent 62%);
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.half--left {
+  --tint: var(--color-p1);
+  --from: 0%;
+}
+
+.half--right {
+  --tint: var(--color-p2);
+  --from: 100%;
+}
+
+.half.is-pressed::before {
+  opacity: 1;
+  transition-duration: 0ms;
+}
+
+.thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(92px, 15vmin, 148px);
+  aspect-ratio: 1;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity var(--motion-slow) var(--ease-out), transform var(--motion-slow) var(--ease-out);
+}
+
+.is-waiting .thumb,
+.is-drawing .thumb {
+  opacity: 1;
+  transform: none;
+  transition-delay: var(--duel-enter);
+}
+
+.thumb__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  border: 2px solid color-mix(in srgb, var(--tint) 80%, var(--color-on-chrome));
+  background: color-mix(in srgb, var(--color-chrome) 55%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--tint) 18%, transparent), var(--shadow-1);
+}
+
+.thumb__ring::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  border: 2px solid color-mix(in srgb, var(--tint) 55%, transparent);
+  opacity: 0;
+}
+
+.is-waiting .thumb__ring::after {
+  animation: ring-breathe 1.6s var(--ease-in-out) infinite;
+}
+
+.is-drawing .thumb__ring {
+  border-color: var(--color-on-chrome);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--tint) 40%, transparent), var(--shadow-1);
+}
+
+@keyframes ring-breathe {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+.thumb__name {
+  position: relative;
+  max-width: 86%;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 2.2vmin, 1.2rem);
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-on-chrome);
+}
+
+.thumb__key {
+  position: absolute;
+  bottom: -14px;
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-chrome-line);
+  background: var(--color-chrome);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-on-chrome);
+  box-shadow: 0 2px 0 var(--color-chrome);
+}
+
+.is-touch .thumb__key {
+  display: none;
+}
+
+/* the heads-up display */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-hud);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: var(--space-3);
+  padding: calc(var(--safe-top) + clamp(10px, 2.2vh, 24px)) calc(var(--safe-right) + var(--edge)) 0 calc(var(--safe-left) + var(--edge));
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity var(--motion-slow) var(--ease-out), transform var(--motion-slow) var(--ease-out);
+}
+
+.is-duel .hud,
+.is-card .hud {
+  opacity: 1;
+  transform: none;
+}
+
+.is-duel .hud,
+.is-duel .hud__round {
+  transition-delay: var(--duel-enter);
+}
+
+.hud__plate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 14px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+}
+
+.hud__plate--left {
+  justify-self: start;
+  border-left: 3px solid var(--color-p1);
+}
+
+.hud__plate--right {
+  justify-self: end;
+  align-items: flex-end;
+  border-right: 3px solid var(--color-p2);
+}
+
+.hud__name {
+  overflow: hidden;
+  max-width: 34vw;
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 2.4vmin, 1.35rem);
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-on-chrome);
+}
+
+.hud__round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 16px 8px;
+  border-radius: var(--radius-md);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+  text-align: center;
+  color: var(--color-on-chrome);
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+
+.is-card .hud__round {
+  opacity: 0;
+}
+
+.hud__round-name {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.6vmin, 1.5rem);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.hud__round-need {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-on-chrome-muted);
+}
+
+/* bullet holes: one per round needed; a hole is shot through for each round won */
+.holes {
+  display: flex;
+  gap: 6px;
+}
+
+.hole {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px dashed color-mix(in srgb, var(--color-on-chrome) 45%, transparent);
+}
+
+.hole.is-hit {
+  border: 0;
+  background: radial-gradient(circle at 46% 44%, var(--color-hole) 0 34%, var(--color-hole-rim) 44%, color-mix(in srgb, var(--color-hole-rim) 30%, transparent) 62%, transparent 70%);
+  animation: hole-hit 420ms var(--ease-out) both;
+}
+
+.hole.is-hit::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  background:
+    linear-gradient(28deg, transparent 47%, color-mix(in srgb, var(--color-hole-rim) 70%, transparent) 49% 51%, transparent 53%),
+    linear-gradient(-62deg, transparent 47%, color-mix(in srgb, var(--color-hole-rim) 60%, transparent) 49% 51%, transparent 53%);
+  border-radius: var(--radius-full);
+  opacity: 0.8;
+}
+
+@keyframes hole-hit {
+  from {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(0.88);
+    opacity: 1;
+  }
+}
+
+/* sound and full screen */
+.tools {
+  position: fixed;
+  top: calc(var(--safe-top) + clamp(10px, 2.2vh, 24px));
+  right: calc(var(--safe-right) + var(--edge));
+  z-index: var(--z-card);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.is-duel .tools,
+.is-card .tools {
+  top: auto;
+  bottom: calc(var(--safe-bottom) + var(--space-3));
+}
+
+.tool {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+  color: var(--color-on-chrome);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.tool:active {
+  transform: scale(0.94);
+}
+
+.tool svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+
+.tool__wave {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.tool__off,
+.tool[aria-pressed="false"] .tool__on {
+  display: none;
+}
+
+.tool[aria-pressed="false"] .tool__off {
+  display: block;
+}
+
+/* the callout in the middle of the street */
+.callout {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-callout);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.callout__word {
+  grid-area: 1 / 1;
+  font-family: var(--font-display);
+  line-height: 1;
+  color: var(--color-title);
+  text-shadow: 0 2px 0 var(--color-title-shadow), 0 6px 30px var(--color-title-shadow);
+  opacity: 0;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+.callout__word--steady {
+  margin-top: -34vh;
+  font-size: clamp(1.4rem, 4.2vmin, 2.4rem);
+  letter-spacing: 0.04em;
+}
+
+.is-waiting .callout__word--steady {
+  animation: steady-in 900ms var(--ease-out) var(--duel-enter) both, steady-pulse 2s var(--ease-in-out) calc(900ms + var(--duel-enter)) infinite;
+}
+
+@keyframes steady-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 0.92;
+    transform: none;
+  }
+}
+
+@keyframes steady-pulse {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.callout__word--draw {
+  font-size: clamp(5rem, 26vmin, 15rem);
+  color: var(--color-title);
+  -webkit-text-stroke: 0.07em var(--color-title-shadow);
+  paint-order: stroke fill;
+  text-shadow: 0 0.07em 0 var(--color-accent), 0 0.1em 0.4em var(--color-title-shadow);
+}
+
+/* the white frame lands first, then the word slams in over it */
+.is-drawing .callout__word--draw {
+  animation: draw-slam 620ms var(--ease-out) 60ms both;
+}
+
+/* the word holds at full strength through the first shot before it goes */
+.is-shot .callout__word--draw {
+  animation: draw-out 240ms var(--ease-out) 340ms both;
+}
+
+/* squash and stretch: in tall and thin, flatten on the hit, overshoot, settle */
+@keyframes draw-slam {
+  0% {
+    opacity: 0;
+    transform: scale(2.6, 3.4) translateY(-6%);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1.32, 0.72);
+  }
+  40% {
+    transform: scale(0.9, 1.12);
+  }
+  58% {
+    transform: scale(1.05, 0.96);
+  }
+  76% {
+    transform: scale(0.99, 1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes draw-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+.callout__word--early {
+  font-size: clamp(2.4rem, 10vmin, 5.5rem);
+  color: var(--color-title);
+}
+
+.is-early .callout__word--early {
+  animation: early-in 1300ms var(--ease-out) both;
+}
+
+@keyframes early-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px) rotate(-6deg) scale(1.4);
+  }
+  18% {
+    opacity: 1;
+    transform: rotate(3deg) scale(0.94);
+  }
+  30% {
+    transform: rotate(-2deg) scale(1.02);
+  }
+  42% {
+    transform: rotate(0deg) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* the white flash on DRAW and on the shot */
+.flash {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-flash);
+  background: var(--color-flash);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.flash.is-on {
+  animation: flash 640ms cubic-bezier(0.45, 0, 0.7, 1) both;
+}
+
+.flash.is-soft {
+  animation: flash-soft 380ms var(--ease-out) both;
+}
+
+/* a full white frame held for a beat, then let go */
+@keyframes flash {
+  0%,
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes flash-soft {
+  0% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* the demo duel's line */
+.demo-chip {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + clamp(84px, 13vh, 120px));
+  z-index: var(--z-hud);
+  max-width: calc(100vw - 2 * var(--edge));
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--color-on-chrome);
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  transition: opacity var(--motion-slow) var(--ease-out), transform var(--motion-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.is-demo .demo-chip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition-delay: var(--duel-enter);
+}
+
+.is-card .demo-chip {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-waiting .thumb__ring::after,
+  .is-waiting .callout__word--steady {
+    animation: none;
+    opacity: 0.92;
+  }
+  .is-drawing .callout__word--draw {
+    animation: fade-in 200ms linear both;
+  }
+  .is-shot .callout__word--draw {
+    animation: fade-out 200ms linear 340ms both;
+  }
+  .is-early .callout__word--early {
+    animation: fade-in-out 1300ms linear both;
+  }
+  .flash.is-on,
+  .flash.is-soft {
+    animation: flash-soft 600ms linear both;
+  }
+  .hole.is-hit {
+    animation: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in-out {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+}

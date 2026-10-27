@@ -1,0 +1,508 @@
+/* The title over the live street: the name, the town, both gunslingers' plates on their own halves, mode and
+   best-of, and the button that starts the duel. Composed tall on a phone held upright and wide everywhere else. */
+
+.title {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-title);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas:
+    "brand . ."
+    ". . ."
+    ". opts ."
+    "p1 go p2";
+  align-items: end;
+  column-gap: var(--space-5);
+  padding:
+    calc(var(--safe-top) + clamp(14px, 3.4vh, 40px))
+    calc(var(--safe-right) + var(--edge))
+    calc(var(--safe-bottom) + clamp(14px, 3vh, 32px))
+    calc(var(--safe-left) + var(--edge));
+  pointer-events: none;
+}
+
+.title > * {
+  pointer-events: auto;
+}
+
+.title__brand {
+  grid-area: brand;
+  align-self: start;
+  max-width: min(46vw, 30vh + 160px, 440px);
+  pointer-events: none;
+}
+
+.title__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.4rem, min(6.4vw, 10vh), 5.4rem);
+  line-height: 0.9;
+  color: var(--color-title);
+  text-shadow: 0 2px 0 var(--color-title-shadow), 0 3px 0 var(--color-title-shadow), 0 10px 34px var(--color-title-shadow);
+  text-wrap: balance;
+}
+
+.title__town {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: clamp(6px, 1.2vh, 14px) 0 0;
+  font-size: clamp(0.95rem, 1.5vw, 1.35rem);
+  font-weight: 650;
+  color: var(--color-title);
+  text-shadow: 0 1px 0 var(--color-title-shadow), 0 2px 14px var(--color-title-shadow);
+}
+
+.title__town::before {
+  content: "";
+  width: clamp(22px, 3vw, 44px);
+  height: 2px;
+  background: currentColor;
+  opacity: 0.8;
+}
+
+/* options and the start button, stacked over the street between the gunslingers */
+.title__options {
+  grid-area: opts;
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.title__go {
+  grid-area: go;
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: clamp(72px, 9vh, 92px);
+}
+
+.title__hint {
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-chrome) 70%, transparent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--color-on-chrome);
+}
+
+.seg {
+  display: inline-flex;
+  align-items: stretch;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+}
+
+.seg__label {
+  display: grid;
+  place-items: center;
+  padding: 0 10px 0 8px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-on-chrome-muted);
+  white-space: nowrap;
+}
+
+.seg button {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-size: var(--text-md);
+  font-weight: 650;
+  color: var(--color-on-chrome);
+  transition: background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+
+.seg button[aria-checked="true"] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-on-accent) 22%, transparent), 0 1px 0 color-mix(in srgb, var(--color-text) 40%, transparent);
+}
+
+.seg button:active {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .seg button[aria-checked="false"]:hover {
+    background: color-mix(in srgb, var(--color-on-chrome) 12%, transparent);
+  }
+}
+
+/* the big button: a painted plank with stitched edges */
+.go {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 220px;
+  min-height: 60px;
+  padding: 0 40px;
+  border: 0;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  line-height: 1;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--color-title-shadow) 70%, transparent));
+  transition: transform var(--motion-fast) var(--ease-out), filter var(--motion-base) var(--ease-out);
+}
+
+.go::before {
+  content: "";
+  position: absolute;
+  inset: 5px 14px;
+  border-top: 1.5px dashed color-mix(in srgb, var(--color-on-accent) 45%, transparent);
+  border-bottom: 1.5px dashed color-mix(in srgb, var(--color-on-accent) 45%, transparent);
+  pointer-events: none;
+}
+
+.go__label {
+  position: relative;
+  translate: 0 1px;
+}
+
+.go:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .go:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--color-title-shadow) 80%, transparent));
+  }
+  .go:active {
+    transform: scale(0.97);
+  }
+}
+
+/* name plates, each on its own half and in its gunslinger's color */
+.plate {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(100%, 300px);
+  padding: 10px 14px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-chrome);
+  box-shadow: inset 0 0 0 1px var(--color-chrome-line), var(--shadow-1);
+  cursor: text;
+}
+
+.plate--left {
+  grid-area: p1;
+  justify-self: start;
+  border-left: 4px solid var(--color-p1);
+  --tint: var(--color-p1);
+}
+
+.plate--right {
+  grid-area: p2;
+  justify-self: end;
+  border-right: 4px solid var(--color-p2);
+  text-align: right;
+  --tint: var(--color-p2);
+}
+
+.plate__hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-on-chrome-muted);
+}
+
+.plate--right .plate__hint {
+  flex-direction: row-reverse;
+}
+
+.plate__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--tint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tint) 30%, transparent);
+}
+
+.plate__name {
+  width: 100%;
+  min-width: 0;
+  padding: 2px 0 4px;
+  border: 0;
+  border-bottom: 1.5px dashed var(--color-chrome-line);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  line-height: 1.2;
+  color: var(--color-on-chrome);
+  text-align: inherit;
+  transition: border-color var(--motion-base) var(--ease-out);
+}
+
+.plate__name:focus {
+  outline: none;
+  border-bottom-color: var(--tint);
+}
+
+.plate__stranger {
+  display: none;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-on-chrome-muted);
+}
+
+.is-solo .plate__stranger {
+  display: block;
+}
+
+.is-solo .plate--right .plate__name {
+  pointer-events: none;
+}
+
+/* entering and leaving: the street is already alive behind it */
+.title__brand,
+.title__options,
+.title__go,
+.plate {
+  transition: opacity var(--motion-slow) var(--ease-out), transform var(--motion-slow) var(--ease-out);
+}
+
+.is-loading .title__brand,
+.is-loading .title__options,
+.is-loading .title__go,
+.is-loading .plate {
+  opacity: 0;
+}
+
+.is-loading .title__brand {
+  transform: translateY(-18px);
+}
+
+.is-loading .plate,
+.is-loading .title__go,
+.is-loading .title__options {
+  transform: translateY(18px);
+}
+
+.title__options {
+  transition-delay: 60ms;
+}
+
+.plate {
+  transition-delay: 110ms;
+}
+
+.title__go {
+  transition-delay: 160ms;
+}
+
+.title.is-away {
+  visibility: hidden;
+  transition: visibility 0s linear var(--title-exit);
+}
+
+.title.is-away .title__brand,
+.title.is-away .title__options,
+.title.is-away .title__go,
+.title.is-away .plate {
+  transition-duration: var(--title-exit);
+}
+
+.title.is-away .title__brand {
+  opacity: 0;
+  transform: translateY(-24px);
+  transition-delay: 0ms;
+}
+
+.title.is-away .plate--left {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition-delay: 0ms;
+}
+
+.title.is-away .plate--right {
+  opacity: 0;
+  transform: translateX(30px);
+  transition-delay: 0ms;
+}
+
+.title.is-away .title__options,
+.title.is-away .title__go {
+  opacity: 0;
+  transform: translateY(24px) scale(0.98);
+  transition-delay: 0ms;
+}
+
+/* a phone held upright: a tall poster, name on top, controls in a band above the bottom */
+@media (max-aspect-ratio: 9/10) {
+  .title {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto auto;
+    grid-template-areas:
+      "brand brand"
+      ". ."
+      "p1 p2"
+      "opts opts"
+      "go go";
+    row-gap: 10px;
+    column-gap: 10px;
+    padding-top: max(calc(var(--safe-top) + 64px), calc(var(--banner-bottom, 20vh) + 6px));
+    padding-bottom: calc(var(--safe-bottom) + 68px);
+  }
+
+  .title__brand {
+    justify-self: center;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .title__name {
+    font-size: clamp(2.8rem, 14.5vw, 5rem);
+  }
+
+  .title__town {
+    justify-content: center;
+    font-size: 1.05rem;
+  }
+
+  .title__town::after {
+    content: "";
+    width: 22px;
+    height: 2px;
+    background: currentColor;
+    opacity: 0.8;
+  }
+
+  .title__options {
+    grid-area: opts;
+    align-self: center;
+    margin: 0;
+    flex-wrap: nowrap;
+  }
+
+  .title__go {
+    grid-area: go;
+    margin: 0;
+  }
+
+  .plate {
+    width: 100%;
+    gap: 2px;
+    padding: 7px 12px 8px;
+  }
+
+  .plate__hint {
+    font-size: var(--text-xs);
+  }
+
+  .plate__name {
+    font-size: 1.25rem;
+    padding: 0 0 2px;
+  }
+
+  .seg button {
+    min-height: 38px;
+  }
+
+  .go {
+    min-width: min(100%, 300px);
+    min-height: 54px;
+  }
+
+  .title__hint {
+    font-size: var(--text-xs);
+  }
+}
+
+/* a phone on its side: everything smaller, the name tucked in the corner */
+@media (max-height: 520px) and (min-aspect-ratio: 9/10) {
+  .title {
+    grid-template-areas:
+      "brand . ."
+      "opts . ."
+      ". . ."
+      "p1 go p2";
+  }
+
+  .title__brand {
+    max-width: none;
+  }
+
+  .title__options {
+    justify-self: start;
+    align-self: start;
+    justify-content: flex-start;
+    margin: 10px 0 0;
+  }
+
+  .title__name {
+    font-size: clamp(2rem, 8.5vh, 2.8rem);
+  }
+
+  .title__town {
+    margin-top: 4px;
+    font-size: 0.95rem;
+  }
+
+  .title__options {
+    margin-bottom: var(--space-2);
+  }
+
+  .title__go {
+    margin-bottom: 84px;
+  }
+
+  .seg button {
+    min-height: 36px;
+  }
+
+  .go {
+    min-width: 190px;
+    min-height: 50px;
+    font-size: 1.3rem;
+  }
+
+  .title__hint {
+    display: none;
+  }
+
+  .plate {
+    width: min(100%, 230px);
+    padding: 6px 12px 8px;
+  }
+
+  .plate__name {
+    font-size: 1.15rem;
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 1000px) {
+  .plate {
+    width: 340px;
+  }
+
+  .go {
+    min-width: 260px;
+    min-height: 68px;
+  }
+}
