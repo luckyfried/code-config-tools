@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"title": "Abyss Drift", "diverName": "Sam", "theme": "abyss", "seed": "lantern", "airSeconds": 120, "species": ["whale", "manta", "school", "jellyfish", "lanternfish", "anglerfish", "squid", "crab"]};

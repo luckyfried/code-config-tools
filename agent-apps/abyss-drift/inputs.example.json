@@ -1,0 +1,16 @@
+{
+  "title": "Abyss Drift",
+  "diverName": "Sam",
+  "theme": "abyss",
+  "seed": "lantern",
+  "airSeconds": 120,
+  "species": ["whale", "manta", "school", "jellyfish", "lanternfish", "anglerfish", "squid", "crab"],
+  "_notes": {
+    "title": "The name on the surface screen and in the corner of every photo.",
+    "diverName": "Stamped on every photo as \"Photo by …\" and shown on the surface screen.",
+    "theme": "The water: abyss (blue-black, cyan glow), kelp (green water, gold glow), or volcanic (red vents, orange glow). Each has a light and a dark look that follows the device.",
+    "seed": "Any word. The trench's bends, its rock, and where the vents stand all come from it; the same word makes the same trench.",
+    "airSeconds": "Seconds of air for one dive, including the climb back up. 120 is the standard dive; 45 to 600.",
+    "species": "Which creatures live in the trench: any of whale, manta, school, jellyfish, lanternfish, anglerfish, squid, crab. Leave out a name to leave it out of the dive and the log."
+  }
+}

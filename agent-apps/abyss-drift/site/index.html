@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Dive a glowing trench and photograph the creatures of the deep.">
+  <title>Abyss Drift</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/saira.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/screens.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+  <script type="module" src="./game/main.js"></script>
+</head>
+<body data-screen="surface">
+  <canvas id="scene" aria-label="The trench, seen from the submarine"></canvas>
+  <div class="veil" id="veil" aria-hidden="true"></div>
+
+  <section class="screen surface" id="surface" aria-labelledby="title">
+    <div class="sheet">
+      <header class="sheet-head">
+        <h1 class="title" id="title">Abyss Drift</h1>
+        <p class="lede">Dive a glowing trench and photograph the creatures of the deep.</p>
+      </header>
+      <div class="launch">
+        <button class="btn primary dive-btn" id="dive-start" type="button" disabled>
+          <span class="btn-label">Dive</span>
+          <span class="btn-sub" id="air-note">120 seconds of air</span>
+        </button>
+        <p class="diver"><span class="diver-label">Diver</span> <span id="diver-name">Diver</span></p>
+      </div>
+      <div class="species-block">
+        <div class="block-head">
+          <h2 class="block-title">Creature log</h2>
+          <p class="block-meta" id="log-count">0 of 8 photographed</p>
+        </div>
+        <ul class="species-grid" id="species-grid"></ul>
+      </div>
+      <p class="best" id="best-line">Your best dive shows here after you surface.</p>
+      <p class="status" id="status" role="status"></p>
+    </div>
+  </section>
+
+  <section class="screen hud" id="hud" aria-label="Dive" hidden>
+    <div class="hud-depth">
+      <p class="depth-read"><output id="depth" class="depth-num">0</output><span class="depth-unit">m</span></p>
+      <p class="zone" id="zone">Sunlit zone</p>
+    </div>
+    <div class="ruler" id="ruler" aria-hidden="true">
+      <div class="ruler-track"></div>
+      <div class="ruler-reach" id="ruler-reach"></div>
+      <ul class="ruler-marks" id="ruler-marks"></ul>
+      <div class="ruler-you" id="ruler-you"></div>
+    </div>
+    <div class="hud-air">
+      <div class="air-dial" id="air-dial" role="meter" aria-label="Air" aria-valuemin="0" aria-valuemax="120" aria-valuenow="120">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="air-track" cx="50" cy="50" r="42"/>
+          <circle class="air-reserve" id="air-reserve" cx="50" cy="50" r="42" pathLength="100"/>
+          <circle class="air-fill" id="air-fill" cx="50" cy="50" r="42" pathLength="100"/>
+        </svg>
+        <p class="air-read"><output id="air-secs" class="air-num">120</output><span class="air-unit">s air</span></p>
+      </div>
+      <div class="hud-tools">
+        <button class="icon-btn" id="sound-btn" type="button" aria-label="Sound off" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="ic-speaker" d="M4 9h4l5-4v14l-5-4H4z"/><path class="ic-waves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="ic-mute" d="M16 9l5 6M21 9l-5 6"/></svg>
+        </button>
+        <button class="icon-btn" id="pause-btn" type="button" aria-label="Pause">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <p class="banner" id="banner" role="status" aria-live="polite"></p>
+
+    <div class="viewfinder" id="viewfinder" aria-hidden="true">
+      <div class="vf-frame">
+        <span class="vf-corner tl"></span><span class="vf-corner tr"></span><span class="vf-corner bl"></span><span class="vf-corner br"></span>
+        <div class="vf-ring" id="vf-ring"></div>
+        <div class="vf-cross"></div>
+        <p class="vf-read" id="vf-read"></p>
+      </div>
+    </div>
+    <div class="stick" id="stick" aria-hidden="true"><div class="stick-knob" id="stick-knob"></div></div>
+
+    <ol class="log-strip" id="log-strip" aria-label="Creature log"></ol>
+
+    <div class="controls">
+      <button class="ctl surface-ctl" id="surface-btn" type="button">
+        <span class="ctl-label" id="surface-label">Surface</span>
+      </button>
+      <button class="ctl descend-ctl" id="descend-btn" type="button" aria-label="Hold to descend">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12l6 6 6-6"/></svg>
+        <span class="key-hint">Space</span>
+      </button>
+      <button class="ctl shutter-ctl" id="shutter-btn" type="button" aria-label="Take a photo">
+        <span class="shutter-ring"></span>
+        <span class="key-hint">Enter</span>
+      </button>
+    </div>
+    <p class="keys-hint" id="keys-hint">WASD or arrows to steer, Space to descend, Enter for the shutter, drag to look</p>
+  </section>
+
+  <section class="screen pause" id="pause" aria-labelledby="pause-title" hidden>
+    <div class="dialog">
+      <h2 class="dialog-title" id="pause-title">Paused</h2>
+      <p class="dialog-text">The air gauge holds while you are here.</p>
+      <div class="dialog-actions">
+        <button class="btn primary" id="resume-btn" type="button">Resume</button>
+        <button class="btn" id="end-btn" type="button">Surface now</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen results" id="results" aria-labelledby="results-title" hidden>
+    <div class="sheet results-sheet">
+      <header class="sheet-head">
+        <h2 class="title results-title" id="results-title">Surfaced</h2>
+        <p class="lede" id="results-lede"></p>
+      </header>
+      <dl class="tally">
+        <div><dt>Photos</dt><dd id="tally-photos">0</dd></div>
+        <div><dt>Stars</dt><dd id="tally-stars">0</dd></div>
+        <div><dt>Log</dt><dd id="tally-log">0 of 8</dd></div>
+        <div><dt>Deepest</dt><dd id="tally-depth">0 m</dd></div>
+      </dl>
+      <ul class="roll" id="roll"></ul>
+      <div class="results-actions">
+        <button class="btn primary" id="again-btn" type="button">Dive again</button>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
+    <figure class="viewer-fig">
+      <img id="viewer-img" alt="" width="1800" height="1200">
+      <figcaption>
+        <p class="viewer-title" id="viewer-title"></p>
+        <p class="viewer-meta" id="viewer-meta"></p>
+      </figcaption>
+    </figure>
+    <div class="viewer-actions">
+      <button class="btn primary" id="viewer-save" type="button">Save photo</button>
+      <button class="btn" id="viewer-close" type="button">Close</button>
+    </div>
+  </dialog>
+  <script src="./badge.js" defer></script>
+</body>
+</html>

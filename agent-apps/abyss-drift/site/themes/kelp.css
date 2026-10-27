@@ -1,0 +1,107 @@
+/* Kelp: green water, gold glow. Tokens only: the light block, the dark block for the system setting, and the two overrides. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --font-sans: "Saira", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 400ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --world-water-surface: #3f8f62;
+  --world-water-mid: #1a5038;
+  --world-water-deep: #0a2619;
+  --world-water-abyss: #020b07;
+  --world-sun: #f2ffd6;
+  --world-caustic: #eaffc4;
+  --world-rock-light: #6c6a50;
+  --world-rock-dark: #24221a;
+  --world-lichen: #ffd24a;
+  --world-glow: #ffc94a;
+  --world-glow-2: #a6ff8c;
+  --world-lure: #ffe590;
+  --world-vent: #ff9a3a;
+  --world-snow: #e6edd2;
+  --world-headlight: #fff6d8;
+  --world-sub-hull: #d9512b;
+  --color-bg: #e3efd9;
+  --color-surface: #f4f9ee;
+  --color-surface-2: #ffffff;
+  --color-text: #10220f;
+  --color-muted: #4a5c3f;
+  --color-accent: #6a5a00;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3341d;
+  --color-ok: #2d7a2a;
+  --color-border: #10220f24;
+  --color-glass: #f4f9eed1;
+  --color-glass-strong: #f8fbf3eb;
+  --color-ink-on-scene: #f4fbff;
+  --color-shade: #1c3a1a33;
+  --shadow-1: 0 1px 2px #10220f1f, 0 4px 12px #10220f14;
+  --shadow-2: 0 2px 6px #10220f1f, 0 16px 40px #10220f29;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #040b06;
+    --color-surface: #0b1c10;
+    --color-surface-2: #14301c;
+    --color-text: #eef7e0;
+    --color-muted: #a7b897;
+    --color-accent: #ffc94a;
+    --color-on-accent: #231a00;
+    --color-danger: #ff7a55;
+    --color-ok: #8ef07a;
+    --color-border: #e0ff9c2b;
+    --color-glass: #06120ab8;
+    --color-glass-strong: #0b1c10e6;
+    --color-ink-on-scene: #f4fbff;
+    --color-shade: #00000066;
+    --shadow-1: 0 1px 2px #00000066, 0 4px 12px #00000040;
+    --shadow-2: 0 2px 6px #00000066, 0 16px 40px #00000080;
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #040b06;
+  --color-surface: #0b1c10;
+  --color-surface-2: #14301c;
+  --color-text: #eef7e0;
+  --color-muted: #a7b897;
+  --color-accent: #ffc94a;
+  --color-on-accent: #231a00;
+  --color-danger: #ff7a55;
+  --color-ok: #8ef07a;
+  --color-border: #e0ff9c2b;
+  --color-glass: #06120ab8;
+  --color-glass-strong: #0b1c10e6;
+  --color-ink-on-scene: #f4fbff;
+  --color-shade: #00000066;
+  --shadow-1: 0 1px 2px #00000066, 0 4px 12px #00000040;
+  --shadow-2: 0 2px 6px #00000066, 0 16px 40px #00000080;
+}

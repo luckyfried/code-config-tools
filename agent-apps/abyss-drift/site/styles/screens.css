@@ -1,0 +1,492 @@
+/* The surface, results, pause, and photo viewer screens. Structure only. */
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.sheet {
+  pointer-events: auto;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  background: var(--color-glass);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Desktop: a slab on the left over the live water; the scene keeps the rest of the width. */
+@media (min-width: 900px) {
+  .sheet {
+    top: max(var(--space-6), env(safe-area-inset-top));
+    max-height: calc(100dvh - 2 * var(--space-6));
+    left: max(var(--space-6), env(safe-area-inset-left));
+    width: clamp(420px, 34vw, 560px);
+    padding: var(--space-6) var(--space-6) var(--space-5);
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Phones and narrow windows: a sheet from the bottom edge, the scene above it. */
+@media (max-width: 899.98px) {
+  .sheet {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 58dvh;
+    padding: var(--space-5) max(var(--space-5), env(safe-area-inset-right)) calc(var(--space-5) + env(safe-area-inset-bottom)) max(var(--space-5), env(safe-area-inset-left));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: 0;
+    gap: var(--space-4);
+  }
+}
+
+.sheet-head {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 640;
+  font-size: clamp(2.5rem, 2rem + 2.6vw, 4.6rem);
+  line-height: 0.95;
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  text-wrap: balance;
+}
+
+.lede {
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  line-height: 1.4;
+  max-width: 34ch;
+  text-wrap: pretty;
+}
+
+.launch {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dive-btn {
+  min-height: 64px;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+}
+.dive-btn .btn-label {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 620;
+  font-variation-settings: "opsz" 72, "SOFT" 100;
+  line-height: 1;
+}
+.dive-btn .btn-sub {
+  font-weight: 500;
+  font-size: var(--text-sm);
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+
+.diver {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+.diver-label {
+  margin-right: var(--space-1);
+}
+#diver-name {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.species-block {
+  display: grid;
+  gap: var(--space-3);
+}
+.block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.block-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.block-meta {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.species-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.species {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 2px;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  min-width: 0;
+}
+.species .art {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-surface);
+  display: grid;
+  place-items: center;
+  color: var(--color-muted);
+}
+.species .art .silhouette {
+  width: 82%;
+  height: auto;
+  opacity: 0.55;
+}
+.species .art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.species .photophore {
+  fill: var(--color-accent);
+}
+.species-name {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.species-band {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.species .stars {
+  position: absolute;
+  top: calc(var(--space-2) + 3px);
+  right: calc(var(--space-2) + 3px);
+  color: var(--color-accent);
+  padding: 1px 3px;
+  border-radius: var(--radius-sm);
+  background: var(--color-glass-strong);
+}
+.species .stars svg {
+  width: 10px;
+  height: 10px;
+}
+
+.best {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+.status:empty {
+  display: none;
+}
+.status {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+/* Desktop: nothing on the slab reads under 14 px. */
+@media (min-width: 900px) {
+  .dive-btn .btn-sub,
+  .diver,
+  .block-meta,
+  .best {
+    font-size: var(--text-md);
+  }
+  .block-title {
+    font-size: var(--text-lg);
+  }
+  .species-name,
+  .species-band {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Phone sheet: tighter, so the water above keeps the top of the screen. */
+@media (max-width: 899.98px) {
+  .title {
+    font-size: clamp(2.2rem, 1.6rem + 3vw, 3rem);
+  }
+  .lede {
+    font-size: var(--text-md);
+  }
+  .sheet-head {
+    gap: var(--space-1);
+  }
+  .launch {
+    grid-template-columns: 1fr;
+  }
+  .dive-btn {
+    min-height: 58px;
+  }
+  .species {
+    padding: var(--space-1);
+  }
+  .species-band {
+    display: none;
+  }
+}
+
+/* Short screens (a phone on its side): the sheet sits on the left and the log shows icons only. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .sheet {
+    top: max(var(--space-3), env(safe-area-inset-top));
+    bottom: auto;
+    left: max(var(--space-3), env(safe-area-inset-left));
+    right: auto;
+    width: min(400px, 50vw);
+    max-height: calc(100dvh - 2 * var(--space-3));
+    border-radius: var(--radius-lg);
+    border-bottom: 1px solid var(--color-border);
+    padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) max(var(--space-4), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
+    gap: var(--space-3);
+  }
+  .title {
+    font-size: 2.2rem;
+  }
+  .lede,
+  .best,
+  .species-name {
+    display: none;
+  }
+  .species-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  .dive-btn {
+    min-height: 52px;
+  }
+}
+
+/* Big screens: the slab grows with the room. */
+@media (min-width: 1800px) {
+  .sheet {
+    width: 680px;
+    padding: var(--space-7) var(--space-7) var(--space-6);
+    gap: var(--space-6);
+  }
+  .lede {
+    font-size: var(--text-xl);
+  }
+  .dive-btn .btn-sub,
+  .diver,
+  .block-meta,
+  .best {
+    font-size: var(--text-lg);
+  }
+  .block-title {
+    font-size: var(--text-xl);
+  }
+  .species-name,
+  .species-band {
+    font-size: var(--text-md);
+  }
+}
+
+/* Results */
+.results-sheet .results-title {
+  font-size: clamp(2.2rem, 1.8rem + 2vw, 3.6rem);
+}
+.tally {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.tally div {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.tally dt {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+.tally dd {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.roll {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.roll:empty::before {
+  content: "No photos this dive. Hold the dive button, find a creature, and press the shutter.";
+  grid-column: 1 / -1;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+.shot {
+  display: grid;
+  gap: var(--space-1);
+}
+.shot-open {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: zoom-in;
+  background: var(--color-surface);
+}
+.shot-open img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+.shot-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+.shot-cap .stars {
+  color: var(--color-accent);
+}
+.shot-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shot-save {
+  min-height: 40px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+.results-actions {
+  display: flex;
+  gap: var(--space-3);
+  position: sticky;
+  bottom: 0;
+}
+.results-actions .btn {
+  flex: 1;
+  min-height: 56px;
+}
+@media (max-width: 899.98px) {
+  .results-sheet {
+    max-height: 82dvh;
+  }
+  .tally dd {
+    font-size: var(--text-lg);
+  }
+}
+
+/* Pause */
+.pause {
+  display: grid;
+  place-items: center;
+  background: var(--color-shade);
+}
+.dialog {
+  pointer-events: auto;
+  width: min(420px, calc(100vw - 32px));
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-strong);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-2);
+  display: grid;
+  gap: var(--space-4);
+}
+.dialog-title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 620;
+}
+.dialog-text {
+  color: var(--color-muted);
+}
+.dialog-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.dialog-actions .btn {
+  flex: 1;
+}
+
+/* Photo viewer */
+.viewer {
+  width: min(1100px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-glass-strong);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2);
+}
+.viewer::backdrop {
+  background: var(--color-shade);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.viewer-fig {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.viewer-fig img {
+  width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 220px);
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.viewer-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 620;
+}
+.viewer-meta {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+.viewer-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.viewer-actions .btn {
+  flex: 1;
+}

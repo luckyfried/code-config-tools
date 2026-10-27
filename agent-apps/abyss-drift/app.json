@@ -1,0 +1,17 @@
+{
+  "id": "01a17a40-47b7-7d9e-b26b-83453ac86b13",
+  "version": "2026-10-21",
+  "name": "Abyss Drift",
+  "shortDescription": "Dive a glowing trench and photograph the creatures of the deep.",
+  "description": "A two-minute dive in a small submarine down a bioluminescent trench. Eight species live at their own depths: a humpback whale passing over the light, giant mantas, a milling sardine school, crown jellies, a flickering lanternfish shoal, an anglerfish with its lure, a giant squid that keeps to the edge of your headlights, and yeti crabs among the hydrothermal vents. Frame each one in the viewfinder and take its picture: every photo is a real PNG stamped with the species, the depth, the date, and your name, ready to save or share. A creature centered and lit earns three stars. The air includes the climb back up, so how deep you go is your call. The creature log and your best dive stay in the browser. Three waters to choose from (abyss, kelp, and volcanic), each with a light and a dark look, and any word you like shapes the trench.",
+  "category": "games",
+  "subcategory": "3D and WebGL worlds",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/abyss-drift",
+  "setup": ""
+}
