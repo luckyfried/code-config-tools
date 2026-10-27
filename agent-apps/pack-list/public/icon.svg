@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#f1ece2"/>
+  <defs>
+    <clipPath id="b"><path d="M134 214H378C395 214 405 224 407 241L414 352C415 370 404 382 386 382H126C108 382 97 370 98 352L105 241C107 224 117 214 134 214Z"/></clipPath>
+  </defs>
+  <path d="M134 214H378C395 214 405 224 407 241L414 352C415 370 404 382 386 382H126C108 382 97 370 98 352L105 241C107 224 117 214 134 214Z" fill="#e4dccb"/>
+  <g clip-path="url(#b)">
+    <path d="M60 300Q97 282 134 300T208 300T282 300T356 300T430 300T504 300V420H60Z" fill="#d9906a"/>
+    <path d="M40 310Q77 330 114 310T188 310T262 310T336 310T410 310T484 310V420H40Z" fill="#b65b36"/>
+  </g>
+  <path d="M134 214H378C395 214 405 224 407 241L414 352C415 370 404 382 386 382H126C108 382 97 370 98 352L105 241C107 224 117 214 134 214Z" fill="none" stroke="#3b3227" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M204 216V180C204 158 218 146 240 146H272C294 146 308 158 308 180V216" fill="none" stroke="#3b3227" stroke-width="16" stroke-linecap="round"/>
+  <g transform="rotate(-8 330 262)">
+    <rect x="312" y="236" width="40" height="56" rx="9" fill="#55652a" stroke="#3b3227" stroke-width="5"/>
+    <path d="M321 266l8 8 15-17" fill="none" stroke="#fbf8f2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

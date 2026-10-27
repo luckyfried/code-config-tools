@@ -1,0 +1,171 @@
+{
+  "_notes": {
+    "templates": "The kinds of trips you take. Each has an id, a label, and groups of items; an item has a name and, when you track weight, a weight in kilograms.",
+    "always": "Items that go on every list, whatever the trip. A name, or a name with a weight.",
+    "limitKg": "Your bag's weight limit in kilograms, for the weight bar. Leave it out to hide weights.",
+    "trip": "The trip the list opens on the first time: its name, the template ids it starts from, and anything already in the bag.",
+    "theme": "canvas (light), night-flight (dark), or auto to follow the device."
+  },
+  "templates": [
+    {
+      "id": "weekend",
+      "label": "Weekend away",
+      "groups": [
+        {
+          "label": "Clothes",
+          "items": [
+            { "name": "T-shirts", "weight": 0.5 },
+            { "name": "Linen shirt", "weight": 0.25 },
+            { "name": "Jeans", "weight": 0.7 },
+            { "name": "Socks and underwear", "weight": 0.4 },
+            { "name": "Light sweater", "weight": 0.45 },
+            { "name": "Sneakers", "weight": 0.8 }
+          ]
+        },
+        {
+          "label": "Toiletries",
+          "items": [
+            { "name": "Toothbrush and paste", "weight": 0.12 },
+            { "name": "Deodorant", "weight": 0.1 },
+            { "name": "Contact lenses", "weight": 0.05 },
+            { "name": "Shampoo, travel size", "weight": 0.1 }
+          ]
+        },
+        {
+          "label": "Tech",
+          "items": [
+            { "name": "Earbuds", "weight": 0.06 },
+            { "name": "Power bank", "weight": 0.25 },
+            { "name": "Kindle", "weight": 0.18 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beach-week",
+      "label": "Beach week",
+      "groups": [
+        {
+          "label": "Clothes",
+          "items": [
+            { "name": "Swimsuit", "weight": 0.15 },
+            { "name": "Linen shirt", "weight": 0.25 },
+            { "name": "Shorts", "weight": 0.3 },
+            { "name": "Sandals", "weight": 0.4 },
+            { "name": "Sun hat", "weight": 0.1 },
+            { "name": "Socks and underwear", "weight": 0.4 }
+          ]
+        },
+        {
+          "label": "Beach",
+          "items": [
+            { "name": "Sunscreen SPF 50", "weight": 0.2 },
+            { "name": "Sunglasses", "weight": 0.05 },
+            { "name": "Beach towel", "weight": 0.6 },
+            { "name": "Paperback novel", "weight": 0.3 },
+            { "name": "Snorkel mask", "weight": 0.35 }
+          ]
+        },
+        {
+          "label": "Toiletries",
+          "items": [
+            { "name": "Toothbrush and paste", "weight": 0.12 },
+            { "name": "After-sun lotion", "weight": 0.2 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "work-trip",
+      "label": "Work trip",
+      "groups": [
+        {
+          "label": "Clothes",
+          "items": [
+            { "name": "Blazer", "weight": 0.9 },
+            { "name": "Dress shirts", "weight": 0.6 },
+            { "name": "Trousers", "weight": 0.6 },
+            { "name": "Leather shoes", "weight": 1.0 },
+            { "name": "Socks and underwear", "weight": 0.4 }
+          ]
+        },
+        {
+          "label": "Tech",
+          "items": [
+            { "name": "Laptop", "weight": 1.4 },
+            { "name": "Laptop charger", "weight": 0.35 },
+            { "name": "USB-C adapter", "weight": 0.05 },
+            { "name": "Earbuds", "weight": 0.06 }
+          ]
+        },
+        {
+          "label": "Papers",
+          "items": [
+            { "name": "Notebook and pen", "weight": 0.3 },
+            { "name": "Business cards", "weight": 0.05 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "camping",
+      "label": "Camping trip",
+      "groups": [
+        {
+          "label": "Camp",
+          "items": [
+            { "name": "Tent", "weight": 2.1 },
+            { "name": "Sleeping bag", "weight": 1.2 },
+            { "name": "Sleeping pad", "weight": 0.5 },
+            { "name": "Headlamp", "weight": 0.1 },
+            { "name": "Camp stove and gas", "weight": 0.6 }
+          ]
+        },
+        {
+          "label": "Clothes",
+          "items": [
+            { "name": "Rain jacket", "weight": 0.4 },
+            { "name": "Fleece", "weight": 0.5 },
+            { "name": "Hiking boots", "weight": 1.3 },
+            { "name": "Wool socks", "weight": 0.2 }
+          ]
+        },
+        {
+          "label": "Kitchen",
+          "items": [
+            { "name": "Pot and spork", "weight": 0.3 },
+            { "name": "Water filter", "weight": 0.2 },
+            { "name": "Coffee", "weight": 0.25 }
+          ]
+        }
+      ]
+    }
+  ],
+  "always": [
+    { "name": "Passport", "weight": 0.05 },
+    { "name": "Phone charger", "weight": 0.1 },
+    { "name": "Wallet", "weight": 0.1 },
+    { "name": "House keys", "weight": 0.05 },
+    { "name": "Medication", "weight": 0.05 },
+    { "name": "Reusable water bottle", "weight": 0.3 }
+  ],
+  "limitKg": 8,
+  "trip": {
+    "name": "Lisbon, long weekend",
+    "templates": ["weekend", "beach-week"],
+    "packed": [
+      "Passport",
+      "Phone charger",
+      "Wallet",
+      "Linen shirt",
+      "Swimsuit",
+      "Jeans",
+      "Toothbrush and paste",
+      "Sunglasses",
+      "Earbuds",
+      "Sunscreen SPF 50",
+      "T-shirts"
+    ]
+  },
+  "theme": "auto"
+}

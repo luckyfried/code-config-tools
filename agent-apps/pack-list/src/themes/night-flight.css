@@ -1,0 +1,35 @@
+/* night-flight: a navy cabin, mint checks, a bone bag. Dark. */
+:root {
+  color-scheme: dark;
+  --background: #0d1628;
+  --foreground: #ece5d6;
+  --card: #132037;
+  --card-foreground: #ece5d6;
+  --popover: #172540;
+  --popover-foreground: #ece5d6;
+  --primary: #7dd6ac;
+  --primary-foreground: #0a1a1f;
+  --secondary: #1b2945;
+  --secondary-foreground: #ece5d6;
+  --muted: #19263f;
+  --muted-foreground: #97a3bb;
+  --accent: #1e2d4c;
+  --accent-foreground: #ece5d6;
+  --destructive: #f07a62;
+  --border: rgb(236 229 214 / 0.1);
+  --input: rgb(236 229 214 / 0.18);
+  --ring: #7dd6ac;
+  --radius: 0.875rem;
+  --rail: #0a1222;
+  --rail-edge: rgb(236 229 214 / 0.08);
+  --bag: #e8ddc6;
+  --bag-back: #a99f8a;
+  --bag-empty: #16223a;
+  --bag-line: #ece5d6;
+  --bag-shadow: rgb(0 0 0 / 0.45);
+  --swipe: #7dd6ac;
+  --swipe-foreground: #0a1a1f;
+  --warn: #f2b14a;
+  --row-hover: #172640;
+  --ghost-opacity: 0.5;
+}

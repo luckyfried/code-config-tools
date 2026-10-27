@@ -1,0 +1,35 @@
+/* canvas: bone paper, olive checks, a terracotta bag. Light. */
+:root {
+  color-scheme: light;
+  --background: #f1ece2;
+  --foreground: #27251d;
+  --card: #fbf8f2;
+  --card-foreground: #27251d;
+  --popover: #fbf8f2;
+  --popover-foreground: #27251d;
+  --primary: #55652a;
+  --primary-foreground: #fbf8f2;
+  --secondary: #e5ddcd;
+  --secondary-foreground: #27251d;
+  --muted: #e8e1d3;
+  --muted-foreground: #6a6555;
+  --accent: #e3dac8;
+  --accent-foreground: #27251d;
+  --destructive: #b0371f;
+  --border: #dbd2c0;
+  --input: #cfc5b1;
+  --ring: #55652a;
+  --radius: 0.875rem;
+  --rail: #e8e0d0;
+  --rail-edge: #d9cfbb;
+  --bag: #b65b36;
+  --bag-back: #d9906a;
+  --bag-empty: #e4dccb;
+  --bag-line: #3b3227;
+  --bag-shadow: rgb(59 50 39 / 0.16);
+  --swipe: #55652a;
+  --swipe-foreground: #fbf8f2;
+  --warn: #c47f17;
+  --row-hover: #f4efe6;
+  --ghost-opacity: 0.32;
+}

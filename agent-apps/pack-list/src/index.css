@@ -1,0 +1,300 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+
+/* Every color lives in theme.css (one file from src/themes/, linked from index.html); this file maps names only. */
+
+@custom-variant dark (&:is(.dark *));
+@custom-variant short (@media (max-height: 560px));
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-rail: var(--rail);
+  --color-rail-edge: var(--rail-edge);
+  --color-bag: var(--bag);
+  --color-bag-back: var(--bag-back);
+  --color-bag-empty: var(--bag-empty);
+  --color-bag-line: var(--bag-line);
+  --color-swipe: var(--swipe);
+  --color-swipe-foreground: var(--swipe-foreground);
+  --color-warn: var(--warn);
+  --color-row-hover: var(--row-hover);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: "cv11", "ss03";
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100dvh;
+  }
+}
+
+/* Group headers are small caps: the label is the design. */
+.small-caps {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
+/* A group's count hangs on a luggage tag like the bag's: an eyelet punched near its left edge. */
+.luggage-tag {
+  transform-origin: 0.5rem 50%;
+}
+.luggage-tag::before {
+  content: "";
+  position: absolute;
+  left: 0.4rem;
+  top: 50%;
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-top: -0.1875rem;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 0 0 1.25px var(--bag-line);
+}
+
+/* The bag: two sine layers slide sideways inside the bag's own outline. */
+.wave {
+  animation: wave-slide var(--wave-period, 3.6s) linear infinite;
+}
+.wave-back {
+  --wave-period: 5.8s;
+  animation-direction: reverse;
+}
+@keyframes wave-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-60px);
+  }
+}
+/* The small bags on the group headers hold still; only the header bag's wave keeps moving. */
+.bag-mini .wave {
+  animation: none;
+}
+.bag-level {
+  transition: transform 1000ms var(--ease-out-strong);
+}
+
+/* The rolling percentage: each digit is a strip of 0 to 9 that slides to its place. */
+.roll-digit {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+}
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--d) * -10%));
+  transition: transform 700ms var(--ease-out-strong);
+}
+
+/* A check is the bag's wave in small: the liquid climbs into the box sliding sideways, then the stroke draws in 200 ms. */
+.wave-mark-level {
+  transform: translateY(27px);
+  transition: transform 260ms var(--ease-out-strong);
+}
+.wave-mark-front,
+.wave-mark-back {
+  transition: transform 260ms var(--ease-out-strong);
+}
+.wave-mark-back {
+  transform: translateX(-24px);
+}
+.wave-mark[data-on] .wave-mark-level {
+  transform: translateY(-4px);
+  transition: transform 460ms cubic-bezier(0.33, 0.8, 0.4, 1);
+}
+.wave-mark[data-on] .wave-mark-front {
+  transform: translateX(-24px);
+  transition-duration: 520ms;
+}
+.wave-mark[data-on] .wave-mark-back {
+  transform: translateX(0);
+  transition-duration: 520ms;
+}
+.check-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 120ms ease-out;
+}
+.wave-mark[data-on] .check-path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 200ms var(--ease-out-strong) 240ms;
+}
+.strike {
+  position: relative;
+  transition: color 200ms ease;
+}
+.strike::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 50%;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 200ms var(--ease-out-strong);
+}
+.is-packed .strike::after {
+  transform: scaleX(1);
+}
+
+/* A row follows the finger, then slides home and settles. */
+.swipe-row {
+  touch-action: pan-y;
+}
+.swipe-face {
+  transition: transform 320ms var(--ease-drawer);
+}
+.swipe-face.is-dragging {
+  transition: none;
+}
+
+/* Bag weight: the bar scales from the left and warms toward amber near the limit. */
+.weight-fill {
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  background-color: color-mix(in oklch, var(--warn) calc(var(--warm, 0) * 100%), var(--primary));
+  transition:
+    transform 600ms var(--ease-out-strong),
+    background-color 400ms ease;
+}
+.weight-fill.is-over {
+  background-color: var(--destructive);
+}
+.weight-ghost {
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  transition: transform 600ms var(--ease-out-strong);
+}
+
+/* Composing two templates cross-fades the list. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-old(pack-groups) {
+  animation: 180ms ease-out both fade-out-soft;
+}
+::view-transition-new(pack-groups) {
+  animation: 240ms ease-out both fade-in-soft;
+}
+::view-transition-group(pack-groups) {
+  animation-duration: 240ms;
+}
+@keyframes fade-out-soft {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes fade-in-soft {
+  from {
+    opacity: 0;
+  }
+}
+.note-in {
+  animation: note-in 260ms var(--ease-out-strong) both;
+}
+@keyframes note-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.row-in {
+  animation: row-in 320ms var(--ease-out-strong) both;
+}
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row-hoverable:hover {
+    background-color: var(--row-hover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave {
+    animation: none;
+  }
+  .bag-level,
+  .roll-strip,
+  .swipe-face,
+  .weight-fill,
+  .weight-ghost {
+    transition-duration: 0ms;
+  }
+  .check-path,
+  .wave-mark .check-path,
+  .wave-mark[data-on] .check-path,
+  .wave-mark-level,
+  .wave-mark-front,
+  .wave-mark-back,
+  .wave-mark[data-on] .wave-mark-level,
+  .wave-mark[data-on] .wave-mark-front,
+  .wave-mark[data-on] .wave-mark-back,
+  .strike::after {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+  }
+  .note-in,
+  .row-in {
+    animation: none;
+  }
+  ::view-transition-old(pack-groups),
+  ::view-transition-new(pack-groups) {
+    animation: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

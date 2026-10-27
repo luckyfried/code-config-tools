@@ -1,0 +1,71 @@
+/* canvas: bone paper, olive checks, a terracotta bag. Light. */
+:root {
+  color-scheme: light;
+  --background: #f1ece2;
+  --foreground: #27251d;
+  --card: #fbf8f2;
+  --card-foreground: #27251d;
+  --popover: #fbf8f2;
+  --popover-foreground: #27251d;
+  --primary: #55652a;
+  --primary-foreground: #fbf8f2;
+  --secondary: #e5ddcd;
+  --secondary-foreground: #27251d;
+  --muted: #e8e1d3;
+  --muted-foreground: #6a6555;
+  --accent: #e3dac8;
+  --accent-foreground: #27251d;
+  --destructive: #b0371f;
+  --border: #dbd2c0;
+  --input: #cfc5b1;
+  --ring: #55652a;
+  --radius: 0.875rem;
+  --rail: #e8e0d0;
+  --rail-edge: #d9cfbb;
+  --bag: #b65b36;
+  --bag-back: #d9906a;
+  --bag-empty: #e4dccb;
+  --bag-line: #3b3227;
+  --bag-shadow: rgb(59 50 39 / 0.16);
+  --swipe: #55652a;
+  --swipe-foreground: #fbf8f2;
+  --warn: #c47f17;
+  --row-hover: #f4efe6;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* night-flight: a navy cabin, mint checks, a bone bag. Dark. */
+  :root {
+    color-scheme: dark;
+    --background: #0d1628;
+    --foreground: #ece5d6;
+    --card: #132037;
+    --card-foreground: #ece5d6;
+    --popover: #172540;
+    --popover-foreground: #ece5d6;
+    --primary: #7dd6ac;
+    --primary-foreground: #0a1a1f;
+    --secondary: #1b2945;
+    --secondary-foreground: #ece5d6;
+    --muted: #19263f;
+    --muted-foreground: #97a3bb;
+    --accent: #1e2d4c;
+    --accent-foreground: #ece5d6;
+    --destructive: #f07a62;
+    --border: rgb(236 229 214 / 0.1);
+    --input: rgb(236 229 214 / 0.18);
+    --ring: #7dd6ac;
+    --radius: 0.875rem;
+    --rail: #0a1222;
+    --rail-edge: rgb(236 229 214 / 0.08);
+    --bag: #e8ddc6;
+    --bag-back: #a99f8a;
+    --bag-empty: #16223a;
+    --bag-line: #ece5d6;
+    --bag-shadow: rgb(0 0 0 / 0.45);
+    --swipe: #7dd6ac;
+    --swipe-foreground: #0a1a1f;
+    --warn: #f2b14a;
+    --row-hover: #172640;
+  }
+}
