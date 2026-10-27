@@ -1,11 +1,11 @@
 ---
 name: implement_plan
-description: Implement technical plans end-to-end from thoughts/shared/plans with codex verification after each step, inline doc updates, and no stopping until complete. Usage - /implement_plan [path-to-plan]
+description: Implement technical plans end-to-end from agent-work/ with codex verification after each step, inline doc updates, and no stopping until complete. Usage - /implement_plan [path-to-plan]
 ---
 
 # Implement Plan
 
-You are tasked with implementing an approved technical plan from `thoughts/shared/plans/`. Execute the entire plan from start to finish. Every step is verified by codex before being marked complete. The plan document is updated inline as work progresses.
+You are tasked with implementing an approved technical plan from `agent-work/`. Execute the entire plan from start to finish. Every step is verified by codex before being marked complete. The plan document is updated inline as work progresses.
 
 ## Core Execution Rules
 
@@ -30,10 +30,10 @@ This ensures the plan document is always a live record of progress.
 
 ### Rule 3: Verify Every Step with Codex
 
-After implementing each step, call `mcp__pal__clink` to verify before marking it complete:
+After implementing each step, call `mcp__clink__clink` to verify before marking it complete:
 
 ```
-mcp__pal__clink(
+mcp__clink__clink(
   cli_name: "codex",
   role: "codereviewer",
   prompt: "Verify this implementation step is correct, complete, and achieves its objective.
@@ -68,7 +68,7 @@ Preserve `continuation_id` across ALL clink calls for the entire execution — c
 Every finding gets an explicit disposition before the next step — disposition means triage, not blanket acceptance:
 
 - **Accept + fix now:** real bugs, plan/ticket-contract violations, missing promised behavior, misleading test names/docstrings.
-- **Reject with a one-line rationale recorded inline in the plan doc:** defensive guards against hypothetical callers, "for completeness" test asks with no coverage gap, stylistic restructures, back-compat shims (see Rule 7), SHA/bookkeeping drift. Before accepting a "missing validation" fix, check whether the current behavior is documented as intentional — if so, reject and pin it down with a docstring note + test instead.
+- **Reject with a one-line rationale recorded inline in the plan doc:** defensive guards against hypothetical callers, "for completeness" test asks with no coverage gap, stylistic restructures, SHA/bookkeeping drift. Before accepting a "missing validation" fix, check whether the current behavior is documented as intentional — if so, reject and pin it down with a docstring note + test instead.
 - **Marginal:** cheap → fix; expensive → skip with rationale.
 
 Do not loop endlessly toward APPROVED. A step is complete once (a) your own disk verification is green AND (b) every finding is fixed or rejected-with-rationale. **Codex APPROVED alone is never sufficient** — codex has hallucinated command output before; always cross-check disk state yourself with grep / build / test after every verdict.
@@ -80,10 +80,6 @@ If context compaction occurs, immediately re-read the plan document to restore s
 ### Rule 6: Quality Over Speed
 
 Take as many tokens as needed. Thoroughness and correctness matter more than speed. Read full files, trace full call chains, write complete implementations. No TODOs, no placeholders, no "we'll add this later."
-
-### Rule 7: No Back-Compat Shims
-
-Default for this user's projects (greenfield, repeated correction): refactors DELETE the old path and migrate every call site. No deprecated wrappers, no `Option<T>`-so-old-callers-work params, no "keep field for old code", no bool flags defaulting to old behavior. Broken call sites mid-migration are fine — fix them, don't shim them. Reject codex findings that ask for back-compat guards. Only a plan that explicitly names external consumers justifies a shim.
 
 ## Execution Modes
 
@@ -116,7 +112,7 @@ When given a plan path:
   - A codex verification task immediately after it
 - Start implementing — do not ask for confirmation
 
-If no plan path provided, look for the most recent plan in `thoughts/shared/plans/`.
+If no plan path provided, look for the most recent plan under `agent-work/`.
 
 ## Implementation Philosophy
 
@@ -141,12 +137,13 @@ If you encounter a serious mismatch that could affect the overall design:
 After implementing each step:
 
 1. **Run automated checks** — success criteria, tests, build commands
-2. **Fix any failures** before proceeding
-3. **Run codex review** via clink (see Rule 3 above)
-4. **Address all codex feedback** (see Rule 4 above)
-5. **Update the plan document inline** with completion details
-6. **Mark both tasks** (implementation + verification) as completed
-7. **Proceed immediately** to the next step
+2. **See the product the way its user will.** When a step produces a page, a screen, or a command, open it for real: a page in the browser this machine has (Playwright's Chromium when `CHROME_PATH` is set or `npx playwright` answers, otherwise the system browser), at the widths and color schemes the plan names, reading the console; a command by running it. A fake DOM in Node is not this check, and "no browser is installed" is a claim to prove by looking before it is written down.
+3. **Fix any failures** before proceeding
+4. **Run codex review** via clink (see Rule 3 above)
+5. **Address all codex feedback** (see Rule 4 above)
+6. **Update the plan document inline** with completion details
+7. **Mark both tasks** (implementation + verification) as completed
+8. **Proceed immediately** to the next step
 
 ## If You Get Stuck
 
@@ -165,7 +162,7 @@ After ALL steps are done:
 1. Verify every task is marked completed
 2. Do one final holistic codex review:
    ```
-   mcp__pal__clink(
+   mcp__clink__clink(
      cli_name: "codex",
      role: "codereviewer",
      prompt: "Final review of the complete implementation. The plan at [path] should now be fully executed. Review the entire implementation holistically — check for integration issues between steps, missing edge cases, and overall architecture quality. Verify SOLID, DRY, SRP, SSOT compliance across the whole.",
@@ -181,27 +178,6 @@ After ALL steps are done:
    - **Codex reviews**: M (all feedback addressed)
    - **Final review**: PASS
    ```
-
-## Resumable Agents
-
-If the plan was created by `plan-agent`, you may be able to resume it for clarification:
-
-1. Check `.claude/cache/agents/agent-log.jsonl` for the plan-agent entry
-2. Look for the `agentId` field
-3. To clarify or update the plan:
-   ```
-   Task(
-     resume="<agentId>",
-     prompt="Phase 2 isn't matching the codebase. Can you clarify..."
-   )
-   ```
-
-The resumed agent retains its full prior context (research, codebase analysis).
-
-Available agents to resume:
-- `plan-agent` - Created the implementation plan
-- `research-agent` - Researched best practices
-- `debug-agent` - Investigated issues
 
 ## Resuming Work
 
@@ -234,7 +210,7 @@ Handoffs persist on disk. If compaction happens, you re-read handoffs and contin
 
 1. **Create handoff directory:**
    ```bash
-   mkdir -p thoughts/handoffs/<session-name>
+   mkdir -p agent-work/<session-name>
    ```
    Pick a short descriptive session name for the plan you're executing.
 
@@ -244,29 +220,13 @@ Handoffs persist on disk. If compaction happens, you re-read handoffs and contin
    ```
    This defines how agents should behave.
 
-### Pre-Requisite: Plan Validation
-
-Before implementing, ensure the plan has been validated using the `validate-agent`. The validation step is separate and should have created a handoff with status VALIDATED.
-
-**Check for validation handoff:**
-```bash
-ls thoughts/handoffs/<session>/validation-*.md
-```
-
-If no validation exists, suggest running validation first:
-```
-"This plan hasn't been validated yet. Would you like me to spawn validate-agent first?"
-```
-
-If validation exists but status is NEEDS REVIEW, present the issues before proceeding.
-
 ### Orchestration Loop
 
 For each task in the plan:
 
 1. **Prepare agent context:**
    - Read the plan (overall context)
-   - Read previous handoff if exists (from thoughts/handoffs/<session>/)
+   - Read previous handoff if exists (from agent-work/<session>/)
    - Identify the specific task
 
 2. **Spawn implementation agent:**
@@ -291,7 +251,7 @@ For each task in the plan:
      [Paste previous task's handoff content, or "This is the first task - no previous handoff"]
 
      ### Handoff Directory:
-     thoughts/handoffs/<session-name>/
+     agent-work/<session-name>/
 
      ### Handoff Filename:
      task-[NN]-[short-description].md
@@ -319,7 +279,7 @@ If auto-compact happens mid-orchestration:
 
 1. List handoff directory:
    ```bash
-   ls -la thoughts/handoffs/<session-name>/
+   ls -la agent-work/<session-name>/
    ```
 2. Read the last handoff to understand where you were
 3. Continue spawning agents from next uncompleted task
@@ -327,24 +287,24 @@ If auto-compact happens mid-orchestration:
 ### Example Orchestration Session
 
 ```
-User: /implement_plan thoughts/shared/plans/PLAN-add-auth.md
+User: /implement_plan agent-work/add-auth/PLAN.md
 
 Claude: I'll use agent orchestration for this plan (6 tasks).
 
 Setting up handoff directory...
-[Creates thoughts/handoffs/add-auth/]
+[Creates agent-work/add-auth/]
 
 Task 1 of 6: Create user model
 [Spawns agent with full context]
 [Agent completes, creates task-01-user-model.md]
 
-✅ Task 1 complete. Handoff: thoughts/handoffs/add-auth/task-01-user-model.md
+✅ Task 1 complete. Handoff: agent-work/add-auth/task-01-user-model.md
 
 Task 2 of 6: Add authentication middleware
 [Spawns agent with previous handoff]
 [Agent completes, creates task-02-auth-middleware.md]
 
-✅ Task 2 complete. Handoff: thoughts/handoffs/add-auth/task-02-auth-middleware.md
+✅ Task 2 complete. Handoff: agent-work/add-auth/task-02-auth-middleware.md
 
 --- AUTO COMPACT HAPPENS ---
 [Context compressed, but handoffs persist]

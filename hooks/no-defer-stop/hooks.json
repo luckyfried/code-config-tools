@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node no-defer-stop.cjs" }] }
+    ]
+  }
+}
