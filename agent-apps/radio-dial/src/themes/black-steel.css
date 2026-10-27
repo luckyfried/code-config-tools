@@ -1,0 +1,82 @@
+/* Black steel: a blackened steel chassis with a gunmetal plate, the dial lamp and the tubes the only warm light. It is
+   a night set in either color scheme. */
+:root {
+  color-scheme: dark;
+  --background: oklch(0.14 0.006 250);
+  --foreground: oklch(0.92 0.008 250);
+  --card: oklch(0.2 0.008 250);
+  --card-foreground: oklch(0.92 0.008 250);
+  --popover: oklch(0.2 0.008 250);
+  --popover-foreground: oklch(0.92 0.008 250);
+  --primary: oklch(0.8 0.15 64);
+  --primary-foreground: oklch(0.18 0.02 50);
+  --secondary: oklch(0.25 0.008 250);
+  --secondary-foreground: oklch(0.92 0.008 250);
+  --muted: oklch(0.23 0.008 250);
+  --muted-foreground: oklch(0.7 0.01 250);
+  --accent: oklch(0.27 0.01 250);
+  --accent-foreground: oklch(0.92 0.008 250);
+  --destructive: oklch(0.68 0.18 27);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.8 0.15 64);
+  --radius: 0.5rem;
+
+  --wall: radial-gradient(110% 80% at 35% 10%, oklch(0.2 0.008 250), oklch(0.11 0.005 250) 75%);
+  --cabinet: linear-gradient(170deg, oklch(0.25 0.006 250), oklch(0.17 0.005 250) 60%, oklch(0.13 0.004 250));
+  --grain: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.018) 0 1px, transparent 1px 3px);
+  --cabinet-edge: oklch(1 0 0 / 0.12);
+  --cabinet-shadow: 0 1px 0 oklch(1 0 0 / 0.1) inset, 0 50px 80px -30px oklch(0 0 0 / 0.85), 0 0 80px -24px oklch(0.6 0.14 55 / 0.18);
+
+  --plate-hi: oklch(0.36 0.008 250);
+  --plate-mid: oklch(0.28 0.007 250);
+  --plate-lo: oklch(0.22 0.006 250);
+  --plate-sheen: oklch(1 0 0 / 0.07);
+  --brush-light: oklch(1 0 0 / 0.035);
+  --brush-dark: oklch(0 0 0 / 0.1);
+  --plate-ink: oklch(0.86 0.01 250);
+  --plate-ink-soft: oklch(0.72 0.01 250 / 0.75);
+  --plate-shadow: 0 1px 0 oklch(1 0 0 / 0.1) inset, 0 -1px 0 oklch(0 0 0 / 0.5) inset;
+
+  --bezel: linear-gradient(180deg, oklch(0.4 0.006 250), oklch(0.16 0.005 250));
+  --lamp-off: oklch(0.14 0.02 45);
+  --lamp: oklch(0.34 0.075 58);
+  --lamp-edge: oklch(0.22 0.045 45);
+  --glow: oklch(0.86 0.17 68);
+  --glow-soft: oklch(0.76 0.17 60 / 0.72);
+  --glass: oklch(1 0 0 / 0.06);
+  --glass-sheen: linear-gradient(176deg, oklch(1 0 0 / 0.16), oklch(1 0 0 / 0.03) 38%, transparent 40%, transparent 82%, oklch(1 0 0 / 0.05));
+  --scale-ink: oklch(0.84 0.06 78);
+  --scale-ink-soft: oklch(0.8 0.05 75 / 0.5);
+  --scale-lit: oklch(0.9 0.15 76);
+  --needle: oklch(0.93 0.01 250);
+  --needle-glow: oklch(1 0 0 / 0.35);
+
+  --tube: oklch(0.1 0.005 250);
+  --tube-mesh: oklch(0.6 0.01 250 / 0.12);
+  --nixie: oklch(0.78 0.19 52);
+  --nixie-core: oklch(0.96 0.08 78);
+  --nixie-halo: oklch(0.72 0.21 45 / 0.75);
+  --nixie-text: oklch(0.78 0.04 70);
+
+  --meter-face: radial-gradient(130% 100% at 50% 110%, oklch(0.4 0.085 58), oklch(0.28 0.055 45) 70%, oklch(0.2 0.035 45));
+  --meter-ink: oklch(0.86 0.07 78);
+  --meter-red: oklch(0.68 0.2 32);
+  --meter-needle: oklch(0.93 0.01 250);
+  --meter-glass: linear-gradient(170deg, oklch(1 0 0 / 0.1), transparent 45%);
+
+  --spectrum-bg: linear-gradient(180deg, oklch(0.09 0.005 250), oklch(0.13 0.006 250));
+  --spectrum-bar: oklch(0.8 0.16 64);
+  --spectrum-peak: oklch(0.96 0.08 80);
+
+  --paper: oklch(0.86 0.012 85);
+  --paper-ink: oklch(0.22 0.01 250);
+  --paper-ink-soft: oklch(0.4 0.012 250);
+  --paper-rule: oklch(0.55 0.16 25 / 0.7);
+  --paper-line: oklch(0.45 0.05 240 / 0.2);
+  --paper-shadow: 0 1px 0 oklch(1 0 0 / 0.35) inset, 0 10px 24px -10px oklch(0 0 0 / 0.8);
+
+  --key: linear-gradient(180deg, oklch(0.34 0.007 250), oklch(0.22 0.006 250));
+  --key-ink: oklch(0.88 0.01 250);
+  --key-shadow: 0 1px 0 oklch(1 0 0 / 0.12) inset, 0 2px 0 oklch(0 0 0 / 0.6), 0 8px 14px -6px oklch(0 0 0 / 0.8);
+}

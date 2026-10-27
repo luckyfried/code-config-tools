@@ -1,0 +1,40 @@
+{
+  "name": "Radio Dial",
+  "theme": "walnut",
+  "presets": [
+    {
+      "name": "Radio Paradise",
+      "url": "https://stream.radioparadise.com/mp3-128",
+      "homepage": "https://radioparadise.com",
+      "country": "United States",
+      "about": "Eclectic, listener-supported mix from Paradise, California"
+    },
+    {
+      "name": "FIP",
+      "url": "https://icecast.radiofrance.fr/fip-midfi.mp3",
+      "homepage": "https://www.radiofrance.fr/fip",
+      "country": "France",
+      "about": "Jazz, groove, and world music from Radio France"
+    },
+    {
+      "name": "KEXP",
+      "url": "https://kexp.streamguys1.com/kexp160.aac",
+      "homepage": "https://www.kexp.org",
+      "country": "United States",
+      "about": "Where the music matters, live from Seattle"
+    },
+    {
+      "name": "NTS 1",
+      "url": "https://stream-relay-geo.ntslive.net/stream",
+      "homepage": "https://www.nts.live",
+      "country": "United Kingdom",
+      "about": "Independent radio from London, around the clock"
+    }
+  ],
+  "_notes": {
+    "name": "The name engraved on the panel and shown on the lock screen.",
+    "theme": "walnut (oiled walnut and brass; cream glass by day, amber by night), bakelite (ivory and chrome by day, oxblood by night), or black-steel (brushed black steel, dark only).",
+    "presets": "The stations on the dial, left to right. Each needs a name and a url that starts with https://, the station's own stream. homepage, country, and about are optional; about is the line under the station name. logo is optional: an https address, or a picture file in the project folder that run.py copies beside the page.",
+    "finding streams": "For a country or a genre the person names, ask https://de1.api.radio-browser.info/json/stations/search?tag=jazz&hidebroken=true&order=votes&reverse=true&limit=10 (or country=Japan) and take url_resolved from rows whose url_resolved starts with https://."
+  }
+}

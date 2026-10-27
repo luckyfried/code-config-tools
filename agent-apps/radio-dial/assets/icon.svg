@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#7a4a2c"/>
+      <stop offset="1" stop-color="#4a2a18"/>
+    </linearGradient>
+    <linearGradient id="brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#efdcae"/>
+      <stop offset="0.5" stop-color="#d2b77c"/>
+      <stop offset="1" stop-color="#b0915a"/>
+    </linearGradient>
+    <linearGradient id="lamp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3c973"/>
+      <stop offset="0.5" stop-color="#fbe7b4"/>
+      <stop offset="1" stop-color="#f0bf62"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb347" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffb347" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#wood)"/>
+  <rect x="56" y="64" width="400" height="384" rx="64" fill="url(#brass)"/>
+  <rect x="88" y="132" width="336" height="148" rx="22" fill="#5b4126"/>
+  <rect x="96" y="140" width="320" height="132" rx="16" fill="url(#lamp)"/>
+  <ellipse cx="292" cy="206" rx="88" ry="66" fill="url(#glow)"/>
+  <g stroke="#4a3320" stroke-width="5" stroke-linecap="round">
+    <line x1="132" y1="232" x2="132" y2="254"/><line x1="172" y1="242" x2="172" y2="254"/>
+    <line x1="212" y1="232" x2="212" y2="254"/><line x1="252" y1="242" x2="252" y2="254"/>
+    <line x1="332" y1="242" x2="332" y2="254"/><line x1="372" y1="232" x2="372" y2="254"/>
+  </g>
+  <rect x="286" y="150" width="12" height="112" rx="6" fill="#c2412d"/>
+  <circle cx="176" cy="372" r="40" fill="#4a3320"/>
+  <circle cx="176" cy="372" r="30" fill="url(#brass)"/>
+  <circle cx="336" cy="372" r="40" fill="#4a3320"/>
+  <circle cx="336" cy="372" r="30" fill="url(#brass)"/>
+  <line x1="176" y1="372" x2="176" y2="348" stroke="#4a3320" stroke-width="7" stroke-linecap="round"/>
+  <line x1="336" y1="372" x2="354" y2="356" stroke="#4a3320" stroke-width="7" stroke-linecap="round"/>
+</svg>

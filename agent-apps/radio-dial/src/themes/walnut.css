@@ -1,0 +1,163 @@
+/* Walnut: an oiled walnut cabinet and a brushed brass plate. By day the dial glass is cream on a linen wall; by night
+   the lamp behind it burns amber in a dark room. */
+:root {
+  color-scheme: light;
+  --background: oklch(0.945 0.012 80);
+  --foreground: oklch(0.26 0.03 50);
+  --card: oklch(0.975 0.014 88);
+  --card-foreground: oklch(0.26 0.03 50);
+  --popover: oklch(0.975 0.014 88);
+  --popover-foreground: oklch(0.26 0.03 50);
+  --primary: oklch(0.36 0.06 45);
+  --primary-foreground: oklch(0.96 0.02 85);
+  --secondary: oklch(0.9 0.02 80);
+  --secondary-foreground: oklch(0.28 0.03 50);
+  --muted: oklch(0.91 0.016 80);
+  --muted-foreground: oklch(0.46 0.03 55);
+  --accent: oklch(0.89 0.03 78);
+  --accent-foreground: oklch(0.26 0.03 50);
+  --destructive: oklch(0.55 0.19 28);
+  --border: oklch(0.3 0.03 50 / 16%);
+  --input: oklch(0.3 0.03 50 / 22%);
+  --ring: oklch(0.72 0.15 62);
+  --radius: 0.75rem;
+
+  --wall: radial-gradient(120% 90% at 30% 0%, oklch(0.965 0.012 85), oklch(0.925 0.014 78) 70%);
+  --cabinet: linear-gradient(170deg, oklch(0.44 0.075 48), oklch(0.33 0.065 40) 60%, oklch(0.29 0.055 38));
+  --grain: repeating-linear-gradient(97deg, oklch(0.2 0.04 40 / 0.16) 0 2px, transparent 2px 7px, oklch(0.6 0.06 55 / 0.08) 7px 9px, transparent 9px 17px);
+  --cabinet-edge: oklch(0.6 0.06 60 / 0.35);
+  --cabinet-shadow: 0 1px 0 oklch(1 0 0 / 0.25) inset, 0 40px 60px -30px oklch(0.25 0.05 45 / 0.55), 0 12px 24px -12px oklch(0.25 0.05 45 / 0.4);
+
+  --plate-hi: oklch(0.88 0.08 88);
+  --plate-mid: oklch(0.76 0.1 80);
+  --plate-lo: oklch(0.63 0.095 70);
+  --plate-sheen: oklch(0.98 0.05 92 / 0.55);
+  --brush-light: oklch(1 0 0 / 0.12);
+  --brush-dark: oklch(0.3 0.05 60 / 0.09);
+  --plate-ink: oklch(0.3 0.05 55);
+  --plate-ink-soft: oklch(0.38 0.05 60 / 0.75);
+  --plate-shadow: 0 1px 0 oklch(1 0 0 / 0.55) inset, 0 -1px 0 oklch(0.3 0.05 60 / 0.25) inset;
+
+  --bezel: linear-gradient(180deg, oklch(0.55 0.06 70), oklch(0.35 0.05 55));
+  --lamp-off: oklch(0.42 0.05 60);
+  --lamp: oklch(0.93 0.07 84);
+  --lamp-edge: oklch(0.84 0.09 76);
+  --glow: oklch(0.8 0.16 62);
+  --glow-soft: oklch(0.86 0.13 70 / 0.65);
+  --glass: oklch(0.99 0.01 90 / 0.18);
+  --glass-sheen: linear-gradient(176deg, oklch(1 0 0 / 0.42), oklch(1 0 0 / 0.06) 38%, transparent 40%, transparent 80%, oklch(1 0 0 / 0.1));
+  --scale-ink: oklch(0.3 0.05 50);
+  --scale-ink-soft: oklch(0.3 0.05 50 / 0.55);
+  --scale-lit: oklch(0.52 0.17 40);
+  --needle: oklch(0.52 0.19 33);
+  --needle-glow: oklch(0.65 0.2 40 / 0.5);
+
+  --tube: oklch(0.2 0.025 50);
+  --tube-mesh: oklch(0.55 0.04 60 / 0.16);
+  --nixie: oklch(0.76 0.18 52);
+  --nixie-core: oklch(0.95 0.08 78);
+  --nixie-halo: oklch(0.7 0.2 45 / 0.6);
+  --nixie-text: oklch(0.82 0.06 75);
+
+  --meter-face: radial-gradient(130% 100% at 50% 110%, oklch(0.94 0.07 84), oklch(0.88 0.08 78) 70%, oklch(0.8 0.09 72));
+  --meter-ink: oklch(0.27 0.04 50);
+  --meter-red: oklch(0.55 0.2 28);
+  --meter-needle: oklch(0.22 0.03 50);
+  --meter-glass: linear-gradient(170deg, oklch(1 0 0 / 0.38), transparent 45%);
+
+  --spectrum-bg: linear-gradient(180deg, oklch(0.18 0.025 50), oklch(0.23 0.03 55));
+  --spectrum-bar: oklch(0.8 0.16 62);
+  --spectrum-peak: oklch(0.95 0.08 80);
+
+  --paper: oklch(0.982 0.014 90);
+  --paper-ink: oklch(0.27 0.03 50);
+  --paper-ink-soft: oklch(0.45 0.03 55);
+  --paper-rule: oklch(0.62 0.16 25 / 0.75);
+  --paper-line: oklch(0.6 0.07 240 / 0.22);
+  --paper-shadow: 0 1px 0 oklch(1 0 0) inset, 0 1px 2px oklch(0.3 0.04 50 / 0.18), 0 8px 18px -10px oklch(0.3 0.04 50 / 0.35);
+
+  --key: linear-gradient(180deg, oklch(0.93 0.04 86), oklch(0.8 0.055 78));
+  --key-ink: oklch(0.3 0.05 55);
+  --key-shadow: 0 1px 0 oklch(1 0 0 / 0.6) inset, 0 2px 0 oklch(0.45 0.05 60 / 0.6), 0 6px 10px -4px oklch(0.3 0.05 50 / 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: oklch(0.16 0.012 45);
+    --foreground: oklch(0.9 0.03 80);
+    --card: oklch(0.22 0.018 48);
+    --card-foreground: oklch(0.9 0.03 80);
+    --popover: oklch(0.22 0.018 48);
+    --popover-foreground: oklch(0.9 0.03 80);
+    --primary: oklch(0.8 0.15 64);
+    --primary-foreground: oklch(0.2 0.03 45);
+    --secondary: oklch(0.26 0.02 48);
+    --secondary-foreground: oklch(0.9 0.03 80);
+    --muted: oklch(0.25 0.018 48);
+    --muted-foreground: oklch(0.7 0.035 70);
+    --accent: oklch(0.29 0.025 50);
+    --accent-foreground: oklch(0.92 0.03 80);
+    --border: oklch(0.9 0.05 80 / 11%);
+    --input: oklch(0.9 0.05 80 / 16%);
+    --ring: oklch(0.8 0.15 64);
+
+    --wall: radial-gradient(110% 80% at 35% 10%, oklch(0.21 0.018 50), oklch(0.13 0.01 45) 75%);
+    --cabinet: linear-gradient(170deg, oklch(0.3 0.055 42), oklch(0.22 0.045 38) 60%, oklch(0.18 0.035 35));
+    --grain: repeating-linear-gradient(97deg, oklch(0.08 0.02 40 / 0.3) 0 2px, transparent 2px 7px, oklch(0.5 0.06 55 / 0.06) 7px 9px, transparent 9px 17px);
+    --cabinet-edge: oklch(0.6 0.08 60 / 0.22);
+    --cabinet-shadow: 0 1px 0 oklch(1 0 0 / 0.08) inset, 0 50px 80px -30px oklch(0 0 0 / 0.75), 0 0 90px -20px oklch(0.6 0.14 55 / 0.22);
+
+    --plate-hi: oklch(0.45 0.04 72);
+    --plate-mid: oklch(0.35 0.035 66);
+    --plate-lo: oklch(0.27 0.03 60);
+    --plate-sheen: oklch(0.85 0.08 80 / 0.1);
+    --brush-light: oklch(1 0 0 / 0.035);
+    --brush-dark: oklch(0 0 0 / 0.08);
+    --plate-ink: oklch(0.86 0.06 82);
+    --plate-ink-soft: oklch(0.78 0.05 78 / 0.7);
+    --plate-shadow: 0 1px 0 oklch(1 0 0 / 0.14) inset, 0 -1px 0 oklch(0 0 0 / 0.4) inset;
+
+    --bezel: linear-gradient(180deg, oklch(0.42 0.04 68), oklch(0.2 0.025 50));
+    --lamp-off: oklch(0.14 0.02 45);
+    --lamp: oklch(0.34 0.075 58);
+    --lamp-edge: oklch(0.22 0.045 45);
+    --glow: oklch(0.86 0.17 68);
+    --glow-soft: oklch(0.76 0.17 60 / 0.72);
+    --glass: oklch(0.98 0.02 85 / 0.08);
+    --glass-sheen: linear-gradient(176deg, oklch(1 0 0 / 0.2), oklch(1 0 0 / 0.03) 38%, transparent 40%, transparent 82%, oklch(1 0 0 / 0.05));
+    --scale-ink: oklch(0.84 0.06 78);
+    --scale-ink-soft: oklch(0.8 0.05 75 / 0.5);
+    --scale-lit: oklch(0.9 0.15 76);
+    --needle: oklch(0.66 0.21 32);
+    --needle-glow: oklch(0.7 0.2 40 / 0.6);
+
+    --tube: oklch(0.12 0.015 45);
+    --tube-mesh: oklch(0.6 0.05 60 / 0.12);
+    --nixie: oklch(0.78 0.19 52);
+    --nixie-core: oklch(0.96 0.08 78);
+    --nixie-halo: oklch(0.72 0.21 45 / 0.75);
+    --nixie-text: oklch(0.82 0.07 72);
+
+    --meter-face: radial-gradient(130% 100% at 50% 110%, oklch(0.4 0.085 58), oklch(0.28 0.055 45) 70%, oklch(0.2 0.035 45));
+    --meter-ink: oklch(0.86 0.07 78);
+    --meter-red: oklch(0.68 0.2 32);
+    --meter-needle: oklch(0.92 0.05 80);
+    --meter-glass: linear-gradient(170deg, oklch(1 0 0 / 0.1), transparent 45%);
+
+    --spectrum-bg: linear-gradient(180deg, oklch(0.1 0.015 45), oklch(0.15 0.02 50));
+    --spectrum-bar: oklch(0.8 0.17 62);
+    --spectrum-peak: oklch(0.96 0.08 80);
+
+    --paper: oklch(0.89 0.03 82);
+    --paper-ink: oklch(0.24 0.03 50);
+    --paper-ink-soft: oklch(0.4 0.035 55);
+    --paper-rule: oklch(0.55 0.16 25 / 0.75);
+    --paper-line: oklch(0.5 0.07 240 / 0.2);
+    --paper-shadow: 0 1px 0 oklch(1 0 0 / 0.4) inset, 0 10px 24px -10px oklch(0 0 0 / 0.7);
+
+    --key: linear-gradient(180deg, oklch(0.42 0.035 70), oklch(0.29 0.03 60));
+    --key-ink: oklch(0.88 0.06 80);
+    --key-shadow: 0 1px 0 oklch(1 0 0 / 0.15) inset, 0 2px 0 oklch(0 0 0 / 0.5), 0 8px 14px -6px oklch(0 0 0 / 0.7);
+  }
+}
