@@ -1,0 +1,18 @@
+{
+  "name": "Pad Synth",
+  "scale": "dorian",
+  "key": "D",
+  "voices": ["pluck", "pad", "bass", "keys"],
+  "grid": "5x8",
+  "bpm": 104,
+  "theme": "aurora",
+  "_notes": {
+    "name": "The title on the page, 1 to 40 characters.",
+    "scale": "The scale the pads play: major, minor, dorian, mixolydian, lydian, phrygian, harmonic-minor, major-pentatonic, minor-pentatonic, blues, or chromatic. It can be changed on the page too.",
+    "key": "The key the grid starts on: C, C#, Db, D, D#, Eb, E, F, F#, Gb, G, G#, Ab, A, A#, Bb, or B.",
+    "voices": "Which of the four voices to offer, in order: pluck, pad, bass, and keys. The first one is the voice the grid opens with.",
+    "grid": "The pad grid: \"5x8\" (40 pads) or \"6x10\" (60 pads).",
+    "bpm": "The tempo of the step ring, a whole number from 50 to 200.",
+    "theme": "The look: aurora (polar green and rose), ember (fire and gold), or ink (indigo and vermilion). Each has a light and a dark side that follows the device."
+  }
+}

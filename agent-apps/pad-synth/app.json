@@ -1,0 +1,17 @@
+{
+  "id": "01a17af8-ea24-7066-8118-63a13af86dd1",
+  "version": "2026-10-21",
+  "name": "Pad Synth",
+  "shortDescription": "A playable glowing synth grid with a step ring and loops you keep.",
+  "description": "A touch instrument for phones, tablets, and desktops. Play an isomorphic grid of pads in any scale and key with four voices: a Karplus–Strong pluck, a wide detuned-saw pad, a bass with a sub, and FM electric keys. Every press sends a wave of colored light across a full-screen field, so a chord draws its own interference pattern; an oscilloscope and a spectrum run across the top, and the pad voice's slow attack and long release rise and fade in the glow. A step ring with a comet playhead plays a pattern under you, Split gives two people one half each, and Record keeps what you play as a loop rendered to WAV. Loops and patches stay on your device and save as WAV and JSON files. Desktops play from the keyboard too.",
+  "category": "music",
+  "subcategory": "Instruments",
+  "useCase": "audio-generation",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/pad-synth",
+  "setup": "Your agent asks, in one message, which scale and key you like to play in, how big a grid you want (5 by 8 or 6 by 10 pads), what tempo the step ring should run at, and which look you want: aurora, ember, or ink. No keys or accounts are needed. Your loops and patches stay in your browser on your device, and you save them as WAV and JSON files when you want them."
+}

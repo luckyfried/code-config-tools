@@ -1,0 +1,128 @@
+/* Ember: a forge at night, gold and crimson sparks; by day, sunlit peach with burnt orange and wine.
+   Tokens only. The shader reads --field-bg, --field-a, --field-b, and --field-mode (0 glows, 1 stains). */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f9d6c0;
+  --color-surface: rgba(255, 244, 236, 0.62);
+  --color-surface-2: rgba(255, 248, 242, 0.92);
+  --color-text: #2a0f05;
+  --color-muted: #6e3f2a;
+  --color-accent: #a83600;
+  --color-on-accent: #ffffff;
+  --color-danger: #a8102a;
+  --color-ok: #7a5000;
+  --color-border: rgba(42, 15, 5, 0.13);
+  --field-bg: #f9d6c0;
+  --field-a: #c25a00;
+  --field-b: #9c0f3a;
+  --field-mode: 1;
+  --voice-pluck: #a85c00;
+  --voice-pad: #c2410c;
+  --voice-bass: #9c0f3a;
+  --voice-keys: #6b2a10;
+  --pad-fill: rgba(255, 246, 238, 0.3);
+  --pad-edge: rgba(42, 15, 5, 0.1);
+  --pad-root: rgba(168, 54, 0, 0.12);
+  --pad-text: #4a2312;
+  --pad-lit-text: #ffffff;
+  --pad-label: rgba(255, 255, 255, 0.76);
+  --pad-label-lit: rgba(42, 15, 5, 0.62);
+  --glass-fill: rgba(255, 244, 236, 0.5);
+  --glass-edge: rgba(255, 255, 255, 0.8);
+  --scope-line: #2a0f05;
+  --scope-glow: rgba(194, 90, 0, 0.24);
+  --spectrum: rgba(156, 15, 58, 0.15);
+  --spectrum-cap: rgba(42, 15, 5, 0.32);
+  --ring-track: rgba(42, 15, 5, 0.09);
+  --ring-head: #2a0f05;
+  --ring-core: #ffffff;
+  --canvas-blend: source-over;
+  --shadow-1: 0 1px 2px rgba(80, 30, 10, 0.1), 0 6px 16px rgba(80, 30, 10, 0.08);
+  --shadow-2: 0 4px 10px rgba(80, 30, 10, 0.1), 0 20px 48px rgba(80, 30, 10, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #0d0604;
+    --color-surface: rgba(36, 16, 8, 0.6);
+    --color-surface-2: rgba(56, 26, 12, 0.82);
+    --color-text: #fbeee4;
+    --color-muted: #c09a84;
+    --color-accent: #ffa23a;
+    --color-on-accent: #2a1000;
+    --color-danger: #ff5a4f;
+    --color-ok: #ffc36b;
+    --color-border: rgba(255, 190, 140, 0.14);
+    --field-bg: #0d0604;
+    --field-a: #ffb02e;
+    --field-b: #ff3b5c;
+    --field-mode: 0;
+    --voice-pluck: #ffc36b;
+    --voice-pad: #ff7a45;
+    --voice-bass: #ff3b5c;
+    --voice-keys: #ffe2a8;
+    --pad-fill: rgba(255, 170, 110, 0.05);
+    --pad-edge: rgba(255, 190, 140, 0.14);
+    --pad-root: rgba(255, 162, 58, 0.1);
+    --pad-text: #ecd0bd;
+    --pad-lit-text: #ffffff;
+    --pad-label: rgba(13, 6, 4, 0.72);
+    --pad-label-lit: rgba(13, 6, 4, 0.42);
+    --glass-fill: rgba(20, 8, 4, 0.5);
+    --glass-edge: rgba(255, 190, 140, 0.16);
+    --scope-line: #fff1df;
+    --scope-glow: rgba(255, 162, 58, 0.34);
+    --spectrum: rgba(255, 90, 70, 0.24);
+    --spectrum-cap: rgba(255, 220, 180, 0.6);
+    --ring-track: rgba(255, 190, 140, 0.1);
+    --ring-head: #fff6ea;
+    --ring-core: #ffffff;
+    --canvas-blend: lighter;
+    --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 16px 48px rgba(0, 0, 0, 0.55);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0d0604;
+  --color-surface: rgba(36, 16, 8, 0.6);
+  --color-surface-2: rgba(56, 26, 12, 0.82);
+  --color-text: #fbeee4;
+  --color-muted: #c09a84;
+  --color-accent: #ffa23a;
+  --color-on-accent: #2a1000;
+  --color-danger: #ff5a4f;
+  --color-ok: #ffc36b;
+  --color-border: rgba(255, 190, 140, 0.14);
+  --field-bg: #0d0604;
+  --field-a: #ffb02e;
+  --field-b: #ff3b5c;
+  --field-mode: 0;
+  --voice-pluck: #ffc36b;
+  --voice-pad: #ff7a45;
+  --voice-bass: #ff3b5c;
+  --voice-keys: #ffe2a8;
+  --pad-fill: rgba(255, 170, 110, 0.05);
+  --pad-edge: rgba(255, 190, 140, 0.14);
+  --pad-root: rgba(255, 162, 58, 0.1);
+  --pad-text: #ecd0bd;
+  --pad-lit-text: #ffffff;
+  --pad-label: rgba(13, 6, 4, 0.72);
+  --pad-label-lit: rgba(13, 6, 4, 0.42);
+  --glass-fill: rgba(20, 8, 4, 0.5);
+  --glass-edge: rgba(255, 190, 140, 0.16);
+  --scope-line: #fff1df;
+  --scope-glow: rgba(255, 162, 58, 0.34);
+  --spectrum: rgba(255, 90, 70, 0.24);
+  --spectrum-cap: rgba(255, 220, 180, 0.6);
+  --ring-track: rgba(255, 190, 140, 0.1);
+  --ring-head: #fff6ea;
+  --ring-core: #ffffff;
+  --canvas-blend: lighter;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 16px 48px rgba(0, 0, 0, 0.55);
+}

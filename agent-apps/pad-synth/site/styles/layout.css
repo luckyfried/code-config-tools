@@ -1,0 +1,290 @@
+/* The page's three compositions:
+   tall   phones and portrait tablets: controls on top, the glass ribbon, the voices, then one screen at a time
+   wide   desktops and big screens: the grid on the left, the ring or the loops on the right
+   short  a phone on its side: controls and the ribbon share one row, the voices stand beside the grid
+   The bottom band is the field showing through with the status line; nothing the hands need sits there. */
+
+.field,
+.glow-fallback {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-field);
+  pointer-events: none;
+}
+
+.field {
+  display: block;
+}
+
+.glow-fallback {
+  display: none;
+  background:
+    radial-gradient(60% 45% at 20% 25%, var(--field-a), transparent 70%),
+    radial-gradient(55% 50% at 85% 80%, var(--field-b), transparent 70%),
+    var(--field-bg);
+  opacity: 0.28;
+}
+
+.no-gl .field {
+  display: none;
+}
+
+.no-gl .glow-fallback {
+  display: block;
+}
+
+.app {
+  position: relative;
+  z-index: var(--z-app);
+  display: grid;
+  height: 100dvh;
+  padding: max(var(--safe-top), var(--space-3)) max(var(--safe-right), var(--space-3)) 0
+    max(var(--safe-left), var(--space-3));
+  gap: var(--space-2);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto clamp(64px, 9dvh, 88px) auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "transport picks end"
+    "glass glass glass"
+    "voices voices voices"
+    "stage stage stage"
+    "foot foot foot";
+}
+
+.bar {
+  display: contents;
+}
+
+.transport {
+  grid-area: transport;
+}
+
+.picks {
+  grid-area: picks;
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.voices {
+  grid-area: voices;
+}
+
+.bar-end {
+  grid-area: end;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.glass {
+  grid-area: glass;
+}
+
+.stage {
+  grid-area: stage;
+  display: grid;
+  min-height: 0;
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "tabs"
+    "panel";
+}
+
+.tabs {
+  grid-area: tabs;
+}
+
+.panel {
+  grid-area: panel;
+  min-width: 0;
+  min-height: 0;
+}
+
+.app:not([data-screen="play"]) .panel-play,
+.app:not([data-screen="seq"]) .panel-seq,
+.app:not([data-screen="loops"]) .panel-loops {
+  display: none;
+}
+
+.app:not([data-screen="play"]) .voices {
+  visibility: hidden;
+}
+
+.foot {
+  grid-area: foot;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: calc(60px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+}
+
+.keys-hint {
+  display: none;
+}
+
+/* Tall: the split and record chips show their icons only, the grid stands upright. */
+@media (max-width: 639px), (max-aspect-ratio: 1/1) {
+  .chip.split span,
+  .chip.rec #record-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* Wide: the grid and the side panel share the stage. */
+@media (min-width: 640px) and (min-aspect-ratio: 1/1) {
+  .app {
+    padding: max(var(--safe-top), var(--space-4)) max(var(--safe-right), var(--space-5)) 0
+      max(var(--safe-left), var(--space-5));
+    gap: var(--space-4);
+    grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto clamp(72px, 11dvh, 128px) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "transport picks voices . end"
+      "glass glass glass glass glass"
+      "stage stage stage stage stage"
+      "foot foot foot foot foot";
+  }
+
+  .app:not([data-screen="play"]) .voices {
+    visibility: visible;
+  }
+
+  .stage {
+    --side: clamp(300px, min(38vw, 100dvh - 250px), 820px);
+    gap: var(--space-4) var(--space-5);
+    grid-template-columns: minmax(0, 1fr) var(--side);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "play tabs"
+      "play side";
+  }
+
+  .panel-play {
+    grid-area: play;
+  }
+
+  .panel-seq,
+  .panel-loops {
+    grid-area: side;
+  }
+
+  .app[data-screen] .panel-play {
+    display: block;
+  }
+
+  .app[data-side="seq"] .panel-seq {
+    display: flex;
+  }
+
+  .app[data-side="loops"] .panel-loops {
+    display: flex;
+  }
+
+  .app[data-side="seq"] .panel-loops,
+  .app[data-side="loops"] .panel-seq {
+    display: none;
+  }
+
+  .tab-play {
+    display: none;
+  }
+
+  .foot {
+    min-height: calc(84px + var(--safe-bottom));
+    justify-content: space-between;
+  }
+
+  .status,
+  .keys-hint {
+    max-width: calc(50% - 190px);
+  }
+
+  .keys-hint {
+    display: block;
+    text-align: right;
+  }
+}
+
+/* Short and wide: a phone on its side. The grid and the ring take the full height; the controls run along the
+   bottom, the transport and chips on the left and the pickers on the right, with the glass ribbon (and the status
+   line on it) in the middle, where the badge rests for its five seconds. */
+@media (min-width: 640px) and (min-aspect-ratio: 1/1) and (max-height: 560px) {
+  .app {
+    padding: max(var(--safe-top), var(--space-2)) max(var(--safe-right), var(--space-3))
+      max(var(--safe-bottom), var(--space-6)) max(var(--safe-left), var(--space-3));
+    gap: var(--space-2) var(--space-3);
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) 44px;
+    grid-template-areas:
+      "voices stage stage stage"
+      "transport end glass picks";
+  }
+
+  .transport {
+    justify-self: start;
+  }
+
+  .stage {
+    --side: clamp(240px, 34vw, 360px);
+    gap: var(--space-2) var(--space-3);
+  }
+
+  .voices {
+    flex-direction: column;
+  }
+
+  .foot {
+    grid-area: glass;
+    position: relative;
+    z-index: 1;
+    min-height: 0;
+    padding: 0 var(--space-3);
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .keys-hint {
+    display: none;
+  }
+
+  .status {
+    max-width: none;
+    padding: 2px var(--space-3);
+    border-radius: var(--radius-full);
+    background: var(--color-surface-2);
+    font-size: var(--text-xs);
+    text-align: center;
+  }
+
+  .status:empty {
+    display: none;
+  }
+
+  .chip.split span,
+  .chip.rec #record-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (hover: none) {
+  .keys-hint {
+    display: none;
+  }
+}

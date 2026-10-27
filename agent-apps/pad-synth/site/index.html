@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Pad Synth</title>
+  <meta name="description" content="A playable glowing synth grid with a step ring and loops you keep.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/sora-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/controls.css">
+  <link rel="stylesheet" href="./styles/pads.css">
+  <link rel="stylesheet" href="./styles/panels.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./main.js"></script>
+</head>
+<body>
+  <canvas class="field" id="field" aria-hidden="true"></canvas>
+  <div class="glow-fallback" aria-hidden="true"></div>
+
+  <div class="app" id="app" data-screen="play" data-side="seq">
+    <header class="bar">
+      <button class="icon-button transport" id="transport" type="button" aria-pressed="false" aria-label="Play the ring">
+        <svg class="icon icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></svg>
+        <svg class="icon icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></svg>
+      </button>
+      <div class="picks">
+        <label class="pick">
+          <span class="pick-label">Key</span>
+          <select id="key"></select>
+        </label>
+        <label class="pick pick-wide">
+          <span class="pick-label">Scale</span>
+          <select id="scale"></select>
+        </label>
+      </div>
+      <div class="voices" id="voices" role="radiogroup" aria-label="Voice"></div>
+      <div class="bar-end">
+        <button class="chip split" id="split" type="button" aria-pressed="false">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="7" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="5" width="7" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>Split</span>
+        </button>
+        <button class="chip rec" id="record" type="button" aria-pressed="false">
+          <span class="rec-dot" aria-hidden="true"></span>
+          <span id="record-label">Record</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="glass" aria-label="Scope and spectrum">
+      <canvas class="scope" id="scope" aria-hidden="true"></canvas>
+      <h1 class="title" id="title">Pad Synth</h1>
+      <p class="readout" id="readout">D dorian, 104 BPM</p>
+    </section>
+
+    <main class="stage">
+      <nav class="tabs" role="tablist" aria-label="Screens">
+        <button class="tab tab-play" id="tab-play" type="button" role="tab" aria-controls="panel-play" aria-selected="true">Play</button>
+        <button class="tab" id="tab-seq" type="button" role="tab" aria-controls="panel-seq" aria-selected="false">Sequence</button>
+        <button class="tab" id="tab-loops" type="button" role="tab" aria-controls="panel-loops" aria-selected="false">Loops</button>
+      </nav>
+
+      <section class="panel panel-play" id="panel-play" role="tabpanel" aria-labelledby="tab-play">
+        <div class="grid" id="grid" role="application" tabindex="0" aria-roledescription="pad grid" aria-label="Pads. Press and hold to play, slide to glide between notes. On a keyboard the letter and number rows play the four lowest rows."></div>
+      </section>
+
+      <section class="panel panel-seq" id="panel-seq" role="tabpanel" aria-labelledby="tab-seq">
+        <div class="ring-wrap" id="ring-wrap">
+          <canvas class="ring" id="ring" role="img" aria-label="Step ring"></canvas>
+          <div class="ring-center">
+            <button class="icon-button tempo" id="slower" type="button" aria-label="Slower">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </button>
+            <p class="bpm"><span class="bpm-value" id="bpm">104</span><span class="bpm-unit">BPM</span></p>
+            <button class="icon-button tempo" id="faster" type="button" aria-label="Faster">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <ul class="lanes" id="lanes" aria-label="Rings from the outside in"></ul>
+        <p class="hint">Tap a step to place the last note you played on that voice there.</p>
+        <div class="actions">
+          <button class="chip" id="ring-clear" type="button">Clear</button>
+          <button class="chip" id="ring-loop" type="button">Save as loop</button>
+          <button class="chip" id="ring-json" type="button">Export JSON</button>
+        </div>
+      </section>
+
+      <section class="panel panel-loops" id="panel-loops" role="tabpanel" aria-labelledby="tab-loops">
+        <h2 class="panel-title">Loops on this device</h2>
+        <ul class="loop-list" id="loop-list"></ul>
+        <div class="empty" id="loops-empty">
+          <p>Press Record, play something, and press it again. The loop is saved here and plays on repeat.</p>
+          <button class="chip accent" id="empty-ring" type="button">Save the ring as a loop</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <p class="keys-hint" id="keys-hint">
+        <span class="shortcut"><kbd>Z</kbd><span class="through" aria-label="through">…</span><kbd>/</kbd> bottom row</span>
+        <span class="shortcut"><kbd>Space</kbd> ring on and off</span>
+      </p>
+    </footer>
+  </div>
+
+  <script src="./badge.js" defer></script>
+</body>
+</html>
