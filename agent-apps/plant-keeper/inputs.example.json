@@ -1,0 +1,24 @@
+{
+  "_notes": {
+    "name": "The header at the top of the page.",
+    "plants": "One entry per plant. id: short letters, digits, or hyphens, unique, never changed once set (the watering log is kept by it). name: what the card says. type: picks the drawing: fern, succulent, vine, palm, fiddle, cactus, herb, or orchid; common names such as monstera or pothos pick the nearest one; anything else gets a neutral leaf and the plant's initial. intervalDays: days between waterings, a whole number from 1. light: the light it sits in, in your own words. room: the room it lives in. Optional: wateredDaysAgo, how many days before the page is first opened it was last watered (0 when left out, a full ring); notes, a line shown in its sheet.",
+    "rooms": "The room tabs, in order. A room a plant names that is missing here is added at the end.",
+    "theme": "greenhouse (light), nightgarden (dark), or auto (greenhouse by day, nightgarden when the device is set to dark)."
+  },
+  "name": "The Window Garden",
+  "plants": [
+    { "id": "boston-fern", "name": "Boston fern", "type": "fern", "intervalDays": 3, "light": "Bright indirect", "room": "Living room", "wateredDaysAgo": 3, "notes": "Likes a misting on dry days." },
+    { "id": "figaro", "name": "Figaro", "type": "fiddle", "intervalDays": 7, "light": "Bright indirect", "room": "Living room", "wateredDaysAgo": 5 },
+    { "id": "golden-pothos", "name": "Golden pothos", "type": "vine", "intervalDays": 7, "light": "Low to medium", "room": "Living room", "wateredDaysAgo": 9 },
+    { "id": "monstera", "name": "Monstera", "type": "monstera", "intervalDays": 7, "light": "Bright indirect", "room": "Bedroom", "wateredDaysAgo": 2 },
+    { "id": "sweet-basil", "name": "Sweet basil", "type": "herb", "intervalDays": 2, "light": "Full sun", "room": "Kitchen", "wateredDaysAgo": 2 },
+    { "id": "lola", "name": "Lola the echeveria", "type": "succulent", "intervalDays": 14, "light": "Full sun", "room": "Kitchen", "wateredDaysAgo": 12 },
+    { "id": "rosemary", "name": "Rosemary", "type": "herb", "intervalDays": 4, "light": "Full sun", "room": "Kitchen", "wateredDaysAgo": 1 },
+    { "id": "kentia", "name": "Kentia palm", "type": "palm", "intervalDays": 10, "light": "Bright indirect", "room": "Bedroom", "wateredDaysAgo": 3 },
+    { "id": "bunny-ears", "name": "Bunny ears", "type": "cactus", "intervalDays": 21, "light": "Full sun", "room": "Bedroom", "wateredDaysAgo": 8 },
+    { "id": "moth-orchid", "name": "Moth orchid", "type": "orchid", "intervalDays": 7, "light": "Bright indirect", "room": "Bathroom", "wateredDaysAgo": 4, "notes": "Water by soaking the pot for ten minutes." },
+    { "id": "maidenhair", "name": "Maidenhair fern", "type": "fern", "intervalDays": 3, "light": "Medium, humid", "room": "Bathroom", "wateredDaysAgo": 2 }
+  ],
+  "rooms": ["Living room", "Kitchen", "Bedroom", "Bathroom"],
+  "theme": "auto"
+}

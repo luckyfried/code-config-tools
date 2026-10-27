@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Plant Keeper</title>
+  <meta name="description" content="Every houseplant on a card with a water ring that drains until you tap Watered.">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/inter/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/fraunces/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./assets/plants.svg" as="fetch" type="image/svg+xml" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/cards.css">
+  <link rel="stylesheet" href="./styles/schedule.css">
+  <link rel="stylesheet" href="./styles/sheet.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <h1 class="title" id="title">Plant Keeper</h1>
+        <p class="today" id="today"></p>
+      </div>
+      <nav class="views" aria-label="Views">
+        <a class="view-link" href="#plants" data-view="plants">Plants</a>
+        <a class="view-link" href="#schedule" data-view="schedule">Schedule</a>
+        <a class="view-link" href="#settings" data-view="settings">Settings</a>
+      </nav>
+      <p class="thirst" id="thirst" aria-live="polite">
+        <span class="thirst-num" id="thirst-num"></span>
+        <span class="thirst-words" id="thirst-words">plants thirsty today</span>
+      </p>
+      <section class="strip" aria-label="The next fourteen days">
+        <ol class="days days-compact" id="strip"></ol>
+      </section>
+    </header>
+
+    <main class="main">
+      <section class="view" id="view-plants" aria-labelledby="plants-heading">
+        <h2 class="visually-hidden" id="plants-heading">Plants</h2>
+        <div class="tabs" role="tablist" aria-label="Rooms" id="tabs">
+          <span class="tab-line" id="tab-line" aria-hidden="true"></span>
+        </div>
+        <div class="rooms" id="rooms"></div>
+      </section>
+
+      <section class="view" id="view-schedule" aria-labelledby="schedule-heading" hidden>
+        <div class="schedule">
+          <div class="schedule-cal">
+            <h2 class="section-title" id="schedule-heading">The next two weeks</h2>
+            <ol class="days days-full" id="calendar"></ol>
+          </div>
+          <div class="schedule-list">
+            <h2 class="section-title">Day by day</h2>
+            <ol class="agenda" id="agenda"></ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-settings" aria-labelledby="settings-heading" hidden>
+        <h2 class="section-title" id="settings-heading">Settings</h2>
+        <div class="settings">
+          <div class="panel">
+            <h3 class="panel-title">Your watering log</h3>
+            <p class="panel-text" id="log-summary"></p>
+            <p class="panel-text">The log lives in this browser. Export it to keep a copy or to carry it to another device, then import it there.</p>
+            <div class="panel-actions">
+              <button class="btn btn-primary" type="button" id="export">Export log</button>
+              <label class="btn btn-quiet file-btn">Import log<input class="visually-hidden" type="file" accept="application/json,.json" id="import"></label>
+            </div>
+            <p class="panel-note" id="import-note" role="status"></p>
+          </div>
+          <div class="panel">
+            <h3 class="panel-title">Start the log over</h3>
+            <p class="panel-text">Clears every watering and note in this browser. Each plant starts again with a full ring today.</p>
+            <div class="panel-actions">
+              <button class="btn btn-danger" type="button" id="clear">Clear the log</button>
+            </div>
+          </div>
+          <div class="panel panel-plants">
+            <h3 class="panel-title">Plants and rooms</h3>
+            <ul class="plant-list" id="plant-list"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-name">
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <div class="sheet-ring" id="sheet-ring"></div>
+        <div class="sheet-id">
+          <h2 class="sheet-name" id="sheet-name"></h2>
+          <p class="sheet-kind" id="sheet-kind"></p>
+          <p class="sheet-status" id="sheet-status"></p>
+        </div>
+        <button class="icon-btn sheet-close" type="button" id="sheet-close" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <button class="btn btn-primary sheet-water" type="button" id="sheet-water">Watered today</button>
+      <dl class="facts" id="sheet-facts"></dl>
+      <div class="sheet-block">
+        <label class="field-label" for="sheet-notes">Notes</label>
+        <textarea class="field" id="sheet-notes" rows="3" placeholder="Repotted in spring, likes a misting"></textarea>
+      </div>
+      <form class="sheet-block log-add" id="log-add">
+        <label class="field-label" for="log-date">Watered on another day</label>
+        <div class="log-add-row">
+          <input class="field" type="date" id="log-date" required>
+          <button class="btn btn-quiet" type="submit">Add to log</button>
+        </div>
+      </form>
+      <div class="sheet-block">
+        <h3 class="field-label">Water log</h3>
+        <ol class="log" id="sheet-log"></ol>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm" id="confirm" aria-labelledby="confirm-title">
+    <form method="dialog" class="confirm-inner">
+      <h2 class="confirm-title" id="confirm-title">Clear the whole log?</h2>
+      <p class="panel-text">Every watering and note in this browser goes. An export made earlier can bring them back.</p>
+      <div class="panel-actions">
+        <button class="btn btn-quiet" value="cancel">Keep it</button>
+        <button class="btn btn-danger" value="clear">Clear the log</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="./badge.js" defer></script>
+</body>
+</html>

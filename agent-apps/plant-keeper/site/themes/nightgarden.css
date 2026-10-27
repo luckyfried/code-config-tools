@@ -1,0 +1,40 @@
+/* Night garden: deep green black, mint rings, clay pots. */
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+  --color-bg: #0a120e;
+  --color-surface: #111c16;
+  --color-surface-2: #17251d;
+  --color-text: #e2ede5;
+  --color-muted: #8ea597;
+  --color-accent: #d9875f;
+  --color-on-accent: #1b0e08;
+  --color-danger: #ff6b57;
+  --color-warn: #f0b347;
+  --color-ok: #6fe0a3;
+  --color-border: #1f3027;
+  --color-glass: #16241c;
+  --color-ring-track: #1d2d24;
+  --color-ring-face: #0e1813;
+  --color-leaf: #4fa66a;
+  --color-leaf-2: #2f7849;
+  --color-leaf-dry: #8f8c48;
+  --color-stem: #4d8653;
+  --color-vein: #ffffff38;
+  --color-pot: #b25f3b;
+  --color-pot-rim: #c8764e;
+  --color-pot-mark: #f6e6d4;
+  --color-soil: #2b1c13;
+  --color-bloom: #e796be;
+  --color-bloom-center: #f2c548;
+  --color-cactus: #4c9b60;
+  --color-rib: #2a6a3f;
+  --color-spine: #e6e2cb;
+  --color-water: #6cb8ff;
+  --color-scrim: #000000a8;
+  --shadow-1: 0 1px 0 #ffffff08 inset, 0 1px 2px #00000066;
+  --shadow-2: 0 1px 0 #ffffff0d inset, 0 14px 36px #00000080;
+  --ring-glow: drop-shadow(0 0 5px color-mix(in oklab, var(--color-ok) 45%, transparent));
+}

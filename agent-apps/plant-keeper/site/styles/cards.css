@@ -1,0 +1,221 @@
+/* A plant card: the soil ring with the plant in its pot, the name and when it next needs water, and Watered. */
+/* Each ring part reads its own --f: --t1 runs green to amber up to 70 %, --t2 amber to red up to 100 %, --over is 1 once overdue. */
+.f-part {
+  --t1: clamp(0, calc(var(--f) / 0.7), 1);
+  --t2: clamp(0, calc((var(--f) - 0.7) / 0.3), 1);
+  --over: clamp(0, calc((var(--f) - 0.999) * 1000), 1);
+  transition: --f var(--motion-drain) var(--ease-out);
+}
+.is-opening .f-part { transition-timing-function: var(--ease-in-out); }
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  grid-template-areas: "ring body act";
+  align-items: center;
+  column-gap: 10px;
+  height: 96px;
+  padding: 10px var(--space-3) 10px 10px;
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--color-surface), var(--color-danger) calc(clamp(0, (var(--f) - 0.999) * 1000, 1) * 6%));
+  box-shadow: var(--shadow-1), inset 0 0 0 1px color-mix(in oklab, var(--color-border), var(--color-danger) calc(clamp(0, (var(--f) - 0.999) * 1000, 1) * 22%));
+  transition: --f var(--motion-drain) var(--ease-out);
+}
+
+.ring-wrap {
+  grid-area: ring;
+  position: relative;
+  width: 74px;
+  height: 74px;
+}
+.ring { width: 100%; height: 100%; overflow: visible; }
+
+.ring-face { fill: var(--color-ring-face); }
+.ring-track {
+  fill: none;
+  stroke-width: 6;
+  stroke: var(--color-ring-track);
+}
+.ring-bar {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 100px 200px;
+  /* Drained to the end it is an empty track with a short red mark at the top. */
+  stroke-dashoffset: calc(min(var(--f), 1) * 100px - var(--over) * 4px);
+  stroke: color-mix(in oklch,
+    color-mix(in oklch, var(--color-ok), var(--color-warn) calc(var(--t1) * 100%)),
+    var(--color-danger) calc(var(--t2) * 100%));
+  filter: var(--ring-glow);
+}
+
+/* The pot and the soil, which pales as it dries. */
+.pot-body { fill: var(--color-pot); }
+.pot-band { fill: var(--color-pot-rim); opacity: 0.55; }
+.pot-rim { fill: var(--color-pot-rim); }
+.soil { fill: color-mix(in oklab, var(--color-soil), var(--color-pot-rim) calc(min(var(--f), 1) * 38%)); }
+
+/* The plant, drawn from the sprite. Leaves hang 24 degrees once it is overdue. */
+.plant .a { fill: var(--color-leaf); }
+.plant .b { fill: var(--color-leaf-2); }
+.plant .s { fill: none; stroke: var(--color-stem); stroke-linecap: round; }
+.plant .v { fill: none; stroke: var(--color-vein); stroke-width: 0.5; stroke-linecap: round; }
+.plant .f { fill: var(--color-bloom); }
+.plant .c { fill: var(--color-bloom-center); }
+.plant .k { fill: var(--color-cactus); }
+.plant .r { fill: none; stroke: var(--color-rib); stroke-width: 0.7; stroke-linecap: round; }
+.plant .p { fill: var(--color-spine); }
+.plant .lf-l, .plant .lf-r { transition: transform var(--motion-droop) ease; }
+
+/* The whole plant also sags toward the soil and its leaves go dry, so a thirsty plant reads as wilted in a still. */
+.plant { transform-origin: 50px 61px; transition: transform var(--motion-droop) ease; }
+.is-droopy .plant { transform: scaleY(0.86); }
+.is-droopy .plant .lf-l { transform: rotate(-24deg); }
+.is-droopy .plant .lf-r { transform: rotate(24deg); }
+.is-droopy .plant .a { fill: color-mix(in oklab, var(--color-leaf), var(--color-leaf-dry) 52%); }
+.is-droopy .plant .b { fill: color-mix(in oklab, var(--color-leaf-2), var(--color-leaf-dry) 46%); }
+.is-droopy .plant .k { fill: color-mix(in oklab, var(--color-cactus), var(--color-leaf-dry) 38%); }
+
+/* The droplet and its ripple, run by app/motion.js. */
+.drop, .ripple, .splash { opacity: 0; }
+.drop { fill: var(--color-water); transform-box: fill-box; transform-origin: 50% 100%; }
+.ripple { fill: none; stroke: var(--color-water); stroke-width: 1.4; transform-box: fill-box; transform-origin: center; }
+.splash { fill: var(--color-water); }
+
+/* The neutral leaf's initial, lettered on the pot below its band. */
+.pot-initial {
+  fill: var(--color-pot-mark);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variation-settings: "SOFT" 100, "opsz" 24;
+}
+
+.card-body {
+  grid-area: body;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.card-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variation-settings: "SOFT" 100, "opsz" 24;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-open {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+.card-open::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.card-open:focus-visible { outline: none; }
+.card:has(.card-open:focus-visible) { outline: 2px solid var(--color-ok); outline-offset: 2px; }
+
+.card-status {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card[data-state="thirsty"] .card-status { color: var(--color-danger); }
+.card[data-state="soon"] .card-status { color: color-mix(in oklab, var(--color-warn), var(--color-text) 25%); }
+.card[data-state="fresh"] .card-status { color: var(--color-ok); }
+
+.card-light {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.card-light svg { flex: none; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.card-light span { overflow: hidden; text-overflow: ellipsis; }
+
+/* Watered: loud on a thirsty plant, quiet otherwise, a check once done today. */
+.water {
+  grid-area: act;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 13px 0 11px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  white-space: nowrap;
+  transition-property: transform, background-color, color, box-shadow;
+  transition-duration: var(--motion-fast), var(--motion-base), var(--motion-base), var(--motion-base);
+  transition-timing-function: var(--ease-out), ease, ease, ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.water svg { width: 16px; height: 16px; flex: none; }
+.water .icon-drop { fill: var(--color-water); }
+.water .icon-check { display: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.water:active { transform: scale(0.96); }
+
+.card[data-state="thirsty"] .water {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--color-accent) 40%, transparent);
+}
+.card[data-state="thirsty"] .water .icon-drop { fill: currentColor; }
+.card[data-state="fresh"] .water {
+  background: color-mix(in oklab, var(--color-ok) 14%, transparent);
+  color: color-mix(in oklab, var(--color-ok), var(--color-text) 35%);
+  box-shadow: none;
+}
+.card[data-state="fresh"] .water .icon-drop { display: none; }
+.card[data-state="fresh"] .water .icon-check { display: block; }
+
+@media (hover: hover) and (pointer: fine) {
+  .water:hover { box-shadow: inset 0 0 0 1px var(--color-muted); }
+  .card[data-state="thirsty"] .water:hover { background: color-mix(in oklab, var(--color-accent), var(--color-text) 12%); }
+  .card:hover { box-shadow: var(--shadow-2), inset 0 0 0 1px color-mix(in oklab, var(--color-border), var(--color-danger) calc(clamp(0, (var(--f) - 0.999) * 1000, 1) * 22%)); }
+}
+
+@media (min-width: 1200px) {
+  .card {
+    grid-template-columns: 92px minmax(0, 1fr);
+    grid-template-areas:
+      "ring body"
+      "ring act";
+    align-items: center;
+    row-gap: var(--space-2);
+    height: auto;
+    min-height: 128px;
+    padding: var(--space-4);
+  }
+  .ring-wrap { width: 92px; height: 92px; }
+  .card-body { align-self: end; }
+  .water { justify-self: start; align-self: start; min-height: 40px; }
+  .card-name { font-size: var(--text-xl); }
+}
