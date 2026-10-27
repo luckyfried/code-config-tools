@@ -1,0 +1,17 @@
+{
+  "id": "01a17a97-9322-7723-83d0-212b76d52624",
+  "version": "2026-10-21",
+  "name": "Run Atlas",
+  "shortDescription": "Every run you've recorded, drawn as a wall of route thumbprints.",
+  "description": "Run Atlas reads the GPX files your watch or Strava exports and draws every run, ride, walk, and hike as a single line on its own square tile, all scaled to the same box, so long loops and short jogs read as a family. Tap a tile and the route flies open and draws itself at the pace you ran it, with a pace strip colored kilometer by kilometer, the elevation profile, and the splits. Above the wall sit the last twelve months as bars, the rolling total, and your fastest 5 km, longest, and biggest climb. A Months screen lays out every year month by month. Light and dark themes, kilometers or miles, and nothing leaves your computer.",
+  "category": "health-fitness",
+  "subcategory": "Running and cycling",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.png",
+    "assets/desktop-light.png"
+  ],
+  "deploy": "out/run-atlas",
+  "setup": "Asks in one message where your GPX files are (and can tell you how to export them from Garmin, Strava, Apple Fitness, or Coros), whether you think in kilometers or miles, and whether to show runs only or rides, walks, and hikes too. No keys or accounts are needed: the files stay on your computer and the page is built from them."
+}

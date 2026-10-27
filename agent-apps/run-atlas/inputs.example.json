@@ -1,0 +1,14 @@
+{
+  "activitiesDir": "",
+  "units": "km",
+  "sports": [],
+  "year": 2026,
+  "theme": "auto",
+  "_notes": {
+    "activitiesDir": "The folder of GPX files, relative to this file, for example \"activities\". Leave it empty to show the sample year that ships with the app.",
+    "units": "\"km\" or \"mi\": distances, paces, and splits use it.",
+    "sports": "Which activities to show: any of \"run\", \"ride\", \"walk\", and \"hike\". An empty list shows them all.",
+    "year": "The year the wall opens on, such as 2026. The year filter lists every year found; null opens on the latest.",
+    "theme": "\"asphalt\" (near-black tiles, white routes), \"trail\" (bone-white tiles, ink routes), or \"auto\" (trail by day, asphalt by night, following the device)."
+  }
+}

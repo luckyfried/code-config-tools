@@ -1,0 +1,30 @@
+/* Asphalt: near-black tiles on a wet-road gray, white routes, a pace strip from blue to orange. */
+:root {
+  color-scheme: dark;
+  --color-bg: #16181b;
+  --color-surface: #1d2024;
+  --color-surface-2: #272b30;
+  --color-text: #eeede8;
+  --color-muted: #959aa1;
+  --color-accent: #ff8a3d;
+  --color-on-accent: #1d0e02;
+  --color-danger: #ff6257;
+  --color-ok: #5fd39f;
+  --color-border: #2e3238;
+  --tile: #0b0c0e;
+  --tile-deep: #102544;
+  --tile-edge: #24282e;
+  --route: #f6f5f0;
+  --route-ghost: #f6f5f033;
+  --tile-label: #d3d6db;
+  --pace-slow: #3f7dff;
+  --pace-mid: #cfcac2;
+  --pace-fast: #ff8a3d;
+  --chart-bar: #d9d8d2;
+  --chart-bar-dim: #3a3f46;
+  --chart-fill: #f6f5f01f;
+  --focus: #ffb27f;
+  --scrim: #000000b3;
+  --shadow-1: 0 1px 0 #ffffff0a inset, 0 0 0 1px #00000066;
+  --shadow-2: 0 18px 50px #00000080, 0 2px 8px #00000066;
+}

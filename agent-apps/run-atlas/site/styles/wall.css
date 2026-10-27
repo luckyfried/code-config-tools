@@ -1,0 +1,166 @@
+/* The wall: one square tile per activity, each route drawn at the same weight in the same box. */
+.wall-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0 var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.wall-title {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 550;
+}
+
+.wall {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (min-width: 600px) {
+  .wall {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .wall {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .wall {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+.tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--tile-deep) calc(var(--len, 0) * 100%), var(--tile));
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+  overflow: hidden;
+  transition-property: transform, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tile:active {
+  transform: scale(0.97);
+}
+
+.tile[aria-current="true"] {
+  box-shadow: var(--shadow-1), 0 0 0 2px var(--color-accent);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tile svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tile polyline {
+  fill: none;
+  stroke: var(--route);
+  stroke-width: var(--sw, 14px);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+  animation: tile-draw 900ms var(--ease-out) both;
+  animation-delay: calc(min(var(--i, 0), 56) * 11ms);
+}
+
+@keyframes tile-draw {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.tile-km {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  background: inherit;
+  color: var(--tile-label);
+  font-size: var(--text-xs);
+  font-weight: 550;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.tile-date {
+  position: absolute;
+  right: 7px;
+  top: 6px;
+  color: var(--tile-label);
+  font-size: var(--text-xs);
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--motion-fast) ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover {
+    transform: translateY(-2px);
+  }
+
+  .tile:hover .tile-date,
+  .tile:focus-visible .tile-date {
+    opacity: 1;
+  }
+}
+
+
+/* desktop: the distance reads at a glance */
+@media (min-width: 1100px) {
+  .tile-km {
+    left: 6px;
+    bottom: 6px;
+    padding: 3px 5px;
+    font-size: var(--text-sm);
+    font-weight: 650;
+  }
+
+  .tile-date {
+    font-size: var(--text-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile polyline {
+    animation: none;
+  }
+}

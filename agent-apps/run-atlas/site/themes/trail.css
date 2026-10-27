@@ -1,0 +1,30 @@
+/* Trail: bone-white tiles on field-notebook paper, ink routes, a pace strip from teal to rust. */
+:root {
+  color-scheme: light;
+  --color-bg: #e7e1d5;
+  --color-surface: #f1ece2;
+  --color-surface-2: #ded6c6;
+  --color-text: #1b2130;
+  --color-muted: #635d52;
+  --color-accent: #b0452a;
+  --color-on-accent: #fff8f2;
+  --color-danger: #b3261e;
+  --color-ok: #2f7a55;
+  --color-border: #d0c7b5;
+  --tile: #faf7f0;
+  --tile-deep: #e5cf9f;
+  --tile-edge: #d6ccb9;
+  --route: #1b2130;
+  --route-ghost: #1b213029;
+  --tile-label: #433e35;
+  --pace-slow: #24898a;
+  --pace-mid: #c9bfa9;
+  --pace-fast: #b0452a;
+  --chart-bar: #2a3142;
+  --chart-bar-dim: #cfc6b4;
+  --chart-fill: #1b21301a;
+  --focus: #b0452a;
+  --scrim: #2a24186b;
+  --shadow-1: 0 1px 0 #ffffffcc inset, 0 1px 2px #5a46201f, 0 3px 10px #5a46200f;
+  --shadow-2: 0 24px 60px #3c2e1640, 0 2px 8px #3c2e1626;
+}

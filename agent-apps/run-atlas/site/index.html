@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Run Atlas</title>
+  <meta name="description" content="Every run you've recorded, drawn as a wall of route thumbprints.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/wall.css">
+  <link rel="stylesheet" href="./styles/detail.css">
+  <link rel="stylesheet" href="./styles/months.css">
+  <script src="./config.js"></script>
+  <script src="./data.js"></script>
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <div class="app" id="app" data-screen="wall">
+    <header class="top">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M7 24c-2.5-3-2.6-8.4.6-11.6 3.4-3.4 7.4-1.4 9.6-4.6 1.6-2.3 5.4-2.6 7.4-.2 2.4 2.8 1.2 6.4-1.4 8-2.8 1.8-2.2 5.2-4.6 7.6-3.2 3.2-8.6 4-11.6.8Z"/>
+        </svg>
+        <div class="brand-text">
+          <h1 class="brand-name">Run Atlas</h1>
+          <p class="brand-status" id="status"></p>
+        </div>
+      </div>
+      <nav class="screens" aria-label="Screens">
+        <a class="seg" href="#/" id="to-wall" aria-current="page">Wall</a>
+        <a class="seg" href="#/months" id="to-months">Months</a>
+      </nav>
+      <div class="filters">
+        <div class="chips" role="group" aria-label="Year" id="years"></div>
+        <div class="chips" role="group" aria-label="Sport" id="sports"></div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="wall-side" id="wall-screen" aria-label="Wall">
+        <div class="summary">
+          <div class="total">
+            <p class="total-number"><span class="num" id="total-number">0</span><span class="unit" id="total-unit">km</span></p>
+            <p class="total-label" id="total-label"></p>
+          </div>
+          <figure class="bars" id="bars" aria-label="Distance by month"></figure>
+          <ul class="bests" id="bests" aria-label="Personal bests"></ul>
+        </div>
+        <div class="wall-head">
+          <h2 class="wall-title" id="wall-title"></h2>
+        </div>
+        <div class="wall" id="wall" role="group" aria-label="Activities"></div>
+        <div class="empty" id="empty" hidden>
+          <p class="empty-text" id="empty-text"></p>
+          <button class="button" type="button" id="empty-reset">Show every sport</button>
+        </div>
+      </section>
+
+      <aside class="detail" id="detail" aria-label="Activity" aria-hidden="true">
+        <div class="detail-scroll" id="detail-scroll">
+          <div class="detail-bar">
+            <button class="icon-button close" type="button" id="close" aria-label="Back to the wall">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+            </button>
+            <div class="detail-nav">
+              <button class="icon-button" type="button" id="prev" aria-label="Newer activity">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+              </button>
+              <button class="icon-button" type="button" id="next" aria-label="Older activity">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="detail-title">
+            <h2 class="detail-name" id="detail-name"></h2>
+            <p class="detail-when" id="detail-when"></p>
+          </div>
+          <div class="route-box" id="route-box">
+            <svg class="route" id="route" viewBox="-70 -70 1140 1140" role="img" aria-labelledby="detail-name">
+              <polyline class="route-ghost" id="route-ghost"/>
+              <path class="route-line" id="route-line"/>
+              <circle class="route-start" id="route-start" r="9"/>
+              <circle class="route-head" id="route-head" r="11"/>
+              <circle class="route-scrub" id="route-scrub" r="13"/>
+            </svg>
+          </div>
+          <dl class="facts" id="facts"></dl>
+          <section class="block" aria-labelledby="pace-title">
+            <div class="block-head">
+              <h3 class="block-title" id="pace-title">Pace by <span id="pace-unit">km</span></h3>
+              <p class="legend" id="pace-legend"></p>
+            </div>
+            <svg class="pace-strip" id="pace-strip" preserveAspectRatio="none" aria-hidden="true"></svg>
+          </section>
+          <section class="block" aria-labelledby="ele-title">
+            <div class="block-head">
+              <h3 class="block-title" id="ele-title">Elevation</h3>
+              <p class="legend" id="ele-readout"></p>
+            </div>
+            <svg class="elevation" id="elevation" preserveAspectRatio="none" aria-hidden="true">
+              <path class="ele-area" id="ele-area"/>
+              <path class="ele-line" id="ele-line"/>
+              <line class="ele-cursor" id="ele-cursor" y1="0" y2="100"/>
+            </svg>
+          </section>
+          <section class="block" aria-labelledby="splits-title">
+            <div class="block-head">
+              <h3 class="block-title" id="splits-title">Splits</h3>
+            </div>
+            <table class="splits" id="splits"></table>
+          </section>
+          <p class="detail-foot"><a class="link" id="gpx-link" href="#" download>Download the GPX file</a></p>
+        </div>
+      </aside>
+
+      <section class="months" id="months-screen" aria-label="Months" hidden></section>
+    </main>
+  </div>
+  <script src="./badge.js"></script>
+</body>
+</html>
