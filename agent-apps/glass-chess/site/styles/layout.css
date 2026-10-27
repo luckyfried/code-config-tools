@@ -1,0 +1,159 @@
+/* Where things sit. Phone: the far player across the top, the board filling the width, the game sheet below it.
+   Desktop: the board fills the left of the window and the rail runs down the right. The 3D table is drawn behind it
+   all on one canvas; main.js fits the board into the stage box. */
+
+.room {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(120% 80% at 50% 35%, var(--room-top), var(--room-bottom));
+}
+
+.table {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+  outline: none;
+}
+.ready .table { opacity: 1; }
+.ready.curtain .table { opacity: 0; }
+.table:focus-visible { outline: none; }
+
+.hud {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "top" "stage" "panel";
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  pointer-events: none;
+}
+
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) 0;
+  pointer-events: auto;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-xl);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+  container-type: size;
+}
+
+/* The board in lacquer and squares, drawn by the page itself, so the first frame already shows the table while the
+   3D scene starts; it fades out as the scene fades in. */
+.poster {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  perspective: 2400px;
+  pointer-events: none;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+.ready .poster { opacity: 0; }
+.ready.curtain .poster { opacity: 1; }
+.poster-board {
+  width: min(80cqw, 88cqh);
+  aspect-ratio: 1;
+  padding: 5.5%;
+  border-radius: 3%;
+  background: var(--board-frame);
+  box-shadow: var(--shadow-2);
+  transform: rotateX(20deg);
+}
+@media (min-width: 900px) {
+  .poster-board { width: min(78cqw, 92cqh); transform: rotateX(34deg); }
+}
+.poster-board::before {
+  content: "";
+  display: block;
+  height: 100%;
+  outline: 2px solid var(--board-inlay);
+  outline-offset: 6px;
+  background: conic-gradient(var(--board-dark) 25%, var(--board-light) 0 50%, var(--board-dark) 0 75%, var(--board-light) 0) 0 0 / 25% 25%;
+}
+
+.panel {
+  grid-area: panel;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  border-top: 1px solid var(--color-border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+}
+
+.flat {
+  position: absolute;
+  inset: var(--space-3);
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+.flat-board {
+  width: min(100%, 100cqh);
+  max-height: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-2);
+}
+.flat-light { fill: var(--board-light); }
+.flat-dark { fill: var(--board-dark); }
+.flat-last { fill: var(--hint-last); fill-opacity: 0.45; }
+.flat-selected { fill: var(--hint-selected); fill-opacity: 0.6; }
+.flat-target { fill: var(--hint-target); fill-opacity: 0.45; }
+.flat-cursor { fill: none; stroke: var(--hint-cursor); stroke-width: 0.06; }
+.flat-check { fill: var(--check); fill-opacity: 0.55; }
+.flat-piece {
+  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+.flat-white path { fill: var(--glass-white-tint); stroke: var(--color-muted); stroke-width: 0.03; }
+.flat-black path { fill: var(--glass-black-tint); stroke: var(--color-text); stroke-width: 0.03; }
+
+@media (min-width: 900px) {
+  .hud {
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 28vw, 410px);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: "stage top" "stage panel";
+    column-gap: var(--space-5);
+    padding: var(--space-5) var(--space-5) var(--space-5) 0;
+  }
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+    padding: 0;
+  }
+  .brand { font-size: var(--text-3xl); padding-top: var(--space-2); }
+  .panel {
+    min-height: 0;
+    margin-top: var(--space-4);
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+}

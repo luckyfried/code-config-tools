@@ -1,0 +1,16 @@
+{
+  "_notes": {
+    "title": "The name at the top of the page and in the browser tab.",
+    "players": "The names shown at each side of the board. Write \"computer\" for a side to have the computer play it.",
+    "strength": "The computer's level, 1 to 4. Level 4 thinks for up to two seconds a move.",
+    "theme": "The board: glass-noir (black lacquer), glass-amber (walnut and amber glass), or ice (white marble and blue glass).",
+    "clock": "none, 5+0, 10+0, or 15+10 (fifteen minutes and ten seconds added after each move).",
+    "sound": "true for the glass set-down, capture, and check sounds; false for silence."
+  },
+  "title": "Glass Chess",
+  "players": { "white": "You", "black": "computer" },
+  "strength": 2,
+  "theme": "glass-noir",
+  "clock": "none",
+  "sound": true
+}

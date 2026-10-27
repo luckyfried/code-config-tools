@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Glass Chess</title>
+  <meta name="description" content="Chess on a lacquered board with pieces of clear and smoke glass. Play a friend on one screen or the computer.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/hanken-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/bodoni-moda-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css" id="theme">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/panel.css">
+  <link rel="stylesheet" href="./styles/dialogs.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+  <link rel="modulepreload" href="./vendor/three.module.min.js">
+  <link rel="modulepreload" href="./vendor/three.core.min.js">
+</head>
+<body>
+  <div class="room" aria-hidden="true"></div>
+  <canvas id="table" class="table" tabindex="0" aria-label="Chess board. Arrow keys move the cursor, Space picks up and puts down a piece."></canvas>
+  <div id="flat" class="flat" hidden></div>
+
+  <div class="hud" id="hud">
+  <header class="topbar" id="topbar">
+    <h1 class="brand" id="title">Glass Chess</h1>
+    <section class="plate" id="plate-far" aria-label="Player at the far side">
+      <img class="plate-piece" alt="" width="40" height="40">
+      <div class="plate-who">
+        <p class="plate-name"></p>
+        <p class="plate-taken" aria-label="Captured pieces"></p>
+      </div>
+      <p class="plate-clock" hidden></p>
+    </section>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="poster" aria-hidden="true"><div class="poster-board"></div></div>
+    <section class="result" id="result" hidden aria-live="assertive">
+      <p class="result-title" id="result-title">Checkmate</p>
+      <p class="result-line" id="result-line"></p>
+      <div class="result-actions" id="result-actions">
+        <button type="button" class="button button-primary" id="result-new">New game</button>
+        <button type="button" class="button" id="result-close">See the board</button>
+      </div>
+    </section>
+  </div>
+
+  <main class="panel" id="panel">
+    <section class="status" aria-live="polite">
+      <p class="status-title" id="status-title">Glass Chess</p>
+      <p class="status-line" id="status-line">A game is being played for you.</p>
+    </section>
+
+    <section class="start" id="start">
+      <p class="start-caption" id="start-caption">Your own game starts with one tap.</p>
+      <div class="start-actions">
+        <button type="button" class="button button-primary" id="play-computer">Play the computer</button>
+        <button type="button" class="button" id="play-friend">Play a friend</button>
+      </div>
+      <button type="button" class="link" id="more-options">Pick the clock, level, and board</button>
+    </section>
+
+    <ol class="moves" id="moves" aria-label="Moves"></ol>
+
+    <form class="san" id="san" autocomplete="off">
+      <label class="san-label" for="san-input">Type a move</label>
+      <input class="san-input" id="san-input" name="move" placeholder="e4, Nf3, O-O" spellcheck="false" autocapitalize="off" enterkeyhint="go">
+      <p class="san-note" id="san-note" role="status"></p>
+    </form>
+
+    <section class="plate plate-near" id="plate-near" aria-label="Player at the near side">
+      <img class="plate-piece" alt="" width="40" height="40">
+      <div class="plate-who">
+        <p class="plate-name"></p>
+        <p class="plate-taken" aria-label="Captured pieces"></p>
+      </div>
+      <p class="plate-clock" hidden></p>
+    </section>
+
+    <nav class="actions" id="actions" aria-label="Game">
+      <button type="button" class="action" id="act-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New game</span></button>
+      <button type="button" class="action" id="act-undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2"/></svg><span>Undo</span></button>
+      <button type="button" class="action" id="act-flip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v14M4 15l3 3 3-3M17 20V6M14 9l3-3 3 3"/></svg><span>Flip</span></button>
+      <button type="button" class="action" id="act-resign"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></svg><span>Resign</span></button>
+      <button type="button" class="action" id="act-settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Settings</span></button>
+    </nav>
+  </main>
+  </div>
+
+
+  <dialog class="sheet-dialog" id="setup" aria-labelledby="setup-title">
+    <form method="dialog" class="setup" id="setup-form">
+      <h2 class="dialog-title" id="setup-title">New game</h2>
+      <fieldset class="field" data-new>
+        <legend>Opponent</legend>
+        <div class="segmented">
+          <label><input type="radio" name="opponent" value="computer"><span>The computer</span></label>
+          <label><input type="radio" name="opponent" value="friend"><span>A friend, on this screen</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="field" data-new data-computer>
+        <legend>You play</legend>
+        <div class="segmented" id="side-pick">
+          <label><input type="radio" name="human" value="w"><span><img alt="" width="28" height="28" data-icon="wk">White</span></label>
+          <label><input type="radio" name="human" value="b"><span><img alt="" width="28" height="28" data-icon="bk">Black</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="field" data-new data-computer>
+        <legend>Computer level</legend>
+        <div class="segmented segmented-4">
+          <label><input type="radio" name="strength" value="1"><span>1</span></label>
+          <label><input type="radio" name="strength" value="2"><span>2</span></label>
+          <label><input type="radio" name="strength" value="3"><span>3</span></label>
+          <label><input type="radio" name="strength" value="4"><span>4</span></label>
+        </div>
+        <p class="field-note" id="strength-note"></p>
+      </fieldset>
+      <fieldset class="field" data-new>
+        <legend>Clock</legend>
+        <div class="segmented segmented-4">
+          <label><input type="radio" name="clock" value="none"><span>No clock</span></label>
+          <label><input type="radio" name="clock" value="5+0"><span>5 min</span></label>
+          <label><input type="radio" name="clock" value="10+0"><span>10 min</span></label>
+          <label><input type="radio" name="clock" value="15+10"><span>15 | 10</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="field">
+        <legend>Board</legend>
+        <div class="themes">
+          <label class="theme-card"><input type="radio" name="theme" value="glass-noir"><img class="theme-swatch" src="./themes/glass-noir.svg" alt="" width="60" height="60"><span>Noir lacquer</span></label>
+          <label class="theme-card"><input type="radio" name="theme" value="glass-amber"><img class="theme-swatch" src="./themes/glass-amber.svg" alt="" width="60" height="60"><span>Amber walnut</span></label>
+          <label class="theme-card"><input type="radio" name="theme" value="ice"><img class="theme-swatch" src="./themes/ice.svg" alt="" width="60" height="60"><span>Ice marble</span></label>
+        </div>
+      </fieldset>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" name="sound"><span>Sound</span></label>
+        <label class="toggle" data-friend><input type="checkbox" name="turnBoard"><span>Turn the board to whoever moves</span></label>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="button" id="setup-cancel">Cancel</button>
+        <button type="submit" class="button button-primary" id="setup-go" value="go">Start the game</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="promote" id="promote" aria-labelledby="promote-title">
+    <form method="dialog">
+      <h2 class="dialog-title" id="promote-title">Promote to</h2>
+      <div class="promote-choices" id="promote-choices">
+        <button type="submit" value="q" class="promote-choice"><img alt="" width="72" height="72" data-promo="q"><span>Queen</span></button>
+        <button type="submit" value="r" class="promote-choice"><img alt="" width="72" height="72" data-promo="r"><span>Rook</span></button>
+        <button type="submit" value="b" class="promote-choice"><img alt="" width="72" height="72" data-promo="b"><span>Bishop</span></button>
+        <button type="submit" value="n" class="promote-choice"><img alt="" width="72" height="72" data-promo="n"><span>Knight</span></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

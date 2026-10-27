@@ -1,0 +1,17 @@
+{
+  "id": "01a162d6-13c9-778c-8901-b52d7fe70895",
+  "version": "2026-10-21",
+  "name": "Glass Chess",
+  "shortDescription": "Glass chess on a mirror-polished board, against a friend or the computer.",
+  "description": "A chess page you keep: pieces of clear and smoke glass catch the studio light, refract the squares beneath them, and reflect in a polished lacquer board. A captured piece sinks through a ripple in the board, check lights its square red under the glass, and checkmate dims the room while the beaten king tips over. Play a friend on one screen, with the camera swinging to whoever moves, or play the computer at one of four levels. Pick a clock (none, 5 minutes, 10 minutes, or 15 with a 10 second increment), move by tap, click, arrow keys, or typed moves like Nf3, and undo or resign from the panel. Three boards: black lacquer, amber walnut, and ice marble, each with a light and a dark look. The page opens playing Légal's mate from Paris, 1750, and your game in progress is kept in the browser, so a reload picks up where you left off.",
+  "category": "games",
+  "subcategory": "Board and strategy",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/glass-chess",
+  "setup": "Ask for the two player names (or which side the computer plays), the computer's level from 1 to 4, the clock (none, 5+0, 10+0, or 15+10), the board (black lacquer, amber walnut, or ice marble), and whether to play sounds. No keys and no services are needed. The page runs in the browser from the out/glass-chess folder; games and settings stay on that device and nothing is sent anywhere."
+}
