@@ -1,0 +1,17 @@
+{
+  "id": "01a1797d-fb4c-7831-adad-212c9819a888",
+  "version": "2026-10-21",
+  "name": "Cook Mode",
+  "shortDescription": "Your recipes, one giant step at a time, with timers in the text.",
+  "description": "Your own recipes as a site with a cook mode for the stove. Cook mode shows one step per screen in 36-pixel type, with the ingredients that step needs pinned in a strip below it and a row of dots for where you are. Every time written in a step, like \"10 minutes\" or \"2½ hours\", is a chip you tap to start a timer. The chip turns into a pill that drains as the time runs down and plays a two-tone chime at zero, even if the phone was locked in between. Steps turn with a swipe or the arrow keys, and the screen stays awake while you cook.\n\nThe servings slider rescales every quantity live, in metric or US measures, with real fractions like ½, ⅓, and ¾. The index is a wall of recipe cards with a cuisine-colored edge and the total time as a small clock arc, under a live \"Tonight\" card for the recipe you pinned. Mark recipes for this week and the shopping page adds up everything they need into one list.\n\nYou never fill in a form: send your agent a link, a photo of a recipe card, or a description, and it writes the recipe into your book and rebuilds the site.",
+  "category": "food-drink",
+  "subcategory": "Recipes",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/cook-mode",
+  "setup": ""
+}

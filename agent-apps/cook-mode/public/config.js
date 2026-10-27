@@ -1,0 +1,818 @@
+window.__APP_CONFIG__ = {
+  "kitchen": "Sam's kitchen",
+  "units": "us",
+  "theme": "auto",
+  "pinned": "mushroom-ragu",
+  "tags": [
+    "weeknight",
+    "vegetarian",
+    "quick",
+    "one-pan",
+    "pasta",
+    "fish",
+    "budget",
+    "spicy",
+    "brunch",
+    "baking",
+    "weekend",
+    "freezer"
+  ],
+  "recipes": [
+    {
+      "id": "mushroom-ragu",
+      "title": "Porcini and chestnut mushroom ragù",
+      "servings": 4,
+      "minutes": 70,
+      "cuisine": "Italian",
+      "tags": [
+        "vegetarian",
+        "pasta",
+        "freezer"
+      ],
+      "ingredients": [
+        {
+          "amount": 20,
+          "unit": "g",
+          "name": "dried porcini",
+          "step": 1
+        },
+        {
+          "amount": 250,
+          "unit": "ml",
+          "name": "boiling water",
+          "step": 1
+        },
+        {
+          "amount": 3,
+          "unit": "tbsp",
+          "name": "olive oil",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "onions, finely chopped",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "celery stalks, finely chopped",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "carrots, finely chopped",
+          "step": 2
+        },
+        {
+          "amount": 500,
+          "unit": "g",
+          "name": "chestnut mushrooms, chopped",
+          "step": 3
+        },
+        {
+          "amount": 3,
+          "unit": "",
+          "name": "garlic cloves, grated",
+          "step": 3
+        },
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "tomato paste",
+          "step": 4
+        },
+        {
+          "amount": 150,
+          "unit": "ml",
+          "name": "red wine",
+          "step": 4
+        },
+        {
+          "amount": 400,
+          "unit": "g",
+          "name": "chopped tomatoes",
+          "step": 5
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "rosemary sprigs",
+          "step": 5
+        },
+        {
+          "amount": 400,
+          "unit": "g",
+          "name": "pappardelle",
+          "step": 6
+        },
+        {
+          "amount": 30,
+          "unit": "g",
+          "name": "butter",
+          "step": 7
+        },
+        {
+          "amount": 40,
+          "unit": "g",
+          "name": "parmesan, finely grated",
+          "step": 7
+        }
+      ],
+      "steps": [
+        "Pour the boiling water over the porcini and leave them to soak for 20 minutes.",
+        "Warm the oil in a wide pan over medium heat. Add the onion, celery, and carrot with a pinch of salt and cook, stirring now and then, for 10 minutes, until soft and sweet.",
+        "Turn the heat up. Add the mushrooms and garlic and fry for 8 minutes, until the pan is dry and the mushrooms brown at the edges.",
+        "Stir in the tomato paste for 1 minute, then pour in the wine and let it bubble away by half.",
+        "Lift out the porcini, chop them, and add them with their soaking liquid (leave the grit behind), the tomatoes, and the rosemary. Simmer gently for 30 minutes.",
+        "Cook the pappardelle in well-salted water until just shy of tender, about 7 minutes. Save a mug of the pasta water.",
+        "Fish out the rosemary. Toss the pasta into the ragù with the butter, the parmesan, and splashes of pasta water until glossy."
+      ]
+    },
+    {
+      "id": "lemon-chicken",
+      "title": "Lemon chicken thighs with green olives",
+      "servings": 4,
+      "minutes": 50,
+      "cuisine": "Greek",
+      "tags": [
+        "weeknight",
+        "one-pan"
+      ],
+      "ingredients": [
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "lemons",
+          "step": 1
+        },
+        {
+          "amount": 3,
+          "unit": "tbsp",
+          "name": "olive oil",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "dried oregano",
+          "step": 1
+        },
+        {
+          "amount": 4,
+          "unit": "",
+          "name": "garlic cloves, smashed",
+          "step": 1
+        },
+        {
+          "amount": 8,
+          "unit": "",
+          "name": "chicken thighs, skin on",
+          "step": 2
+        },
+        {
+          "amount": 600,
+          "unit": "g",
+          "name": "baby potatoes, halved",
+          "step": 2
+        },
+        {
+          "amount": 100,
+          "unit": "g",
+          "name": "green olives",
+          "step": 4
+        },
+        {
+          "amount": 1,
+          "unit": "bunch",
+          "name": "parsley, chopped",
+          "step": 5
+        }
+      ],
+      "steps": [
+        "Heat the oven to 220°C. Zest one lemon and mix the zest with the oil, oregano, garlic, and a big pinch of salt.",
+        "Toss the potatoes and chicken in the lemon oil in a roasting pan, skin side up, with the zested lemon cut into wedges among them.",
+        "Roast for 25 minutes, until the skin starts to color.",
+        "Scatter the olives around the chicken and roast for 15 minutes more, until the skin is deep gold and crisp.",
+        "Squeeze over the juice of the second lemon, shower with parsley, and rest for 5 minutes before serving."
+      ]
+    },
+    {
+      "id": "dal-tadka",
+      "title": "Yellow dal with cumin tadka",
+      "servings": 4,
+      "minutes": 45,
+      "cuisine": "Indian",
+      "tags": [
+        "vegetarian",
+        "weeknight",
+        "budget"
+      ],
+      "ingredients": [
+        {
+          "amount": 250,
+          "unit": "g",
+          "name": "yellow split peas (toor dal)",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "l",
+          "name": "water",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "ground turmeric",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "salt",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "ghee",
+          "step": 4
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "cumin seeds",
+          "step": 4
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "onions, thinly sliced",
+          "step": 4
+        },
+        {
+          "amount": 3,
+          "unit": "",
+          "name": "garlic cloves, sliced",
+          "step": 4
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "green chilies, slit",
+          "step": 4
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "tomatoes, chopped",
+          "step": 5
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "limes",
+          "step": 6
+        },
+        {
+          "amount": 15,
+          "unit": "g",
+          "name": "cilantro, chopped",
+          "step": 6
+        }
+      ],
+      "steps": [
+        "Rinse the dal in a sieve until the water runs clear, then soak it in fresh water for 15 minutes.",
+        "Drain, then simmer the dal with the water, turmeric, and salt for 25 minutes, skimming off the foam, until it collapses when stirred.",
+        "Whisk the dal hard for 30 seconds to make it creamy. Keep it warm over low heat.",
+        "For the tadka, heat the ghee until it shimmers. Add the cumin seeds and let them crackle for 30 seconds, then add the onion, garlic, and chilies and fry for 6 minutes, until golden.",
+        "Add the tomatoes and cook for 4 minutes, until they slump.",
+        "Pour the tadka over the dal, squeeze in the lime, and scatter with cilantro."
+      ]
+    },
+    {
+      "id": "miso-salmon",
+      "title": "Miso-glazed salmon with sesame greens",
+      "servings": 2,
+      "minutes": 25,
+      "cuisine": "Japanese",
+      "tags": [
+        "quick",
+        "weeknight",
+        "fish"
+      ],
+      "ingredients": [
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "white miso",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "tbsp",
+          "name": "mirin",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "tbsp",
+          "name": "honey",
+          "step": 1
+        },
+        {
+          "amount": 2,
+          "unit": "tsp",
+          "name": "soy sauce",
+          "step": 1
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "salmon fillets, skin on",
+          "step": 2
+        },
+        {
+          "amount": 300,
+          "unit": "g",
+          "name": "bok choy, halved",
+          "step": 4
+        },
+        {
+          "amount": 1,
+          "unit": "tbsp",
+          "name": "toasted sesame oil",
+          "step": 4
+        },
+        {
+          "amount": 1,
+          "unit": "tbsp",
+          "name": "sesame seeds, toasted",
+          "step": 5
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "scallions, thinly sliced",
+          "step": 5
+        }
+      ],
+      "steps": [
+        "Stir the miso, mirin, honey, and soy sauce into a smooth glaze.",
+        "Pat the salmon dry, brush it all over with the glaze, and leave it for 10 minutes while the broiler heats to high.",
+        "Broil the salmon skin side down for 8 minutes, until the glaze blisters and the fish flakes at the thickest point.",
+        "Meanwhile, fry the bok choy cut side down in the sesame oil for 3 minutes, then add a splash of water, cover, and steam for 1 minute.",
+        "Plate the greens and salmon and finish with the sesame seeds and scallions."
+      ]
+    },
+    {
+      "id": "black-bean-tacos",
+      "title": "Crispy black bean tacos with pickled onions",
+      "servings": 4,
+      "minutes": 35,
+      "cuisine": "Mexican",
+      "tags": [
+        "vegetarian",
+        "weeknight",
+        "budget"
+      ],
+      "ingredients": [
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "red onions, thinly sliced",
+          "step": 1
+        },
+        {
+          "amount": 3,
+          "unit": "",
+          "name": "limes",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "sugar",
+          "step": 1
+        },
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "olive oil",
+          "step": 2
+        },
+        {
+          "amount": 800,
+          "unit": "g",
+          "name": "black beans, drained",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "tsp",
+          "name": "ground cumin",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "smoked paprika",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "garlic cloves, grated",
+          "step": 2
+        },
+        {
+          "amount": 12,
+          "unit": "",
+          "name": "corn tortillas",
+          "step": 4
+        },
+        {
+          "amount": 100,
+          "unit": "g",
+          "name": "cotija, crumbled",
+          "step": 5
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "avocados, sliced",
+          "step": 5
+        },
+        {
+          "amount": 15,
+          "unit": "g",
+          "name": "cilantro leaves",
+          "step": 5
+        }
+      ],
+      "steps": [
+        "Toss the onion with the juice of two limes, the sugar, and a pinch of salt. Leave it to turn pink for 20 minutes.",
+        "Warm the oil in a large skillet and fry the beans with the cumin, paprika, and garlic for 5 minutes.",
+        "Crush about half the beans with a fork so they hold together, and season with the juice of the last lime.",
+        "Warm each tortilla in a dry pan, fill it with a spoonful of beans, fold, and fry in a little oil until crisp, about 2 minutes a side.",
+        "Open them up and pile in the pickled onions, cotija, avocado, and cilantro."
+      ]
+    },
+    {
+      "id": "shakshuka",
+      "title": "Shakshuka with feta",
+      "servings": 2,
+      "minutes": 35,
+      "cuisine": "Middle Eastern",
+      "tags": [
+        "vegetarian",
+        "one-pan",
+        "brunch"
+      ],
+      "ingredients": [
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "olive oil",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "onions, sliced",
+          "step": 1
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "red bell peppers, sliced",
+          "step": 1
+        },
+        {
+          "amount": 3,
+          "unit": "",
+          "name": "garlic cloves, sliced",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "ground cumin",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "sweet paprika",
+          "step": 2
+        },
+        {
+          "amount": 0.5,
+          "unit": "tsp",
+          "name": "chili flakes",
+          "step": 2
+        },
+        {
+          "amount": 400,
+          "unit": "g",
+          "name": "canned whole tomatoes",
+          "step": 3
+        },
+        {
+          "amount": 4,
+          "unit": "",
+          "name": "eggs",
+          "step": 4
+        },
+        {
+          "amount": 50,
+          "unit": "g",
+          "name": "feta",
+          "step": 5
+        },
+        {
+          "amount": null,
+          "unit": "",
+          "name": "crusty bread, to serve",
+          "step": 5
+        }
+      ],
+      "steps": [
+        "Soften the onion and pepper in the oil over medium heat for 10 minutes.",
+        "Add the garlic and spices and stir for 1 minute, until fragrant.",
+        "Crush in the tomatoes with your hands, season, and simmer for 10 minutes, until thick enough to hold a hollow.",
+        "Make four hollows, crack an egg into each, cover, and cook for 6 minutes, until the whites are set and the yolks still wobble.",
+        "Crumble the feta over the top and eat straight from the pan with bread."
+      ]
+    },
+    {
+      "id": "green-curry",
+      "title": "Green curry with tofu and green beans",
+      "servings": 4,
+      "minutes": 35,
+      "cuisine": "Thai",
+      "tags": [
+        "vegetarian",
+        "weeknight",
+        "spicy"
+      ],
+      "ingredients": [
+        {
+          "amount": 300,
+          "unit": "g",
+          "name": "jasmine rice",
+          "step": 1
+        },
+        {
+          "amount": 450,
+          "unit": "ml",
+          "name": "water",
+          "step": 1
+        },
+        {
+          "amount": 400,
+          "unit": "g",
+          "name": "firm tofu, cubed",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "neutral oil",
+          "step": 2
+        },
+        {
+          "amount": 3,
+          "unit": "tbsp",
+          "name": "green curry paste",
+          "step": 3
+        },
+        {
+          "amount": 400,
+          "unit": "ml",
+          "name": "coconut milk",
+          "step": 3
+        },
+        {
+          "amount": 200,
+          "unit": "ml",
+          "name": "vegetable stock",
+          "step": 4
+        },
+        {
+          "amount": 200,
+          "unit": "g",
+          "name": "green beans, trimmed",
+          "step": 4
+        },
+        {
+          "amount": 1,
+          "unit": "tbsp",
+          "name": "soy sauce",
+          "step": 5
+        },
+        {
+          "amount": 2,
+          "unit": "tsp",
+          "name": "brown sugar",
+          "step": 5
+        },
+        {
+          "amount": 1,
+          "unit": "",
+          "name": "limes",
+          "step": 5
+        },
+        {
+          "amount": 15,
+          "unit": "g",
+          "name": "Thai basil leaves",
+          "step": 5
+        }
+      ],
+      "steps": [
+        "Rinse the rice and simmer it in the water, covered, for 12 minutes, then leave it to steam off the heat.",
+        "Pat the tofu dry and fry it in the oil for 8 minutes, turning, until golden on most sides. Lift it out.",
+        "Fry the curry paste in the same pan for 2 minutes, then add half the coconut milk and let it sizzle for 3 minutes, until the oil splits out.",
+        "Add the rest of the coconut milk, the stock, and the beans and simmer for 5 minutes, until the beans are just tender.",
+        "Return the tofu, season with the soy sauce, sugar, and lime juice, and tear in the basil."
+      ]
+    },
+    {
+      "id": "banana-bread",
+      "title": "Brown butter banana bread",
+      "servings": 10,
+      "minutes": 80,
+      "cuisine": "American",
+      "tags": [
+        "baking",
+        "weekend"
+      ],
+      "ingredients": [
+        {
+          "amount": 115,
+          "unit": "g",
+          "name": "unsalted butter",
+          "step": 1
+        },
+        {
+          "amount": 3,
+          "unit": "",
+          "name": "very ripe bananas",
+          "step": 2
+        },
+        {
+          "amount": 150,
+          "unit": "g",
+          "name": "light brown sugar",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "eggs",
+          "step": 2
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "vanilla extract",
+          "step": 2
+        },
+        {
+          "amount": 190,
+          "unit": "g",
+          "name": "all-purpose flour",
+          "step": 3
+        },
+        {
+          "amount": 1,
+          "unit": "tsp",
+          "name": "baking soda",
+          "step": 3
+        },
+        {
+          "amount": 0.5,
+          "unit": "tsp",
+          "name": "fine salt",
+          "step": 3
+        },
+        {
+          "amount": 80,
+          "unit": "g",
+          "name": "walnuts, toasted and chopped",
+          "step": 3
+        }
+      ],
+      "steps": [
+        "Heat the oven to 175°C and line a loaf pan. Melt the butter in a small pan and keep it going for 4 minutes, swirling, until it smells nutty and brown flecks appear.",
+        "Mash the bananas in a bowl, then beat in the brown butter, sugar, eggs, and vanilla.",
+        "Fold in the flour, baking soda, salt, and walnuts until no dry streaks remain.",
+        "Scrape into the pan and bake for 55 minutes, until a skewer comes out clean.",
+        "Cool in the pan for 15 minutes, then turn it out onto a rack."
+      ]
+    },
+    {
+      "id": "beef-stew",
+      "title": "Beef and red wine stew",
+      "servings": 6,
+      "minutes": 210,
+      "cuisine": "French",
+      "tags": [
+        "weekend",
+        "freezer"
+      ],
+      "ingredients": [
+        {
+          "amount": 1.2,
+          "unit": "kg",
+          "name": "beef chuck, in large chunks",
+          "step": 1
+        },
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "olive oil",
+          "step": 1
+        },
+        {
+          "amount": 150,
+          "unit": "g",
+          "name": "bacon lardons",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "onions, chopped",
+          "step": 2
+        },
+        {
+          "amount": 3,
+          "unit": "",
+          "name": "carrots, in chunks",
+          "step": 2
+        },
+        {
+          "amount": 2,
+          "unit": "tbsp",
+          "name": "all-purpose flour",
+          "step": 3
+        },
+        {
+          "amount": 750,
+          "unit": "ml",
+          "name": "red wine",
+          "step": 3
+        },
+        {
+          "amount": 500,
+          "unit": "ml",
+          "name": "beef stock",
+          "step": 3
+        },
+        {
+          "amount": 2,
+          "unit": "",
+          "name": "bay leaves",
+          "step": 3
+        },
+        {
+          "amount": 4,
+          "unit": "",
+          "name": "thyme sprigs",
+          "step": 3
+        },
+        {
+          "amount": 250,
+          "unit": "g",
+          "name": "button mushrooms",
+          "step": 5
+        },
+        {
+          "amount": 20,
+          "unit": "g",
+          "name": "butter",
+          "step": 5
+        },
+        {
+          "amount": 1,
+          "unit": "bunch",
+          "name": "parsley, chopped",
+          "step": 6
+        }
+      ],
+      "steps": [
+        "Heat the oven to 160°C. Brown the beef in the oil in batches, about 4 minutes a batch, and set it aside.",
+        "Fry the lardons, onions, and carrots in the same pot for 10 minutes, until the onions are golden.",
+        "Stir in the flour, then the wine, stock, bay, and thyme. Return the beef, bring to a simmer, and scrape up the brown bits.",
+        "Cover and braise in the oven for 2½ hours, until the beef gives way to a spoon.",
+        "Fry the mushrooms in the butter for 6 minutes and stir them into the stew for the last 15 minutes.",
+        "Scatter with parsley and serve with mashed potatoes or bread."
+      ]
+    }
+  ]
+};

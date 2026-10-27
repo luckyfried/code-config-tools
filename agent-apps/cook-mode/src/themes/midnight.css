@@ -1,0 +1,54 @@
+/* Midnight: charcoal, warm parchment type, a brass accent. Dark. */
+:root {
+  color-scheme: dark;
+  --background: #181716;
+  --foreground: #efe7da;
+  --card: #22201e;
+  --card-foreground: #efe7da;
+  --popover: #262421;
+  --popover-foreground: #efe7da;
+  --primary: #d0a752;
+  --primary-foreground: #1c1710;
+  --secondary: #2c2925;
+  --secondary-foreground: #efe7da;
+  --muted: #2a2723;
+  --muted-foreground: #a99f90;
+  --accent: #312d28;
+  --accent-foreground: #efe7da;
+  --destructive: #e0705f;
+  --border: #37332d;
+  --input: #47423a;
+  --ring: #d0a752;
+  --radius: 0.75rem;
+
+  /* The cook stage: a lamp-lit slab, a shade above the room. */
+  --stage: #1f1d1b;
+  --stage-foreground: #f6efe3;
+  --stage-edge: #3a352e;
+  --stage-glow: radial-gradient(120% 70% at 30% 0%, #d0a75214, transparent 60%);
+  --strip: #26231f;
+  --pill: #d0a752;
+  --pill-drain: #3a2f1c;
+  --pill-drain-foreground: #f3dca4;
+  --pill-foreground: #1c1710;
+  --chip: #2e2920;
+  --chip-foreground: #e4c27a;
+  --chip-edge: #5a4a2c;
+  --done: #7fc79a;
+  --done-foreground: #10241a;
+
+  --shadow-sheet: 0 1px 0 #ffffff0f inset, 0 0 0 1px #00000066, 0 24px 60px -24px #000000cc;
+  --shadow-card: 0 1px 0 #ffffff0d inset, 0 0 0 1px #0000004d, 0 10px 24px -14px #000000b3;
+  --grain-opacity: 0.35;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .92 0 0 0 0 .8 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* Cuisine tints, lifted to read on charcoal. */
+  --tint-1: #e0805f;
+  --tint-2: #a3c46e;
+  --tint-3: #e6b955;
+  --tint-4: #72aac4;
+  --tint-5: #cf86aa;
+  --tint-6: #7cbfa3;
+  --tint-7: #d1a774;
+  --tint-8: #93add4;
+}

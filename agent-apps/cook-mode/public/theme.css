@@ -1,0 +1,111 @@
+/* Butcher: pink butcher paper, ink-brown type, an oxblood accent. Light. */
+:root {
+  color-scheme: light;
+  --background: #ecdfd4;
+  --foreground: #2b1916;
+  --card: #f8f1ea;
+  --card-foreground: #2b1916;
+  --popover: #fbf6f1;
+  --popover-foreground: #2b1916;
+  --primary: #6f1d24;
+  --primary-foreground: #fbf1ea;
+  --secondary: #e3d2c4;
+  --secondary-foreground: #3a221e;
+  --muted: #e4d4c7;
+  --muted-foreground: #6a534c;
+  --accent: #e6d3c5;
+  --accent-foreground: #2b1916;
+  --destructive: #a1261d;
+  --border: #d6c0b0;
+  --input: #cfb7a6;
+  --ring: #8d3a40;
+  --radius: 0.75rem;
+
+  /* The cook stage: a fresh sheet laid on the paper. */
+  --stage: #fbf7f2;
+  --stage-foreground: #241512;
+  --stage-edge: #e2cfc0;
+  --stage-glow: linear-gradient(180deg, #ffffff 0%, #ffffff00 40%);
+  --strip: #f1e6dc;
+  --pill: #6f1d24;
+  --pill-drain: #ebd3c9;
+  --pill-drain-foreground: #6f1d24;
+  --pill-foreground: #fff6ef;
+  --chip: #f3e2d6;
+  --chip-foreground: #6f1d24;
+  --chip-edge: #dcbfae;
+  --done: #2f6b4a;
+  --done-foreground: #f4fbf6;
+
+  --shadow-sheet: 0 1px 0 #ffffffb3 inset, 0 1px 2px #5a2a1a14, 0 8px 24px -8px #5a2a1a2e, 0 32px 64px -32px #5a2a1a33;
+  --shadow-card: 0 1px 0 #ffffff99 inset, 0 1px 2px #5a2a1a12, 0 6px 16px -10px #5a2a1a40;
+  --grain-opacity: 0.5;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .16 0 0 0 0 .12 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* Cuisine tints for the card edges, in the paper's earthy range. */
+  --tint-1: #a3472f;
+  --tint-2: #5c7a37;
+  --tint-3: #b97f1f;
+  --tint-4: #2f5f75;
+  --tint-5: #7b3757;
+  --tint-6: #3c6c5a;
+  --tint-7: #8b663a;
+  --tint-8: #4f6d8f;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Midnight: charcoal, warm parchment type, a brass accent. Dark. */
+  :root {
+    color-scheme: dark;
+    --background: #181716;
+    --foreground: #efe7da;
+    --card: #22201e;
+    --card-foreground: #efe7da;
+    --popover: #262421;
+    --popover-foreground: #efe7da;
+    --primary: #d0a752;
+    --primary-foreground: #1c1710;
+    --secondary: #2c2925;
+    --secondary-foreground: #efe7da;
+    --muted: #2a2723;
+    --muted-foreground: #a99f90;
+    --accent: #312d28;
+    --accent-foreground: #efe7da;
+    --destructive: #e0705f;
+    --border: #37332d;
+    --input: #47423a;
+    --ring: #d0a752;
+    --radius: 0.75rem;
+
+    /* The cook stage: a lamp-lit slab, a shade above the room. */
+    --stage: #1f1d1b;
+    --stage-foreground: #f6efe3;
+    --stage-edge: #3a352e;
+    --stage-glow: radial-gradient(120% 70% at 30% 0%, #d0a75214, transparent 60%);
+    --strip: #26231f;
+    --pill: #d0a752;
+    --pill-drain: #3a2f1c;
+    --pill-drain-foreground: #f3dca4;
+    --pill-foreground: #1c1710;
+    --chip: #2e2920;
+    --chip-foreground: #e4c27a;
+    --chip-edge: #5a4a2c;
+    --done: #7fc79a;
+    --done-foreground: #10241a;
+
+    --shadow-sheet: 0 1px 0 #ffffff0f inset, 0 0 0 1px #00000066, 0 24px 60px -24px #000000cc;
+    --shadow-card: 0 1px 0 #ffffff0d inset, 0 0 0 1px #0000004d, 0 10px 24px -14px #000000b3;
+    --grain-opacity: 0.35;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .92 0 0 0 0 .8 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+    /* Cuisine tints, lifted to read on charcoal. */
+    --tint-1: #e0805f;
+    --tint-2: #a3c46e;
+    --tint-3: #e6b955;
+    --tint-4: #72aac4;
+    --tint-5: #cf86aa;
+    --tint-6: #7cbfa3;
+    --tint-7: #d1a774;
+    --tint-8: #93add4;
+  }
+}
