@@ -1,0 +1,16 @@
+{
+  "_notes": {
+    "players": "One or more people who drill on this device. name: what the page calls them. level: where they start, 1 (early school) to 10 (sharp); the drill adapts from there. kid: true drops the timer, enlarges the keys, uses the rounded type, and celebrates every finish.",
+    "operations": "Any of add, subtract, multiply, divide, percent, squares. Each player can switch some off on the Start screen.",
+    "seconds": "How long a timed drill runs. 0 means untimed: ten problems, no clock. Kid players are always untimed.",
+    "theme": "chalk (a blackboard), candy (cream and bright keys), slate (gray with one accent), or auto (slate by day, chalk at night, candy for kid players). Each one has a light and a dark look that follows the device."
+  },
+  "players": [
+    { "name": "Maya", "level": 4, "kid": false },
+    { "name": "Leo", "level": 2, "kid": true },
+    { "name": "Sam", "level": 6, "kid": false }
+  ],
+  "operations": ["add", "subtract", "multiply", "divide", "percent", "squares"],
+  "seconds": 90,
+  "theme": "auto"
+}

@@ -1,0 +1,124 @@
+/* chalk: a blackboard at night, a sage board by day. Chalk-white numerals, pastel success. Tokens only. */
+:root {
+  color-scheme: light;
+  --color-bg: #dde5da;
+  --color-surface: #ebf0e7;
+  --color-surface-2: #cdd8ca;
+  --color-text: #1b2922;
+  --color-muted: #536359;
+  --color-accent: #2c5e48;
+  --color-on-accent: #f3f0e4;
+  --color-danger: #b8433c;
+  --color-ok: #23805a;
+  --color-border: #bccab9;
+  --color-ok-tint: #c4e5d0;
+  --color-danger-tint: #f0d0cb;
+  --color-key-1: #f2f5ef;
+  --color-key-2: #f2f5ef;
+  --color-key-3: #f2f5ef;
+  --color-key-4: #e1e9dd;
+  --color-key-text: #1b2922;
+  --color-chart: #2c5e48;
+  --color-confetti-1: #e2b93f;
+  --color-confetti-2: #4fae82;
+  --color-confetti-3: #e9857b;
+  --color-confetti-4: #6c9fd8;
+  --bg-image: radial-gradient(120% 70% at 20% 0%, #e8eee4 0%, transparent 60%),
+    radial-gradient(90% 60% at 100% 100%, #d3dccf 0%, transparent 70%);
+  --shadow-1: 0 1px 0 #ffffff99 inset, 0 1px 2px #1b292214, 0 2px 0 #1b29220f;
+  --shadow-2: 0 1px 0 #ffffffaa inset, 0 18px 40px -18px #1b292240, 0 4px 10px -4px #1b292226;
+  --numeral-filter: url("#chalk");
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-kid: "Nunito", "Inter", system-ui, sans-serif;
+  --numeral-weight: 500;
+  --board-surface: radial-gradient(60% 45% at 25% 20%, #ffffff14 0%, transparent 70%),
+    radial-gradient(45% 35% at 78% 75%, #ffffff0d 0%, transparent 70%),
+    linear-gradient(165deg, #2f5a45 0%, #24493a 55%, #1d3d30 100%);
+  --board-frame: linear-gradient(180deg, #c99a63 0%, #a87842 50%, #85582c 100%);
+  --board-tray: linear-gradient(180deg, #b98a55 0%, #7b5129 100%);
+  --board-ink: #f5f3e8;
+  --board-muted: #f5f3e88f;
+  --board-line: #f5f3e840;
+  --board-accent: #f6dc84;
+  --board-ok: #b8f0cf;
+  --board-miss: #ffb0a6;
+  --board-ok-tint: radial-gradient(70% 70% at 50% 50%, #9fe2bd40 0%, #9fe2bd14 100%);
+  --board-miss-tint: radial-gradient(70% 70% at 50% 50%, #f3a49d40 0%, #f3a49d14 100%);
+  --board-shadow: inset 0 5px 14px #00000066, 0 30px 50px -26px #1b292280, 0 8px 18px -8px #1b29224d;
+  --board-filter: url("#chalk");
+  --chalk-stick: #fbfaf2;
+  --chalk-stick-2: #f6dc84;
+  --eraser-felt: #3d4a43;
+  --eraser-top: #6c4524;
+  --color-key-edge: #3c5a49;
+  --key-highlight: #ffffff;
+  --key-drop: #1b292240;
+  --streak-bg: #1b2922;
+  --streak-ink: #f6dc84;
+  --streak-hot-bg: #f6dc84;
+  --streak-hot-ink: #1b2922;
+  --streak-glow: #f6dc8499;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #1c2822;
+    --color-surface: #22302a;
+    --color-surface-2: #2c3c34;
+    --color-text: #f2eee2;
+    --color-muted: #a3b1a7;
+    --color-accent: #f1da8a;
+    --color-on-accent: #1c2822;
+    --color-danger: #f3a49d;
+    --color-ok: #9fe2bd;
+    --color-border: #364840;
+    --color-ok-tint: #2f5546;
+    --color-danger-tint: #553634;
+    --color-key-1: #27362f;
+    --color-key-2: #27362f;
+    --color-key-3: #27362f;
+    --color-key-4: #31433a;
+    --color-key-text: #f2eee2;
+    --color-chart: #f1da8a;
+    --color-confetti-1: #f1da8a;
+    --color-confetti-2: #9fe2bd;
+    --color-confetti-3: #f3a49d;
+    --color-confetti-4: #a9c8f2;
+    --bg-image: radial-gradient(110% 70% at 25% 10%, #ffffff0d 0%, transparent 60%),
+      radial-gradient(80% 60% at 90% 95%, #ffffff09 0%, transparent 60%);
+    --shadow-1: 0 1px 0 #ffffff0d inset, 0 2px 0 #00000033;
+    --shadow-2: 0 1px 0 #ffffff0f inset, 0 22px 48px -20px #00000080, 0 4px 12px -6px #00000059;
+    --numeral-filter: url("#chalk");
+    --numeral-weight: 500;
+    --board-surface: radial-gradient(60% 45% at 25% 20%, #ffffff10 0%, transparent 70%),
+      radial-gradient(45% 35% at 78% 75%, #ffffff0a 0%, transparent 70%),
+      linear-gradient(165deg, #1f3a2e 0%, #172e24 55%, #11251d 100%);
+    --board-frame: linear-gradient(180deg, #7a5532 0%, #5c3d22 50%, #432c18 100%);
+    --board-tray: linear-gradient(180deg, #6e4b2b 0%, #3f2915 100%);
+    --board-ink: #f4f1e4;
+    --board-muted: #f4f1e480;
+    --board-line: #f4f1e433;
+    --board-accent: #f1da8a;
+    --board-ok: #a6ecc5;
+    --board-miss: #f7aaa2;
+    --board-ok-tint: radial-gradient(70% 70% at 50% 50%, #9fe2bd38 0%, #9fe2bd12 100%);
+    --board-miss-tint: radial-gradient(70% 70% at 50% 50%, #f3a49d38 0%, #f3a49d12 100%);
+    --board-shadow: inset 0 5px 14px #00000066, 0 30px 60px -26px #000000c0, 0 8px 18px -8px #00000080;
+    --board-filter: url("#chalk");
+    --chalk-stick: #f4f1e4;
+    --chalk-stick-2: #f1da8a;
+    --eraser-felt: #2a332e;
+    --eraser-top: #5c3d22;
+    --color-key-edge: #050a07;
+    --key-highlight: #ffffff1a;
+    --key-drop: #000000a6;
+    --streak-bg: #0e1712;
+    --streak-ink: #f1da8a;
+    --streak-hot-bg: #f1da8a;
+    --streak-hot-ink: #1c2822;
+    --streak-glow: #f1da8a80;
+  }
+}

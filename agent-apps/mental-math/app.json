@@ -1,0 +1,14 @@
+{
+  "id": "01a17a24-dc03-7c66-897d-d83a2ecd5300",
+  "version": "2026-10-21",
+  "name": "mental-math",
+  "shortDescription": "Ninety seconds of mental math a day, with a score curve that climbs.",
+  "description": "A daily arithmetic drill for one person or a household. Each drill is ninety seconds of problems in big numerals, answered on a custom number pad on a phone or with the number keys on a computer. The level adapts as you go: up after nine of the last ten right, down at six. A right answer flashes the card and a wrong one shakes it; the results screen eases a score ring to its value, draws your thirty-day curve, and fires confetti on a level-up. Players take turns on one device, and today's scores sit side by side. Kid mode drops the timer, enlarges the keys, and celebrates. Add, subtract, multiply, divide, percent, and squares, with chalk, candy, and slate themes in light and dark. Results stay in the browser, with Export and Import to move them.",
+  "category": "education",
+  "subcategory": "Arithmetic drills",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": ["assets/shot-1.png", "assets/shot-2.png"],
+  "deploy": "out/mental-math",
+  "setup": ""
+}

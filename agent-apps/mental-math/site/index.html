@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <title>Mental Math</title>
+    <meta name="description" content="Ninety seconds of mental math a day, with a score curve that climbs.">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="preload" href="./vendor/fonts/inter/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./theme.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/play.css">
+    <link rel="stylesheet" href="./styles/screens.css">
+    <script src="./config.js"></script>
+    <script src="./boot.js"></script>
+    <script type="module" src="./game/main.js"></script>
+  </head>
+  <body>
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="chalk" x="-5%" y="-10%" width="110%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="grain"></feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="grain" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="rough"></feDisplacementMap>
+        <feComposite in="rough" in2="grain" operator="arithmetic" k1="0" k2="1" k3="-0.18" k4="0.06"></feComposite>
+      </filter>
+    </svg>
+
+    <div class="app" id="app" data-screen="start">
+      <div class="timebar" aria-hidden="true"><div class="timebar-fill" id="timebar"></div></div>
+
+      <header class="top">
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect class="brand-mark-bg" x="1" y="1" width="30" height="30" rx="9"></rect>
+            <path class="brand-mark-line" d="M6 23 L12 17 L17 20 L26 9"></path>
+            <circle class="brand-mark-dot" cx="26" cy="9" r="2.6"></circle>
+          </svg>
+          <span class="brand-name">Mental Math</span>
+        </div>
+        <div class="players" id="players" role="radiogroup" aria-label="Player"></div>
+        <button class="ghost-btn history-btn" type="button" id="open-history">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18 L9 12 L13 15 L20 6"></path><path d="M4 21 H20"></path></svg>
+          <span>History</span>
+        </button>
+      </header>
+
+      <main class="play" id="play">
+        <section class="stage" aria-label="Drill">
+          <div class="deck">
+            <div class="ops ops-deck" data-ops role="group" aria-label="Operations"></div>
+            <div class="drill-info">
+              <button class="ghost-btn quit-btn" type="button" id="quit" aria-label="Stop the drill">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 L18 18 M18 6 L6 18"></path></svg>
+              </button>
+              <div class="drill-player" id="drill-player"></div>
+              <ol class="stars" id="stars" aria-label="Progress"></ol>
+              <div class="drill-score"><span class="drill-score-value" id="drill-score">0</span><span class="drill-score-unit">points</span></div>
+            </div>
+          </div>
+
+          <div class="card" id="card">
+            <div class="card-head">
+              <div class="level" id="level">
+                <button class="step-btn" type="button" id="level-down" aria-label="Lower level">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12 H18"></path></svg>
+                </button>
+                <span class="badge" id="badge"><span class="badge-word">Level</span> <span class="badge-num" id="badge-num">1</span></span>
+                <button class="step-btn" type="button" id="level-up" aria-label="Raise level">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12 H18 M12 6 V18"></path></svg>
+                </button>
+              </div>
+              <div class="length" id="length"></div>
+              <div class="streak" id="streak" data-count="0">
+                <span class="streak-label">Streak</span>
+                <span class="streak-num" id="streak-num">0</span>
+                <svg class="streak-burst" id="streak-burst" aria-hidden="true"></svg>
+              </div>
+            </div>
+            <div class="problem-wrap">
+              <div class="problem" id="problem" aria-live="off"></div>
+            </div>
+            <input class="answer" id="answer" type="text" readonly inputmode="none" tabindex="-1" autocomplete="off" aria-label="Your answer" placeholder="?">
+            <p class="hint" id="hint"></p>
+            <p class="sr-only" id="announce" aria-live="polite"></p>
+            <div class="tray" aria-hidden="true">
+              <span class="chalk-stick"></span>
+              <span class="chalk-stick chalk-stick-2"></span>
+              <span class="eraser"></span>
+            </div>
+          </div>
+
+          <div class="pad" id="pad" role="group" aria-label="Number pad">
+            <button class="key" type="button" data-key="1">1</button>
+            <button class="key" type="button" data-key="2">2</button>
+            <button class="key" type="button" data-key="3">3</button>
+            <button class="key" type="button" data-key="4">4</button>
+            <button class="key" type="button" data-key="5">5</button>
+            <button class="key" type="button" data-key="6">6</button>
+            <button class="key" type="button" data-key="7">7</button>
+            <button class="key" type="button" data-key="8">8</button>
+            <button class="key" type="button" data-key="9">9</button>
+            <button class="key key-action" type="button" data-key="back" aria-label="Delete">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5 H20 V19 H9 L3 12 Z"></path><path d="M12 9 L17 14 M17 9 L12 14"></path></svg>
+            </button>
+            <button class="key" type="button" data-key="0">0</button>
+            <button class="key key-go" type="button" data-key="enter" id="go-key"><span class="key-go-label" id="go-label">Go</span></button>
+          </div>
+        </section>
+
+        <aside class="panel" aria-label="Player">
+          <div class="panel-head">
+            <h2 class="panel-name" id="panel-name"></h2>
+            <p class="status" id="panel-status"></p>
+          </div>
+          <div class="panel-last">
+            <svg class="ring ring-sm" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="50"></circle>
+              <circle class="ring-arc" id="panel-ring" cx="60" cy="60" r="50" pathLength="100"></circle>
+            </svg>
+            <div class="panel-last-text">
+              <div class="panel-last-score" id="panel-score">0</div>
+              <div class="panel-last-label" id="panel-score-label"></div>
+            </div>
+          </div>
+          <figure class="curve-card">
+            <figcaption class="curve-title">Last 30 days</figcaption>
+            <div class="curve" id="panel-curve"></div>
+          </figure>
+          <div class="panel-setup">
+            <div class="ops ops-panel" data-ops role="group" aria-label="Operations"></div>
+          </div>
+        </aside>
+      </main>
+
+      <section class="results" id="results" hidden aria-labelledby="results-title">
+        <div class="results-main">
+          <h2 class="results-title" id="results-title"></h2>
+          <div class="results-ring">
+            <svg class="ring ring-lg" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="50"></circle>
+              <circle class="ring-arc" id="results-ring" cx="60" cy="60" r="50" pathLength="100"></circle>
+            </svg>
+            <div class="results-ring-text">
+              <div class="results-score" id="results-score">0</div>
+              <div class="results-unit">points</div>
+            </div>
+          </div>
+          <p class="results-accuracy" id="results-accuracy"></p>
+          <div class="results-badge-row">
+            <span class="badge badge-lg" id="results-badge"><span class="badge-word">Level</span> <span class="badge-num" id="results-badge-num">1</span></span>
+          </div>
+          <div class="results-actions">
+            <button class="go-btn" type="button" id="again"></button>
+            <button class="ghost-btn wide-btn" type="button" id="next-player"></button>
+            <button class="ghost-btn wide-btn" type="button" id="results-history">History</button>
+          </div>
+        </div>
+        <div class="results-side">
+          <figure class="curve-card curve-card-lg">
+            <figcaption class="curve-title">Last 30 days</figcaption>
+            <div class="curve" id="results-curve"></div>
+          </figure>
+          <div class="today">
+            <h3 class="today-title">Today</h3>
+            <ol class="today-list" id="today-list"></ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="history" id="history" hidden aria-labelledby="history-title">
+        <div class="history-head">
+          <button class="ghost-btn" type="button" id="history-back">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19"></path></svg>
+            <span>Back</span>
+          </button>
+          <h2 class="history-title" id="history-title">History</h2>
+          <div class="history-tools">
+            <button class="ghost-btn" type="button" id="export">Export</button>
+            <label class="ghost-btn file-btn">Import<input class="sr-only" type="file" id="import" accept="application/json,.json"></label>
+          </div>
+        </div>
+        <div class="history-tabs" id="history-tabs" role="tablist" aria-label="Player"></div>
+        <p class="status" id="history-status"></p>
+        <div class="history-body">
+          <figure class="curve-card curve-card-lg">
+            <figcaption class="curve-title">Last 30 days</figcaption>
+            <div class="curve" id="history-curve"></div>
+          </figure>
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead><tr><th scope="col">Day</th><th scope="col">Score</th><th scope="col">Level</th><th scope="col">Right</th></tr></thead>
+              <tbody id="history-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <svg class="confetti" id="confetti" aria-hidden="true"></svg>
+    </div>
+    <script src="./badge.js" defer></script>
+  </body>
+</html>

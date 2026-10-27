@@ -1,0 +1,120 @@
+/* slate: cool gray paper with one cobalt accent; graphite after dark. Tokens only. */
+:root {
+  color-scheme: light;
+  --color-bg: #e4e8ec;
+  --color-surface: #f4f6f8;
+  --color-surface-2: #d6dce3;
+  --color-text: #13171c;
+  --color-muted: #57616c;
+  --color-accent: #2849e0;
+  --color-on-accent: #ffffff;
+  --color-danger: #cc3b2e;
+  --color-ok: #138a59;
+  --color-border: #c5cdd6;
+  --color-ok-tint: #d0ecdf;
+  --color-danger-tint: #f6d9d4;
+  --color-key-1: #fbfcfd;
+  --color-key-2: #fbfcfd;
+  --color-key-3: #fbfcfd;
+  --color-key-4: #e9edf1;
+  --color-key-text: #13171c;
+  --color-chart: #2849e0;
+  --color-confetti-1: #2849e0;
+  --color-confetti-2: #138a59;
+  --color-confetti-3: #e3a92b;
+  --color-confetti-4: #13171c;
+  --bg-image: linear-gradient(180deg, #edf0f3 0%, transparent 45%);
+  --shadow-1: 0 1px 0 #ffffff inset, 0 1px 2px #13171c1a, 0 1px 0 #13171c0f;
+  --shadow-2: 0 1px 0 #ffffff inset, 0 20px 44px -22px #13171c47, 0 4px 10px -6px #13171c26;
+  --numeral-filter: none;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --font-kid: "Nunito", "Inter", system-ui, sans-serif;
+  --numeral-weight: 600;
+  --board-surface: radial-gradient(60% 45% at 22% 18%, #ffffff12 0%, transparent 70%),
+    radial-gradient(50% 40% at 82% 78%, #ffffff0c 0%, transparent 70%),
+    linear-gradient(165deg, #333b44 0%, #252b32 55%, #1e2329 100%);
+  --board-frame: linear-gradient(180deg, #f3f5f7 0%, #c3cad2 48%, #9aa3ad 100%);
+  --board-tray: linear-gradient(180deg, #e6eaee 0%, #a7b0ba 100%);
+  --board-ink: #f2f4f1;
+  --board-muted: #f2f4f18f;
+  --board-line: #f2f4f140;
+  --board-accent: #ffd768;
+  --board-ok: #8fe7b6;
+  --board-miss: #ff9d8f;
+  --board-ok-tint: radial-gradient(70% 70% at 50% 50%, #5fd69a3d 0%, #5fd69a14 100%);
+  --board-miss-tint: radial-gradient(70% 70% at 50% 50%, #ff7d6a38 0%, #ff7d6a12 100%);
+  --board-shadow: inset 0 5px 14px #00000066, 0 30px 50px -26px #13171c80, 0 8px 18px -8px #13171c4d;
+  --board-filter: url("#chalk");
+  --chalk-stick: #fbfaf4;
+  --chalk-stick-2: #ffd768;
+  --eraser-felt: #3a4048;
+  --eraser-top: #c9874b;
+  --color-key-edge: #4a5868;
+  --key-highlight: #ffffff;
+  --key-drop: #13171c40;
+  --streak-bg: #13171c;
+  --streak-ink: #ffd768;
+  --streak-hot-bg: #ffd768;
+  --streak-hot-ink: #13171c;
+  --streak-glow: #ffd76899;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #15191e;
+    --color-surface: #1d2229;
+    --color-surface-2: #29303a;
+    --color-text: #e8ecf0;
+    --color-muted: #939eaa;
+    --color-accent: #7a92ff;
+    --color-on-accent: #0b1024;
+    --color-danger: #ff7b6c;
+    --color-ok: #4cc58c;
+    --color-border: #313944;
+    --color-ok-tint: #1c3d30;
+    --color-danger-tint: #4a2824;
+    --color-key-1: #242a32;
+    --color-key-2: #242a32;
+    --color-key-3: #242a32;
+    --color-key-4: #2e3540;
+    --color-key-text: #e8ecf0;
+    --color-chart: #7a92ff;
+    --color-confetti-1: #7a92ff;
+    --color-confetti-2: #4cc58c;
+    --color-confetti-3: #f0c04c;
+    --color-confetti-4: #e8ecf0;
+    --bg-image: linear-gradient(180deg, #1a1f25 0%, transparent 45%);
+    --shadow-1: 0 1px 0 #ffffff0d inset, 0 1px 2px #00000066;
+    --shadow-2: 0 1px 0 #ffffff0f inset, 0 22px 48px -22px #000000a6, 0 4px 12px -6px #00000066;
+    --board-surface: radial-gradient(60% 45% at 22% 18%, #ffffff0d 0%, transparent 70%),
+      radial-gradient(50% 40% at 82% 78%, #ffffff08 0%, transparent 70%),
+      linear-gradient(165deg, #22282f 0%, #181c21 60%, #13161a 100%);
+    --board-frame: linear-gradient(180deg, #59626d 0%, #3a414a 50%, #2a3037 100%);
+    --board-tray: linear-gradient(180deg, #4d5560 0%, #2a3037 100%);
+    --board-ink: #eef1f4;
+    --board-muted: #eef1f480;
+    --board-line: #eef1f436;
+    --board-accent: #ffd768;
+    --board-ok: #7fe0aa;
+    --board-miss: #ff8f80;
+    --board-ok-tint: radial-gradient(70% 70% at 50% 50%, #4cc58c40 0%, #4cc58c14 100%);
+    --board-miss-tint: radial-gradient(70% 70% at 50% 50%, #ff7b6c3a 0%, #ff7b6c12 100%);
+    --board-shadow: inset 0 5px 14px #00000066, 0 30px 60px -26px #000000c0, 0 8px 18px -8px #00000080;
+    --board-filter: url("#chalk");
+    --chalk-stick: #f4f2ea;
+    --chalk-stick-2: #ffd768;
+    --eraser-felt: #2a2f36;
+    --eraser-top: #8f6036;
+    --color-key-edge: #050608;
+    --key-highlight: #ffffff1f;
+    --key-drop: #000000a6;
+    --streak-bg: #0b0d10;
+    --streak-ink: #ffd768;
+    --streak-hot-bg: #ffd768;
+    --streak-hot-ink: #13161a;
+    --streak-glow: #ffd76880;
+  }
+}

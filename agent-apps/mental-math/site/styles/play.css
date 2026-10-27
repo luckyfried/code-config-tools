@@ -1,0 +1,1541 @@
+/* The frame, the header, the drill stage (card and pad), and the side panel. Structure only; colors are tokens. */
+
+/* On a phone the bottom keeps the badge toast's height (52 px over the home bar) clear, so all of the pad shows. */
+.app {
+  --pad-key: clamp(56px, 6.6dvh, 68px);
+  --pad-gap: clamp(8px, 1dvh, 12px);
+  --numeral-max: clamp(64px, 14dvh, 132px);
+  --answer-size: clamp(32px, 5.2dvh, 56px);
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: calc(var(--safe-top) + var(--space-2)) calc(var(--safe-right) + var(--space-4))
+    calc(var(--safe-bottom) + 60px) calc(var(--safe-left) + var(--space-4));
+}
+
+/* From 640 px wide the toast is a pill 24 px above the bottom. */
+@media (min-width: 640px) {
+  .app {
+    padding-bottom: calc(var(--safe-bottom) + 88px);
+  }
+}
+
+.app[data-screen="start"],
+.app[data-screen="drill"] {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+:root[data-kid] .app {
+  --pad-key: clamp(60px, 7.4dvh, 76px);
+  --pad-gap: clamp(10px, 1.3dvh, 14px);
+}
+
+/* The ninety-second bar, drained by a transform so it stays on the compositor. */
+.timebar {
+  position: fixed;
+  z-index: var(--z-bar);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--safe-top) + 6px);
+  padding-top: var(--safe-top);
+  background: var(--color-surface-2);
+  overflow: hidden;
+}
+
+.timebar-fill {
+  height: 6px;
+  background: var(--color-accent);
+  transform-origin: left center;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+}
+
+.timebar.is-low .timebar-fill {
+  background: var(--color-danger);
+}
+
+.app[data-untimed] .timebar {
+  display: none;
+}
+
+/* Header */
+.top {
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "brand history"
+    "players players";
+  align-items: center;
+  gap: 6px var(--space-3);
+  padding-top: var(--space-1);
+}
+
+.brand {
+  grid-area: brand;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+
+.brand-mark-bg {
+  fill: var(--color-accent);
+}
+
+.brand-mark-line {
+  fill: none;
+  stroke: var(--color-on-accent);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-mark-dot {
+  fill: var(--color-on-accent);
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.history-btn {
+  grid-area: history;
+}
+
+.players {
+  grid-area: players;
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 2px var(--space-4) 4px;
+  scroll-padding: var(--space-4);
+}
+
+.players::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  box-shadow: var(--shadow-1);
+  transition-property: background-color, color, border-color, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.chip:active {
+  transform: scale(0.97);
+}
+
+.chip[aria-checked="true"] {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
+}
+
+.chip-level {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.chip[aria-checked="true"] .chip-level {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.chip-kid {
+  width: 16px;
+  height: 16px;
+  margin-left: calc(-1 * var(--space-1));
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  transition-property: background-color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.ghost-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ghost-btn:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ghost-btn:hover,
+  .chip:hover:not([aria-checked="true"]) {
+    background: var(--color-surface-2);
+  }
+}
+
+/* Play: stage and panel */
+.play,
+.results,
+.history {
+  grid-row: 2;
+}
+
+.play {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  padding-top: var(--space-2);
+}
+
+.stage {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "deck"
+    "card"
+    "pad";
+  gap: var(--space-2);
+  justify-items: center;
+}
+
+.deck {
+  grid-area: deck;
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+}
+
+.deck > * {
+  grid-area: 1 / 1;
+}
+
+.ops {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ops-deck {
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.op {
+  flex: 1 1 0;
+  min-width: 44px;
+  max-width: 64px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1;
+  transition-property: background-color, color, border-color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.op[aria-pressed="true"] {
+  background: var(--color-surface);
+  border-color: var(--color-text);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+.op:active {
+  transform: scale(0.95);
+}
+
+.op-pct {
+  font-size: var(--text-lg);
+}
+
+.op sup {
+  line-height: 0;
+  font-size: 0.6em;
+}
+
+.drill-info {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.app[data-screen="drill"] .ops-deck {
+  visibility: hidden;
+}
+
+.app[data-screen="drill"] .drill-info {
+  display: flex;
+}
+
+.quit-btn {
+  width: 44px;
+  padding: 0;
+  flex: none;
+}
+
+.drill-player {
+  font-weight: 700;
+  font-size: var(--text-lg);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stars {
+  display: none;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.app[data-untimed] .stars {
+  display: flex;
+}
+
+.star {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  transition-property: background-color, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-spring);
+}
+
+.star.is-ok {
+  background: var(--color-ok);
+  transform: scale(1.15);
+}
+
+.star.is-miss {
+  background: var(--color-danger);
+}
+
+.drill-score {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.app[data-untimed] .drill-score {
+  margin-left: var(--space-3);
+}
+
+.drill-score-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.drill-score-unit {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+/* The card is a framed chalkboard: an almost-empty board that holds the problem in chalk, with a tray under it, and
+   flashes on an answer. */
+.card {
+  --frame: 10px;
+  grid-area: card;
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: var(--space-3) var(--space-4) var(--space-3);
+  border: var(--frame) solid transparent;
+  border-radius: 22px;
+  background: var(--board-surface) padding-box, var(--board-frame) border-box;
+  box-shadow: var(--board-shadow);
+  color: var(--board-ink);
+  isolation: isolate;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: calc(22px - var(--frame));
+  background: var(--board-ok-tint);
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.card::after {
+  content: "";
+  flex: none;
+  margin-top: auto;
+}
+
+.card.flash-ok::before {
+  opacity: 1;
+  transition-duration: 0ms;
+}
+
+.card.flash-miss::before {
+  background: var(--board-miss-tint);
+  opacity: 1;
+  transition-duration: 0ms;
+}
+
+/* The chalk tray: a ledge on the frame's bottom edge with two sticks of chalk and an eraser on it. */
+.tray {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: calc(-1 * var(--frame) - 10px);
+  height: 12px;
+  border-radius: 3px 3px 7px 7px;
+  background: var(--board-tray);
+  box-shadow: 0 8px 12px -6px var(--key-drop);
+  pointer-events: none;
+}
+
+.chalk-stick {
+  position: absolute;
+  bottom: calc(100% - 2px);
+  left: 10%;
+  width: 38px;
+  height: 7px;
+  border-radius: 2px 3px 3px 2px;
+  background: var(--chalk-stick);
+  box-shadow: 0 1px 0 var(--key-drop);
+}
+
+.chalk-stick-2 {
+  left: calc(10% + 46px);
+  width: 22px;
+  background: var(--chalk-stick-2);
+  transform: rotate(-4deg);
+}
+
+.eraser {
+  position: absolute;
+  bottom: calc(100% - 2px);
+  right: 9%;
+  width: 58px;
+  height: 15px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--eraser-top) 0 58%, var(--eraser-felt) 58% 100%);
+  box-shadow: 0 1px 0 var(--key-drop);
+}
+
+.card-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.level {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.step-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid var(--board-line);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--board-ink);
+  transition-property: background-color, transform, opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.step-btn::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+.step-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.step-btn:active {
+  transform: scale(0.92);
+}
+
+.step-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.app[data-screen="drill"] .step-btn {
+  display: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.card .badge {
+  padding: 5px 13px;
+  border: 2px solid var(--board-accent);
+  background: transparent;
+  color: var(--board-accent);
+}
+
+.badge-num {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.15em;
+}
+
+/* The length reads in the hint on Start; during a drill the bar and the stars carry it. */
+.length {
+  display: none;
+}
+
+/* The streak: a scoreboard plate in the board's corner. It climbs with every right answer and bursts when it does;
+   from three in a row it lights up. */
+.streak {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 42px;
+  padding: 0 5px 0 12px;
+  border-radius: 12px;
+  background: var(--streak-bg);
+  color: var(--streak-ink);
+  box-shadow: inset 0 0 0 1px var(--board-line), 0 3px 0 var(--key-drop);
+  transition-property: background-color, color, box-shadow;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.streak-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.streak-num {
+  min-width: 34px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: var(--board-line);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px var(--streak-glow);
+}
+
+.streak[data-count="0"] .streak-num {
+  opacity: 0.55;
+  text-shadow: none;
+}
+
+.streak.is-hot {
+  background: var(--streak-hot-bg);
+  color: var(--streak-hot-ink);
+  box-shadow: 0 0 0 3px var(--streak-glow), 0 0 28px var(--streak-glow), 0 3px 0 var(--key-drop);
+}
+
+.streak.is-hot .streak-num {
+  text-shadow: none;
+}
+
+/* The burst comes out of the number, at the plate's right end. */
+.streak-burst {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.streak-burst .spark {
+  stroke: var(--board-accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+.streak-burst .spark.alt {
+  stroke: var(--board-ink);
+}
+
+.streak-burst .shock {
+  fill: none;
+  stroke: var(--board-accent);
+  stroke-width: 2.5;
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+.streak-call {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--board-accent);
+  color: var(--streak-bg);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.problem-wrap {
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  container-type: inline-size;
+}
+
+/* The problem is the screen's hero: chalk numerals sized by JavaScript to fill the board's width, up to the cap. */
+.problem {
+  font-family: var(--font-display);
+  font-weight: var(--numeral-weight);
+  font-size: calc(var(--numeral-max) * var(--fit, 1));
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+  color: var(--board-ink);
+  filter: var(--board-filter);
+  padding: 0.06em 0.06em;
+}
+
+.problem .opr {
+  display: inline-block;
+  margin: 0 0.1em;
+  color: var(--board-accent);
+  font-weight: 500;
+}
+
+.problem .of {
+  font-size: 0.42em;
+  font-weight: 600;
+  color: var(--board-accent);
+  letter-spacing: 0;
+  margin: 0 0.18em;
+}
+
+.problem sup {
+  font-size: 0.55em;
+  line-height: 0;
+  vertical-align: 0.75em;
+  color: var(--board-accent);
+}
+
+.answer {
+  flex: none;
+  width: min(100%, 7.5em);
+  height: calc(var(--answer-size) * 1.35);
+  margin-top: var(--space-2);
+  padding: 0;
+  border: 0;
+  border-bottom: 3px solid var(--board-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--board-ink);
+  font-family: var(--font-display);
+  font-weight: var(--numeral-weight);
+  font-size: var(--answer-size);
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  caret-color: transparent;
+  outline: none;
+  pointer-events: none;
+  filter: var(--board-filter);
+  transition: color var(--motion-base) var(--ease-out);
+}
+
+.answer::placeholder {
+  color: var(--board-line);
+  opacity: 1;
+}
+
+.card.flash-ok .answer {
+  border-bottom-color: var(--board-ok);
+  color: var(--board-ok);
+  transition-duration: 0ms;
+}
+
+.card.flash-miss .answer {
+  border-bottom-color: var(--board-miss);
+  color: var(--board-miss);
+  transition-duration: 0ms;
+}
+
+.hint {
+  min-height: 1.5em;
+  margin-top: var(--space-2);
+  color: var(--board-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* The four-by-three pad: chunky keys with a lit top and a solid side, set in a recessed well. A press sinks the key
+   onto its side and lights it from inside. */
+.pad {
+  grid-area: pad;
+  width: min(100%, 26rem);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: var(--pad-key);
+  gap: var(--pad-gap);
+  padding: 10px 10px 16px;
+  border-radius: 26px;
+  background: var(--color-surface-2);
+  box-shadow: inset 0 2px 6px var(--key-drop), inset 0 -1px 0 var(--key-highlight);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.key {
+  --key-bg: var(--color-key-1);
+  --depth: 6px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--key-bg) 82%, var(--key-highlight)) 0%, var(--key-bg) 55%);
+  color: var(--color-key-text);
+  font-family: var(--font-display);
+  font-size: calc(var(--pad-key) * 0.44);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    inset 0 1px 0 var(--key-highlight),
+    0 var(--depth) 0 color-mix(in oklab, var(--key-bg) 68%, var(--color-key-edge)),
+    0 calc(var(--depth) + 5px) 12px -4px var(--key-drop);
+  transform: translateY(0);
+  transition-property: transform, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: var(--ease-out);
+}
+
+.key::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 40%, var(--key-highlight) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 260ms var(--ease-out);
+  pointer-events: none;
+}
+
+.key:nth-child(n + 4) {
+  --key-bg: var(--color-key-2);
+}
+
+.key:nth-child(n + 7) {
+  --key-bg: var(--color-key-3);
+}
+
+.key:nth-child(n + 10) {
+  --key-bg: var(--color-key-4);
+}
+
+.key.key-go {
+  --key-bg: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-sans);
+  font-size: calc(var(--pad-key) * 0.34);
+  font-weight: 750;
+}
+
+.key:active,
+.key.is-pressed {
+  transform: translateY(calc(var(--depth) - 1px));
+  box-shadow:
+    inset 0 1px 0 var(--key-highlight),
+    inset 0 3px 8px var(--key-drop),
+    0 1px 0 color-mix(in oklab, var(--key-bg) 68%, var(--color-key-edge)),
+    0 2px 4px -2px var(--key-drop);
+  transition-duration: 40ms;
+}
+
+.key:active::after,
+.key.is-pressed::after {
+  opacity: 0.9;
+  transition-duration: 0ms;
+}
+
+.key svg {
+  width: 30%;
+  height: 30%;
+  min-width: 22px;
+  min-height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+:root[data-kid] .key {
+  border-radius: 22px;
+  font-weight: 800;
+}
+
+/* The player's panel. On a phone it is a strip above the drill: the ring, the score, and the month as a sparkline. */
+.panel {
+  order: -1;
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-4);
+  height: 72px;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  border-radius: 22px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.app[data-screen="drill"] .panel,
+.panel-head,
+.panel-setup,
+.panel-last-when {
+  display: none;
+}
+
+.panel-last {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ring-sm {
+  width: 52px;
+  height: 52px;
+  flex: none;
+}
+
+.panel-last-score {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.panel-last-label {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.panel .curve-card {
+  min-height: 0;
+  gap: 2px;
+  padding-top: var(--space-1);
+}
+
+.panel .curve-title {
+  font-size: var(--text-xs);
+}
+
+.panel .curve {
+  min-height: 0;
+}
+
+.status {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.status:empty {
+  display: none;
+}
+
+.go-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  box-shadow: var(--shadow-1);
+  transition-property: transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.go-btn:active {
+  transform: scale(0.97);
+}
+
+/* Ring */
+.ring {
+  transform: rotate(-90deg);
+}
+
+.ring-track,
+.ring-arc {
+  fill: none;
+  stroke-width: 10;
+}
+
+.ring-track {
+  stroke: var(--color-surface-2);
+}
+
+.ring-arc {
+  stroke: var(--color-ok);
+  stroke-linecap: round;
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+}
+
+/* During a drill the header steps away so the problem sits on an empty screen. */
+.app[data-screen="drill"] .top {
+  display: none;
+}
+
+.app[data-screen="drill"] .play {
+  padding-top: var(--space-4);
+}
+
+/* Phones held upright: a slimmer frame and a smaller answer so the problem gets the board. */
+@media (max-width: 639px) and (orientation: portrait) {
+  .app {
+    --answer-size: clamp(32px, 4.6dvh, 44px);
+  }
+
+  .card {
+    --frame: 8px;
+    padding: var(--space-2) var(--space-3) var(--space-3);
+    border-radius: 20px;
+  }
+
+  .card::before {
+    border-radius: calc(20px - var(--frame));
+  }
+
+  .pad {
+    padding: 8px 8px 14px;
+    border-radius: 24px;
+  }
+}
+
+/* Short phones */
+@media (max-height: 700px) and (orientation: portrait) {
+  .app {
+    --pad-key: clamp(48px, 7.4dvh, 56px);
+    --numeral-max: clamp(52px, 10dvh, 72px);
+    --answer-size: clamp(28px, 4.4dvh, 36px);
+  }
+
+  :root[data-kid] .app {
+    --pad-key: clamp(56px, 8.4dvh, 64px);
+  }
+
+  .app[data-screen="drill"] .hint {
+    display: none;
+  }
+
+  /* Too short for the strip as well: the drill fills the screen and the player's panel is a scroll below it. */
+  .app[data-screen="start"] {
+    height: auto;
+    overflow: visible;
+  }
+
+  .app[data-screen="start"] .problem-wrap {
+    flex: none;
+  }
+
+  .panel {
+    order: 1;
+  }
+}
+
+/* Phones on their side: the card on the left with the operations in its head, the player's panel above the pad on
+   the right. The card ends above the toast's pill, which sits centered 24 px over the bottom, and the pad column
+   starts right of it. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    --pad-key: clamp(44px, 11dvh, 56px);
+    --pad-gap: 6px;
+    --numeral-max: clamp(52px, 21dvh, 110px);
+    --answer-size: clamp(26px, 8.6dvh, 40px);
+    grid-template-rows: auto 1fr;
+    padding-top: calc(var(--safe-top) + var(--space-2));
+    padding-bottom: calc(var(--safe-bottom) + var(--space-2));
+  }
+
+  :root[data-kid] .app {
+    --pad-key: clamp(44px, 11dvh, 56px);
+  }
+
+  .top {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "brand players history";
+    padding-top: var(--space-1);
+  }
+
+  .players {
+    margin: 0;
+    padding: 2px 0 4px;
+  }
+
+  .play {
+    container: play / inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) calc(var(--pad-key) * 3 * 1.45 + var(--pad-gap) * 2);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "card panel"
+      "card pad";
+    column-gap: var(--space-5);
+    row-gap: var(--space-2);
+    padding-top: var(--space-1);
+  }
+
+  .stage {
+    display: contents;
+  }
+
+  .deck {
+    grid-area: card;
+    position: relative;
+    z-index: 1;
+    align-self: start;
+    justify-self: start;
+    width: auto;
+    margin: 16px 0 0 136px;
+  }
+
+  /* On Start the operations sit between the level's minus and plus and the streak plate. */
+  .app[data-screen="start"] .deck {
+    margin-left: calc(8px + var(--space-4) + 36px * 2 + 88px + var(--space-1) * 2 + var(--space-3));
+  }
+
+  /* During a drill the player and the points sit on the board, in chalk. */
+  .drill-info {
+    color: var(--board-ink);
+  }
+
+  .drill-score-unit {
+    color: var(--board-muted);
+  }
+
+  .ops-deck {
+    gap: var(--space-1);
+  }
+
+  .ops-deck .op {
+    width: 34px;
+    min-width: 34px;
+    min-height: 42px;
+    font-size: var(--text-lg);
+  }
+
+  .card .badge {
+    min-width: 88px;
+    justify-content: center;
+  }
+
+  .card-head .step-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .card {
+    --frame: 8px;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .card::before {
+    border-radius: calc(22px - var(--frame));
+  }
+
+  /* On Start the board ends above the badge toast's pill, which sits centered 24 px over the bottom. */
+  .app[data-screen="start"] .card {
+    margin-bottom: calc(var(--safe-bottom) + 94px);
+  }
+
+  .pad {
+    padding: 6px 6px 10px;
+    border-radius: 20px;
+  }
+
+  .key {
+    --depth: 4px;
+    border-radius: 13px;
+  }
+
+  .card-head {
+    min-height: 44px;
+  }
+
+  .length {
+    display: none;
+  }
+
+
+  .hint {
+    min-height: 0;
+    margin-top: var(--space-1);
+    font-size: var(--text-xs);
+  }
+
+  .panel {
+    grid-area: panel;
+    height: auto;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+    border-radius: 20px;
+  }
+
+  .panel-last {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+  }
+
+  .ring-sm {
+    width: 40px;
+    height: 40px;
+  }
+
+  .panel-last-score {
+    font-size: var(--text-md);
+  }
+
+  .pad {
+    grid-area: pad;
+    width: 100%;
+    align-self: end;
+  }
+
+  .app[data-screen="drill"] .pad {
+    grid-row: 1 / -1;
+    align-self: center;
+  }
+}
+
+/* Under 826 px wide the toast's pill reaches into the right column, so the pad goes on top and the panel, ring on its
+   right, below it. The board has no room for the operations beside the level and the streak, so on Start they take
+   the panel's place under the pad. */
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 825px) {
+  .play {
+    grid-template-areas:
+      "card pad"
+      "card panel";
+  }
+
+  .pad {
+    align-self: start;
+  }
+
+  .panel {
+    align-self: end;
+  }
+
+  .panel-last {
+    order: 1;
+  }
+
+  .app[data-screen="start"] .panel {
+    display: none;
+  }
+
+  .app[data-screen="start"] .deck {
+    grid-area: panel;
+    align-self: end;
+    justify-self: stretch;
+    margin: 0;
+  }
+
+  .app[data-screen="start"] .ops-deck {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .app[data-screen="start"] .ops-deck .op {
+    width: auto;
+    max-width: none;
+    min-height: 40px;
+  }
+}
+
+/* Desktop: the stage on the left, the player's panel on the right. */
+@media (min-width: 960px) and (min-height: 600px) {
+  .app {
+    --pad-key: clamp(60px, 7.4dvh, 80px);
+    --pad-gap: clamp(10px, 1.2dvh, 14px);
+    --numeral-max: clamp(120px, 22dvh, 250px);
+    --answer-size: clamp(44px, 5.4dvh, 64px);
+    padding: calc(var(--safe-top) + var(--space-3)) calc(var(--safe-right) + var(--space-6))
+      calc(var(--safe-bottom) + var(--space-5)) calc(var(--safe-left) + var(--space-6));
+  }
+
+  :root[data-kid] .app {
+    --pad-key: clamp(68px, 8.4dvh, 92px);
+  }
+
+  .top {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "brand players history";
+    gap: var(--space-5);
+    padding-top: var(--space-3);
+  }
+
+  .brand-name {
+    font-size: var(--text-xl);
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .players {
+    margin: 0;
+    padding: 2px 4px 4px;
+    justify-content: center;
+  }
+
+  .play {
+    flex-direction: row;
+    gap: var(--space-6);
+    padding-top: var(--space-5);
+  }
+
+  /* The badge toast's pill sits centered 24 px over the bottom for the first five seconds; the pad stays above it. */
+  .app[data-screen="start"] .stage {
+    --pad-key: clamp(56px, 6.4dvh, 72px);
+    padding-bottom: var(--space-8);
+  }
+
+  :root[data-kid] .app[data-screen="start"] .stage {
+    --pad-key: clamp(64px, 7.6dvh, 84px);
+  }
+
+  .hint {
+    margin-top: var(--space-1);
+  }
+
+  .stage {
+    container: stage / inline-size;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "card"
+      "pad";
+    gap: var(--space-5);
+  }
+
+  .deck {
+    display: none;
+  }
+
+  .card {
+    --frame: 12px;
+    padding: var(--space-5) var(--space-6) var(--space-5);
+    border-radius: 36px;
+  }
+
+  .card::before {
+    border-radius: calc(36px - var(--frame));
+  }
+
+  .streak {
+    height: 56px;
+    padding: 0 7px 0 18px;
+    border-radius: 14px;
+    gap: var(--space-3);
+  }
+
+  .streak-label {
+    font-size: var(--text-sm);
+  }
+
+  .streak-num {
+    min-width: 46px;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 30px;
+  }
+
+  .streak-burst {
+    right: 30px;
+  }
+
+  .pad {
+    width: calc(var(--pad-key) * 3 * 2 + var(--pad-gap) * 2);
+  }
+
+  .panel {
+    order: 0;
+    flex: 0 0 clamp(360px, 30vw, 34rem);
+    display: grid;
+    grid-template-columns: none;
+    grid-template-rows: auto auto 1fr auto;
+    align-items: normal;
+    gap: var(--space-5);
+    height: auto;
+    padding: var(--space-6);
+    border-radius: 36px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-2);
+    min-height: 0;
+    transition-property: opacity, transform;
+    transition-duration: var(--motion-slow);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .panel-name {
+    font-size: var(--text-4xl);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .panel-last {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .ring-sm {
+    width: 112px;
+    height: 112px;
+    flex: none;
+  }
+
+  .panel-last-score {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .panel-last-label {
+    margin-top: var(--space-2);
+    font-size: var(--text-md);
+    font-weight: 400;
+  }
+
+  .panel-last-when {
+    display: inline;
+  }
+
+  .panel .curve-card {
+    min-height: 200px;
+    gap: var(--space-2);
+    padding-top: 0;
+  }
+
+  .panel .curve-title {
+    font-size: var(--text-sm);
+  }
+
+  .panel .curve {
+    min-height: 140px;
+  }
+
+  .panel-setup {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .ops-panel {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .ops-panel .op {
+    min-width: 0;
+    max-width: none;
+    min-height: 52px;
+  }
+
+  /* On Start the pad is the board's own key rail, as wide as the board: the digits in a row, then delete and a wide
+     Go, the one way to start. */
+  .app[data-screen="start"] .pad {
+    width: 100%;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .app[data-screen="start"] .key {
+    --key-bg: var(--color-key-1);
+    min-width: 0;
+  }
+
+  .app[data-screen="start"] .key-action {
+    --key-bg: var(--color-key-4);
+    order: 1;
+  }
+
+  .app[data-screen="start"] .key.key-go {
+    --key-bg: var(--color-accent);
+    grid-column: span 3;
+    order: 2;
+  }
+
+  /* The drill takes the whole width: the card and the pad side by side, the panel gone. */
+  .app[data-screen="drill"] .panel {
+    display: none;
+  }
+
+  .app[data-screen="drill"] .stage {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "deck deck"
+      "card pad";
+    column-gap: var(--space-7);
+    max-width: 1500px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .app[data-screen="drill"] .deck {
+    display: grid;
+  }
+
+  .app[data-screen="drill"] .pad {
+    --pad-key: clamp(68px, 9.4dvh, 100px);
+    width: calc(var(--pad-key) * 3 * 1.7 + var(--pad-gap) * 2);
+    align-self: center;
+  }
+
+  .app[data-screen="drill"] .card {
+    --numeral-max: clamp(140px, 27dvh, 300px);
+    --answer-size: clamp(56px, 8dvh, 92px);
+  }
+}
+
+@container stage (min-width: 760px) {
+  .app[data-screen="start"] .pad {
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+  }
+
+  .app[data-screen="start"] .key.key-go {
+    grid-column: span 2;
+  }
+}

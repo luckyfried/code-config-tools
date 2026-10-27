@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"players": [{"name": "Maya", "level": 4, "kid": false}, {"name": "Leo", "level": 2, "kid": true}, {"name": "Sam", "level": 6, "kid": false}], "operations": ["add", "subtract", "multiply", "divide", "percent", "squares"], "seconds": 90, "theme": "auto"};
