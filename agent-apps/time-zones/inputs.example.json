@@ -1,0 +1,18 @@
+{
+  "home": { "label": "Lisbon", "zone": "Europe/Lisbon", "workStart": 9, "workEnd": 18 },
+  "people": [
+    { "name": "Lena", "city": "Berlin", "zone": "Europe/Berlin", "workStart": 9, "workEnd": 18 },
+    { "name": "Priya", "city": "Bengaluru", "zone": "Asia/Kolkata", "workStart": 13, "workEnd": 22 },
+    { "name": "Sam", "city": "São Paulo", "zone": "America/Sao_Paulo", "workStart": 9, "workEnd": 18 },
+    { "name": "Maya", "city": "New York", "zone": "America/New_York", "workStart": 8, "workEnd": 17 },
+    { "name": "Diego", "city": "Mexico City", "zone": "America/Mexico_City", "workStart": 8, "workEnd": 17 }
+  ],
+  "hourFormat": 24,
+  "theme": "auto",
+  "_notes": {
+    "home": "Your own city: label is the city name the page shows, zone is its time zone name (like Europe/Lisbon). workStart and workEnd are the hours you usually work, from 0 to 24; they default to 9 and 17.",
+    "people": "One row per person, in the order the page shows them: their name, the city they are in, its time zone name, and the hours they usually work there (17.5 is half past five). color is optional, like \"#e0457b\", and tints their work hours and their clock's seconds hand.",
+    "hourFormat": "24 shows 15:00; 12 shows 3:00 pm.",
+    "theme": "day (white page, bright strips), night (black page, softer strips, brighter glow), or auto, which follows the system's light or dark setting."
+  }
+}

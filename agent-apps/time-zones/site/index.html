@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Time Zones</title>
+  <meta name="description" content="A strip of your people's days; drag the line to find a good hour.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script>
+    try {
+      const saved = JSON.parse(localStorage.getItem("time-zones") || "{}");
+      if (saved.theme === "light" || saved.theme === "dark") document.documentElement.dataset.theme = saved.theme;
+    } catch {}
+  </script>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/app.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="top">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="4" width="20" height="4" rx="2" class="brand-a"/>
+          <rect x="2" y="10" width="20" height="4" rx="2" class="brand-b"/>
+          <rect x="2" y="16" width="20" height="4" rx="2" class="brand-c"/>
+          <rect x="13" y="2" width="2" height="20" rx="1" class="brand-line"/>
+        </svg>
+        <span>Time Zones</span>
+      </div>
+
+      <h1 class="status" id="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="status-text" id="status-text">Finding a good hour</span>
+      </h1>
+
+      <div class="controls">
+        <div class="datenav" role="group" aria-label="Day">
+          <button class="icon-btn" id="prev-day" type="button" aria-label="Previous day">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <label class="date-field">
+            <span class="date-label" id="date-label">Today</span>
+            <input type="date" id="date" aria-label="Date">
+          </label>
+          <button class="icon-btn" id="next-day" type="button" aria-label="Next day">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <button class="pill-btn" id="to-now" type="button" hidden>Now</button>
+        <button class="icon-btn" id="theme" type="button" aria-label="Switch to the night look">
+          <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="bar" aria-label="The time at the line in every city">
+      <p class="details" id="details" tabindex="-1"></p>
+      <button class="copy-btn" id="copy" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>
+        <span id="copy-label">Copy times</span>
+      </button>
+    </section>
+
+    <main class="board" id="board">
+      <div class="scroller" id="scroller">
+        <div class="content" id="content">
+          <div class="axis" id="axis" aria-hidden="true">
+            <div class="axis-label"></div>
+            <div class="axis-track" id="axis-track"></div>
+          </div>
+          <div class="lanes" id="lanes"></div>
+        </div>
+      </div>
+      <div class="column" id="column" aria-hidden="true"></div>
+      <div class="line" id="line">
+        <div class="knob" id="knob" role="slider" tabindex="0" aria-label="Meeting time" aria-valuemin="0" aria-valuemax="1439" aria-valuenow="0">
+          <span id="knob-time">00:00</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
