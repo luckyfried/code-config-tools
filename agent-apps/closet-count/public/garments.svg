@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Seven flat garment shapes in one weight. Each takes its fill, outline, seam, and fold light from the page that draws it, so one file draws every item. -->
+  <symbol id="top" viewBox="0 0 100 100">
+    <path d="M38 9 C42 15 58 15 62 9 L74 13 C80 15 85 19 88 24 L95 37 L81 45 L74 35 L74 90 C74 92 73 93 71 93 L29 93 C27 93 26 92 26 90 L26 35 L19 45 L5 37 L12 24 C15 19 20 15 26 13 Z"/>
+    <path d="M38 9 C42 18 58 18 62 9" style="fill:none;stroke:var(--seam);stroke-width:2.2;stroke-linecap:round"/>
+    <path d="M26 35 L26 22 M74 35 L74 22" style="fill:none;stroke:var(--seam);stroke-width:1.6;stroke-linecap:round"/>
+    <path d="M30 40 C36 58 33 74 36 88 L46 88 C42 72 44 56 38 40 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+  <symbol id="bottom" viewBox="0 0 100 100">
+    <path d="M27 5 L73 5 L79 94 C79 95 78 96 77 96 L58 96 C57 96 56 95 56 94 L50 36 L44 94 C44 95 43 96 42 96 L23 96 C22 96 21 95 21 94 Z"/>
+    <path d="M27.4 13 L72.6 13 M50 13 L50 34 M35 13 C36 19 33 23 28 24 M65 13 C64 19 67 23 72 24" style="fill:none;stroke:var(--seam);stroke-width:1.8;stroke-linecap:round"/>
+    <path d="M30 26 L28 90 L36 90 L38 30 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+  <symbol id="dress" viewBox="0 0 100 100">
+    <path d="M38 5 L43 5 C44 12 56 12 57 5 L62 5 L64 22 C60 28 60 34 62 40 L84 92 C84 94 83 95 81 95 L19 95 C17 95 16 94 16 92 L38 40 C40 34 40 28 36 22 Z"/>
+    <path d="M38 40 C46 43 54 43 62 40" style="fill:none;stroke:var(--seam);stroke-width:2;stroke-linecap:round"/>
+    <path d="M50 44 C49 62 46 78 44 92 M60 46 C62 62 66 78 70 92" style="fill:none;stroke:var(--seam);stroke-width:1.2;stroke-linecap:round"/>
+    <path d="M40 46 L26 90 L36 90 L44 46 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+  <symbol id="layer" viewBox="0 0 100 100">
+    <path d="M36 5 L50 13 L64 5 L80 11 C84 13 86 16 87 20 L95 70 C95 72 94 73 92 73 L85 74 C83 74 82 73 82 71 L78 40 L78 95 C78 96 77 97 76 97 L24 97 C23 97 22 96 22 95 L22 40 L18 71 C18 73 17 74 15 74 L8 73 C6 73 5 72 5 70 L13 20 C14 16 16 13 20 11 Z"/>
+    <path d="M36 5 L45 38 L50 13 L55 38 L64 5 M50 38 L50 96 M22 40 L22 24 M78 40 L78 24" style="fill:none;stroke:var(--seam);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round"/>
+    <path d="M28 66 L42 66 M58 66 L72 66" style="fill:none;stroke:var(--seam);stroke-width:2.4;stroke-linecap:round"/>
+    <circle cx="54" cy="50" r="1.8" style="fill:var(--seam);stroke:none"/>
+    <circle cx="54" cy="62" r="1.8" style="fill:var(--seam);stroke:none"/>
+    <path d="M26 44 L26 92 L34 92 L36 46 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+  <symbol id="shoes" viewBox="0 0 100 100">
+    <path d="M6 48 C6 36 12 30 20 30 L34 30 C36 30 37 31 38 33 C42 42 52 46 66 48 C82 50 93 56 94 66 L94 72 C94 74 93 75 91 75 L9 75 C7 75 6 74 6 72 Z"/>
+    <path d="M6 65 L94 65" style="fill:none;stroke:var(--seam);stroke-width:2;stroke-linecap:round"/>
+    <path d="M36 36 L46 33 M41 41 L51 38 M47 45 L57 42" style="fill:none;stroke:var(--seam);stroke-width:1.8;stroke-linecap:round"/>
+    <path d="M12 38 C12 34 15 33 19 33 L24 33 L22 60 L12 60 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+  <symbol id="bag" viewBox="0 0 100 100">
+    <path fill-rule="evenodd" d="M33 34 C33 16 40 8 50 8 C60 8 67 16 67 34 L61 34 C61 20 57 14 50 14 C43 14 39 20 39 34 Z M16 34 L84 34 C86 34 87 35 87 37 L91 90 C91 92 90 94 88 94 L12 94 C10 94 9 92 9 90 L13 37 C13 35 14 34 16 34 Z"/>
+    <path d="M14 46 L86 46" style="fill:none;stroke:var(--seam);stroke-width:1.8;stroke-linecap:round"/>
+    <path d="M18 50 L15 88 L24 88 L26 50 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+  <symbol id="accessory" viewBox="0 0 100 100">
+    <path d="M18 8 L82 8 C85 8 87 10 87 13 L87 87 C87 90 85 92 82 92 L18 92 C15 92 13 90 13 87 L13 13 C13 10 15 8 18 8 Z"/>
+    <path d="M13 72 L87 72" style="fill:none;stroke:var(--seam);stroke-width:1.8"/>
+    <path d="M20 14 L20 66 L30 66 L30 14 Z" style="fill:var(--sheen);stroke:none"/>
+  </symbol>
+</svg>

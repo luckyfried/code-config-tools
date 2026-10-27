@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="116" fill="#29251f"/>
+  <g transform="translate(76 78)">
+    <rect x="0" y="0" width="38" height="96" rx="6" fill="#b5532c"/>
+    <rect x="46" y="0" width="38" height="96" rx="6" fill="#e8a33d"/>
+    <rect x="92" y="0" width="38" height="96" rx="6" fill="#9caf88"/>
+    <rect x="138" y="0" width="38" height="96" rx="6" fill="#2f6e6e"/>
+    <rect x="184" y="0" width="38" height="96" rx="6" fill="#2a52be"/>
+    <rect x="230" y="0" width="38" height="96" rx="6" fill="#c46b8c"/>
+    <rect x="276" y="0" width="38" height="96" rx="6" fill="#ece8e0"/>
+  </g>
+  <circle cx="256" cy="330" r="108" fill="none" stroke="#ece8e0" stroke-opacity="0.18" stroke-width="22"/>
+  <path d="M256 222 A108 108 0 1 1 148 330" fill="none" stroke="#c9a54e" stroke-width="22" stroke-linecap="round"/>
+  <path d="M238 274 C244 284 268 284 274 274 L294 281 C303 284 310 290 314 298 L324 316 L305 327 L295 313 L295 386 C295 389 293 391 290 391 L222 391 C219 391 217 389 217 386 L217 313 L207 327 L188 316 L198 298 C202 290 209 284 218 281 Z" fill="#c19a6b"/>
+</svg>

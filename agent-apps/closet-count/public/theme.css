@@ -1,0 +1,93 @@
+/* Boutique: bone paper, ink type, swatches outlined in warm gray, the wear ring in brass. Light. */
+:root {
+  --scheme: light;
+  color-scheme: light;
+  --background: #ece8e0;
+  --foreground: #29251f;
+  --card: #f6f3ee;
+  --card-foreground: #29251f;
+  --popover: #f8f6f2;
+  --popover-foreground: #29251f;
+  --primary: #29251f;
+  --primary-foreground: #f6f3ee;
+  --secondary: #e0dbd1;
+  --secondary-foreground: #29251f;
+  --muted: #e2ddd3;
+  --muted-foreground: #6b6359;
+  --accent: #e4dccb;
+  --accent-foreground: #29251f;
+  --destructive: #a1301f;
+  --border: #d6cfc2;
+  --input: #c8c0b2;
+  --ring: #9c7a2e;
+  --radius: 0.5rem;
+
+  --swatch-outline: #a99f91;
+  --swatch-outline-width: 2.2px;
+  --rim-light: #8f8577;
+  --rim-light-width: 4.5px;
+  --rim-dark: #a99f91;
+  --rim-dark-width: 2.2px;
+  --seam: rgb(41 37 31 / 0.24);
+  --sheen: rgb(255 255 255 / 0.2);
+  --swatch-saturate: 0.94;
+  --chip-edge: rgb(41 37 31 / 0.16);
+  --flatlay: #e2dcd0;
+  --flatlay-edge: #d3cbbd;
+  --wear-track: #d9d1c2;
+  --wear-fill: #a8843a;
+  --wear-done: #8a6a24;
+  --shelf: #b9ae9c;
+  --dusty-tint: #cfc8bc;
+  --capsule-ink: #29251f;
+  --shadow-card: 0 1px 0 rgb(41 37 31 / 0.05), 0 1px 3px rgb(41 37 31 / 0.07);
+  --shadow-lift: 0 2px 4px rgb(41 37 31 / 0.06), 0 14px 28px -12px rgb(41 37 31 / 0.24);
+}
+
+@media (prefers-color-scheme: dark) {
+/* Atelier: a charcoal workroom where every swatch shows at full chroma and the wear ring is drawn in bone. Dark. */
+:root {
+  --scheme: dark;
+  color-scheme: dark;
+  --background: #202022;
+  --foreground: #ece6dc;
+  --card: #2a2a2d;
+  --card-foreground: #ece6dc;
+  --popover: #2e2e31;
+  --popover-foreground: #ece6dc;
+  --primary: #ece6dc;
+  --primary-foreground: #202022;
+  --secondary: #343438;
+  --secondary-foreground: #ece6dc;
+  --muted: #303034;
+  --muted-foreground: #a39d93;
+  --accent: #3a3a3f;
+  --accent-foreground: #ece6dc;
+  --destructive: #e0705c;
+  --border: #3b3b40;
+  --input: #4a4a50;
+  --ring: #d9cfbf;
+  --radius: 0.75rem;
+
+  --swatch-outline: rgb(236 230 220 / 0.22);
+  --swatch-outline-width: 1.6px;
+  --rim-dark: rgb(236 230 220 / 0.78);
+  --rim-dark-width: 5px;
+  --rim-light: rgb(236 230 220 / 0.22);
+  --rim-light-width: 1.6px;
+  --seam: rgb(0 0 0 / 0.3);
+  --sheen: rgb(255 255 255 / 0.1);
+  --swatch-saturate: 1.12;
+  --chip-edge: rgb(255 255 255 / 0.24);
+  --flatlay: #38383d;
+  --flatlay-edge: #46464c;
+  --wear-track: #3d3d42;
+  --wear-fill: #ece6dc;
+  --wear-done: #ffffff;
+  --shelf: #4a4a50;
+  --dusty-tint: #55555b;
+  --capsule-ink: #ece6dc;
+  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.25), 0 2px 6px rgb(0 0 0 / 0.25);
+  --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.3), 0 18px 36px -14px rgb(0 0 0 / 0.6);
+}
+}
