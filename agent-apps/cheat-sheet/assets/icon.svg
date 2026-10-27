@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#17181b"/>
+  <g font-family="Inter, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <g transform="translate(96 140)">
+      <rect y="14" width="148" height="148" rx="30" fill="#8a8270"/>
+      <rect width="148" height="150" rx="30" fill="#e7e0cd" stroke="#cfc7b2" stroke-width="3"/>
+      <rect x="10" y="3" width="128" height="3" rx="1.5" fill="#fffaf0"/>
+      <text x="74" y="104" font-size="78" font-weight="400" fill="#23211c">⌘</text>
+    </g>
+    <g transform="translate(268 140)">
+      <rect y="14" width="148" height="148" rx="30" fill="#8a8270"/>
+      <rect width="148" height="150" rx="30" fill="#e7e0cd" stroke="#cfc7b2" stroke-width="3"/>
+      <rect x="10" y="3" width="128" height="3" rx="1.5" fill="#fffaf0"/>
+      <text x="74" y="102" font-size="68" font-weight="650" fill="#23211c">K</text>
+    </g>
+    <rect x="96" y="352" width="320" height="10" rx="5" fill="#4a4d55"/>
+    <rect x="96" y="384" width="220" height="10" rx="5" fill="#2f3238"/>
+  </g>
+</svg>

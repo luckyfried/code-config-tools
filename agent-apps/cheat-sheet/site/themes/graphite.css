@@ -1,0 +1,170 @@
+/* Graphite: a cool family. Dark is near-black with bone key faces; light is a pale steel desk with graphite caps.
+   Print always uses the paper face below. Tokens only. */
+
+:root {
+  color-scheme: light;
+  --color-bg: #e3e5e8;
+  --color-surface: #eef0f2;
+  --color-surface-2: #d9dce1;
+  --color-text: #17191d;
+  --color-muted: #5a5f68;
+  --color-accent: #9a5d0c;
+  --color-on-accent: #fff8ec;
+  --color-danger: #b23a2a;
+  --color-ok: #2f7a45;
+  --color-border: #c4c8ce;
+  --color-rule: #8b9099;
+  --color-hairline: #d0d3d8;
+  --color-cmd: #20242b;
+  --color-mark: #f5c75a;
+  --color-on-mark: #17140c;
+  --color-focus: #2b5fd9;
+
+  --key-face: #33363e;
+  --key-face-top: #535865;
+  --key-face-low: #282a31;
+  --key-rim: #16181c;
+  --key-highlight: #6c727e;
+  --key-edge-hi: #0c0d10;
+  --key-edge: #1a1c21;
+  --key-edge-low: #000000;
+  --key-shadow: #0f121a59;
+  --key-glyph: #ece8de;
+  --key-back: #cdd1d7;
+  --key-back-rim: #b8bdc5;
+  --key-back-highlight: #f4f5f7;
+  --key-back-edge: #9aa0aa;
+  --key-back-mark: #aeb3bb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #141518;
+    --color-surface: #1b1d21;
+    --color-surface-2: #23262b;
+    --color-text: #ece6d8;
+    --color-muted: #8f8b82;
+    --color-accent: #e8b04a;
+    --color-on-accent: #1b1610;
+    --color-danger: #e06c5a;
+    --color-ok: #7fb08a;
+    --color-border: #2b2e34;
+    --color-rule: #4a4d55;
+    --color-hairline: #24272c;
+    --color-cmd: #d9d2c2;
+    --color-mark: #e8b04a;
+    --color-on-mark: #17140e;
+    --color-focus: #e8b04a;
+
+    --key-face: #e7e0cd;
+    --key-face-top: #fffaf0;
+    --key-face-low: #d3cab3;
+    --key-rim: #bfb59c;
+    --key-highlight: #fffdf7;
+    --key-edge-hi: #9c937d;
+    --key-edge: #6f6856;
+    --key-edge-low: #2c2922;
+    --key-shadow: #000000b3;
+    --key-glyph: #23211c;
+    --key-back: #2d3036;
+    --key-back-rim: #383b42;
+    --key-back-highlight: #474b53;
+    --key-back-edge: #0b0c0e;
+    --key-back-mark: #3e424a;
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #e3e5e8;
+  --color-surface: #eef0f2;
+  --color-surface-2: #d9dce1;
+  --color-text: #17191d;
+  --color-muted: #5a5f68;
+  --color-accent: #9a5d0c;
+  --color-on-accent: #fff8ec;
+  --color-border: #c4c8ce;
+  --color-rule: #8b9099;
+  --color-hairline: #d0d3d8;
+  --color-cmd: #20242b;
+  --color-mark: #f5c75a;
+  --color-on-mark: #17140c;
+  --color-focus: #2b5fd9;
+  --key-face: #33363e;
+  --key-face-top: #535865;
+  --key-face-low: #282a31;
+  --key-rim: #16181c;
+  --key-highlight: #6c727e;
+  --key-edge-hi: #0c0d10;
+  --key-edge: #1a1c21;
+  --key-edge-low: #000000;
+  --key-shadow: #0f121a59;
+  --key-glyph: #ece8de;
+  --key-back: #cdd1d7;
+  --key-back-rim: #b8bdc5;
+  --key-back-highlight: #f4f5f7;
+  --key-back-edge: #9aa0aa;
+  --key-back-mark: #aeb3bb;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #141518;
+  --color-surface: #1b1d21;
+  --color-surface-2: #23262b;
+  --color-text: #ece6d8;
+  --color-muted: #8f8b82;
+  --color-accent: #e8b04a;
+  --color-on-accent: #1b1610;
+  --color-border: #2b2e34;
+  --color-rule: #4a4d55;
+  --color-hairline: #24272c;
+  --color-cmd: #d9d2c2;
+  --color-mark: #e8b04a;
+  --color-on-mark: #17140e;
+  --color-focus: #e8b04a;
+  --key-face: #e7e0cd;
+  --key-face-top: #fffaf0;
+  --key-face-low: #d3cab3;
+  --key-rim: #bfb59c;
+  --key-highlight: #fffdf7;
+  --key-edge-hi: #9c937d;
+  --key-edge: #6f6856;
+  --key-edge-low: #2c2922;
+  --key-shadow: #000000b3;
+  --key-glyph: #23211c;
+  --key-back: #2d3036;
+  --key-back-rim: #383b42;
+  --key-back-highlight: #474b53;
+  --key-back-edge: #0b0c0e;
+  --key-back-mark: #3e424a;
+}
+
+@media print {
+  :root, [data-theme] {
+    color-scheme: light;
+    --color-bg: #ffffff;
+    --color-surface: #ffffff;
+    --color-surface-2: #f4f3f0;
+    --color-text: #1a1b1f;
+    --color-muted: #66666b;
+    --color-accent: #1a1b1f;
+    --color-border: #d9d6cf;
+    --color-rule: #1a1b1f;
+    --color-hairline: #e6e3dc;
+    --color-cmd: #1a1b1f;
+    --color-mark: transparent;
+    --color-on-mark: #1a1b1f;
+    --key-face: #f3eee2;
+    --key-face-top: #fcfaf4;
+    --key-face-low: #ebe5d7;
+    --key-rim: #c9c2b3;
+    --key-highlight: #ffffff;
+    --key-edge-hi: #c6bfb0;
+    --key-edge: #aaa394;
+    --key-edge-low: #8f897c;
+    --key-shadow: transparent;
+    --key-glyph: #24221d;
+  }
+}

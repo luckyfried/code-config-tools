@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cheat Sheet</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/inter-variable.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/keycap.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/print.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <h1 class="title" id="title"></h1>
+      <p class="sub" id="sub" aria-live="polite"></p>
+    </header>
+    <script src="./js/boot.js"></script>
+
+    <div class="toolbar" role="toolbar" aria-label="Sheet controls">
+      <label class="search" id="search-box">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.75" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <input id="q" type="search" placeholder="Search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Search the sheet">
+        <span class="cap" data-kind="key" aria-hidden="true"><kbd class="cap-face">/</kbd></span>
+        <button class="clear" id="clear" type="button" aria-label="Clear search">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="m3.5 3.5 7 7m0-7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </label>
+
+      <div class="seg" id="platform" role="radiogroup" aria-label="Keys for">
+        <button type="button" role="radio" data-platform="mac" aria-checked="false">Mac</button>
+        <button type="button" role="radio" data-platform="windows" aria-checked="false">Windows</button>
+        <button type="button" role="radio" data-platform="linux" aria-checked="false">Linux</button>
+      </div>
+
+      <button class="btn" id="learn" type="button" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2.75" width="12" height="10.5" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.75 10.75h10.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Learn
+      </button>
+
+      <button class="btn" id="print" type="button">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.25 6V1.75h7.5V6M4.25 11.5H2.5a.75.75 0 0 1-.75-.75v-4A.75.75 0 0 1 2.5 6h11a.75.75 0 0 1 .75.75v4a.75.75 0 0 1-.75.75h-1.75" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4.25 9.25h7.5v5h-7.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        Print
+      </button>
+    </div>
+
+    <main class="sheet" id="sheet"></main>
+
+    <div class="empty" id="empty" hidden>
+      <p id="empty-text"></p>
+      <button class="btn" id="empty-clear" type="button">Clear search</button>
+    </div>
+  </div>
+
+  <div class="print-title" id="print-title" aria-hidden="true"></div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "id": "01a162b2-06af-7fab-b10d-db3e52980704",
+  "version": "2026-10-21",
+  "name": "Cheat Sheet",
+  "shortDescription": "Your shortcuts and commands as keycaps on a sheet you can print.",
+  "description": "A one-page reference for the tools you are learning. Shortcuts show as real keycaps with the Mac glyphs or the Windows and Linux key names, commands are set in mono, and everything is grouped in columns with hairline rules. Type to find a row, switch between Mac, Windows, and Linux keys, and turn on Learn to hide every key until you hover or tap the row. Print it on A4 or Letter in two or three columns on light paper. Your agent writes the entries for your editor, shell, or app and puts the ones you keep forgetting at the top.",
+  "category": "reference",
+  "subcategory": "Printable cheat sheet",
+  "useCase": "documentation",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/cheat-sheet",
+  "setup": "Your agent asks, in one message, which tool or tools the sheet is for, whether you use a Mac, Windows, or Linux, and which shortcuts or commands you keep forgetting so they go at the top. It writes the entries, picks a two or three column print layout on A4 or Letter, and a graphite or paper look. No accounts or keys are needed, and the sheet stays in your project folder."
+}
