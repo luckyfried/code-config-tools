@@ -1,0 +1,17 @@
+{
+  "id": "01a179f2-8581-7d98-8ea0-c3e9884d00e5",
+  "version": "2026-10-21",
+  "name": "Velvet Solitaire",
+  "shortDescription": "Klondike on a velvet table, with cards that have real thickness and weight.",
+  "description": "A one-page Klondike solitaire you host on your own site. The table is lit felt with cloth sheen and a lacquered wood rail; the cards are thick, rounded, and glossy, tilt as you drag them, cast soft shadows, and settle with a snap. Draw one or three, standard or Vegas scoring (the deck costs $52 and pays $5 a card, and the bank carries from game to game), unlimited undo in standard, hints, auto-finish, a clock and a move count, and the classic win cascade with fading trails. Plays with touch, mouse, and keyboard, keeps a half-played game on the device, and comes in three tables, each with a day and a night look.",
+  "category": "games",
+  "subcategory": "Card and casino",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/velvet-solitaire",
+  "setup": ""
+}

@@ -1,0 +1,216 @@
+/* The table: the full-screen stage under everything, the grid that places the felt area
+   between the bars (phone) or beside the rail (wide screens), and the CSS 3D table. */
+
+.app {
+  --rail-w: clamp(252px, 24vw, 340px);
+  --bar-pad: var(--space-2);
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  pointer-events: none;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: auto;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.table-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.table-area {
+  grid-row: 2;
+  grid-column: 1;
+  pointer-events: none;
+}
+
+@media (min-aspect-ratio: 21/20) and (min-width: 640px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr) var(--rail-w);
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .table-area {
+    grid-row: 1;
+  }
+}
+
+/* The house's demo hand: a line and the button that deals the person in, over the live table. */
+.attract {
+  grid-row: 2;
+  grid-column: 1;
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--panel-edge);
+  pointer-events: auto;
+  animation: rise-in var(--motion-slow) var(--ease-out) both;
+  animation-delay: 300ms;
+}
+
+.attract-line {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-md);
+  text-wrap: balance;
+}
+
+@media (min-aspect-ratio: 21/20) and (min-width: 640px) {
+  .attract {
+    grid-row: 1;
+    margin-bottom: var(--space-6);
+    padding-left: var(--space-5);
+  }
+  .attract-line {
+    font-size: var(--text-lg);
+  }
+}
+
+@media (max-width: 639px), (max-aspect-ratio: 21/20), (max-height: 560px) {
+  .attract {
+    gap: var(--space-2);
+    padding-left: var(--space-4);
+  }
+  .attract-line {
+    font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+  .attract .btn--big {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
+  }
+}
+
+/* One plain status line, shown for a moment where the eye already is. */
+.status {
+  grid-row: 2;
+  grid-column: 1;
+  align-self: end;
+  justify-self: center;
+  max-width: min(92%, 34rem);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  text-align: center;
+  text-wrap: pretty;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translateY(8px);
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+  pointer-events: none;
+}
+
+.status.is-shown {
+  opacity: 1;
+  transform: none;
+}
+
+.is-demo .status {
+  display: none;
+}
+
+@media (min-aspect-ratio: 21/20) and (min-width: 640px) {
+  .status {
+    grid-row: 1;
+    margin-bottom: var(--space-5);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The CSS 3D table, when WebGL is missing: the same faces on preserve-3d transforms. */
+.css-table {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  perspective: 2600px;
+  background: radial-gradient(ellipse 70% 60% at 42% 38%, var(--felt), var(--felt-deep));
+}
+
+.css-print {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.css-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--card-w);
+  height: var(--card-h);
+  transform-style: preserve-3d;
+  transform: translate3d(calc(var(--x, 0) * 1px - var(--card-w) / 2), calc(var(--y, 0) * 1px - var(--card-h) / 2), calc(var(--z, 0) * 1px))
+    rotateZ(var(--rz, 0rad)) rotateX(var(--rx, 0rad)) rotateY(var(--ry, 0rad)) scale(var(--s, 1));
+  opacity: var(--o, 1);
+}
+
+.css-face {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--card-w) * 0.055);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-color: var(--card-face);
+  background-image: var(--atlas);
+  background-size: calc(var(--card-w) * 8) calc(var(--card-h) * 7);
+  background-position: calc(var(--cell-x) * var(--card-w) * -1) calc(var(--cell-y) * var(--card-h) * -1);
+  box-shadow: var(--shadow-1);
+}
+
+.css-back {
+  transform: rotateY(180deg);
+  background-position: calc(var(--card-w) * -4) calc(var(--card-h) * -6);
+}
+
+.css-halo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--card-w) + 10px);
+  height: calc(var(--card-h) + 10px);
+  border-radius: calc(var(--card-w) * 0.09);
+  box-shadow: 0 0 0 3px var(--hint-glow), 0 0 18px 4px var(--hint-glow);
+  transform: translate(calc(var(--x, 0) * 1px - 50%), calc(var(--y, 0) * 1px - 50%));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.css-halo.is-on {
+  opacity: var(--o, 1);
+}
+
+.css-halo--cursor {
+  box-shadow: 0 0 0 3px var(--cursor-glow), 0 0 14px 3px var(--cursor-glow);
+}

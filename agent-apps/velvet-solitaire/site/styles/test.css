@@ -1,0 +1,45 @@
+/* The rules check page. */
+.test-page {
+  overflow: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html:has(.test-page) {
+  overflow: auto;
+}
+
+.test-sheet {
+  max-width: 44rem;
+  margin: var(--space-6) auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.test-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-3xl);
+}
+
+.test-summary {
+  margin-top: var(--space-2);
+  font-weight: 600;
+}
+
+.test-list {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-5);
+  line-height: 1.6;
+}
+
+.test-pass {
+  color: var(--color-ok);
+}
+
+.test-fail {
+  color: var(--color-danger);
+}

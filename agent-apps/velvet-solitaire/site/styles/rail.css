@@ -1,0 +1,719 @@
+/* The rail and the bars: leather plates and buttons set into the table's wood. On a phone the
+   scores sit in a bar across the top and the tools across the bottom, and the menu slides up;
+   on a wide screen it is all one rail down the right side. */
+
+.topbar,
+.actionbar,
+.attract,
+.status {
+  position: relative;
+  z-index: 2;
+}
+
+.topbar,
+.actionbar {
+  pointer-events: auto;
+  padding-left: max(var(--bar-pad), env(safe-area-inset-left));
+  padding-right: max(var(--bar-pad), env(safe-area-inset-right));
+}
+
+.topbar {
+  grid-row: 1;
+  grid-column: 1;
+  padding-top: max(var(--bar-pad), env(safe-area-inset-top));
+  padding-bottom: var(--bar-pad);
+}
+
+.actionbar {
+  grid-row: 3;
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding-top: var(--bar-pad);
+  padding-bottom: max(var(--bar-pad), env(safe-area-inset-bottom));
+}
+
+.no-webgl .topbar,
+.no-webgl .actionbar,
+.no-webgl .rail {
+  background: var(--rail-wood);
+}
+
+/* A leather plate: the scores. */
+.plate {
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1), inset 0 1px 0 var(--panel-edge);
+}
+
+.plate--bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: var(--space-1) var(--space-4);
+  gap: var(--space-3);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-size: var(--text-md);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.stat--lead .stat-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.app:not(.is-vegas) [data-show="vegas"],
+.app.is-vegas [data-show="standard"] {
+  display: none;
+}
+
+/* The phone's tools. */
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: var(--space-1) 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  box-shadow: var(--shadow-1), inset 0 1px 0 var(--panel-edge);
+  transition-property: transform, opacity, background-color, color;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.tool svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tool span {
+  white-space: nowrap;
+}
+
+.tool:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.tool:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  box-shadow: none;
+}
+
+.tool:disabled svg {
+  opacity: 0.55;
+}
+
+.tool--finish.is-ready,
+.btn--finish.is-ready {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* The rail: on a phone, a sheet that slides up; on a wide screen, the right side of the table. */
+.rail {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 88dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) max(var(--space-4), env(safe-area-inset-right)) max(var(--space-5), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  transform: translateY(104%);
+  visibility: hidden;
+  transition: transform var(--motion-slow) var(--ease-out), visibility 0s linear var(--motion-slow);
+}
+
+/* While more of the rail sits below its bottom edge, that edge fades out. */
+.rail.has-more {
+  mask-image: linear-gradient(to bottom, var(--color-surface) calc(100% - var(--space-8)), transparent);
+}
+
+.menu-open .rail {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--motion-slow) var(--ease-out), visibility 0s;
+}
+
+.rail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rail-title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.plate--rail {
+  display: none;
+  padding: var(--space-4);
+}
+
+.plate-lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.plate-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.plate-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+/* The buttons share each row they land on, so a row never ends in an empty cell. */
+.rail-actions {
+  display: none;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rail-actions .btn {
+  flex: 1 1 0;
+  min-width: max-content;
+}
+
+.rail-actions .btn--accent {
+  flex-basis: 100%;
+}
+
+.rail-actions .btn--finish:not(.is-ready) {
+  display: none;
+}
+
+.rail-actions .btn--finish.is-ready {
+  flex-basis: 100%;
+  animation: rise-in var(--motion-base) var(--ease-out);
+}
+
+/* The rail's Menu button and the sheet it opens stand only on a short wide screen; everywhere
+   else the settings and stats sit in the rail's own column. */
+.rail-actions .btn--menu,
+.more-head {
+  display: none;
+}
+
+.rail-more {
+  display: contents;
+}
+
+.btn {
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: var(--text-md);
+  box-shadow: var(--shadow-1), inset 0 0 0 1px var(--color-border);
+  transition-property: transform, opacity, background-color;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.btn--accent {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-1);
+}
+
+.btn--big {
+  min-height: 48px;
+  padding: var(--space-2) var(--space-5);
+  white-space: nowrap;
+}
+
+/* Settings: segmented choices. */
+.settings {
+  container-type: inline-size;
+}
+
+.settings,
+.ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1), inset 0 1px 0 var(--panel-edge);
+}
+
+/* The label sits above its segments; where the panel is wide enough, beside them. */
+.choice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+@container (min-width: 250px) {
+  .choice {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+  }
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.choice--three .seg {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.choice legend {
+  float: left;
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.choice label {
+  position: relative;
+  display: grid;
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.choice span {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  padding: var(--space-1);
+  border-radius: calc(var(--radius-md) - 3px);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.15;
+  white-space: nowrap;
+  transition-property: background-color, color, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.choice input:checked + span {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1), inset 0 0 0 1.5px var(--color-accent);
+}
+
+.choice input:focus-visible + span {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.rule,
+.settings-note {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+.settings-note {
+  font-size: var(--text-xs);
+}
+
+.switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch input {
+  appearance: none;
+  -webkit-appearance: none;
+  order: 2;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  position: relative;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.switch input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.switch input:checked {
+  background: var(--color-accent);
+}
+
+.switch input:checked::after {
+  transform: translateX(18px);
+}
+
+.ledger-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-xl);
+}
+
+.ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-2);
+}
+
+.ledger-grid dt {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+
+.ledger-grid dd {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.keys {
+  display: none;
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  text-wrap: pretty;
+}
+
+/* Wide screens: the rail stands on the table's right side; the bars go away. */
+@media (min-aspect-ratio: 21/20) and (min-width: 640px) {
+  .topbar,
+  .actionbar {
+    display: none;
+  }
+  .rail {
+    position: relative;
+    grid-column: 2;
+    grid-row: 1;
+    inset: auto;
+    z-index: 2;
+    max-height: none;
+    height: 100%;
+    padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--space-5), env(safe-area-inset-right)) max(var(--space-5), env(safe-area-inset-bottom)) var(--space-5);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+    transition: none;
+    scrollbar-width: thin;
+  }
+  .rail {
+    gap: var(--space-2);
+  }
+  .rail-head {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    box-shadow: var(--shadow-1), inset 0 1px 0 var(--panel-edge);
+  }
+  .rail-title {
+    text-align: center;
+  }
+  .close {
+    display: none;
+  }
+  .plate--rail {
+    display: block;
+  }
+  .rail-actions {
+    display: flex;
+  }
+  .keys {
+    display: block;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-1);
+  }
+  .no-webgl .rail {
+    background: var(--rail-wood);
+  }
+  /* Read from a desk chair: the rail's small type never drops under 13 px. */
+  .stat-label,
+  .ledger-grid dt,
+  .rule,
+  .keys {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Laptop heights: the same rail, set tighter, so every card shows whole with wood below it. */
+@media (min-aspect-ratio: 21/20) and (min-width: 640px) and (max-height: 1000px) {
+  .rail-head {
+    padding: var(--space-2) var(--space-4);
+  }
+  .rail-title {
+    font-size: var(--text-xl);
+  }
+  .plate--rail {
+    padding: var(--space-3) var(--space-4);
+  }
+  .plate-number {
+    font-size: var(--text-3xl);
+  }
+  .plate-row {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  .rail-actions .btn--accent {
+    flex-basis: 0;
+  }
+  .settings,
+  .ledger {
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+  .choice span {
+    min-height: 34px;
+  }
+  .switch {
+    min-height: 36px;
+  }
+  .ledger-title {
+    font-size: var(--text-lg);
+  }
+  .ledger-grid {
+    gap: var(--space-2);
+  }
+  .keys {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* Phone landscape: the rail keeps the numbers and the play buttons; the settings and stats
+   open from its Menu button in a sheet over the felt. */
+@media (min-aspect-ratio: 21/20) and (min-width: 640px) and (max-height: 560px) {
+  .rail {
+    gap: var(--space-2);
+    padding-top: max(var(--space-3), env(safe-area-inset-top));
+    padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+    padding-left: var(--space-3);
+    padding-right: max(var(--space-3), env(safe-area-inset-right));
+  }
+  .rail-head {
+    padding: var(--space-2) var(--space-3);
+  }
+  .rail-title {
+    font-size: var(--text-lg);
+  }
+  .plate--rail {
+    padding: var(--space-3);
+  }
+  .plate-number {
+    font-size: var(--text-3xl);
+  }
+  .plate-number {
+    font-size: var(--text-3xl);
+  }
+  .rail-actions {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .rail-actions .btn {
+    grid-column: span 2;
+    min-width: 0;
+  }
+  .rail-actions .btn--accent {
+    order: -2;
+    grid-column: 1 / -1;
+  }
+  .rail-actions .btn--finish.is-ready {
+    order: -1;
+    grid-column: span 3;
+  }
+  .rail-actions:has(.btn--finish.is-ready) .btn--accent {
+    grid-column: span 3;
+  }
+  .rail-actions .btn--menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+  }
+  .btn--menu svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+  }
+  .btn {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-sm);
+  }
+  .keys,
+  .rail-more {
+    display: none;
+  }
+  .menu-open .rail {
+    z-index: 30;
+  }
+  .menu-open .rail-more {
+    position: fixed;
+    top: max(var(--space-3), env(safe-area-inset-top));
+    left: max(var(--space-3), env(safe-area-inset-left));
+    right: calc(var(--rail-w) + var(--space-2));
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "settings head" "settings ledger";
+    max-height: calc(100dvh - 2 * var(--space-3));
+    gap: var(--space-2) var(--space-3);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    box-shadow: var(--shadow-2);
+    animation: rise-in var(--motion-base) var(--ease-out);
+  }
+  .more-head {
+    grid-area: head;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .more-title {
+    flex: 1;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: var(--text-xl);
+  }
+  .more-head .close {
+    display: grid;
+  }
+  .rail-more .settings {
+    grid-area: settings;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+  .rail-more .ledger {
+    grid-area: ledger;
+    align-self: start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+  .rail-more .ledger-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .rail-more .choice span {
+    min-height: 36px;
+  }
+  .rail-more .rule {
+    font-size: var(--text-xs);
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Velvet Solitaire",
+  "playerName": "Ada Lovelace",
+  "draw": 1,
+  "scoring": "vegas",
+  "theme": "velvet-green",
+  "cardBack": "classic",
+  "sound": true,
+  "_notes": {
+    "title": "The name on the page tab, the rail, and the felt.",
+    "playerName": "Shown on the stats card; its initials go on a monogram card back.",
+    "draw": "1 to turn one card from the stock at a time, 3 to turn three.",
+    "scoring": "\"standard\" (points, unlimited undo and passes) or \"vegas\" (the deck costs $52, each card on a foundation pays $5, the bank carries across games, no undo).",
+    "theme": "\"velvet-green\", \"midnight-blue\", or \"ivory-club\": felt, rail wood, card backs, and the page's colors, each with a day and a night look.",
+    "cardBack": "\"classic\", \"lattice\", \"monogram\" (the player's initials), or the path to your own picture beside this file, such as \"my-back.png\".",
+    "sound": "true to play the card sounds, false for a silent table."
+  }
+}

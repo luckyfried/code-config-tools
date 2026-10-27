@@ -1,0 +1,77 @@
+/* The scrim, the win card that rises in, and the new-deal question. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--felt-deep);
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+.win,
+.confirm {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 40;
+  width: min(92vw, 400px);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: center;
+  box-shadow: var(--shadow-2), inset 0 1px 0 var(--panel-edge);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 24px)) scale(0.97);
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-out);
+}
+
+.win.is-open,
+.confirm.is-open {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.win-title,
+.confirm-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--text-3xl);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.confirm-title {
+  font-size: var(--text-2xl);
+}
+
+.win-line {
+  margin-top: var(--space-2);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.win-money,
+.confirm-body {
+  margin-top: var(--space-2);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  text-wrap: pretty;
+}
+
+.win-actions,
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.confirm-actions .btn {
+  flex: 1;
+}
