@@ -1,0 +1,98 @@
+/* The poster: the name and the year in the display serif, the grid centered, the legend as a footer. */
+@page a3 { size: A3 portrait; margin: 0; }
+@page a4 { size: A4 portrait; margin: 0; }
+@page letter { size: letter portrait; margin: 0; }
+
+@media print {
+  html {
+    --s: 1;
+    --paper-h: 420mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  html[data-paper="A3"] body { page: a3; }
+  html[data-paper="A4"] { --s: 0.707; --paper-h: 297mm; }
+  html[data-paper="A4"] body { page: a4; }
+  html[data-paper="Letter"] { --s: 0.66; --paper-h: 279.4mm; }
+  html[data-paper="Letter"] body { page: letter; }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  body { min-height: 0; }
+
+  .facts, .step, .picker, .tip, .sheet, .ribbon { display: none !important; }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(14mm * var(--s));
+    height: var(--paper-h);
+    padding: calc(20mm * var(--s));
+    overflow: hidden;
+    break-after: avoid;
+  }
+  .stage, .head { display: contents; }
+
+  .title {
+    order: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(2mm * var(--s));
+    text-align: center;
+  }
+  .who {
+    order: 0;
+    overflow: visible;
+    color: var(--color-text);
+    font-family: var(--font-display);
+    font-size: calc(22pt * var(--s));
+    font-style: var(--year-style);
+    font-weight: 400;
+    font-variation-settings: var(--year-axes);
+    white-space: normal;
+  }
+  .year-switch { margin: 0; }
+  .year { font-size: calc(120pt * var(--s)); }
+
+  .board {
+    order: 2;
+    flex: none;
+    container-type: normal;
+  }
+  .plate {
+    width: auto;
+    height: auto;
+  }
+  .grid {
+    flex: none;
+    grid-template-columns: calc(7mm * var(--s)) repeat(12, calc(7.4mm * var(--s)));
+    grid-template-rows: calc(6mm * var(--s)) repeat(31, calc(7.4mm * var(--s)));
+    gap: calc(1.2mm * var(--s));
+  }
+  .m-label, .d-label { font-size: calc(8pt * var(--s)); }
+  .m-label.is-now, .d-label.is-now { color: var(--color-muted); font-weight: 400; }
+  .cell { box-shadow: none; }
+  .cell.is-today::before, .cell.is-today::after { display: none; }
+  .cell.is-lifted { transform: none; }
+
+  .legend {
+    order: 3;
+    display: flex;
+    justify-content: center;
+    gap: calc(9mm * var(--s));
+    width: auto;
+  }
+  .key-swatch {
+    width: calc(4mm * var(--s));
+    height: calc(8mm * var(--s));
+  }
+  .key-label { font-size: calc(10pt * var(--s)); }
+  .key-count { font-size: calc(8pt * var(--s)); }
+}

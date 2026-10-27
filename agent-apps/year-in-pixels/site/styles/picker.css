@@ -1,0 +1,113 @@
+/* The radial picker: five swatches on an arc around the tapped day, which is lifted 1.6x beneath them. */
+.picker {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-picker);
+  pointer-events: none;
+}
+.picker[hidden] { display: none; }
+
+.picker-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform: translate(var(--cx), var(--cy));
+}
+
+.swatch {
+  position: absolute;
+  top: -22px;
+  left: -22px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--sw);
+  color: var(--sw);
+  box-shadow: var(--swatch-ring);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translate(calc(var(--x) * 0.35), calc(var(--y) * 0.35)) scale(0.5);
+  transition-property: transform, opacity;
+  transition-duration: 260ms, 160ms;
+  transition-timing-function: var(--ease-out);
+  transition-delay: calc(var(--i) * 22ms);
+}
+.picker.is-open .swatch {
+  opacity: 1;
+  transform: translate(var(--x), var(--y)) scale(1);
+}
+.swatch[aria-checked="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 15px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .picker.is-open .swatch:hover {
+    transform: translate(var(--x), var(--y)) scale(1.1);
+    transition-delay: 0ms;
+  }
+}
+
+.swatch-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) translate(calc(var(--x) * 0.6), calc(var(--y) * 0.6));
+  transition-property: transform, opacity;
+  transition-duration: 260ms, 180ms;
+  transition-timing-function: var(--ease-out);
+  transition-delay: calc(var(--i) * 22ms + 40ms);
+}
+.picker.is-open .swatch-label {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y));
+}
+
+.picker-note {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: auto;
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translate(-50%, -50%) translate(var(--nx), var(--ny)) scale(0.9);
+  transition-property: transform, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: var(--ease-out);
+  transition-delay: 90ms;
+}
+.picker.is-open .picker-note {
+  opacity: 1;
+  transform: translate(-50%, -50%) translate(var(--nx), var(--ny)) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swatch, .swatch-label, .picker-note { transition-property: opacity; transition-delay: 0ms; }
+  .swatch-label { transform: translate(-50%, -50%) translate(var(--x), var(--y)); }
+  .swatch { transform: translate(var(--x), var(--y)); }
+  .picker-note { transform: translate(-50%, -50%) translate(var(--nx), var(--ny)); }
+}

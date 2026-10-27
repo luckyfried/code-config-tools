@@ -1,0 +1,3 @@
+/* auto: gallery on a light device, night on a dark one. */
+@import url("themes/gallery.css");
+@import url("themes/night.css") (prefers-color-scheme: dark);

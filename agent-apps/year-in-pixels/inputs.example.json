@@ -1,0 +1,24 @@
+{
+  "name": "Maya Okafor",
+  "year": 2026,
+  "moods": [
+    { "id": "rough", "label": "Rough", "color": "#3B4CC0" },
+    { "id": "low", "label": "Low", "color": "#2C9AD1" },
+    { "id": "okay", "label": "Okay", "color": "#5CC6A0" },
+    { "id": "good", "label": "Good", "color": "#F4C04A" },
+    { "id": "great", "label": "Great", "color": "#F05A38" }
+  ],
+  "weekStart": "mon",
+  "paper": "A3",
+  "theme": "auto",
+  "example": true,
+  "_notes": {
+    "name": "The name on the poster and above the year.",
+    "year": "The year the page opens on, like 2026. The arrows beside it move to the years before it.",
+    "moods": "Exactly five moods, from the roughest day to the best. id is lowercase letters, digits, and hyphens; label is one to sixteen characters; color is a hex color. The run warns when two colors are too close to tell apart.",
+    "weekStart": "mon or sun: the first day of the week in the Stats sheet.",
+    "paper": "The poster size: A3, A4, or Letter.",
+    "theme": "auto follows the device's light or dark setting; gallery is white with soft tiles; night is black with glowing tiles.",
+    "example": "true fills the year up to yesterday with an example year the first time the page opens, so the grid shows what a full year looks like. false starts empty. Once a day is colored, the page keeps what was colored."
+  }
+}

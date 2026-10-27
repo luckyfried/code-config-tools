@@ -1,0 +1,28 @@
+/* night: true black, the moods at full chroma with a soft bloom, the year in a light upright serif. */
+:root {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #0d0d0f;
+  --color-surface-2: #18181b;
+  --color-text: #f1f0ec;
+  --color-muted: #8e8f96;
+  --color-accent: #f1f0ec;
+  --color-on-accent: #000000;
+  --color-danger: #ff7a62;
+  --color-ok: #6fd3a0;
+  --color-border: #232327;
+  --color-empty: rgba(255, 255, 255, 0.1);
+  --color-dot: rgba(255, 255, 255, 0.2);
+  --color-backdrop: rgba(0, 0, 0, 0.66);
+  --color-today: #fff6dc;
+  --cell-radius: 4px;
+  --cell-shadow: 0 0 14px -4px currentColor;
+  --cell-lift-shadow: 0 0 28px -2px currentColor, 0 0 0 2px #000000;
+  --swatch-ring: 0 0 0 3px #000000, 0 0 22px -4px currentColor;
+  --year-style: normal;
+  --year-weight: 220;
+  --year-axes: "opsz" 144, "SOFT" 0, "WONK" 0;
+  --label-weight: 450;
+  --shadow-1: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-2: 0 30px 80px -20px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.09);
+}

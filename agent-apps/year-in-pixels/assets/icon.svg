@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#FBFAF7"/>
+  <g transform="translate(96 96)">
+    <rect x="0" y="0" width="64" height="64" rx="12" fill="#2C9AD1"/>
+    <rect x="80" y="0" width="64" height="64" rx="12" fill="#5CC6A0"/>
+    <rect x="160" y="0" width="64" height="64" rx="12" fill="#F4C04A"/>
+    <rect x="240" y="0" width="64" height="64" rx="12" fill="#F05A38"/>
+    <rect x="0" y="80" width="64" height="64" rx="12" fill="#3B4CC0"/>
+    <rect x="80" y="80" width="64" height="64" rx="12" fill="#F4C04A"/>
+    <rect x="160" y="80" width="64" height="64" rx="12" fill="#F05A38"/>
+    <rect x="240" y="80" width="64" height="64" rx="12" fill="#F4C04A"/>
+    <rect x="0" y="160" width="64" height="64" rx="12" fill="#5CC6A0"/>
+    <rect x="80" y="160" width="64" height="64" rx="12" fill="#F05A38"/>
+    <rect x="160" y="160" width="64" height="64" rx="12" fill="#F4C04A"/>
+    <rect x="245" y="165" width="54" height="54" rx="9" fill="none" stroke="#1B1B1F" stroke-width="10"/>
+    <circle cx="32" cy="272" r="9" fill="#1B1B1F" fill-opacity="0.18"/>
+    <circle cx="112" cy="272" r="9" fill="#1B1B1F" fill-opacity="0.18"/>
+    <circle cx="192" cy="272" r="9" fill="#1B1B1F" fill-opacity="0.18"/>
+    <circle cx="272" cy="272" r="9" fill="#1B1B1F" fill-opacity="0.18"/>
+  </g>
+</svg>

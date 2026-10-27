@@ -1,0 +1,28 @@
+/* gallery: a white wall, ink type, the moods as printed squares with a hairline edge. */
+:root {
+  color-scheme: light;
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3f3f1;
+  --color-text: #15161a;
+  --color-muted: #6c6e75;
+  --color-accent: #15161a;
+  --color-on-accent: #ffffff;
+  --color-danger: #b8321f;
+  --color-ok: #2c7a50;
+  --color-border: #e3e3df;
+  --color-empty: rgba(21, 22, 26, 0.06);
+  --color-dot: rgba(21, 22, 26, 0.16);
+  --color-backdrop: rgba(250, 250, 248, 0.72);
+  --color-today: #15161a;
+  --cell-radius: 2px;
+  --cell-shadow: inset 0 0 0 1px rgba(21, 22, 26, 0.07);
+  --cell-lift-shadow: 0 10px 24px -6px rgba(21, 22, 26, 0.35), 0 0 0 2px #ffffff;
+  --swatch-ring: 0 0 0 3px #ffffff, 0 6px 18px -4px rgba(21, 22, 26, 0.35);
+  --year-style: italic;
+  --year-weight: 330;
+  --year-axes: "opsz" 144, "SOFT" 100, "WONK" 1;
+  --label-weight: 500;
+  --shadow-1: 0 1px 2px rgba(21, 22, 26, 0.06), 0 1px 1px rgba(21, 22, 26, 0.04);
+  --shadow-2: 0 24px 60px -18px rgba(21, 22, 26, 0.28), 0 0 0 1px rgba(21, 22, 26, 0.06);
+}

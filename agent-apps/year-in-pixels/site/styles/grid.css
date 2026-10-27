@@ -1,0 +1,244 @@
+/* The grid of days, its labels, today's ring, and the ribbon of months. */
+.plate {
+  --g: 3px;
+  --label-w: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  height: 100cqh;
+}
+
+.grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--label-w) repeat(12, minmax(0, 1fr));
+  grid-template-rows: 18px repeat(31, minmax(0, 1fr));
+  gap: var(--g);
+}
+
+.m-label, .d-label {
+  display: flex;
+  align-items: center;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+.m-label {
+  grid-column: var(--m-line);
+  grid-row: 1;
+  justify-content: center;
+  align-items: flex-start;
+}
+.d-label {
+  grid-column: 1;
+  grid-row: var(--d-line);
+  justify-content: flex-end;
+  padding-right: 4px;
+}
+.m-label.is-now, .d-label.is-now {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.cell {
+  position: relative;
+  grid-column: var(--m-line);
+  grid-row: var(--d-line);
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--cell-radius);
+  background: var(--color-empty);
+  transform-origin: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition-property: transform, background-color, box-shadow;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+.cell[data-mood="1"] { background: var(--mood-1); color: var(--mood-1); box-shadow: var(--cell-shadow); }
+.cell[data-mood="2"] { background: var(--mood-2); color: var(--mood-2); box-shadow: var(--cell-shadow); }
+.cell[data-mood="3"] { background: var(--mood-3); color: var(--mood-3); box-shadow: var(--cell-shadow); }
+.cell[data-mood="4"] { background: var(--mood-4); color: var(--mood-4); box-shadow: var(--cell-shadow); }
+.cell[data-mood="5"] { background: var(--mood-5); color: var(--mood-5); box-shadow: var(--cell-shadow); }
+
+.cell[data-future] {
+  background: transparent;
+  cursor: default;
+}
+.cell[data-future]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(5px, 34%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-dot);
+  transform: translate(-50%, -50%);
+}
+
+.cell.is-today { z-index: var(--z-cell); }
+.cell.is-today::before,
+.cell.is-today::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--cell-radius) + 3px);
+  box-shadow: 0 0 0 2px var(--color-today);
+  pointer-events: none;
+}
+.cell.is-today::after {
+  box-shadow: 0 0 0 4px var(--color-today);
+  animation: today-pulse var(--pulse) var(--ease-out) infinite;
+}
+@keyframes today-pulse {
+  0% { transform: scale(1); opacity: 0.85; }
+  80%, 100% { transform: scale(1.8); opacity: 0; }
+}
+
+.cell.is-lifted {
+  z-index: var(--z-lift);
+  transform: scale(1.6);
+  box-shadow: var(--cell-lift-shadow);
+}
+.cell.is-lifted:not([data-mood]) {
+  background: var(--color-surface);
+  color: var(--color-today);
+  box-shadow: inset 0 0 0 1.5px var(--color-today), var(--cell-lift-shadow);
+}
+.cell.is-lifted::before { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .cell:not([data-future]):not(.is-lifted):hover {
+    z-index: var(--z-lift);
+    transform: scale(1.18);
+  }
+}
+
+.ribbon {
+  display: grid;
+  grid-template-columns: var(--label-w) repeat(12, minmax(0, 1fr));
+  column-gap: var(--g);
+  height: 30px;
+  flex: none;
+}
+.seg {
+  grid-column: var(--m-line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.seg-bar {
+  flex: 1;
+  border-radius: 3px;
+  background-color: var(--color-empty);
+  background-image: linear-gradient(var(--ribbon-dir, to top), var(--ribbon-stops));
+  transform-origin: bottom;
+}
+.seg-name { display: none; }
+
+.tip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-tip);
+  max-width: 260px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translate(var(--tx), var(--ty));
+}
+.tip[hidden] { display: none; }
+.tip-date { font-weight: 600; }
+.tip-mood {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+}
+.tip-mood::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--tip-color, var(--color-empty));
+}
+.tip-note { margin-top: 2px; }
+
+@media screen and (min-width: 900px) and (orientation: landscape) {
+  .board {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .plate {
+    --g: 5px;
+    --label-w: 44px;
+    --head-h: 22px;
+    --ribbon-h: 46px;
+    --pitch: min(
+      calc((100cqw - var(--label-w) - 31 * var(--g)) / 31),
+      calc((100cqh - var(--head-h) - var(--ribbon-h) - var(--space-5) - 12 * var(--g)) / 12)
+    );
+    gap: var(--space-5);
+    width: calc(var(--label-w) + 31 * (var(--pitch) + var(--g)));
+    height: auto;
+  }
+  .grid {
+    flex: none;
+    grid-template-columns: var(--label-w) repeat(31, var(--pitch));
+    grid-template-rows: var(--head-h) repeat(12, var(--pitch));
+    gap: var(--g);
+  }
+  .m-label {
+    grid-column: 1;
+    grid-row: var(--m-line);
+    justify-content: flex-start;
+    align-items: center;
+    font-size: var(--text-sm);
+  }
+  .d-label {
+    grid-column: var(--d-line);
+    grid-row: 1;
+    justify-content: center;
+    align-items: flex-start;
+    padding-right: 0;
+    font-size: var(--text-sm);
+  }
+  .cell {
+    grid-column: var(--d-line);
+    grid-row: var(--m-line);
+  }
+  .ribbon {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--space-1);
+    height: var(--ribbon-h);
+    margin-left: calc(var(--label-w) + var(--g));
+  }
+  .seg { grid-column: auto; }
+  .seg-bar {
+    --ribbon-dir: to right;
+    flex: none;
+    height: 22px;
+    transform-origin: left;
+  }
+  .seg-name {
+    display: block;
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.is-today::after { animation: none; opacity: 0; }
+}

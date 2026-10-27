@@ -1,0 +1,17 @@
+{
+  "id": "01a162c8-c14e-7468-874c-6f18b47acd30",
+  "version": "2026-10-21",
+  "name": "Year in Pixels",
+  "shortDescription": "One colored square a day for a year of moods, a poster you can print.",
+  "description": "The whole year on one screen: twelve months of thirty-one squares, one square for every day. Tap a day and five mood swatches rise around your finger; pick one and the square takes its color. On opening, the colored days pop in one after another down each month, the days still to come sit as faint dots, and today pulses. A ribbon under the grid shows each month as a blend of its moods, the Stats sheet counts each mood with its longest run and names the best month, and hovering a day on a desktop shows its note. Export and import the year as a file, and print it as an A3, A4, or Letter poster with your name and the year. Light and dark looks.",
+  "category": "health-fitness",
+  "subcategory": "Mood",
+  "useCase": "data-analysis",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/year-in-pixels",
+  "setup": "Your agent asks for your name and the year to start on, and whether you want your own five moods (a word and a color for each, from the roughest day to the best) or the ready ramp from cool blue to warm red. It can also ask for the poster size (A3, A4, or Letter), the light or dark look, and whether to open on an example year or an empty one."
+}

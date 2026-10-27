@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Year in Pixels</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/fraunces-latin-full-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/fonts.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/grid.css">
+  <link rel="stylesheet" href="./styles/picker.css">
+  <link rel="stylesheet" href="./styles/sheets.css">
+  <link rel="stylesheet" href="./styles/print.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <main class="page" id="page">
+    <div class="stage">
+    <header class="head">
+      <div class="title">
+        <p class="who" id="who"></p>
+        <div class="year-switch">
+          <button class="step" id="prev" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <h1 class="year" id="year"></h1>
+          <button class="step" id="next" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="legend" id="legend" type="button" aria-label="Open the stats for this year"></button>
+    </header>
+
+    <section class="board" id="board">
+      <div class="plate" id="plate">
+        <div class="grid" id="grid" role="group" aria-label="The year, one square a day"></div>
+        <div class="ribbon" id="ribbon" aria-hidden="true"></div>
+      </div>
+    </section>
+    </div>
+
+    <footer class="facts">
+      <p class="facts-line" id="facts"></p>
+      <div class="facts-actions">
+        <button class="link" id="open-stats" type="button">Stats</button>
+        <button class="link" id="open-settings" type="button">Export, import, and print</button>
+      </div>
+    </footer>
+  </main>
+
+  <div class="picker" id="picker" hidden>
+    <div class="picker-ring" id="ring" role="dialog" aria-label="Pick a mood"></div>
+  </div>
+  <div class="tip" id="tip" hidden></div>
+
+  <dialog class="sheet" id="day-sheet" aria-labelledby="day-title">
+    <form method="dialog" class="sheet-body" id="day-form">
+      <h2 class="sheet-title" id="day-title"></h2>
+      <div class="mood-row" id="day-moods" role="radiogroup" aria-label="Mood"></div>
+      <label class="field">
+        <span class="field-label">Note</span>
+        <input class="field-input" id="day-note" name="note" maxlength="120" autocomplete="off" placeholder="One line about the day">
+      </label>
+      <div class="sheet-actions">
+        <button class="button quiet" id="day-clear" type="button">Clear the day</button>
+        <button class="button" id="day-save" type="submit" value="save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="sheet" id="stats-sheet" aria-labelledby="stats-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="stats-title"></h2>
+        <button class="close" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <ul class="stat-moods" id="stat-moods"></ul>
+      <p class="stat-best" id="stat-best"></p>
+      <div class="stat-week" id="stat-week"></div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="settings-sheet" aria-labelledby="settings-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="settings-title">Export, import, and print</h2>
+        <button class="close" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div class="setting">
+        <div>
+          <h3 class="setting-name">Print the poster</h3>
+          <p class="setting-text" id="paper-text"></p>
+        </div>
+        <button class="button" id="print" type="button">Print</button>
+      </div>
+      <div class="setting">
+        <div>
+          <h3 class="setting-name">Export</h3>
+          <p class="setting-text">Every day you colored, in every year, as one file.</p>
+        </div>
+        <button class="button quiet" id="export" type="button">Export</button>
+      </div>
+      <div class="setting">
+        <div>
+          <h3 class="setting-name">Import</h3>
+          <p class="setting-text" id="import-text">Adds the days from an exported file. A day in the file replaces the same day here.</p>
+        </div>
+        <label class="button quiet file">
+          Import
+          <input type="file" id="import" accept=".json,application/json">
+        </label>
+      </div>
+      <div class="setting">
+        <div>
+          <h3 class="setting-name" id="clear-name"></h3>
+          <p class="setting-text" id="clear-text">Removes every color and note in this year from this browser.</p>
+        </div>
+        <button class="button danger" id="clear" type="button"></button>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
