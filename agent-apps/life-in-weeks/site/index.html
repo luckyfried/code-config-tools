@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Life in Weeks</title>
+  <meta name="description" content="A life as a grid of weeks, the lived ones filled, ready to print as a poster.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/fonts.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/chart.css">
+  <link rel="stylesheet" href="./styles/print.css">
+  <script src="./boot.js"></script>
+  <script src="./config.js"></script>
+  <script src="./data.js"></script>
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <p class="status" hidden></p>
+      <h1 class="name"></h1>
+      <p class="born"></p>
+    </header>
+
+    <section class="tally" aria-label="Weeks so far">
+      <p class="tally-lived"><span class="tally-num" data-tally="lived"></span> <span class="tally-word">weeks lived</span></p>
+      <p class="tally-ahead"><span data-tally="ahead"></span></p>
+      <p class="tally-now"><span class="now-dot" aria-hidden="true"></span><span data-tally="now"></span></p>
+    </section>
+
+    <ul class="key key-events" aria-label="Days to remember" hidden></ul>
+
+    <div class="tools">
+      <button class="tool tool-theme" type="button" aria-label="Switch to the dark theme">
+        <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+        <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z"/></svg>
+      </button>
+      <button class="tool tool-print" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3.5h10V9M7 17.5H4.5v-7A1.5 1.5 0 0 1 6 9h12a1.5 1.5 0 0 1 1.5 1.5v7H17"/><path d="M7 14h10v6.5H7z"/></svg>
+        <span class="tool-label">Print</span>
+      </button>
+    </div>
+
+    <figure class="chart">
+      <div class="sheet">
+        <div class="plot">
+          <div class="margin margin-left" aria-hidden="true">
+            <span class="axis-title axis-age">Age</span>
+          </div>
+          <div class="grid-wrap" tabindex="0" role="group" aria-label="The weeks of a life. Use the arrow keys to read a week.">
+            <div class="week-ticks" aria-hidden="true"></div>
+            <svg class="weeks" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="">
+              <g class="bands"></g>
+              <g class="cells"></g>
+              <g class="leaders"></g>
+            </svg>
+            <span class="now-ring" aria-hidden="true"></span>
+            <span class="cursor" aria-hidden="true"></span>
+          </div>
+          <div class="margin margin-right" aria-hidden="true"></div>
+        </div>
+      </div>
+      <figcaption class="sr-only">Each row is one year of age and each square one week. Filled squares are weeks already lived.</figcaption>
+    </figure>
+
+    <section class="legend" aria-label="Key">
+      <ul class="key key-eras"></ul>
+      <ul class="key key-marks">
+        <li><span class="swatch swatch-lived" aria-hidden="true"></span>Weeks lived</li>
+        <li><span class="swatch swatch-ahead" aria-hidden="true"></span>Weeks ahead</li>
+        <li><span class="swatch swatch-event" aria-hidden="true"></span>A day to remember</li>
+        <li><span class="swatch swatch-now" aria-hidden="true"></span>This week</li>
+      </ul>
+    </section>
+
+    <blockquote class="quote" hidden>
+      <p class="quote-line"></p>
+      <footer class="quote-by" hidden></footer>
+    </blockquote>
+  </main>
+
+  <div class="tip" role="tooltip" hidden>
+    <p class="tip-when"></p>
+    <p class="tip-age"></p>
+    <ul class="tip-tags" hidden></ul>
+  </div>
+  <p class="sr-only" aria-live="polite" data-live></p>
+
+  <script src="./badge.js" defer></script>
+</body>
+</html>

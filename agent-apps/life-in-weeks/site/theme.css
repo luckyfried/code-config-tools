@@ -1,0 +1,137 @@
+/* Auto: paper by day, ink when the device is set to dark; the page's switch wins over both. Tokens only: the structure in styles/ reads these names. */
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 400ms;
+  --motion-sweep: 1500ms;
+  --motion-pulse: 1000ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --scheme: light;
+  --color-bg: #E7E4DC;
+  --color-surface: #F3F1EB;
+  --color-surface-2: #DDD9CF;
+  --color-text: #17181D;
+  --color-muted: #5C5D64;
+  --color-accent: #2440C2;
+  --color-on-accent: #FFFFFF;
+  --color-danger: #B3261E;
+  --color-ok: #2E7D4F;
+  --color-border: rgba(23, 24, 29, 0.14);
+  --color-lived: #1A1C23;
+  --color-ahead: rgba(26, 28, 35, 0.105);
+  --color-rule: rgba(26, 28, 35, 0.28);
+  --color-tip: #17181D;
+  --color-on-tip: #F3F1EB;
+  --era-tint: 0.2;
+  --era-mix: 58%;
+  --sheet-shadow: 0 1px 1px rgba(40, 32, 20, 0.06), 0 6px 14px -4px rgba(40, 32, 20, 0.12), 0 28px 60px -18px rgba(40, 32, 20, 0.28);
+  --sheet-edge: rgba(40, 32, 20, 0.07);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27180%27 height=%27180%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.9%27 numOctaves=%272%27 stitchTiles=%27stitch%27/%3E%3CfeColorMatrix values=%270 0 0 0 0.09 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.11 0%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27/%3E%3C/svg%3E");
+  --shadow-1: 0 1px 2px rgba(23, 24, 29, 0.1), 0 2px 6px rgba(23, 24, 29, 0.06);
+  --shadow-2: 0 4px 10px rgba(23, 24, 29, 0.14), 0 16px 36px -8px rgba(23, 24, 29, 0.24);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --scheme: dark;
+    --color-bg: #000000;
+    --color-surface: #000000;
+    --color-surface-2: #1C1C1B;
+    --color-text: #ECE7DA;
+    --color-muted: #9B978C;
+    --color-accent: #8197FF;
+    --color-on-accent: #000000;
+    --color-danger: #FF8A80;
+    --color-ok: #7FD1A0;
+    --color-border: rgba(236, 231, 218, 0.16);
+    --color-lived: #E8E2D2;
+    --color-ahead: rgba(236, 231, 218, 0.115);
+    --color-rule: rgba(236, 231, 218, 0.3);
+    --color-tip: #ECE7DA;
+    --color-on-tip: #000000;
+    --era-tint: 0.3;
+    --era-mix: 40%;
+    --sheet-shadow: none;
+    --sheet-edge: transparent;
+    --grain: none;
+    --shadow-1: 0 0 0 1px rgba(236, 231, 218, 0.14);
+    --shadow-2: 0 0 0 1px rgba(236, 231, 218, 0.18), 0 18px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+[data-theme="dark"] {
+  --scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #000000;
+  --color-surface-2: #1C1C1B;
+  --color-text: #ECE7DA;
+  --color-muted: #9B978C;
+  --color-accent: #8197FF;
+  --color-on-accent: #000000;
+  --color-danger: #FF8A80;
+  --color-ok: #7FD1A0;
+  --color-border: rgba(236, 231, 218, 0.16);
+  --color-lived: #E8E2D2;
+  --color-ahead: rgba(236, 231, 218, 0.115);
+  --color-rule: rgba(236, 231, 218, 0.3);
+  --color-tip: #ECE7DA;
+  --color-on-tip: #000000;
+  --era-tint: 0.3;
+  --era-mix: 40%;
+  --sheet-shadow: none;
+  --sheet-edge: transparent;
+  --grain: none;
+  --shadow-1: 0 0 0 1px rgba(236, 231, 218, 0.14);
+  --shadow-2: 0 0 0 1px rgba(236, 231, 218, 0.18), 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] {
+  --scheme: light;
+  --color-bg: #E7E4DC;
+  --color-surface: #F3F1EB;
+  --color-surface-2: #DDD9CF;
+  --color-text: #17181D;
+  --color-muted: #5C5D64;
+  --color-accent: #2440C2;
+  --color-on-accent: #FFFFFF;
+  --color-danger: #B3261E;
+  --color-ok: #2E7D4F;
+  --color-border: rgba(23, 24, 29, 0.14);
+  --color-lived: #1A1C23;
+  --color-ahead: rgba(26, 28, 35, 0.105);
+  --color-rule: rgba(26, 28, 35, 0.28);
+  --color-tip: #17181D;
+  --color-on-tip: #F3F1EB;
+  --era-tint: 0.2;
+  --era-mix: 58%;
+  --sheet-shadow: 0 1px 1px rgba(40, 32, 20, 0.06), 0 6px 14px -4px rgba(40, 32, 20, 0.12), 0 28px 60px -18px rgba(40, 32, 20, 0.28);
+  --sheet-edge: rgba(40, 32, 20, 0.07);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27180%27 height=%27180%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%270.9%27 numOctaves=%272%27 stitchTiles=%27stitch%27/%3E%3CfeColorMatrix values=%270 0 0 0 0.09 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.11 0%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27/%3E%3C/svg%3E");
+  --shadow-1: 0 1px 2px rgba(23, 24, 29, 0.1), 0 2px 6px rgba(23, 24, 29, 0.06);
+  --shadow-2: 0 4px 10px rgba(23, 24, 29, 0.14), 0 16px 36px -8px rgba(23, 24, 29, 0.24);
+}

@@ -1,0 +1,360 @@
+/* The chart: a sheet holding the left margin, the grid, and the right margin, all measured in --pitch (one week's square). */
+
+.chart {
+  --top: calc(var(--pitch) * 2);
+  --ml-w: calc(var(--margin-l) * var(--pitch));
+  --mr-w: calc(var(--margin-r) * var(--pitch));
+  justify-self: center;
+}
+
+.sheet {
+  background-color: var(--color-sheet);
+  background-image: var(--grain);
+  box-shadow: var(--sheet-shadow), 0 0 0 1px var(--sheet-edge);
+  padding: calc(var(--pitch) * 1.5);
+  padding-top: calc(var(--pitch) * 1);
+}
+
+.plot {
+  display: grid;
+  grid-template-columns: var(--ml-w) calc(52 * var(--pitch)) var(--mr-w);
+}
+
+.margin,
+.grid-wrap {
+  position: relative;
+  padding-top: var(--top);
+}
+
+.grid-wrap {
+  outline-offset: 6px;
+  touch-action: pan-y;
+}
+
+/* The grid. */
+.weeks {
+  display: block;
+  width: calc(52 * var(--pitch));
+  height: calc(var(--rows) * var(--pitch));
+  overflow: visible;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.weeks .w {
+  fill: var(--color-ahead);
+}
+
+.weeks .lived {
+  --cell-fill: var(--color-lived);
+  fill: var(--cell-fill);
+}
+
+.weeks .lived.in-era {
+  --cell-fill: color-mix(in oklab, var(--color-lived), var(--era-c) var(--era-mix));
+}
+
+.weeks .lived.event {
+  --cell-fill: var(--color-accent);
+}
+
+.weeks .event:not(.lived) {
+  fill: color-mix(in oklab, var(--color-accent) 42%, transparent);
+}
+
+.weeks .now {
+  fill: var(--color-accent);
+}
+
+.band {
+  fill: var(--era-c);
+  fill-opacity: var(--era-tint);
+}
+
+.leader {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+.leader.ahead {
+  stroke-dasharray: 2 2;
+}
+
+/*
+ * The sweep. Each diagonal of lived weeks arrives in turn: its --i, 0 to 1 from the top-left corner, delays it within
+ * --motion-sweep. Only opacity moves, on a few dozen groups.
+ */
+.weeks.is-waiting .diag,
+.weeks.is-waiting .now,
+.weeks.is-sweeping .now {
+  opacity: 0;
+}
+
+.weeks.is-sweeping .diag {
+  animation: arrive 280ms var(--ease-out) both;
+  animation-delay: calc(var(--i) * (var(--motion-sweep) - 280ms));
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* This week: a ring that leaves the cell once a second. It is its own layer, so the grid never repaints for it. */
+.now-ring {
+  position: absolute;
+  left: 0;
+  top: var(--top);
+  width: calc(var(--pitch) - 1px);
+  height: calc(var(--pitch) - 1px);
+  transform: translate(calc(var(--nx) * var(--pitch)), calc(var(--ny) * var(--pitch)));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.now-ring::before,
+.now-ring::after {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border: 1.5px solid var(--color-accent);
+}
+
+.now-ring::after {
+  animation: pulse var(--motion-pulse) var(--ease-out) infinite;
+  will-change: transform, opacity;
+}
+
+.is-settled .now-ring {
+  opacity: 1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  80%,
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* The hovered or keyed week. */
+.cursor {
+  position: absolute;
+  left: 0;
+  top: var(--top);
+  width: var(--pitch);
+  height: var(--pitch);
+  transform: translate(calc(var(--cx, 0) * var(--pitch) - 2px), calc(var(--cy, 0) * var(--pitch) - 2px));
+  border: 1.5px solid var(--color-text);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.cursor.is-on {
+  opacity: 1;
+}
+
+/* Week numbers above the grid. */
+.week-ticks {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--top);
+}
+
+.tick,
+.age,
+.axis-title {
+  position: absolute;
+  font-size: max(12px, calc(var(--pitch) * 1.1));
+  line-height: 1;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tick {
+  left: calc(var(--x) * var(--pitch));
+  bottom: calc(var(--pitch) * 0.55);
+  transform: translateX(-50%);
+}
+
+.tick:last-child {
+  transform: translateX(calc(-100% + var(--pitch) * 0.5));
+}
+
+/* The left margin: ages beside the grid, era labels outside them. */
+.age {
+  right: calc(var(--pitch) * 0.7);
+  top: calc(var(--top) + var(--y) * var(--pitch));
+  transform: translateY(-50%);
+}
+
+.age-ten {
+  color: var(--color-text);
+}
+
+.axis-title {
+  right: calc(var(--pitch) * 0.7);
+  bottom: calc(100% - var(--top) + var(--pitch) * 0.55);
+  font-style: normal;
+}
+
+.era-label {
+  position: absolute;
+  right: calc(var(--pitch) * 3.6);
+  top: calc(var(--top) + var(--y) * var(--pitch));
+  transform: translateY(-50%);
+  max-width: calc((var(--margin-l) - 4.2) * var(--pitch));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 420;
+  font-variation-settings: "opsz" 24, "SOFT" 50;
+  font-size: max(13px, calc(var(--pitch) * 1.55));
+  line-height: 1.3;
+  color: color-mix(in oklab, var(--color-text) 78%, var(--era-c));
+}
+
+/* The right margin: one word per event at the end of its leader. */
+.event-word {
+  position: absolute;
+  left: calc(var(--pitch) * 3.5);
+  top: calc(var(--top) + var(--y) * var(--pitch));
+  transform: translateY(-50%);
+  max-width: calc((var(--margin-r) - 3.5) * var(--pitch));
+  display: flex;
+  align-items: baseline;
+  gap: 0.45em;
+  white-space: nowrap;
+  font-size: max(12px, calc(var(--pitch) * 1.3));
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.event-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-year {
+  flex: none;
+  font-size: 0.82em;
+  font-weight: 400;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.event-word.ahead .event-text {
+  color: var(--color-muted);
+}
+
+/* The tooltip that follows the pointer. */
+.tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 20;
+  transform: translate3d(var(--tx, 0), var(--ty, 0), 0);
+  min-width: 180px;
+  max-width: 280px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-tip);
+  color: var(--color-on-tip);
+  box-shadow: var(--shadow-2);
+  pointer-events: none;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.tip-when {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-age {
+  opacity: 0.78;
+  font-variant-numeric: tabular-nums;
+}
+
+.tip-tags {
+  margin-top: var(--space-2);
+  display: grid;
+  gap: 2px;
+}
+
+.tip-tag {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tip-era {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.tip-mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent);
+}
+
+.tip-era .tip-mark {
+  background: var(--era-c);
+}
+
+/* Per layout: the narrow phone column, the mid tablet stack, the wide desktop pair. Screen only; print has its own. */
+@media screen {
+  [data-mode="narrow"] .chart,
+  [data-mode="side"] .chart {
+    --ml-w: 18px;
+    --mr-w: 0px;
+    --top: 22px;
+  }
+
+  [data-mode="narrow"] .sheet,
+  [data-mode="side"] .sheet {
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  [data-mode="narrow"] .margin-right,
+  [data-mode="side"] .margin-right,
+  [data-mode="narrow"] .era-label,
+  [data-mode="side"] .era-label,
+  [data-mode="narrow"] .axis-title,
+  [data-mode="side"] .axis-title,
+  [data-mode="narrow"] .leaders,
+  [data-mode="side"] .leaders {
+    display: none;
+  }
+
+  [data-mode="narrow"] .age:not(.age-ten),
+  [data-mode="side"] .age:not(.age-ten) {
+    display: none;
+  }
+
+  [data-mode="narrow"] .age,
+  [data-mode="side"] .age {
+    right: 4px;
+    font-size: 12px;
+  }
+}

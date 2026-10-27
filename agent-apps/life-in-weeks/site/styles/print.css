@@ -1,0 +1,239 @@
+/*
+ * The poster. Printed, the page is one sheet of the paper size the inputs name: the name and birthdate above in the
+ * serif, the grid centered with its margins, the chosen line below, the eras as a key. Every length is in --pitch,
+ * worked out from the sheet, so A2, A3, A4, and Letter share one composition.
+ */
+
+@page a2 {
+  size: 420mm 594mm;
+  margin: 0;
+}
+
+@page a3 {
+  size: 297mm 420mm;
+  margin: 0;
+}
+
+@page a4 {
+  size: 210mm 297mm;
+  margin: 0;
+}
+
+@page letter {
+  size: 8.5in 11in;
+  margin: 0;
+}
+
+@media print {
+  html[data-paper="A2"] {
+    --page-w: 420mm;
+    --page-h: 594mm;
+    --page-m: 26mm;
+  }
+
+  html[data-paper="A3"] {
+    --page-w: 297mm;
+    --page-h: 420mm;
+    --page-m: 18mm;
+  }
+
+  html[data-paper="A4"] {
+    --page-w: 210mm;
+    --page-h: 297mm;
+    --page-m: 12mm;
+  }
+
+  html[data-paper="Letter"] {
+    --page-w: 215.9mm;
+    --page-h: 279.4mm;
+    --page-m: 12.7mm;
+  }
+
+  html[data-paper="A2"] body { page: a2; }
+  html[data-paper="A3"] body { page: a3; }
+  html[data-paper="A4"] body { page: a4; }
+  html[data-paper="Letter"] body { page: letter; }
+
+  html[data-paper] {
+    --pitch: min(
+      calc((var(--page-h) - 2 * var(--page-m)) / (var(--rows) + 31)),
+      calc((var(--page-w) - 2 * var(--page-m)) / (var(--margin-l) + 52 + var(--margin-r)))
+    ) !important;
+  }
+
+  html,
+  body {
+    background: var(--color-surface);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body {
+    margin: 0;
+    width: var(--page-w);
+    height: var(--page-h);
+    min-height: 0;
+    padding: var(--page-m);
+    overflow: hidden;
+    background-image: none;
+  }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+  }
+
+  .tools,
+  .tally,
+  .key-events,
+  .status,
+  .tip,
+  .cursor,
+  .now-ring,
+  .code-config-toast {
+    display: none !important;
+  }
+
+  .intro {
+    order: 1;
+  }
+
+  .chart {
+    order: 2;
+    margin-top: calc(var(--pitch) * 2.2);
+  }
+
+  .quote {
+    order: 3;
+    margin-top: auto;
+    padding-top: calc(var(--pitch) * 2.4);
+  }
+
+  .legend {
+    order: 4;
+    margin-top: calc(var(--pitch) * 2.6);
+    justify-items: center;
+  }
+
+  .quote[hidden] + .legend,
+  .legend:only-child {
+    margin-top: auto;
+  }
+
+  .name {
+    font-size: calc(var(--pitch) * 6.4);
+    line-height: 1;
+  }
+
+  .born {
+    margin-top: calc(var(--pitch) * 0.9);
+    font-size: calc(var(--pitch) * 2);
+  }
+
+  .quote {
+    max-width: none;
+    font-size: calc(var(--pitch) * 2);
+  }
+
+  .quote-by {
+    margin-top: calc(var(--pitch) * 0.6);
+    font-size: calc(var(--pitch) * 1.2);
+  }
+
+  .legend {
+    gap: calc(var(--pitch) * 0.9);
+  }
+
+  .key {
+    justify-content: center;
+    column-gap: calc(var(--pitch) * 2.2);
+    row-gap: calc(var(--pitch) * 0.6);
+  }
+
+  .key li {
+    gap: calc(var(--pitch) * 0.7);
+  }
+
+  .key-eras {
+    flex-direction: row;
+  }
+
+  .key-eras li {
+    font-size: calc(var(--pitch) * 1.55);
+  }
+
+  .key-years,
+  .key-marks {
+    font-size: calc(var(--pitch) * 1.15);
+  }
+
+  .swatch {
+    width: calc(var(--pitch) * 1.1);
+    height: calc(var(--pitch) * 1.1);
+  }
+
+  .swatch-now,
+  .now-dot {
+    box-shadow: none;
+  }
+
+  html[data-mode] .chart {
+    --ml-w: calc(var(--margin-l) * var(--pitch));
+    --mr-w: calc(var(--margin-r) * var(--pitch));
+    --top: calc(var(--pitch) * 2);
+  }
+
+  html[data-mode] .sheet {
+    background: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  html[data-mode] .margin-right,
+  html[data-mode] .axis-title,
+  html[data-mode] .age {
+    display: block;
+  }
+
+  html[data-mode] .era-label {
+    display: block;
+  }
+
+  html[data-mode] .event-word {
+    display: flex;
+  }
+
+  html[data-mode] .leaders {
+    display: inline;
+  }
+
+  html[data-mode] .tick,
+  html[data-mode] .age,
+  html[data-mode] .axis-title {
+    font-size: calc(var(--pitch) * 1.1);
+    right: calc(var(--pitch) * 0.7);
+  }
+
+  html[data-mode] .tick {
+    right: auto;
+  }
+
+  html[data-mode] .era-label {
+    font-size: calc(var(--pitch) * 1.55);
+    text-align: right;
+  }
+
+  html[data-mode] .event-word {
+    font-size: calc(var(--pitch) * 1.3);
+    text-align: left;
+  }
+
+  .weeks .diag,
+  .weeks .now {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "01a17404-8042-73cd-870a-10abf74a6bce",
+  "version": "2026-10-21",
+  "name": "Life in Weeks",
+  "shortDescription": "Your life as a grid of weeks, lived ones filled, a poster you can print.",
+  "description": "Life in Weeks lays a whole life out as ninety rows of fifty-two squares, one square for every week. The weeks you have lived are filled, sweeping in from the top-left corner when the page opens, and this week's square pulses once a second.\n\nThe chapters of your life sit behind the grid as tinted bands, school, a city, a first job, each named in the left margin in a display serif. The days that mattered are marked squares with a hairline running out to a word in the right margin. Hover any square to see its dates and how old you were, or will be.\n\nPress Print and the page becomes a poster in A2, A3, A4, or Letter: your name and birthdate above, the grid centered, a line of your choosing below, and the eras as a key. Choose paper, bone white with the weeks in ink, or ink, black with the weeks in bone. On a phone the grid fills the screen; on a desktop the whole life fits at once.",
+  "category": "lifestyle",
+  "subcategory": "Life calendar",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png"
+  ],
+  "deploy": "out/life-in-weeks",
+  "setup": "What's your birthdate? What three to six eras would you mark, with their years (school, a city, a job)? Any single dates to flag? A line for the bottom of the poster?"
+}
