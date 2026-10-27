@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="up" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f9bff"/>
+      <stop offset="1" stop-color="#2e7bff" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="down" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff8c4a"/>
+      <stop offset="1" stop-color="#ff6516" stop-opacity="0.35"/>
+    </linearGradient>
+    <filter id="lift" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#000"/>
+  <path d="M72 272 L72 214 L160 196 L248 150 L336 128 L440 92 L440 272 Z" fill="url(#up)"/>
+  <path d="M72 272 L72 368 L160 356 L248 330 L336 308 L440 292 L440 272 Z" fill="url(#down)"/>
+  <line x1="72" y1="272" x2="440" y2="272" stroke="#fff" stroke-opacity="0.7" stroke-width="4"/>
+  <path d="M72 330 L160 300 L248 238 L336 198 L440 150" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" filter="url(#lift)"/>
+  <circle cx="440" cy="150" r="22" fill="#fff"/>
+</svg>

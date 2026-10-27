@@ -1,0 +1,305 @@
+/* The chart: layered areas, the net worth line, milestone flags, the month cursor, and the scrubber under it. */
+.chart {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.chart-plot {
+  position: relative;
+  height: 220px;
+  touch-action: pan-y;
+  cursor: ew-resize;
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.grid-line {
+  stroke: var(--color-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.zero-line {
+  stroke: var(--color-zero);
+  stroke-width: 1.25;
+  shape-rendering: crispEdges;
+}
+
+.axis-value {
+  fill: var(--color-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.axis-name {
+  fill: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 620;
+}
+
+.axis-name-note {
+  fill: var(--color-muted);
+  font-weight: 500;
+}
+
+.month-tick {
+  stroke: var(--color-muted);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.month-label {
+  fill: var(--color-muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-label.is-next {
+  fill-opacity: 0.6;
+}
+
+.grad-near {
+  stop-color: var(--layer);
+  stop-opacity: var(--fill-near);
+}
+
+.grad-far {
+  stop-color: var(--layer);
+  stop-opacity: var(--fill-far);
+}
+
+.layer-edge {
+  fill: none;
+  stroke: var(--layer);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+}
+
+.net-line {
+  fill: none;
+  stroke: var(--color-line);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 3px 6px var(--color-line-shadow));
+}
+
+.net-point {
+  fill: var(--color-point);
+  stroke: var(--color-line);
+  stroke-width: 1.75;
+}
+
+.cursor-line {
+  stroke: var(--color-text);
+  stroke-opacity: 0.4;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.cursor-dot {
+  fill: var(--color-line);
+  stroke: var(--color-point);
+  stroke-width: 3;
+}
+
+.cursor-halo {
+  fill: var(--color-line);
+  fill-opacity: 0.14;
+}
+
+.flag {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.flag.is-down {
+  opacity: 1;
+  animation: flag-drop 300ms var(--ease-spring) both;
+}
+
+.flag-pole {
+  stroke: var(--color-flag);
+  stroke-width: 1.5;
+}
+
+.flag-mark {
+  fill: var(--color-flag);
+  stroke: var(--color-point);
+  stroke-width: 2;
+}
+
+.flag-pill {
+  fill: var(--color-flag);
+}
+
+.flag-text {
+  fill: var(--color-on-flag);
+  font-size: 0.75rem;
+  font-weight: 620;
+}
+
+@keyframes flag-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The scrubber: a track lined up under the plot, one tick per month, and a thumb that snaps to them. */
+.scrubber {
+  padding: var(--space-1) 0 0;
+}
+
+.scrubber-track {
+  position: relative;
+  height: 44px;
+  margin-left: var(--plot-left, 48px);
+  margin-right: var(--plot-right, 16px);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.scrubber-track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: var(--radius-full);
+  background: var(--color-track);
+}
+
+.scrubber-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: var(--radius-full);
+  background: var(--color-line);
+  transform: scaleX(var(--p, 1));
+  transform-origin: left center;
+}
+
+.scrubber-ticks {
+  position: absolute;
+  inset: 0;
+}
+
+.scrubber-tick {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 12px;
+  margin: -6px 0 0 -1px;
+  border-radius: 1px;
+  background: var(--color-track);
+  transform: translateX(var(--tx, 0)) scaleY(1);
+  transition: transform var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out);
+}
+
+.scrubber-tick.is-near {
+  background: var(--color-text);
+  transform: translateX(var(--tx, 0)) scaleY(1.5);
+}
+
+.scrubber-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  border: 2.5px solid var(--color-line);
+  box-shadow: var(--shadow-2);
+  transform: translateX(var(--tx, 0));
+  cursor: grab;
+  touch-action: none;
+}
+
+.scrubber-thumb::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: var(--radius-full);
+}
+
+.scrubber-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-line);
+  transform: scale(0);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.is-dragging .scrubber-thumb {
+  cursor: grabbing;
+}
+
+.is-dragging .scrubber-thumb::after {
+  transform: scale(1);
+}
+
+/* Desktop and landscape: the plot takes every pixel the column has. */
+@media (min-width: 960px), (orientation: landscape) and (min-width: 640px) {
+  .chart-plot {
+    flex: 1;
+    height: auto;
+    min-height: 200px;
+  }
+
+  .scrubber {
+    padding-top: var(--space-2);
+  }
+}
+
+/* A phone on its side: the plot and scrubber end above the screen's bottom band, clear of anything docked there. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .chart-plot {
+    flex: none;
+    height: max(200px, calc(100dvh - 160px));
+  }
+}
+
+.key-swatch {
+  fill: var(--layer);
+}
+
+/* The donut's rings. */
+.donut-track {
+  fill: none;
+  stroke: var(--color-surface-2);
+}
+
+.donut-arc {
+  fill: none;
+  stroke: var(--layer);
+}
+
+.month-year {
+  fill: var(--color-muted);
+  fill-opacity: 0.75;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}

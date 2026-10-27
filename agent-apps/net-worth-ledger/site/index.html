@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Net worth</title>
+  <meta name="description" content="A monthly net worth chart: assets above the line, debts below, net worth across both.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./vendor/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/fonts.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/chart.css">
+  <link rel="stylesheet" href="./styles/table.css">
+  <script src="./config.js"></script>
+  <script src="./data.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path class="brand-up" d="M3 12 L3 7 L8 9 L13 5 L21 3 L21 12 Z"></path>
+          <path class="brand-down" d="M3 12 L3 17 L8 16 L13 14 L21 13 L21 12 Z"></path>
+          <path class="brand-line" d="M3 14 L8 12 L13 9 L21 6"></path>
+        </svg>
+        <div class="brand-words">
+          <p class="brand-name">Net worth</p>
+          <p class="brand-title" id="ledger-title">Sample ledger</p>
+        </div>
+      </div>
+      <nav class="views" role="tablist" aria-label="View">
+        <button class="view-tab" type="button" role="tab" id="tab-chart" aria-controls="view-chart" aria-selected="true">Chart</button>
+        <button class="view-tab" type="button" role="tab" id="tab-table" aria-controls="view-table" aria-selected="false" tabindex="-1">Table</button>
+      </nav>
+    </header>
+
+    <main class="views-body">
+      <section class="view view-chart" id="view-chart" role="tabpanel" aria-labelledby="tab-chart">
+        <figure class="chart" id="chart">
+          <div class="chart-plot" id="chart-plot">
+            <svg class="chart-svg" id="chart-svg" role="img" aria-labelledby="chart-label"></svg>
+            <p class="sr-only" id="chart-label">Net worth by month</p>
+          </div>
+          <div class="scrubber" id="scrubber">
+            <div class="scrubber-track" id="scrubber-track">
+              <div class="scrubber-ticks" id="scrubber-ticks" aria-hidden="true"></div>
+              <div class="scrubber-fill" id="scrubber-fill" aria-hidden="true"></div>
+              <div class="scrubber-thumb" id="scrubber-thumb" role="slider" tabindex="0" aria-label="Month" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
+            </div>
+          </div>
+        </figure>
+
+        <div class="sheet">
+          <div class="headline" id="headline">
+            <p class="headline-month" id="headline-month">&nbsp;</p>
+            <p class="headline-net" id="headline-net" data-net=""><span class="sr-only" id="headline-net-text"></span><span class="roll" id="headline-roll" aria-hidden="true"></span></p>
+            <p class="headline-delta" id="headline-delta">&nbsp;</p>
+            <dl class="headline-totals">
+              <div class="total total-assets"><dt>Assets</dt><dd id="total-assets">&nbsp;</dd></div>
+              <div class="total total-debts"><dt>Debts</dt><dd id="total-debts">&nbsp;</dd></div>
+            </dl>
+          </div>
+
+          <aside class="mix" aria-labelledby="mix-title">
+            <h2 class="mix-title" id="mix-title">By account</h2>
+            <div class="mix-body">
+              <div class="donut">
+                <svg class="donut-svg" id="donut-svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false"></svg>
+                <div class="donut-center">
+                  <p class="donut-value" id="donut-value">&nbsp;</p>
+                  <p class="donut-label">debt to assets</p>
+                </div>
+              </div>
+              <div class="legend" id="legend"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view view-table" id="view-table" role="tabpanel" aria-labelledby="tab-table" hidden>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Every month">
+          <table class="ledger" id="ledger-table"></table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="./badge.js" defer></script>
+</body>
+</html>

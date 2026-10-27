@@ -1,0 +1,549 @@
+/* The frame: the masthead, the two views, the side sheet, the headline, and the donut's column. */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  overflow-x: clip;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  background:
+    radial-gradient(120% 80% at 0% 0%, var(--page-glow), transparent 60%),
+    var(--color-bg);
+}
+
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.brand-mark {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+  padding: 4px;
+}
+
+.brand-up {
+  fill: var(--asset-1);
+}
+
+.brand-down {
+  fill: var(--debt-1);
+}
+
+.brand-line {
+  fill: none;
+  stroke: var(--color-line);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-words {
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.brand-name {
+  font-size: var(--text-md);
+  font-weight: 650;
+}
+
+.brand-title {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.views {
+  display: flex;
+  flex: none;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+}
+
+.view-tab {
+  min-height: 40px;
+  min-width: 72px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition-property: background-color, color, box-shadow, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.view-tab[aria-selected="true"] {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+.view-tab:active {
+  transform: scale(0.97);
+}
+
+.views-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Chart view, phone first: the headline, the chart at 220 px with its scrubber, then the donut. */
+.view-chart {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+}
+
+.sheet {
+  display: contents;
+}
+
+.headline {
+  order: 0;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+.chart {
+  order: 1;
+  padding: 0 var(--space-4);
+}
+
+.mix {
+  order: 2;
+  margin: var(--space-4) var(--space-4) 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.headline-month {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 550;
+}
+
+.headline-net {
+  margin-top: var(--space-1);
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  font-variation-settings: "opsz" 32;
+}
+
+.headline-delta {
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+  transition: color var(--motion-base) var(--ease-out);
+}
+
+.headline-delta.is-up {
+  color: var(--color-ok);
+}
+
+.headline-delta.is-down {
+  color: var(--color-danger);
+}
+
+.headline-totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.total dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.total dt::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--asset-1);
+}
+
+.total-debts dt::before {
+  background: var(--debt-1);
+}
+
+.total dd {
+  font-size: var(--text-lg);
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The rolling number: each digit is a strip of 0 to 9 moved by its own --d. */
+.roll {
+  display: inline-flex;
+  align-items: flex-start;
+  height: 1.1em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.roll-char,
+.roll-digit {
+  display: block;
+  height: 1.1em;
+  line-height: 1.1;
+}
+
+.roll-digit {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+}
+
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--d, 0) * -10%));
+  transition: transform var(--roll-ms, var(--motion-slow)) var(--roll-ease, var(--ease-out));
+}
+
+.roll-strip span {
+  display: block;
+  height: 1.1em;
+  line-height: 1.1;
+}
+
+.mix-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.mix-body {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.donut {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+}
+
+.donut-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 22%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.donut-value {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.donut-label {
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+  text-wrap: balance;
+}
+
+.legend {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.legend-group {
+  display: grid;
+  gap: 2px;
+}
+
+.legend-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: 2px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.legend-swatch {
+  align-self: start;
+  margin-top: calc((1.5em - 10px) / 2);
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--swatch);
+}
+
+/* A label longer than its column wraps onto a second line beside its amount, never cut short. */
+.legend-label {
+  overflow-wrap: anywhere;
+}
+
+.legend-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.legend-row.is-zero .legend-value,
+.legend-row.is-zero .legend-label {
+  color: var(--color-muted);
+}
+
+/* Table view. */
+.view-table {
+  flex: 1;
+  min-height: 0;
+  padding: 0 var(--space-4) calc(var(--space-5) + env(safe-area-inset-bottom));
+}
+
+/* A narrow phone: the donut sits above the legend, so every label keeps the card's full width. */
+@media (max-width: 379px) {
+  .mix-body {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .donut {
+    width: 148px;
+  }
+
+  .legend {
+    width: 100%;
+  }
+}
+
+@media (min-width: 400px) {
+  .mix-body {
+    grid-template-columns: 148px minmax(0, 1fr);
+  }
+}
+
+/* A wider phone or a tablet in portrait: more room for the same column. */
+@media (min-width: 600px) and (max-width: 959px) {
+  .masthead,
+  .headline {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+
+  .mix {
+    margin-left: var(--space-6);
+    margin-right: var(--space-6);
+  }
+
+  .chart {
+    padding: 0 var(--space-6);
+  }
+
+  .mix-body {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+
+  .headline-net {
+    font-size: var(--text-4xl);
+  }
+}
+
+/* Desktop and landscape: the chart takes the width, the headline and donut sit in a side sheet. */
+@media (min-width: 960px), (orientation: landscape) and (min-width: 640px) {
+  .page {
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .masthead {
+    padding: calc(var(--space-4) + env(safe-area-inset-top)) var(--space-6) var(--space-3);
+  }
+
+  .view-chart {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 27vw, 480px);
+    gap: var(--space-5);
+    min-height: 0;
+    padding: var(--space-2) var(--space-6) calc(var(--space-6) + env(safe-area-inset-bottom));
+  }
+
+  .chart {
+    order: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .sheet {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-2);
+  }
+
+  .headline {
+    padding: var(--space-6) var(--space-6) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .headline-net {
+    font-size: clamp(2.5rem, 3.6vw, 4.5rem);
+  }
+
+  .mix {
+    flex: 1;
+    margin: 0;
+    padding: var(--space-5) var(--space-6) var(--space-6);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mix-body {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: var(--space-5);
+  }
+
+  .donut {
+    width: min(100%, 240px);
+  }
+
+  .legend {
+    width: 100%;
+  }
+
+  .view-table {
+    padding: var(--space-2) var(--space-6) calc(var(--space-6) + env(safe-area-inset-bottom));
+  }
+}
+
+/* A phone on its side: a short screen, so the page grows past it, the chart keeps to the first screen
+   above the bottom edge, and the sheet runs its full length with the donut beside its legend. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .page {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .sheet {
+    overflow: visible;
+  }
+
+  .masthead {
+    padding-top: calc(var(--space-2) + env(safe-area-inset-top));
+    padding-bottom: var(--space-2);
+  }
+
+  .view-chart {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) 344px;
+    gap: var(--space-4);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  }
+
+  .headline {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .headline-net {
+    font-size: var(--text-3xl);
+  }
+
+  /* The legend's group heads carry the same two totals, so the donut moves up into the first screen. */
+  .headline-totals {
+    display: none;
+  }
+
+  .mix {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .mix-body {
+    grid-template-columns: 110px minmax(0, 1fr);
+    align-items: start;
+    justify-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .donut-value {
+    font-size: var(--text-md);
+  }
+
+  .donut-label {
+    margin-top: 0;
+    line-height: 1.15;
+  }
+}
+
+/* A big screen across a room: everything a step larger. */
+@media (min-width: 1800px) and (min-height: 1000px) {
+  html {
+    font-size: 112.5%;
+  }
+
+  .donut {
+    width: min(100%, 300px);
+  }
+}

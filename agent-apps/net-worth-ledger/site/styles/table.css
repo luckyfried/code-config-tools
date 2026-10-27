@@ -1,0 +1,107 @@
+/* The ledger table: every month a row, every account a column, the month pinned while it scrolls. */
+.table-scroll {
+  height: 100%;
+  max-height: 100%;
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.ledger {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger th,
+.ledger td {
+  padding: var(--space-3) var(--space-4);
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ledger thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-weight: 600;
+  vertical-align: bottom;
+}
+
+.ledger .col-month {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  background: var(--color-surface);
+  box-shadow: 1px 0 0 var(--color-border);
+}
+
+.ledger thead .col-month {
+  z-index: 3;
+}
+
+.ledger tbody th {
+  font-weight: 600;
+}
+
+.ledger .col-net {
+  font-weight: 650;
+}
+
+.ledger .col-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ledger .col-kind::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--swatch);
+}
+
+.cell-value {
+  display: block;
+}
+
+.cell-delta {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 550;
+  color: var(--color-muted);
+}
+
+.cell-delta.is-up {
+  color: var(--color-ok);
+}
+
+.cell-delta.is-down {
+  color: var(--color-danger);
+}
+
+.ledger tbody tr:last-child th,
+.ledger tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ledger tbody tr.is-latest th,
+.ledger tbody tr.is-latest td {
+  background: var(--color-surface-2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ledger tbody tr:hover th,
+  .ledger tbody tr:hover td {
+    background: var(--color-surface-2);
+  }
+}
