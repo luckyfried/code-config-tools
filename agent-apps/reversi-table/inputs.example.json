@@ -1,0 +1,14 @@
+{
+  "_notes": {
+    "title": "The page's name, shown at the top and in the browser tab.",
+    "players": "Who plays each side. Black moves first. Write a name, or \"computer\" to make that side the computer; at most one side can be the computer. Two names make it a game for two people on one screen.",
+    "strength": "How hard the computer plays: 1 is Easy, 2 is Club, 3 is Master.",
+    "theme": "The table: \"lacquer-green\" (ivory and black on green), \"walnut\" (cream and espresso on wood), or \"neon\" (cyan and magenta on black glass).",
+    "sound": "true plays the disc sounds; false keeps the table quiet."
+  },
+  "title": "Reversi Table",
+  "players": { "black": "You", "white": "computer" },
+  "strength": 2,
+  "theme": "lacquer-green",
+  "sound": true
+}

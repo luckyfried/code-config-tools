@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reversi Table</title>
+  <meta name="description" content="Reversi with lacquered discs that flip in waves. Play a friend or the computer.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/instrument-sans-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css" id="theme-sheet">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <script src="./config.js"></script>
+  <script src="./boot.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+  <script type="module" src="./main.js"></script>
+</head>
+<body>
+  <div class="stage" id="stage" aria-label="Reversi board" role="application" tabindex="0"></div>
+
+  <header class="masthead">
+    <div>
+      <h1 class="title" id="title">Reversi Table</h1>
+      <p class="status" id="status" aria-live="polite"><span class="status__disc is-none" id="status-disc"></span><span id="status-text">Setting the table</span></p>
+    </div>
+    <nav class="rail is-hidden" id="rail" aria-label="Game">
+      <button class="rail__button" type="button" id="undo" aria-keyshortcuts="U">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+        <span>Undo</span>
+      </button>
+      <button class="rail__button" type="button" id="hint" aria-keyshortcuts="H">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2h5c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3Z"/></svg>
+        <span>Hint</span>
+      </button>
+      <button class="rail__button" type="button" id="new-game">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>New game</span>
+      </button>
+      <button class="rail__button" type="button" id="open-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        <span>Settings</span>
+      </button>
+    </nav>
+  </header>
+
+  <section class="player player--dark" id="player-1" aria-label="Dark discs">
+    <span class="player__disc" aria-hidden="true"></span>
+    <span class="player__who"><span class="player__name" id="name-1">Black</span><span class="player__note" id="note-1">Moves first</span></span>
+    <span class="player__count" id="count-1" aria-label="discs">2</span>
+  </section>
+  <section class="player player--light" id="player-2" aria-label="Light discs">
+    <span class="player__disc" aria-hidden="true"></span>
+    <span class="player__who"><span class="player__name" id="name-2">White</span><span class="player__note" id="note-2">Computer</span></span>
+    <span class="player__count" id="count-2" aria-label="discs">2</span>
+  </section>
+
+  <section class="setup is-away" id="setup" aria-labelledby="setup-title">
+    <div class="setup__head">
+      <h2 class="setup__title" id="setup-title">New game</h2>
+      <button class="icon-button" type="button" id="setup-back" aria-label="Back to the game" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <p class="setup__lede" id="setup-lede">Tap a glowing square to place a disc. Every line you close flips.</p>
+    <form class="setup__form" id="setup-form">
+      <details class="setup__more" id="setup-more">
+        <summary>Side, strength, and table</summary>
+        <div class="setup__options">
+          <fieldset class="field" id="side-field">
+            <legend>Against the computer, you play</legend>
+            <div class="segmented">
+              <label><input type="radio" name="side" value="1" checked><span><i class="mini-disc is-dark"></i><b class="side-name" data-side="1">Black</b></span></label>
+              <label><input type="radio" name="side" value="2"><span><i class="mini-disc is-light"></i><b class="side-name" data-side="2">White</b></span></label>
+            </div>
+            <p class="field__hint"><span class="side-name" data-side="1">Black</span> moves first.</p>
+          </fieldset>
+          <fieldset class="field" id="strength-field">
+            <legend>Computer strength</legend>
+            <div class="segmented">
+              <label><input type="radio" name="strength" value="1"><span>Easy</span></label>
+              <label><input type="radio" name="strength" value="2" checked><span>Club</span></label>
+              <label><input type="radio" name="strength" value="3"><span>Master</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="field">
+            <legend>Table</legend>
+            <div class="swatches">
+              <label class="swatch swatch--lacquer-green"><input type="radio" name="theme" value="lacquer-green"><span class="swatch__board"><i></i><i></i></span><span class="swatch__name">Lacquer green</span></label>
+              <label class="swatch swatch--walnut"><input type="radio" name="theme" value="walnut"><span class="swatch__board"><i></i><i></i></span><span class="swatch__name">Walnut</span></label>
+              <label class="swatch swatch--neon"><input type="radio" name="theme" value="neon"><span class="swatch__board"><i></i><i></i></span><span class="swatch__name">Neon</span></label>
+            </div>
+          </fieldset>
+        </div>
+      </details>
+      <div class="setup__actions">
+        <button class="button button--primary" type="submit" name="opponent" value="computer" id="start-computer">Play the computer</button>
+        <button class="button button--quiet" type="submit" name="opponent" value="friend" id="start-friend">Play a friend</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="result" id="result" role="status" aria-live="polite">
+    <p class="result__line" id="result-line">Game over</p>
+    <p class="result__score" id="result-score"></p>
+    <div class="result__actions" id="result-actions">
+      <button class="button button--primary" type="button" id="again">Play again</button>
+      <button class="button button--quiet" type="button" id="change">New setup</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog class="settings" id="settings" aria-labelledby="settings-title">
+    <form method="dialog">
+      <div class="settings__head">
+        <h2 class="settings__title" id="settings-title">Settings</h2>
+        <button class="icon-button" value="close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="settings__body">
+        <fieldset class="field">
+          <legend>Table</legend>
+          <div class="swatches">
+            <label class="swatch swatch--lacquer-green"><input type="radio" name="s-theme" value="lacquer-green"><span class="swatch__board"><i></i><i></i></span><span class="swatch__name">Lacquer green</span></label>
+            <label class="swatch swatch--walnut"><input type="radio" name="s-theme" value="walnut"><span class="swatch__board"><i></i><i></i></span><span class="swatch__name">Walnut</span></label>
+            <label class="swatch swatch--neon"><input type="radio" name="s-theme" value="neon"><span class="swatch__board"><i></i><i></i></span><span class="swatch__name">Neon</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Light</legend>
+          <div class="segmented">
+            <label><input type="radio" name="s-scheme" value="auto"><span>Match device</span></label>
+            <label><input type="radio" name="s-scheme" value="light"><span>Day</span></label>
+            <label><input type="radio" name="s-scheme" value="dark"><span>Night</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Sound</legend>
+          <div class="segmented">
+            <label><input type="radio" name="s-sound" value="on"><span>On</span></label>
+            <label><input type="radio" name="s-sound" value="off"><span>Off</span></label>
+          </div>
+        </fieldset>
+        <p class="keys">Keys: <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> move, <kbd>Space</kbd> places, <kbd>U</kbd> undoes, <kbd>H</kbd> hints.</p>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./badge.js" defer></script>
+</body>
+</html>

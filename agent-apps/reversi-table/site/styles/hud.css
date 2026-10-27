@@ -1,0 +1,896 @@
+/* The table's frame: the full-bleed scene, the masthead, the rail, the player cards, the setup panel, the result,
+   and the settings dialog. Colors come from the theme's tokens only. */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+.stage.is-pointing {
+  cursor: pointer;
+}
+
+/* Masthead: the page's name and the one status line. */
+.masthead {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: calc(env(safe-area-inset-top) + var(--space-4)) calc(env(safe-area-inset-right) + var(--space-4)) 0
+    calc(env(safe-area-inset-left) + var(--space-4));
+  pointer-events: none;
+}
+
+.masthead > * {
+  pointer-events: auto;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-xl), 1rem + 1.4vw, var(--text-3xl));
+  font-weight: 650;
+  font-stretch: 82%;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+  min-height: 1.5rem;
+  color: var(--color-muted);
+  font-size: var(--text-md);
+  text-wrap: pretty;
+}
+
+.status__disc {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.status__disc.is-light {
+  background: var(--disc-light);
+}
+
+.status__disc.is-none {
+  display: none;
+}
+
+/* The rail: undo, hint, new game, settings. A row at the top right on wide screens, a bar at the bottom on phones. */
+.rail {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1), inset 0 0 0 1px var(--color-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.rail__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: var(--text-sm);
+  font-weight: 560;
+  transition-property: background-color, transform, opacity;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.rail__button svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.rail__button:active {
+  transform: scale(0.96);
+}
+
+.rail__button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.rail__button:disabled:active {
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rail__button:not(:disabled):hover {
+    background: var(--color-surface-2);
+  }
+}
+
+.rail.is-hidden {
+  visibility: hidden;
+}
+
+/* Player cards ride above their trays; the scene sets --x and --y each layout. */
+.player {
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  column-gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1), inset 0 0 0 1px var(--color-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translate(calc(var(--x, -999px) - 50%), calc(var(--y, -999px) - 100%));
+  transition-property: box-shadow;
+  transition-duration: var(--motion-base);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.player.is-below {
+  transform: translate(calc(var(--x, -999px) - 50%), var(--y, -999px));
+}
+
+.player.is-turn {
+  box-shadow: var(--shadow-2), inset 0 0 0 2px var(--color-accent);
+}
+
+.player__disc {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 1.5px var(--color-muted);
+}
+
+/* The dark disc icons: a filled lacquer disc with a lit crown and a light rim, so on a night surface it never reads
+   as an empty ring. */
+.player--dark .player__disc,
+.mini-disc.is-dark,
+.status__disc.is-dark {
+  background: radial-gradient(circle at 34% 28%, color-mix(in oklab, var(--disc-dark), var(--disc-light) 34%), var(--disc-dark) 62%);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--disc-dark), var(--disc-light) 22%),
+    0 0 0 1.5px color-mix(in oklab, var(--color-muted), var(--color-text) 40%);
+}
+
+.player--light .player__disc {
+  background: var(--disc-light);
+}
+
+.player__who {
+  display: grid;
+  line-height: 1.15;
+}
+
+.player__name {
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--text-md);
+  font-weight: 620;
+}
+
+.player__note {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.player__count {
+  min-width: 2ch;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  font-stretch: 80%;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Setup: beside the live table on wide screens, a sheet over its lower edge on phones. */
+.setup {
+  position: fixed;
+  z-index: 3;
+  top: 50%;
+  right: calc(env(safe-area-inset-right) + var(--space-5));
+  width: min(25rem, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100dvh - 2 * var(--space-5));
+  overflow: auto;
+  padding: var(--space-5);
+  border-radius: calc(var(--radius-lg) + 4px);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--color-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateY(-50%);
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-out);
+}
+
+.setup.is-away {
+  opacity: 0;
+  transform: translate(24px, -50%);
+  pointer-events: none;
+}
+
+.setup__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  font-stretch: 85%;
+  line-height: 1.1;
+}
+
+.setup__lede {
+  margin: var(--space-1) 0 var(--space-4);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  text-wrap: pretty;
+}
+
+.setup__form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 560;
+}
+
+.field__hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.segmented {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: calc(var(--radius-md) + 4px);
+  background: var(--color-surface-2);
+}
+
+.segmented label {
+  position: relative;
+  display: flex;
+}
+
+.segmented input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.segmented span {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 580;
+  text-align: center;
+  transition-property: background-color, color, box-shadow;
+  transition-duration: var(--motion-fast);
+}
+
+.segmented input:checked + span {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1), inset 0 0 0 1px var(--color-border);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.segmented input:disabled + span {
+  opacity: 0.4;
+}
+
+.mini-disc {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.mini-disc.is-light {
+  background: var(--disc-light);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.swatch {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.swatch__board {
+  position: relative;
+  display: grid;
+  place-items: center;
+  grid-template-columns: auto auto;
+  gap: 4px;
+  width: 100%;
+  height: 44px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  transition-property: box-shadow;
+  transition-duration: var(--motion-fast);
+}
+
+.swatch__board i {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+}
+
+.swatch--lacquer-green .swatch__board {
+  background: var(--swatch-green-board);
+}
+
+.swatch--lacquer-green i:first-child {
+  background: var(--swatch-green-dark);
+}
+
+.swatch--lacquer-green i:last-child {
+  background: var(--swatch-green-light);
+}
+
+.swatch--walnut .swatch__board {
+  background: var(--swatch-walnut-board);
+}
+
+.swatch--walnut i:first-child {
+  background: var(--swatch-walnut-dark);
+}
+
+.swatch--walnut i:last-child {
+  background: var(--swatch-walnut-light);
+}
+
+.swatch--neon .swatch__board {
+  background: var(--swatch-neon-board);
+}
+
+.swatch--neon i:first-child {
+  background: var(--swatch-neon-dark);
+}
+
+.swatch--neon i:last-child {
+  background: var(--swatch-neon-light);
+}
+
+.swatch__name {
+  font-size: var(--text-sm);
+  font-weight: 560;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.swatch input:checked ~ .swatch__board {
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
+}
+
+.swatch input:checked ~ .swatch__name {
+  color: var(--color-text);
+}
+
+.swatch input:focus-visible ~ .swatch__board {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 5px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-full);
+  font-size: var(--text-md);
+  font-weight: 620;
+  white-space: nowrap;
+  transition-property: transform, background-color, box-shadow;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+.button--primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-1);
+}
+
+.button--quiet {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+/* The result rises over the board when a game ends. */
+.result {
+  position: fixed;
+  z-index: 2;
+  left: var(--cx, 50%);
+  top: var(--cy, 50%);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--space-4));
+  padding: var(--space-5) var(--space-6);
+  border-radius: calc(var(--radius-lg) + 8px);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--color-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  text-align: center;
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 12px)) scale(0.97);
+  transition-property: opacity, transform;
+  transition-duration: 600ms;
+  transition-timing-function: var(--ease-out);
+  pointer-events: none;
+}
+
+.result.is-shown {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.result__line {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-3xl), 1.4rem + 2.4vw, var(--text-4xl));
+  font-weight: 680;
+  font-stretch: 78%;
+  line-height: 1;
+}
+
+.result__score {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* A short note over the board's upper rows: a pass, a hint with nothing to show. Sized to read from arm's length. */
+.toast {
+  position: fixed;
+  z-index: 2;
+  left: var(--cx, 50%);
+  top: var(--ty, 30%);
+  max-width: calc(100vw - 2 * var(--space-4));
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  background: var(--color-text);
+  color: var(--color-bg);
+  box-shadow: var(--shadow-2);
+  font-family: var(--font-display);
+  font-size: clamp(var(--text-xl), 0.9rem + 1vw, var(--text-3xl));
+  font-weight: 650;
+  font-stretch: 85%;
+  line-height: 1.15;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, calc(-50% + 8px));
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+  pointer-events: none;
+}
+
+.toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+/* Settings. */
+.settings {
+  width: min(400px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-5);
+  border: 0;
+  border-radius: calc(var(--radius-lg) + 4px);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--color-border);
+}
+
+.settings::backdrop {
+  background: var(--color-bg);
+  opacity: 0.6;
+}
+
+.settings[open] {
+  animation: settings-in var(--motion-base) var(--ease-out);
+}
+
+@keyframes settings-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.settings__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.settings__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  font-stretch: 85%;
+}
+
+.settings__body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.keys {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.keys kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  box-shadow: inset 0 -1px 0 var(--color-border);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Wide screens: the rail sits in the masthead's right corner. */
+@media (min-width: 760px) {
+  .masthead {
+    padding-top: calc(env(safe-area-inset-top) + var(--space-5));
+    padding-left: calc(env(safe-area-inset-left) + var(--space-6));
+    padding-right: calc(env(safe-area-inset-right) + var(--space-6));
+  }
+}
+
+/* Phones and narrow windows: the rail is a bar along the bottom and setup is a sheet. */
+@media (max-width: 759px) {
+  .rail {
+    position: fixed;
+    z-index: 2;
+    left: calc(env(safe-area-inset-left) + var(--space-3));
+    right: calc(env(safe-area-inset-right) + var(--space-3));
+    bottom: calc(env(safe-area-inset-bottom) + var(--space-3));
+    justify-content: space-between;
+    border-radius: calc(var(--radius-lg) + 4px);
+  }
+
+  .rail__button {
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 52px;
+    padding: var(--space-1) 0;
+    border-radius: var(--radius-lg);
+    font-size: var(--text-xs);
+  }
+
+  .setup {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 62dvh;
+    padding: var(--space-5) calc(env(safe-area-inset-right) + var(--space-4))
+      calc(env(safe-area-inset-bottom) + var(--space-4)) calc(env(safe-area-inset-left) + var(--space-4));
+    border-radius: calc(var(--radius-lg) + 8px) calc(var(--radius-lg) + 8px) 0 0;
+    transform: none;
+  }
+
+  .setup.is-away {
+    transform: translateY(24px);
+  }
+
+  .setup__lede {
+    margin-bottom: var(--space-3);
+  }
+
+  .setup__form {
+    gap: var(--space-3);
+  }
+
+  .field legend {
+    margin-bottom: var(--space-1);
+  }
+
+  .player {
+    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+    column-gap: var(--space-2);
+  }
+
+  .player__disc {
+    width: 24px;
+    height: 24px;
+  }
+
+  .player__count {
+    font-size: var(--text-xl);
+  }
+}
+
+/* Landscape phones: the masthead tucks to the left and the rail runs down the right edge. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .rail {
+    position: fixed;
+    z-index: 2;
+    top: 50%;
+    bottom: auto;
+    left: auto;
+    right: calc(env(safe-area-inset-right) + var(--space-3));
+    flex-direction: column;
+    transform: translateY(-50%);
+    border-radius: calc(var(--radius-lg) + 4px);
+  }
+
+  .rail__button {
+    flex: none;
+    min-width: 56px;
+  }
+
+  .setup {
+    top: 50%;
+    left: auto;
+    bottom: auto;
+    right: calc(env(safe-area-inset-right) + var(--space-3));
+    width: min(300px, 40vw);
+    max-height: calc(100dvh - 2 * var(--space-3));
+    padding: var(--space-4);
+    border-radius: calc(var(--radius-lg) + 4px);
+    transform: translateY(-50%);
+  }
+
+  .setup.is-away {
+    transform: translate(24px, -50%);
+  }
+}
+
+/* Short landscape screens: a smaller masthead, and compact cards that keep the name and the count. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .masthead {
+    padding-top: calc(env(safe-area-inset-top) + var(--space-2));
+  }
+
+  .title {
+    font-size: var(--text-xl);
+  }
+
+  .status {
+    margin-top: 0;
+    font-size: var(--text-sm);
+  }
+
+  .player {
+    column-gap: var(--space-2);
+    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  }
+
+  .player__name {
+    max-width: 8rem;
+    font-size: var(--text-sm);
+  }
+
+  .player__note {
+    font-size: var(--text-xs);
+  }
+
+  .setup__lede {
+    display: none;
+  }
+
+  .player__disc {
+    width: 22px;
+    height: 22px;
+  }
+
+  .player__count {
+    font-size: var(--text-lg);
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 1000px) {
+  :root {
+    font-size: 112.5%;
+  }
+}
+
+/* The setup's parts: a head with the way back, the options that fold away on phones, and the two ways to play. */
+.setup__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.setup__options {
+  display: grid;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+}
+
+.setup__more {
+  order: 1;
+}
+
+.setup__more summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 580;
+  cursor: pointer;
+  list-style: none;
+}
+
+.setup__more summary::-webkit-details-marker {
+  display: none;
+}
+
+.setup__more summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-left: 2px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition-property: transform;
+  transition-duration: var(--motion-fast);
+}
+
+.setup__more[open] summary::after {
+  transform: translateY(1px) rotate(-135deg);
+}
+
+.setup__actions {
+  order: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.setup__actions .button {
+  padding: 0 var(--space-3);
+}
+
+@media (max-width: 759px) {
+  .setup__lede {
+    display: none;
+  }
+
+  .setup__actions {
+    order: 1;
+    margin-top: var(--space-1);
+  }
+
+  .setup__more {
+    order: 2;
+  }
+}
+
+/* Landscape phones: the panel is narrow, so the two ways to play stack and each label keeps to one line. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .setup__actions {
+    grid-template-columns: 1fr;
+  }
+}
