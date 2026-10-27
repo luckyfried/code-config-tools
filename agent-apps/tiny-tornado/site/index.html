@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tiny Tornado</title>
+  <meta name="description" content="Steer a tornado through a farm town and lift everything you can in sixty seconds.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/bricolage-grotesque-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/barlow-condensed-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/screens.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body data-screen="boot">
+  <canvas id="scene" class="scene" aria-label="The storm over the town"></canvas>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+
+  <div class="hud" id="hud" inert>
+    <div class="hud-top">
+      <div class="hud-block hud-mass" aria-live="off">
+        <span class="hud-label">Lifted</span>
+        <span class="hud-value"><b id="mass">0.0</b><span class="hud-unit">t</span></span>
+      </div>
+      <div class="hud-block hud-level">
+        <span class="hud-label" id="level-label">Funnel level 1</span>
+        <span class="level-pips" id="pips" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="level-meter" aria-hidden="true"><span class="level-fill" id="level-fill"></span></span>
+      </div>
+      <div class="hud-block hud-time">
+        <span class="hud-label">Time</span>
+        <span class="hud-value"><b id="time">1:00</b></span>
+      </div>
+      <button class="icon-button" id="pause-button" type="button" aria-label="Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="3.5" height="14" rx="1.2"/><rect x="14" y="5" width="3.5" height="14" rx="1.2"/></svg>
+      </button>
+    </div>
+    <p class="hud-toast" id="toast" aria-live="polite"></p>
+    <p class="hud-hint" id="hint"></p>
+    <button class="pulse-button" id="pulse-button" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 4.5a7.5 7.5 0 1 1-7.5 7.5M12 1.5A10.5 10.5 0 1 1 1.5 12" fill="none"/></svg>
+      <span class="pulse-label">Pulse</span>
+      <span class="pulse-ring" id="pulse-ring"></span>
+    </button>
+  </div>
+
+  <section class="screen screen-title" id="screen-title" aria-labelledby="town-name">
+    <div class="card title-card" id="title-card">
+      <p class="eyebrow" id="title-app">Tiny Tornado</p>
+      <h1 class="town-name" id="town-name">Town</h1>
+      <p class="lede" id="title-lede">Sixty seconds of storm. Lift fences and hay first, then cows and cars, and grow big enough to take the barns.</p>
+      <dl class="facts">
+        <div><dt>Best</dt><dd id="best-mass">None yet</dd></div>
+        <div><dt>In town</dt><dd id="in-town">Cows and barns</dd></div>
+      </dl>
+      <button class="button button-primary" id="start-button" type="button" disabled>
+        <span id="start-label">Gathering the storm</span>
+      </button>
+      <p class="controls" id="title-controls">Drag anywhere to steer. Space sends a pulse.</p>
+    </div>
+  </section>
+
+  <section class="screen screen-pause" id="screen-pause" aria-labelledby="pause-heading" inert>
+    <div class="card pause-card">
+      <h2 class="card-heading" id="pause-heading">Paused</h2>
+      <p class="card-text">The storm holds still until you are back.</p>
+      <div class="card-actions">
+        <button class="button button-primary" id="resume-button" type="button">Resume</button>
+        <button class="button button-quiet" id="sound-button" type="button" aria-pressed="true">Sound on</button>
+        <button class="button button-quiet" id="quit-button" type="button">Title screen</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen screen-report" id="screen-report" aria-labelledby="report-heading" inert>
+    <div class="card report-card" id="report-card">
+      <p class="eyebrow" id="report-eyebrow">Damage report</p>
+      <h2 class="report-mass" id="report-heading"><b id="report-mass">0</b> <span>tons lifted</span></h2>
+      <p class="lede" id="report-text">Your tornado lifted nothing at all.</p>
+      <p class="report-best" id="report-best">Best: none yet</p>
+      <ul class="tally" id="tally"></ul>
+      <div class="card-actions">
+        <button class="button button-primary" id="again-button" type="button">Again</button>
+        <button class="button button-quiet" id="title-button" type="button">Title screen</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="./game/main.js"></script>
+</body>
+</html>

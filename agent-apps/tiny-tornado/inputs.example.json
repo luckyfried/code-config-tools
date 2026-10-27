@@ -1,0 +1,16 @@
+{
+  "title": "Tiny Tornado",
+  "playerName": "Juniper",
+  "townName": "Millbrook",
+  "theme": "plains",
+  "seed": "millbrook",
+  "runSeconds": 60,
+  "_notes": {
+    "title": "The name on the title card. Optional; Tiny Tornado when left out.",
+    "playerName": "The person's name, shown on the damage report. Ask for it.",
+    "townName": "The town's name, on the title card and painted on the water tower. Up to 24 letters. Ask for it.",
+    "theme": "The look: plains (green fields, red barns, a slate sky), dusk (gold light under a purple sky), or snow (a white town in a blue storm). Ask for it.",
+    "seed": "Any word; the town's layout is made from it, so the same word gives the same town. Optional; the town name when left out.",
+    "runSeconds": "How long the storm lasts, from 15 to 600 seconds. Optional; 60 when left out."
+  }
+}

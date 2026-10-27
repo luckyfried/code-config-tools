@@ -1,0 +1,257 @@
+/* The title, pause, and report screens: one card each. On a desktop the card sits at the lower left with the storm
+   to its right; on a phone it is a sheet along the bottom with the storm above it. */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: calc(var(--space-6) + var(--safe-top)) calc(var(--space-6) + var(--safe-right)) calc(var(--space-6) + var(--safe-bottom)) calc(var(--space-6) + var(--safe-left));
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--motion-slow) var(--ease-out), visibility 0s linear var(--motion-slow);
+}
+
+body[data-screen="loading"] .screen-title,
+body[data-screen="title"] .screen-title,
+body[data-screen="pause"] .screen-pause,
+body[data-screen="report"] .screen-report {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--motion-slow) var(--ease-out), visibility 0s;
+}
+
+.screen-pause {
+  align-items: center;
+  justify-content: center;
+  background: var(--color-scrim);
+}
+
+.card {
+  pointer-events: auto;
+  width: min(420px, 100%);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--color-surface) 93%, transparent);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-2);
+  transform: translateY(0);
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+
+body[data-screen="run"] .card {
+  transform: translateY(24px);
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-ink);
+}
+
+.town-name {
+  margin: var(--space-1) 0 var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 75%;
+  font-size: var(--text-hero);
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.lede {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  color: var(--color-text);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.facts div {
+  display: contents;
+}
+
+.facts dt {
+  color: var(--color-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--ease-out), background-color var(--motion-base) var(--ease-out);
+}
+
+.button:active {
+  transform: scale(0.97);
+}
+
+.button-primary {
+  width: 100%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-1);
+}
+
+.button-primary:disabled {
+  cursor: progress;
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+  box-shadow: none;
+}
+
+.button-quiet {
+  min-height: 48px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: var(--text-base);
+}
+
+.controls {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.card-heading {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 80%;
+  font-size: var(--text-2xl);
+  line-height: 1.05;
+}
+
+.card-text {
+  margin: 0 0 var(--space-5);
+  color: var(--color-muted);
+}
+
+.card-actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pause-card {
+  text-align: center;
+}
+
+.report-mass {
+  margin: var(--space-2) 0 var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-stretch: 80%;
+  font-size: var(--text-xl);
+  line-height: 1;
+  color: var(--color-muted);
+}
+
+.report-mass b {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--text-hero);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-best {
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.report-best.is-new {
+  color: var(--color-ok);
+}
+
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.tally li {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  font-size: var(--text-sm);
+}
+
+.tally b {
+  font-family: var(--font-mono);
+  font-size: var(--text-lg);
+  margin-right: var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .screen {
+    align-items: flex-end;
+    justify-content: stretch;
+    padding: 0;
+  }
+  .screen-pause {
+    padding: var(--space-4);
+    align-items: center;
+  }
+  .screen-title .card,
+  .screen-report .card {
+    width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-width: 1px 0 0;
+    padding: var(--space-5) calc(var(--space-5) + var(--safe-right)) calc(var(--space-5) + var(--safe-bottom)) calc(var(--space-5) + var(--safe-left));
+  }
+  .town-name {
+    font-size: clamp(2.6rem, 1.4rem + 8vw, 3.6rem);
+    margin-bottom: var(--space-2);
+  }
+  .lede {
+    font-size: var(--text-base);
+    margin-bottom: var(--space-3);
+  }
+  .facts {
+    margin-bottom: var(--space-4);
+  }
+  .tally {
+    margin-bottom: var(--space-4);
+  }
+}
+
+@media (max-height: 520px) and (min-width: 641px) {
+  .card {
+    padding: var(--space-4) var(--space-5);
+  }
+  .town-name {
+    font-size: 2.6rem;
+  }
+}
