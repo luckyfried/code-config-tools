@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Countdown Wall</title>
+    <meta name="description" content="The days until everything you're waiting for, as big flip tiles.">
+    <meta name="theme-color" content="">
+    <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="./vendor/fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./theme.css">
+    <link rel="stylesheet" href="./styles/fonts.css">
+    <link rel="stylesheet" href="./styles/tokens.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/flap.css">
+    <link rel="stylesheet" href="./styles/layout.css">
+    <link rel="stylesheet" href="./styles/tiles.css">
+    <link rel="stylesheet" href="./styles/stage.css">
+    <script src="./config.js"></script>
+    <script src="./data.js"></script>
+    <script type="module" src="./js/app.js"></script>
+    <script src="./badge.js" defer></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <a class="brand" href="#/">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span class="brand-name">Countdown Wall</span>
+        </a>
+        <nav class="tabs" aria-label="Screens">
+          <a class="tab" href="#/" data-tab="wall" aria-current="page">Wall</a>
+          <a class="tab" href="#/since" data-tab="since">Since <span class="tab-count"></span></a>
+        </nav>
+        <p class="now"></p>
+      </header>
+
+      <main id="wall-screen">
+        <section class="hero" id="hero" aria-label="Next up"></section>
+
+        <section class="section" id="coming">
+          <div class="section-head">
+            <h2 class="section-title">Coming up</h2>
+            <p class="section-note"></p>
+          </div>
+          <div class="wall" id="wall"></div>
+        </section>
+
+        <section class="section" id="since-row">
+          <div class="section-head">
+            <h2 class="section-title">Since</h2>
+            <a class="section-note" href="#/since"></a>
+          </div>
+          <div class="wall wall-since" id="since"></div>
+        </section>
+      </main>
+
+      <main id="since-screen" hidden>
+        <div class="screen-head">
+          <h1 class="screen-title">Since</h1>
+          <p class="screen-lede"></p>
+        </div>
+        <div class="since-board" id="since-board"></div>
+      </main>
+    </div>
+
+    <div class="stage" id="stage" role="dialog" aria-modal="true" aria-labelledby="stage-title" tabindex="-1" hidden></div>
+  </body>
+</html>

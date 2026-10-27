@@ -1,0 +1,377 @@
+/* The wall: a top bar, the hero, the tiles, and the "since" row. */
+@property --m1x { syntax: "<percentage>"; inherits: false; initial-value: 14%; }
+@property --m1y { syntax: "<percentage>"; inherits: false; initial-value: 22%; }
+@property --m2x { syntax: "<percentage>"; inherits: false; initial-value: 82%; }
+@property --m2y { syntax: "<percentage>"; inherits: false; initial-value: 18%; }
+@property --m3x { syntax: "<percentage>"; inherits: false; initial-value: 62%; }
+@property --m3y { syntax: "<percentage>"; inherits: false; initial-value: 92%; }
+
+.page {
+  padding: 0 max(var(--page-pad), env(safe-area-inset-right)) calc(var(--space-8) + env(safe-area-inset-bottom))
+    max(var(--page-pad), env(safe-area-inset-left));
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 64px;
+  padding-top: env(safe-area-inset-top);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-mark {
+  display: inline-grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  width: 18px;
+  height: 22px;
+  flex: none;
+}
+
+.brand-mark i {
+  background: var(--color-text);
+  border-radius: 3px 3px 1px 1px;
+}
+
+.brand-mark i + i {
+  border-radius: 1px 1px 3px 3px;
+  opacity: 0.72;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-1);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  color: var(--color-muted);
+  transition-property: background-color, color;
+  transition-duration: var(--motion-base);
+  transition-timing-function: ease;
+}
+
+.tab[aria-current="page"] {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.tab-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.now {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .now {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .tab {
+    padding: 0 var(--space-3);
+  }
+}
+
+/* The hero */
+.hero {
+  container: hero / inline-size;
+  position: relative;
+  isolation: isolate;
+  min-height: 320px;
+  margin-top: var(--space-2);
+  padding: clamp(20px, 2.6vw, 40px);
+  border-radius: var(--radius-hero);
+  color: var(--hero-ink);
+  display: grid;
+  align-content: space-between;
+  gap: clamp(20px, 3vw, 40px);
+}
+
+.hero-surface {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  overflow: hidden;
+  background: var(--hero-base);
+  transform-origin: 0 0;
+  box-shadow: var(--shadow-2);
+}
+
+.hero-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, var(--hero-scrim));
+}
+
+.hero-glow {
+  position: absolute;
+  z-index: -2;
+  left: 6%;
+  right: 6%;
+  bottom: -46px;
+  height: 120px;
+  background: radial-gradient(50% 50% at 50% 50%, var(--hero-glow), transparent);
+  opacity: var(--hero-glow-opacity);
+  pointer-events: none;
+}
+
+.mesh {
+  position: absolute;
+  inset: -12%;
+  opacity: var(--mesh-strength);
+  background:
+    radial-gradient(48% 62% at var(--m1x) var(--m1y), var(--mesh-a), transparent),
+    radial-gradient(42% 58% at var(--m2x) var(--m2y), var(--mesh-b), transparent),
+    radial-gradient(56% 50% at var(--m3x) var(--m3y), var(--mesh-c), transparent);
+}
+
+.mesh-live .mesh {
+  animation: mesh-drift var(--motion-mesh) ease-in-out infinite alternate;
+}
+
+@keyframes mesh-drift {
+  0% {
+    --m1x: 14%; --m1y: 22%; --m2x: 82%; --m2y: 18%; --m3x: 62%; --m3y: 92%;
+  }
+  35% {
+    --m1x: 34%; --m1y: 70%; --m2x: 66%; --m2y: 40%; --m3x: 88%; --m3y: 74%;
+  }
+  70% {
+    --m1x: 58%; --m1y: 30%; --m2x: 22%; --m2y: 62%; --m3x: 40%; --m3y: 96%;
+  }
+  100% {
+    --m1x: 78%; --m1y: 58%; --m2x: 40%; --m2y: 14%; --m3x: 18%; --m3y: 80%;
+  }
+}
+
+.hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.hero-title-block {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.hero-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: clamp(1.75rem, 3.6cqw, 3.25rem);
+  font-weight: 680;
+  letter-spacing: -0.025em;
+}
+
+.hero-title .icon {
+  width: 0.8em;
+  height: 0.8em;
+  stroke-width: 2.2;
+}
+
+.hero-when {
+  font-size: clamp(1rem, 1.4cqw, 1.25rem);
+  color: var(--hero-ink-soft);
+  font-weight: 500;
+}
+
+.hero-empty {
+  font-size: var(--text-lg);
+  color: var(--hero-ink-soft);
+  max-width: 36ch;
+}
+
+.chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--chip-border);
+  border-radius: var(--radius-full);
+  background: var(--chip-bg);
+  color: var(--chip-ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition-property: transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.chip-button:active {
+  transform: scale(0.96);
+}
+
+.chip-button .icon {
+  width: 18px;
+  height: 18px;
+}
+
+@container hero (max-width: 620px) {
+  .chip-button .chip-label {
+    display: none;
+  }
+
+  .chip-button {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+.hero-content {
+  display: contents;
+}
+
+.hero-enter {
+  animation: hero-enter var(--motion-slow) var(--ease-out) 180ms backwards;
+}
+
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* Sections */
+.section {
+  margin-top: clamp(32px, 4vw, 56px);
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: 650;
+}
+
+.section-note {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.wall {
+  --cols: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: clamp(12px, 1.2vw, 20px);
+}
+
+@media (min-width: 600px) {
+  .wall {
+    --cols: 2;
+  }
+}
+
+@media (min-width: 1100px) {
+  .wall {
+    --cols: 4;
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .wall-since {
+    --cols: 3;
+  }
+}
+
+.empty-note {
+  color: var(--color-muted);
+}
+
+/* Since screen */
+.screen-head {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 var(--space-6);
+}
+
+.screen-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  letter-spacing: -0.03em;
+}
+
+.screen-lede {
+  color: var(--color-muted);
+  font-size: var(--text-lg);
+  max-width: 52ch;
+  text-wrap: pretty;
+}
+
+/* A phone on its side: the hero fits above the fold, the title tight over one row of flaps. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .topbar {
+    min-height: 52px;
+  }
+
+  .hero {
+    min-height: 0;
+    align-content: start;
+    gap: var(--space-4);
+    padding: 18px 24px 20px;
+  }
+
+  .hero-title {
+    font-size: 1.625rem;
+  }
+
+  .hero-when {
+    font-size: var(--text-md);
+  }
+}

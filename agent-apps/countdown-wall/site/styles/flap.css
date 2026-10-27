@@ -1,0 +1,175 @@
+/* One split-flap digit: two still halves, and two moving ones. The top that falls carries the old digit, the bottom
+   that lands carries the new one; each turns about the center hinge on its own. */
+.flap {
+  --seam: max(1px, calc(var(--fh) * 0.012));
+  --r: calc(var(--fw) * 0.12);
+  position: relative;
+  flex: none;
+  width: var(--fw);
+  height: var(--fh);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: calc(var(--fh) * 0.76);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: var(--flap-color-ink, var(--flap-ink));
+  border-radius: var(--r);
+  background: var(--flap-seam);
+  box-shadow: var(--flap-shadow, var(--flap-drop));
+}
+
+.flap-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc(50% - var(--seam) / 2);
+  overflow: hidden;
+  background: var(--flap-color-top, var(--flap-top));
+}
+
+.flap-half > b {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--fh);
+  line-height: var(--fh);
+  font-weight: inherit;
+  text-align: center;
+}
+
+.flap-upper {
+  top: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  box-shadow: 0 1px 0 var(--flap-edge) inset;
+  transform-origin: 50% calc(100% + var(--seam) / 2);
+}
+
+.flap-upper > b {
+  top: 0;
+}
+
+.flap-lower {
+  bottom: 0;
+  border-radius: 0 0 var(--r) var(--r);
+  background: var(--flap-color-bottom, var(--flap-bottom));
+  transform-origin: 50% calc(var(--seam) / -2);
+}
+
+.flap-lower > b {
+  bottom: 0;
+}
+
+/* At rest the moving halves match the still ones exactly; they only differ while a flip runs. */
+.flap-fall,
+.flap-land {
+  z-index: 1;
+}
+
+/* The two pins a real board hangs its flaps on, at the seam. */
+.flap::before,
+.flap::after {
+  content: "";
+  position: absolute;
+  top: calc(50% - var(--seam) * 1.5);
+  width: calc(var(--fw) * 0.035);
+  height: calc(var(--seam) * 3);
+  background: var(--flap-seam);
+  border-radius: var(--radius-full);
+  z-index: 2;
+}
+
+.flap::before {
+  left: 0;
+}
+
+.flap::after {
+  right: 0;
+}
+
+/* A clock: unit groups of flaps, each with its label. Sizes come from --fw and --fh, set per place below. */
+.clock {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--group-gap);
+}
+
+.unit {
+  display: grid;
+  gap: calc(var(--fh) * 0.09);
+  justify-items: start;
+}
+
+.unit-digits {
+  display: flex;
+  gap: var(--digit-gap);
+}
+
+.unit-label {
+  font-size: var(--label-size, var(--text-sm));
+  line-height: 1;
+  color: var(--label-ink, inherit);
+  opacity: var(--label-opacity, 0.78);
+  font-weight: 500;
+  padding-left: 2px;
+}
+
+/* The hero's clock fills the hero's width in one row, up to a flap of 150 px. */
+.clock-hero {
+  --digit-gap: clamp(4px, 0.5cqw, 8px);
+  --group-gap: clamp(14px, 2.4cqw, 36px);
+  --fw: min(210px, calc((100cqw - 3 * var(--group-gap) - (var(--digits) - 4) * var(--digit-gap)) / var(--digits)));
+  --fh: calc(var(--fw) * 1.36);
+  --label-size: clamp(0.8125rem, 1.1cqw, 1rem);
+}
+
+/* Narrow heroes stack the days over the hours, minutes, and seconds. */
+@container hero (max-width: 620px) {
+  .clock-hero {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    justify-content: start;
+    row-gap: 14px;
+    --group-gap: 14px;
+    --digit-gap: 5px;
+    --fw: calc((100cqw - 2 * var(--group-gap) - 3 * var(--digit-gap)) / 6);
+    --fh: calc(var(--fw) * 1.36);
+  }
+
+  .clock-hero .unit-days {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    --fw: min(108px, calc((100cqw - 96px - (var(--day-digits) - 1) * 6px) / var(--day-digits)));
+    --fh: calc(var(--fw) * 1.32);
+    --digit-gap: 6px;
+  }
+
+  .clock-hero .unit-days .unit-label {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    opacity: 1;
+    padding-bottom: 4px;
+  }
+}
+
+/* Short, wide screens (a phone on its side) keep the one row and size it to the height. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .clock-hero {
+    --fw: min(calc((100cqw - 3 * var(--group-gap) - (var(--digits) - 4) * var(--digit-gap)) / var(--digits)), 22dvh);
+  }
+}
+
+.clock-mini {
+  --fw: 30px;
+  --fh: 42px;
+  --digit-gap: 3px;
+  --group-gap: 10px;
+  --label-size: var(--text-xs);
+  --flap-color-top: var(--mini-flap-top);
+  --flap-color-bottom: var(--mini-flap-bottom);
+  --flap-color-ink: var(--mini-flap-ink);
+  --flap-shadow: none;
+}

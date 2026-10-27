@@ -1,0 +1,271 @@
+/* Auto: calm when the device is light, celebration when it is dark. Tokens only: colors, depth, and the event colors each tile and the hero take on. */
+
+:root {
+  color-scheme: light;
+  --color-bg: #e8e2d6;
+  --color-surface: #f5f1e9;
+  --color-surface-2: #ddd6c8;
+  --color-text: #1c1a17;
+  --color-muted: #6a6359;
+  --color-accent: #c8501c;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3261e;
+  --color-ok: #2e7d4f;
+  --color-border: rgba(28, 26, 23, 0.12);
+  --color-focus: #1c1a17;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 1px 2px rgba(60, 48, 30, 0.08), 0 8px 20px rgba(60, 48, 30, 0.08);
+  --shadow-2: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 6px rgba(60, 48, 30, 0.08), 0 24px 48px rgba(60, 48, 30, 0.14);
+
+  --flap-top: #fdfbf7;
+  --flap-bottom: #f3eee5;
+  --flap-ink: #1c1a17;
+  --flap-seam: rgba(28, 26, 23, 0.2);
+  --flap-shade: #3d3427;
+  --flap-edge: rgba(255, 255, 255, 0.9);
+  --flap-drop: 0 1px 0 rgba(60, 48, 30, 0.12), 0 10px 20px rgba(60, 48, 30, 0.16);
+
+  --hero-base: #f5f1e9;
+  --hero-ink: #1c1a17;
+  --hero-ink-soft: rgba(28, 26, 23, 0.7);
+  --hero-scrim: rgba(255, 255, 255, 0);
+  --hero-glow-opacity: 0;
+  --mesh-strength: 1;
+
+  --chip-bg: rgba(255, 255, 255, 0.6);
+  --chip-ink: #1c1a17;
+  --chip-border: rgba(28, 26, 23, 0.12);
+
+  --bar-track: rgba(28, 26, 23, 0.1);
+  --since-ink: #6a6359;
+  --stage-scrim: rgba(245, 241, 233, 0.72);
+  --stage-scrim-top: rgba(245, 241, 233, 0.4);
+  --stage-blend: multiply;
+  --photo-ink: #ffffff;
+  --photo-ink-soft: rgba(255, 255, 255, 0.84);
+  --photo-scrim: rgba(14, 8, 6, 0.66);
+  --photo-scrim-top: rgba(14, 8, 6, 0.42);
+  --photo-chip: rgba(0, 0, 0, 0.38);
+  --photo-chip-border: rgba(255, 255, 255, 0.22);
+}
+:root,
+[data-event] {
+  --mesh-a: var(--event-soft);
+  --mesh-b: var(--event-2-soft);
+  --mesh-c: var(--event-3-soft);
+  --hero-base: var(--event-pale);
+  --hero-glow: var(--event-soft);
+  --tile-fill: var(--event-soft);
+  --tile-ink: #1c1a17;
+  --tile-ink-soft: rgba(28, 26, 23, 0.68);
+  --tile-track: rgba(28, 26, 23, 0.14);
+  --tile-accent: var(--event-dark);
+  --mini-flap-top: #fdfbf7;
+  --mini-flap-bottom: #f3eee5;
+  --mini-flap-ink: #1c1a17;
+  --small-fill: var(--color-surface);
+  --small-number: var(--event-dark);
+  --bar-fill: var(--event-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #000000;
+    --color-surface: #141414;
+    --color-surface-2: #1f1f1f;
+    --color-text: #f7f4ee;
+    --color-muted: #a29d94;
+    --color-accent: #ff6b2c;
+    --color-on-accent: #000000;
+    --color-danger: #ff5a4f;
+    --color-ok: #4fd38a;
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-focus: #f7f4ee;
+    --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-2: 0 2px 0 rgba(255, 255, 255, 0.05) inset, 0 24px 60px rgba(0, 0, 0, 0.6);
+
+    --flap-top: #2a2a2a;
+    --flap-bottom: #222222;
+    --flap-ink: #f7f4ee;
+    --flap-seam: rgba(0, 0, 0, 0.9);
+    --flap-shade: #000000;
+    --flap-edge: rgba(255, 255, 255, 0.07);
+    --flap-drop: 0 2px 0 rgba(0, 0, 0, 0.6), 0 10px 22px rgba(0, 0, 0, 0.45);
+
+    --hero-base: #000000;
+    --hero-ink: #ffffff;
+    --hero-ink-soft: rgba(255, 255, 255, 0.78);
+    --hero-scrim: rgba(0, 0, 0, 0.42);
+    --hero-glow-opacity: 0.55;
+    --mesh-strength: 1;
+
+    --chip-bg: rgba(0, 0, 0, 0.42);
+    --chip-ink: #ffffff;
+    --chip-border: rgba(255, 255, 255, 0.16);
+
+    --bar-track: rgba(255, 255, 255, 0.14);
+    --since-ink: #a29d94;
+    --stage-scrim: rgba(0, 0, 0, 0.62);
+    --stage-scrim-top: rgba(0, 0, 0, 0.35);
+    --stage-blend: screen;
+    --photo-ink: #ffffff;
+    --photo-ink-soft: rgba(255, 255, 255, 0.84);
+    --photo-scrim: rgba(14, 8, 6, 0.66);
+    --photo-scrim-top: rgba(14, 8, 6, 0.42);
+    --photo-chip: rgba(0, 0, 0, 0.38);
+    --photo-chip-border: rgba(255, 255, 255, 0.22);
+  }
+  :root,
+  [data-event] {
+    --hero-base: #000000;
+    --mesh-a: var(--event);
+    --mesh-b: var(--event-deep);
+    --mesh-c: var(--event-3);
+    --hero-glow: var(--event);
+    --tile-fill: var(--event);
+    --tile-ink: var(--event-ink);
+    --tile-ink-soft: var(--event-ink-soft);
+    --tile-track: var(--event-track);
+    --tile-accent: var(--event-bright);
+    --mini-flap-top: rgba(0, 0, 0, 0.84);
+    --mini-flap-bottom: rgba(0, 0, 0, 0.76);
+    --mini-flap-ink: #ffffff;
+    --small-fill: var(--color-surface);
+    --small-number: var(--event-bright);
+    --bar-fill: var(--event-bright);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #e8e2d6;
+  --color-surface: #f5f1e9;
+  --color-surface-2: #ddd6c8;
+  --color-text: #1c1a17;
+  --color-muted: #6a6359;
+  --color-accent: #c8501c;
+  --color-on-accent: #ffffff;
+  --color-danger: #b3261e;
+  --color-ok: #2e7d4f;
+  --color-border: rgba(28, 26, 23, 0.12);
+  --color-focus: #1c1a17;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 1px 2px rgba(60, 48, 30, 0.08), 0 8px 20px rgba(60, 48, 30, 0.08);
+  --shadow-2: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 2px 6px rgba(60, 48, 30, 0.08), 0 24px 48px rgba(60, 48, 30, 0.14);
+
+  --flap-top: #fdfbf7;
+  --flap-bottom: #f3eee5;
+  --flap-ink: #1c1a17;
+  --flap-seam: rgba(28, 26, 23, 0.2);
+  --flap-shade: #3d3427;
+  --flap-edge: rgba(255, 255, 255, 0.9);
+  --flap-drop: 0 1px 0 rgba(60, 48, 30, 0.12), 0 10px 20px rgba(60, 48, 30, 0.16);
+
+  --hero-base: #f5f1e9;
+  --hero-ink: #1c1a17;
+  --hero-ink-soft: rgba(28, 26, 23, 0.7);
+  --hero-scrim: rgba(255, 255, 255, 0);
+  --hero-glow-opacity: 0;
+  --mesh-strength: 1;
+
+  --chip-bg: rgba(255, 255, 255, 0.6);
+  --chip-ink: #1c1a17;
+  --chip-border: rgba(28, 26, 23, 0.12);
+
+  --bar-track: rgba(28, 26, 23, 0.1);
+  --since-ink: #6a6359;
+  --stage-scrim: rgba(245, 241, 233, 0.72);
+  --stage-scrim-top: rgba(245, 241, 233, 0.4);
+  --stage-blend: multiply;
+  --photo-ink: #ffffff;
+  --photo-ink-soft: rgba(255, 255, 255, 0.84);
+  --photo-scrim: rgba(14, 8, 6, 0.66);
+  --photo-scrim-top: rgba(14, 8, 6, 0.42);
+  --photo-chip: rgba(0, 0, 0, 0.38);
+  --photo-chip-border: rgba(255, 255, 255, 0.22);
+}
+:root[data-theme="light"],
+:root[data-theme="light"] [data-event] {
+  --mesh-a: var(--event-soft);
+  --mesh-b: var(--event-2-soft);
+  --mesh-c: var(--event-3-soft);
+  --hero-base: var(--event-pale);
+  --hero-glow: var(--event-soft);
+  --tile-fill: var(--event-soft);
+  --tile-ink: #1c1a17;
+  --tile-ink-soft: rgba(28, 26, 23, 0.68);
+  --tile-track: rgba(28, 26, 23, 0.14);
+  --tile-accent: var(--event-dark);
+  --mini-flap-top: #fdfbf7;
+  --mini-flap-bottom: #f3eee5;
+  --mini-flap-ink: #1c1a17;
+  --small-fill: var(--color-surface);
+  --small-number: var(--event-dark);
+  --bar-fill: var(--event-dark);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #141414;
+  --color-surface-2: #1f1f1f;
+  --color-text: #f7f4ee;
+  --color-muted: #a29d94;
+  --color-accent: #ff6b2c;
+  --color-on-accent: #000000;
+  --color-danger: #ff5a4f;
+  --color-ok: #4fd38a;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-focus: #f7f4ee;
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 2px 0 rgba(255, 255, 255, 0.05) inset, 0 24px 60px rgba(0, 0, 0, 0.6);
+
+  --flap-top: #2a2a2a;
+  --flap-bottom: #222222;
+  --flap-ink: #f7f4ee;
+  --flap-seam: rgba(0, 0, 0, 0.9);
+  --flap-shade: #000000;
+  --flap-edge: rgba(255, 255, 255, 0.07);
+  --flap-drop: 0 2px 0 rgba(0, 0, 0, 0.6), 0 10px 22px rgba(0, 0, 0, 0.45);
+
+  --hero-base: #000000;
+  --hero-ink: #ffffff;
+  --hero-ink-soft: rgba(255, 255, 255, 0.78);
+  --hero-scrim: rgba(0, 0, 0, 0.42);
+  --hero-glow-opacity: 0.55;
+  --mesh-strength: 1;
+
+  --chip-bg: rgba(0, 0, 0, 0.42);
+  --chip-ink: #ffffff;
+  --chip-border: rgba(255, 255, 255, 0.16);
+
+  --bar-track: rgba(255, 255, 255, 0.14);
+  --since-ink: #a29d94;
+  --stage-scrim: rgba(0, 0, 0, 0.62);
+  --stage-scrim-top: rgba(0, 0, 0, 0.35);
+  --stage-blend: screen;
+  --photo-ink: #ffffff;
+  --photo-ink-soft: rgba(255, 255, 255, 0.84);
+  --photo-scrim: rgba(14, 8, 6, 0.66);
+  --photo-scrim-top: rgba(14, 8, 6, 0.42);
+  --photo-chip: rgba(0, 0, 0, 0.38);
+  --photo-chip-border: rgba(255, 255, 255, 0.22);
+}
+:root[data-theme="dark"],
+:root[data-theme="dark"] [data-event] {
+  --hero-base: #000000;
+  --mesh-a: var(--event);
+  --mesh-b: var(--event-deep);
+  --mesh-c: var(--event-3);
+  --hero-glow: var(--event);
+  --tile-fill: var(--event);
+  --tile-ink: var(--event-ink);
+  --tile-ink-soft: var(--event-ink-soft);
+  --tile-track: var(--event-track);
+  --tile-accent: var(--event-bright);
+  --mini-flap-top: rgba(0, 0, 0, 0.84);
+  --mini-flap-bottom: rgba(0, 0, 0, 0.76);
+  --mini-flap-ink: #ffffff;
+  --small-fill: var(--color-surface);
+  --small-number: var(--event-bright);
+  --bar-fill: var(--event-bright);
+}
