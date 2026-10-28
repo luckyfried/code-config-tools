@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="A repository's year from its own git history: a commit heat map, an authors river, a churn map, and the release cadence.">
+    <title>Repo Pulse</title>
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="preload" href="./vendor/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./vendor/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./theme.css">
+    <link rel="stylesheet" href="./styles/fonts.css">
+    <link rel="stylesheet" href="./styles/base.css">
+    <link rel="stylesheet" href="./styles/layout.css">
+    <link rel="stylesheet" href="./styles/components.css">
+    <script src="./config.js"></script>
+    <script src="./data.js"></script>
+    <script src="./js/boot.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="top">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 28 28" aria-hidden="true">
+            <rect class="lv2" x="1" y="1" width="7" height="7" rx="2"></rect>
+            <rect class="lv4" x="10.5" y="1" width="7" height="7" rx="2"></rect>
+            <rect class="lv1" x="20" y="1" width="7" height="7" rx="2"></rect>
+            <rect class="lv3" x="1" y="10.5" width="7" height="7" rx="2"></rect>
+            <rect class="lv5" x="10.5" y="10.5" width="7" height="7" rx="2"></rect>
+            <rect class="lv4" x="20" y="10.5" width="7" height="7" rx="2"></rect>
+            <rect class="lv1" x="1" y="20" width="7" height="7" rx="2"></rect>
+            <rect class="lv3" x="10.5" y="20" width="7" height="7" rx="2"></rect>
+            <rect class="lv2" x="20" y="20" width="7" height="7" rx="2"></rect>
+          </svg>
+          <div class="brand-text">
+            <h1 class="repo" id="repo-title">Repo Pulse</h1>
+            <p class="window" id="repo-window"></p>
+          </div>
+        </div>
+        <nav class="tabs" aria-label="Screens">
+          <a class="tab" href="#overview" data-view="overview">Overview</a>
+          <a class="tab" href="#authors" data-view="authors">Authors</a>
+          <a class="tab" href="#churn" data-view="churn">Churn</a>
+          <a class="tab" href="#timeline" data-view="timeline">Timeline</a>
+          <span class="tab-ink" aria-hidden="true"></span>
+        </nav>
+        <div class="top-end">
+          <span class="status" id="status" hidden></span>
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark" hidden>
+            <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"></circle><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"></path></svg>
+            <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a8.4 8.4 0 1 0 10.8 10.8z"></path></svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="views">
+        <section class="view view-overview" id="view-overview" aria-label="Overview">
+          <div class="stats panel" id="stats"></div>
+
+          <section class="panel panel-heat" aria-labelledby="h-heat">
+            <div class="panel-head">
+              <h2 id="h-heat">Commits per day</h2>
+              <div class="legend-ramp" id="heat-legend"></div>
+            </div>
+            <div class="heat"></div>
+            <div class="daycard"></div>
+          </section>
+
+          <section class="panel panel-river" aria-labelledby="h-river">
+            <div class="panel-head">
+              <h2 id="h-river">Authors over the year</h2>
+            </div>
+            <div class="river" id="river-overview"></div>
+          </section>
+
+          <section class="panel panel-tree" aria-labelledby="h-tree">
+            <div class="panel-head">
+              <h2 id="h-tree">Lines changed by folder</h2>
+              <p class="panel-note" id="tree-note"></p>
+            </div>
+            <div class="tree" id="tree-overview"></div>
+          </section>
+        </section>
+
+        <section class="view view-authors" id="view-authors" aria-label="Authors" hidden>
+          <section class="panel panel-river-lg" aria-labelledby="h-river-lg">
+            <div class="panel-head">
+              <h2 id="h-river-lg">Commits per author, month by month</h2>
+            </div>
+            <div class="river is-tall" id="river-authors"></div>
+          </section>
+          <section class="panel panel-table" aria-labelledby="h-table">
+            <div class="panel-head">
+              <h2 id="h-table">Everyone who committed</h2>
+            </div>
+            <div class="table-wrap" id="authors-table"></div>
+          </section>
+        </section>
+
+        <section class="view view-churn" id="view-churn" aria-label="Churn" hidden>
+          <section class="panel panel-tree-lg" aria-labelledby="h-tree-lg">
+            <div class="panel-head">
+              <h2 id="h-tree-lg">Lines changed by folder</h2>
+              <p class="panel-note">Hover a folder to open it</p>
+            </div>
+            <div class="tree is-big" id="tree-churn"></div>
+          </section>
+          <section class="panel panel-files" aria-labelledby="h-files">
+            <div class="panel-head">
+              <h2 id="h-files">The ten most-changed files</h2>
+            </div>
+            <div class="files-wrap" id="files"></div>
+          </section>
+        </section>
+
+        <section class="view view-timeline" id="view-timeline" aria-label="Timeline" hidden>
+          <section class="panel panel-weeks" aria-labelledby="h-weeks">
+            <div class="panel-head">
+              <h2 id="h-weeks">Commits per week</h2>
+              <p class="panel-note weeks-key"><span class="key-bar"></span>Week <span class="key-line"></span>Four-week average</p>
+            </div>
+            <div class="weeks" id="weeks"></div>
+          </section>
+          <section class="panel panel-cadence" aria-labelledby="h-cadence">
+            <div class="panel-head">
+              <h2 id="h-cadence">Release cadence</h2>
+            </div>
+            <div class="cadence-wrap" id="cadence"></div>
+          </section>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <p id="foot-left"></p>
+        <p id="foot-right"></p>
+      </footer>
+    </div>
+    <div class="tip" id="tip" role="status"></div>
+    <script src="./badge.js" defer></script>
+  </body>
+</html>

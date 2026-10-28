@@ -1,0 +1,45 @@
+/* Repo Pulse theme: paper, light. Tokens only; site/styles/ reads them and names no color. */
+:root,
+[data-theme] {
+  color-scheme: light;
+  --color-bg: #eef1f6;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f6fa;
+  --color-text: #0b1524;
+  --color-text-2: #33445b;
+  --color-muted: #627189;
+  --color-accent: #1c57d4;
+  --color-on-accent: #ffffff;
+  --color-danger: #c43350;
+  --color-ok: #0f7f69;
+  --color-border: #dae1eb;
+  --color-grid: #e6ebf2;
+  --color-veil: rgba(238, 241, 246, 0.82);
+  --color-glow: rgba(28, 87, 212, 0.28);
+  --color-light: rgba(255, 255, 255, 0.9);
+  --color-lift: rgba(28, 87, 212, 0.06);
+  --heat-0: #e8ecf2;
+  --heat-1: #c9dbf8;
+  --heat-2: #8cb2f0;
+  --heat-3: #4a82e3;
+  --heat-4: #1b55c8;
+  --heat-5: #0a2c78;
+  --on-heat-low: #0b1524;
+  --on-heat-high: #ffffff;
+  --cat-1: #1c57d4;
+  --cat-2: #0d9384;
+  --cat-3: #e2792b;
+  --cat-4: #cf375a;
+  --cat-5: #7650cf;
+  --cat-6: #5d8a19;
+  --cat-7: #2a9fd4;
+  --cat-8: #a55e37;
+  --cat-rest: #c9d1dc;
+  --on-cat: #ffffff;
+  --glow-text: transparent;
+  --font-display: "Inter Variable", "Inter", system-ui, sans-serif;
+  --display-weight: 650;
+  --display-tracking: -0.035em;
+  --shadow-1: 0 1px 2px rgba(15, 34, 68, 0.05), 0 2px 6px -2px rgba(15, 34, 68, 0.06);
+  --shadow-2: 0 24px 48px -16px rgba(15, 34, 68, 0.28), 0 8px 16px -8px rgba(15, 34, 68, 0.14), 0 0 0 1px rgba(15, 34, 68, 0.07);
+}

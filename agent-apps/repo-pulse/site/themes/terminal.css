@@ -1,0 +1,45 @@
+/* Repo Pulse theme: terminal, dark. Tokens only; site/styles/ reads them and names no color. */
+:root,
+[data-theme] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #050d08;
+  --color-surface-2: #0a1710;
+  --color-text: #d7f7e4;
+  --color-text-2: #a3cab3;
+  --color-muted: #6c9079;
+  --color-accent: #3cff8b;
+  --color-on-accent: #00150a;
+  --color-danger: #ff5f7e;
+  --color-ok: #3cff8b;
+  --color-border: #15281c;
+  --color-grid: #0f1f15;
+  --color-veil: rgba(0, 0, 0, 0.78);
+  --color-glow: rgba(60, 255, 139, 0.45);
+  --color-light: rgba(60, 255, 139, 0.07);
+  --color-lift: rgba(60, 255, 139, 0.045);
+  --heat-0: #15281d;
+  --heat-1: #0d4a25;
+  --heat-2: #10662e;
+  --heat-3: #1d9f47;
+  --heat-4: #3ed871;
+  --heat-5: #a8ffc8;
+  --on-heat-low: #d7f7e4;
+  --on-heat-high: #00150a;
+  --cat-1: #3cff8b;
+  --cat-2: #4fd5ff;
+  --cat-3: #ffc84d;
+  --cat-4: #ff6a96;
+  --cat-5: #b28cff;
+  --cat-6: #c9ff4d;
+  --cat-7: #ff994d;
+  --cat-8: #5e9cff;
+  --cat-rest: #1f3528;
+  --on-cat: #00150a;
+  --glow-text: rgba(60, 255, 139, 0.32);
+  --font-display: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  --display-weight: 600;
+  --display-tracking: -0.04em;
+  --shadow-1: 0 0 0 1px rgba(60, 255, 139, 0.03);
+  --shadow-2: 0 28px 60px -20px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(60, 255, 139, 0.16), 0 0 40px -12px rgba(60, 255, 139, 0.22);
+}

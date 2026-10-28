@@ -1,0 +1,21 @@
+{
+  "title": "harbor",
+  "logFile": null,
+  "tagsFile": null,
+  "since": "2025-11-01",
+  "authorAliases": {
+    "mara": "Mara Lindqvist",
+    "Dev O.": "Dev Okafor"
+  },
+  "ignorePaths": ["pnpm-lock.yaml", "tests/fixtures/"],
+  "theme": "auto",
+  "_notes": {
+    "title": "The repository's name, shown at the top of the page.",
+    "logFile": "The exported git log, relative to this file (repo-pulse.log after the README's first command). null shows the sample year that ships with the app.",
+    "tagsFile": "The exported tag list, relative to this file (repo-pulse.tags after the README's second command). null shows no releases, or the sample's when logFile is null too.",
+    "since": "The first day to count, as YYYY-MM-DD; commits before it are left out. null counts the year up to the newest commit.",
+    "authorAliases": "Names that are the same person: each key is a name as git has it, each value the name to count it under.",
+    "ignorePaths": "Paths left out of the churn map and the line counts: a file name or pattern (pnpm-lock.yaml, *.min.js) or a folder ending in / (vendor/).",
+    "theme": "auto follows the device's light or dark setting; paper is always light, terminal always dark."
+  }
+}

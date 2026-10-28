@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"title": "harbor", "logFile": null, "tagsFile": null, "since": "2025-11-01", "authorAliases": {"mara": "Mara Lindqvist", "Dev O.": "Dev Okafor"}, "ignorePaths": ["pnpm-lock.yaml", "tests/fixtures/"], "theme": "auto"};

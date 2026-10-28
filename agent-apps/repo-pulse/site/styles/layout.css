@@ -1,0 +1,248 @@
+/* The shell, the four screens, and how each is composed per screen size. */
+.app {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Header */
+.top {
+  position: relative;
+  z-index: var(--z-header);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 68px;
+  padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-6) var(--space-3);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+.top-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Screens */
+.views {
+  position: relative;
+  min-width: 0;
+}
+
+.view {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-6) var(--space-4);
+  min-width: 0;
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.view > * {
+  min-width: 0;
+}
+
+.view-overview {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: auto auto minmax(260px, 1fr);
+}
+
+.view-overview .stats,
+.view-overview .panel-heat {
+  grid-column: 1 / -1;
+}
+
+.view-overview .panel-river {
+  grid-column: 1 / 8;
+}
+
+.view-overview .panel-tree {
+  grid-column: 8 / -1;
+}
+
+.view-authors,
+.view-churn,
+.view-timeline {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: minmax(520px, 1fr);
+}
+
+.view-churn > :first-child,
+.view-timeline > :first-child {
+  grid-column: 1 / 9;
+}
+
+.view-churn > :last-child,
+.view-timeline > :last-child {
+  grid-column: 9 / -1;
+}
+
+.view-authors > :first-child {
+  grid-column: 1 / 8;
+}
+
+.view-authors > :last-child {
+  grid-column: 8 / -1;
+}
+
+/* Footer: two facts at the ends; the middle stays clear. */
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 60px;
+  padding: var(--space-1) var(--space-6) calc(var(--space-3) + env(safe-area-inset-bottom));
+}
+
+.foot p {
+  max-width: 56ch;
+}
+
+.foot p:last-child {
+  text-align: right;
+}
+
+/* A desktop screen is one screen: the view fills what the header and footer leave. */
+@media (min-width: 1100px) and (min-height: 700px) {
+  .app {
+    height: 100dvh;
+    min-height: 640px;
+  }
+
+  .views {
+    min-height: 0;
+  }
+
+  .view {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .view-authors,
+  .view-churn,
+  .view-timeline {
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1600px) {
+  .top,
+  .view,
+  .foot {
+    padding-left: var(--space-7);
+    padding-right: var(--space-7);
+  }
+
+  .view {
+    gap: var(--space-5);
+  }
+}
+
+/* Tablet and the phone on its side: the heat map leads, the numbers follow. */
+@media (max-width: 1099px) {
+  .view-overview .panel-heat {
+    order: -1;
+  }
+
+  .view-overview .panel-river {
+    grid-column: 1 / 7;
+  }
+
+  .view-overview .panel-tree {
+    grid-column: 7 / -1;
+  }
+
+  .view-authors > :first-child,
+  .view-churn > :first-child,
+  .view-timeline > :first-child,
+  .view-authors > :last-child,
+  .view-churn > :last-child,
+  .view-timeline > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .view-authors,
+  .view-churn,
+  .view-timeline {
+    grid-template-rows: auto;
+  }
+}
+
+@media (max-width: 899px) {
+  .top {
+    padding-left: var(--space-5);
+    padding-right: var(--space-5);
+  }
+
+  .view,
+  .foot {
+    padding-left: var(--space-5);
+    padding-right: var(--space-5);
+  }
+}
+
+/* Phone: one column; the tabs stay in reach at the top. */
+@media (max-width: 699px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand end"
+      "tabs tabs";
+    row-gap: var(--space-3);
+    padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-4) var(--space-3);
+  }
+
+  .brand {
+    grid-area: brand;
+  }
+
+  .top-end {
+    grid-area: end;
+  }
+
+  .tabs {
+    grid-area: tabs;
+  }
+
+  .view {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: var(--space-3);
+    padding: 0 var(--space-3) var(--space-4);
+  }
+
+  .view-overview .stats,
+  .view-overview .panel-heat,
+  .view-overview .panel-river,
+  .view-overview .panel-tree {
+    grid-column: 1 / -1;
+  }
+
+  .foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4) calc(var(--space-7) + var(--space-5) + env(safe-area-inset-bottom));
+  }
+
+  .foot p:last-child {
+    text-align: left;
+  }
+}
