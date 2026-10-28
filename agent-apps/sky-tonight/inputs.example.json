@@ -1,0 +1,22 @@
+{
+  "_notes": {
+    "place": "The name shown at the top of the page, usually the town; the part before a comma is the title.",
+    "lat": "Latitude in degrees, north positive, from -90 to 90.",
+    "lon": "Longitude in degrees, east positive, from -180 to 180.",
+    "timezone": "The place's time zone as an IANA name, like America/Phoenix or Europe/London; every time on the page is read in it.",
+    "when": "\"now\" shows the sky at this moment, or tonight after dark when it is still light; a local date and time like 2027-03-12T20:45 opens on that moment.",
+    "horizon": "The skyline drawn around you: \"hill\" (ridges and pines), \"sea\" (open water with a headland), \"city\" (buildings and lit windows), or \"flat\" (open plain).",
+    "labels": "\"names\" for star, planet, and constellation names, \"bayer\" for Greek letters on the stars, or \"none\".",
+    "constellations": "\"lines\" for fine figure lines, \"art\" for wide painted strokes, or \"none\".",
+    "theme": "\"night\" (deep sky, frosted glass), \"red\" (all red, keeps eyes adapted to the dark), or \"paper\" (a printed star atlas)."
+  },
+  "place": "Flagstaff, Arizona",
+  "lat": 35.1983,
+  "lon": -111.6513,
+  "timezone": "America/Phoenix",
+  "when": "2027-03-12T20:45",
+  "horizon": "hill",
+  "labels": "names",
+  "constellations": "lines",
+  "theme": "night"
+}

@@ -1,0 +1,160 @@
+/* Night: ink sky, icy hairlines, starlight gold. Light is the moonlit blue hour under frosted glass; dark is the deep night. */
+:root {
+  --color-bg: #0a1530;
+  --color-surface: rgba(244, 246, 251, 0.84);
+  --color-column: rgba(236, 241, 252, 0.58);
+  --color-column-muted: #29344d;
+  --color-surface-2: rgba(226, 232, 244, 0.92);
+  --color-text: #0e1626;
+  --color-muted: #4b5873;
+  --color-accent: #2346b0;
+  --color-on-accent: #ffffff;
+  --color-danger: #b4232f;
+  --color-ok: #1d7a55;
+  --color-border: rgba(20, 36, 72, 0.14);
+  --color-glass-edge: rgba(255, 255, 255, 0.7);
+  --color-scrim: rgba(10, 20, 44, 0.42);
+  --color-label: #f3f6ff;
+  --color-label-soft: rgba(232, 238, 255, 0.78);
+  --color-label-shadow: rgba(6, 14, 34, 0.75);
+  --color-compass: #f6d58e;
+  --color-compass-minor: rgba(226, 234, 255, 0.62);
+  --color-focus: #2f5bd8;
+  --shadow-1: 0 1px 2px rgba(10, 24, 60, 0.16), 0 6px 18px rgba(10, 24, 60, 0.16);
+  --shadow-2: 0 2px 6px rgba(10, 24, 60, 0.18), 0 18px 48px rgba(10, 24, 60, 0.28);
+
+  --band-day: #9ec4ea;
+  --band-civil: #f2b37a;
+  --band-nautical: #5876b8;
+  --band-astro: #2b3d73;
+  --band-night: #121d3d;
+  --band-moon: #f3ecd2;
+
+  --sky-night-zenith: #0b1733;
+  --sky-night-horizon: #2d4677;
+  --sky-astro-zenith: #0e1c3d;
+  --sky-astro-horizon: #33528f;
+  --sky-nautical-zenith: #15295a;
+  --sky-nautical-horizon: #4f72b5;
+  --sky-civil-rim: #ffb46e;
+  --sky-day-zenith: #3f7fc6;
+  --sky-day-horizon: #c3daf0;
+  --sky-glow: #4c6aa6;
+  --sky-ground: #0a1222;
+  --sky-ground-haze: #2c3f66;
+  --sky-light: #ffcf8a;
+  --sky-line: #d6e4ff;
+  --sky-line-art: #ffd892;
+  --sky-ink: #ffffff;
+  --sky-ink-mode: 0;
+  --sky-star-mono: 0;
+  --sky-star-tint: #ffffff;
+  --sky-star-gain: 1.08;
+  --sky-milkyway: 0.5;
+  --sky-twinkle: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #03050b;
+    --color-surface: rgba(10, 15, 28, 0.66);
+    --color-column: rgba(6, 10, 22, 0.4);
+    --color-column-muted: #aab5cc;
+    --color-surface-2: rgba(20, 28, 48, 0.8);
+    --color-text: #eaeef7;
+    --color-muted: #98a4bd;
+    --color-accent: #f4cd78;
+    --color-on-accent: #1b1407;
+    --color-danger: #ff7b7b;
+    --color-ok: #7fdcb0;
+    --color-border: rgba(170, 190, 230, 0.15);
+    --color-glass-edge: rgba(190, 210, 255, 0.12);
+    --color-scrim: rgba(0, 2, 8, 0.55);
+    --color-label: #e6ecff;
+    --color-label-soft: rgba(205, 216, 240, 0.7);
+    --color-label-shadow: rgba(0, 0, 0, 0.9);
+    --color-compass: #f4cd78;
+    --color-compass-minor: rgba(190, 204, 235, 0.55);
+    --color-focus: #f4cd78;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.45), 0 24px 64px rgba(0, 0, 0, 0.55);
+
+    --band-day: #6f9ccc;
+    --band-civil: #e39a5c;
+    --band-nautical: #2f4c8a;
+    --band-astro: #172552;
+    --band-night: #070c1c;
+    --band-moon: #e9e2c6;
+
+    --sky-night-zenith: #010208;
+    --sky-night-horizon: #0a1428;
+    --sky-astro-zenith: #030714;
+    --sky-astro-horizon: #12234d;
+    --sky-nautical-zenith: #081430;
+    --sky-nautical-horizon: #2b4680;
+    --sky-civil-rim: #f39a52;
+    --sky-day-zenith: #2c66ad;
+    --sky-day-horizon: #9fc0e2;
+    --sky-glow: #16213d;
+    --sky-ground: #020307;
+    --sky-ground-haze: #0e1628;
+    --sky-light: #ffbf6e;
+    --sky-line: #8db3ff;
+    --sky-line-art: #f1c27a;
+    --sky-ink: #ffffff;
+    --sky-ink-mode: 0;
+    --sky-star-mono: 0;
+    --sky-star-tint: #ffffff;
+    --sky-star-gain: 1;
+    --sky-milkyway: 0.85;
+    --sky-twinkle: 1;
+  }
+}
+
+[data-theme="dark"] {
+  --color-bg: #03050b;
+  --color-surface: rgba(10, 15, 28, 0.66);
+  --color-column: rgba(6, 10, 22, 0.4);
+  --color-column-muted: #aab5cc;
+  --color-surface-2: rgba(20, 28, 48, 0.8);
+  --color-text: #eaeef7;
+  --color-muted: #98a4bd;
+  --color-accent: #f4cd78;
+  --color-on-accent: #1b1407;
+  --color-border: rgba(170, 190, 230, 0.15);
+  --color-glass-edge: rgba(190, 210, 255, 0.12);
+  --color-label: #e6ecff;
+  --color-label-soft: rgba(205, 216, 240, 0.7);
+  --color-label-shadow: rgba(0, 0, 0, 0.9);
+  --color-compass: #f4cd78;
+  --color-focus: #f4cd78;
+  --sky-night-zenith: #010208;
+  --sky-night-horizon: #0a1428;
+  --sky-ground: #020307;
+  --sky-ground-haze: #0e1628;
+  --sky-line: #8db3ff;
+  --sky-milkyway: 0.85;
+}
+
+[data-theme="light"] {
+  --color-bg: #0a1530;
+  --color-surface: rgba(244, 246, 251, 0.84);
+  --color-column: rgba(236, 241, 252, 0.58);
+  --color-column-muted: #29344d;
+  --color-surface-2: rgba(226, 232, 244, 0.92);
+  --color-text: #0e1626;
+  --color-muted: #4b5873;
+  --color-accent: #2346b0;
+  --color-on-accent: #ffffff;
+  --color-border: rgba(20, 36, 72, 0.14);
+  --color-glass-edge: rgba(255, 255, 255, 0.7);
+  --color-label: #f3f6ff;
+  --color-compass: #f6d58e;
+  --color-focus: #2f5bd8;
+  --sky-night-zenith: #0b1733;
+  --sky-night-horizon: #2d4677;
+  --sky-ground: #0a1222;
+  --sky-ground-haze: #2c3f66;
+  --sky-line: #d6e4ff;
+  --sky-milkyway: 0.5;
+}

@@ -1,0 +1,196 @@
+/* Layout: the sky fills the screen; the chrome is composed per screen. A phone holds a dock at the bottom, clear
+   of the home bar and the badge; a phone on its side moves time to the top; a desktop gathers the almanac into a
+   column on the left and leaves the rest of its width to the sky. */
+
+:root {
+  --dock-bottom: calc(var(--safe-bottom) + 64px);
+  --side: calc(var(--safe-left) + 16px);
+  --side-r: calc(var(--safe-right) + 16px);
+  --chrome-top: 84px;
+  --chrome-bottom: 270px;
+  --card-radius: 22px;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sky:active {
+  cursor: grabbing;
+}
+
+.labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.topbar {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: calc(var(--safe-top) + 14px) var(--side-r) 0 calc(var(--safe-left) + 20px);
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.topbar__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tonight {
+  position: absolute;
+  z-index: 6;
+  left: var(--side);
+  right: var(--side-r);
+  bottom: calc(var(--dock-bottom) + var(--timebar-h, 112px) + 12px);
+}
+
+.timebar {
+  position: absolute;
+  z-index: 6;
+  left: var(--side);
+  right: var(--side-r);
+  bottom: var(--dock-bottom);
+}
+
+.star-card {
+  position: absolute;
+  z-index: 8;
+  left: var(--side);
+  right: var(--side-r);
+  top: calc(var(--safe-top) + 86px);
+}
+
+.sensor-hint {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  top: calc(var(--safe-top) + 86px);
+}
+
+.fallback-note {
+  position: absolute;
+  z-index: 7;
+  left: var(--side);
+  right: var(--side-r);
+  top: calc(var(--safe-top) + 92px);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --dock-bottom: calc(var(--safe-bottom) + 100px);
+  }
+  .tonight,
+  .timebar {
+    left: 50%;
+    right: auto;
+    width: min(560px, calc(100vw - 48px));
+    transform: translateX(-50%);
+  }
+}
+
+/* A phone on its side: time across the top, Tonight as a compact card at the lower left, clear of the badge. */
+@media (orientation: landscape) and (max-height: 540px) {
+  :root {
+    --chrome-top: 64px;
+    --chrome-bottom: 0px;
+  }
+  .topbar {
+    padding-top: calc(var(--safe-top) + 10px);
+  }
+  .timebar {
+    top: calc(var(--safe-top) + 10px);
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    width: min(460px, calc(100vw - 420px));
+    transform: translateX(-50%);
+  }
+  .tonight {
+    left: var(--side);
+    right: auto;
+    bottom: calc(var(--safe-bottom) + 12px);
+    width: 232px;
+    transform: none;
+  }
+  .star-card {
+    left: auto;
+    right: var(--side-r);
+    top: calc(var(--safe-top) + 64px);
+    width: 300px;
+  }
+}
+
+/* Desktop and big screens: the almanac in a column on the left, the sky across the full width behind it. */
+@media (min-width: 900px) and (min-height: 541px) {
+  :root {
+    --col: clamp(384px, 28vw, 440px);
+    --chrome-top: 24px;
+    --chrome-bottom: 24px;
+  }
+  .topbar {
+    padding: calc(var(--safe-top) + 28px) calc(var(--safe-right) + 28px) 0 calc(var(--safe-left) + 32px);
+  }
+  .tonight {
+    left: calc(var(--safe-left) + 24px);
+    right: auto;
+    top: calc(var(--safe-top) + 122px);
+    bottom: auto;
+    width: var(--col);
+    transform: none;
+    max-height: calc(100vh - 122px - 190px);
+    overflow: auto;
+  }
+  .timebar {
+    left: calc(var(--safe-left) + 24px);
+    right: auto;
+    bottom: calc(var(--safe-bottom) + 24px);
+    width: var(--col);
+    transform: none;
+  }
+  .star-card {
+    left: clamp(calc(var(--col) + 48px), calc(var(--ax, 50vw) + 28px), calc(100vw - 340px));
+    right: auto;
+    top: clamp(96px, calc(var(--ay, 30vh) - 48px), calc(100vh - 320px));
+    width: 300px;
+  }
+  .sensor-hint {
+    top: 96px;
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 960px) {
+  :root {
+    font-size: 17px;
+  }
+  .tonight {
+    top: calc(var(--safe-top) + 140px);
+  }
+}

@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"place": "Flagstaff, Arizona", "lat": 35.1983, "lon": -111.6513, "timezone": "America/Phoenix", "when": "2027-03-12T20:45", "horizon": "hill", "labels": "names", "constellations": "lines", "theme": "night"};

@@ -1,0 +1,2 @@
+Data: HYG star database v4.0 by David Nash (astronexus), CC BY-SA 4.0, https://github.com/astronexus/HYG-Database.
+stars-info.json holds, for each star in d3-celestial stars.6.json (by Hipparcos number): its proper name, Bayer letter, Flamsteed number, and constellation from d3-celestial starnames.json (BSD-3), and its distance in light-years and spectral type from HYG. This file is shared under CC BY-SA 4.0.

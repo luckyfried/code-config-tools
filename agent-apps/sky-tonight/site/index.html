@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Sky Tonight</title>
+  <meta name="description" content="The real night sky over your place: stars, constellations, planets, and the Moon, tonight or at any hour you pick.">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/cormorant-garamond-latin-500-italic.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./vendor/d3-celestial/data/stars.6.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="./theme.css" id="theme-link">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "astronomy-engine": "./vendor/astronomy-engine/esm/astronomy.js" } }
+  </script>
+  <script type="module" src="./game/main.js"></script>
+</head>
+<body>
+  <main class="app" id="app">
+    <canvas class="sky" id="sky" aria-label="The night sky. Drag to look around, scroll or pinch to zoom, tap a star to name it."></canvas>
+    <canvas class="sky sky--chart" id="chart" hidden aria-label="Star chart of the sky overhead"></canvas>
+
+    <div class="labels" id="labels" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="place enter" data-enter="0">
+        <h1 class="place__name" id="place-name">Sky Tonight</h1>
+        <p class="place__when" id="place-when"><span id="when-text"></span></p>
+      </div>
+      <div class="topbar__actions enter" data-enter="1">
+        <button class="icon-btn" id="sensor-btn" type="button" aria-pressed="false" aria-label="Hold up to the sky">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.75" width="10" height="18.5" rx="2.5"/><path d="M10.5 18h3"/><path d="M12 7.2v4.3"/><circle cx="12" cy="11.6" r="0.9" class="fill"/></svg>
+        </button>
+        <button class="icon-btn" id="settings-btn" type="button" aria-haspopup="dialog" aria-controls="settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <p class="sensor-hint" id="sensor-hint" hidden>Drag sideways to line up a star you know.</p>
+
+    <section class="tonight enter" data-enter="2" id="tonight" aria-labelledby="tonight-title">
+      <button class="tonight__head" id="tonight-toggle" type="button" aria-expanded="false" aria-controls="tonight-body">
+        <h2 class="tonight__title" id="tonight-title">Tonight</h2>
+        <svg class="tonight__chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14l5-5 5 5"/></svg>
+      </button>
+      <ol class="tonight__events" id="tonight-events"></ol>
+      <div class="tonight__body" id="tonight-body">
+        <div class="tonight__inner">
+        <div class="moon-row" id="moon-row">
+          <canvas class="moon-row__disc" id="moon-disc" width="96" height="96" aria-hidden="true"></canvas>
+          <div class="moon-row__text">
+            <p class="moon-row__phase" id="moon-phase"></p>
+            <p class="moon-row__detail" id="moon-detail"></p>
+          </div>
+        </div>
+        <h3 class="tonight__sub" id="planets-title">Planets up</h3>
+        <ul class="planets" id="planets" aria-labelledby="planets-title"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="timebar enter" data-enter="3" aria-label="Time">
+      <div class="timebar__readout">
+        <output class="timebar__time" id="time-out" for="ribbon"></output>
+      </div>
+      <div class="ribbon" id="ribbon" role="slider" tabindex="0" aria-label="Time of night" aria-valuemin="0" aria-valuemax="1440" aria-valuenow="0" aria-valuetext="">
+        <div class="ribbon__band" id="ribbon-band"></div>
+        <div class="ribbon__moon" id="ribbon-moon"></div>
+        <div class="ribbon__ticks" id="ribbon-ticks"></div>
+        <div class="ribbon__thumb" id="ribbon-thumb"><span class="ribbon__needle"></span></div>
+      </div>
+      <div class="timebar__buttons">
+        <button class="pill-btn" id="spin-btn" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="pill-btn__icon pill-btn__icon--play"><path d="M8 5.5v13l10.5-6.5z" class="fill"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="pill-btn__icon pill-btn__icon--pause"><path d="M8 5.5v13M16 5.5v13"/></svg>
+          <span>Spin</span>
+        </button>
+        <button class="pill-btn pill-btn--quiet" id="now-btn" type="button">Now</button>
+      </div>
+    </section>
+
+    <aside class="star-card" id="star-card" role="status" aria-live="polite" hidden>
+      <button class="star-card__close" id="star-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+      </button>
+      <p class="star-card__kind" id="star-kind"></p>
+      <h2 class="star-card__name" id="star-name"></h2>
+      <p class="star-card__desig" id="star-desig"></p>
+      <dl class="star-card__facts" id="star-facts"></dl>
+    </aside>
+
+    <dialog class="settings" id="settings" aria-labelledby="settings-title">
+      <form method="dialog" class="settings__inner" id="settings-form">
+        <header class="settings__head">
+          <h2 id="settings-title">Your sky</h2>
+          <button class="icon-btn icon-btn--flat" value="close" aria-label="Close settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          </button>
+        </header>
+
+        <fieldset class="field-group">
+          <legend>Place</legend>
+          <label class="field field--wide"><span>Name</span><input id="set-place" type="text" autocomplete="off" maxlength="60"></label>
+          <label class="field"><span>Latitude</span><input id="set-lat" type="number" step="0.0001" min="-90" max="90" inputmode="decimal"></label>
+          <label class="field"><span>Longitude</span><input id="set-lon" type="number" step="0.0001" min="-180" max="180" inputmode="decimal"></label>
+        </fieldset>
+
+        <fieldset class="field-group">
+          <legend>Date and time</legend>
+          <label class="field"><span>Date</span><input id="set-date" type="date"></label>
+          <label class="field"><span>Time</span><input id="set-time" type="time" step="300"></label>
+        </fieldset>
+
+        <fieldset class="field-group">
+          <legend>Labels</legend>
+          <div class="segmented" role="radiogroup" aria-label="Labels" data-setting="labels">
+            <label><input type="radio" name="labels" value="names"><span>Names</span></label>
+            <label><input type="radio" name="labels" value="bayer"><span>Greek letters</span></label>
+            <label><input type="radio" name="labels" value="none"><span>None</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field-group">
+          <legend>Constellations</legend>
+          <div class="segmented" role="radiogroup" aria-label="Constellations" data-setting="constellations">
+            <label><input type="radio" name="constellations" value="lines"><span>Lines</span></label>
+            <label><input type="radio" name="constellations" value="art"><span>Painted</span></label>
+            <label><input type="radio" name="constellations" value="none"><span>None</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field-group">
+          <legend>Horizon</legend>
+          <div class="segmented" role="radiogroup" aria-label="Horizon" data-setting="horizon">
+            <label><input type="radio" name="horizon" value="hill"><span>Hills</span></label>
+            <label><input type="radio" name="horizon" value="sea"><span>Sea</span></label>
+            <label><input type="radio" name="horizon" value="city"><span>City</span></label>
+            <label><input type="radio" name="horizon" value="flat"><span>Plain</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field-group">
+          <legend>Look</legend>
+          <div class="segmented" role="radiogroup" aria-label="Look" data-setting="theme">
+            <label><input type="radio" name="theme" value="night"><span>Night</span></label>
+            <label><input type="radio" name="theme" value="red"><span>Red light</span></label>
+            <label><input type="radio" name="theme" value="paper"><span>Paper chart</span></label>
+          </div>
+        </fieldset>
+
+        <p class="settings__credit">Stars from the Hipparcos and Yale catalogs by way of d3-celestial and HYG. Milky Way panorama by ESO and S. Brunier. Moon map by NASA's Lunar Reconnaissance Orbiter.</p>
+      </form>
+    </dialog>
+
+    <p class="fallback-note" id="fallback-note" hidden>This screen can't draw the 3D sky, so here is the chart of the sky overhead.</p>
+  </main>
+  <script src="./badge.js"></script>
+</body>
+</html>
