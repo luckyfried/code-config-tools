@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"title": "Morning Board", "sources": ["https://feeds.bbci.co.uk/news/world/rss.xml", "https://feeds.npr.org/1001/rss.xml", "wikipedia", "hackernews"], "rows": 6, "secondsPerFlip": 7, "location": {"lat": 40.7128, "lon": -74.006, "name": "New York"}, "theme": "amber"};

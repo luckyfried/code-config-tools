@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Today's headlines on a split-flap board that clacks as they change.">
+  <title>Headline Board</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/JetBrainsMono-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <script src="./boot.js"></script>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/board.css">
+  <link rel="stylesheet" href="./styles/sheet.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./js/main.js"></script>
+  <script src="./badge.js" defer></script>
+</head>
+<body>
+  <div class="housing" id="housing">
+    <i class="screw screw-tl" aria-hidden="true"></i>
+    <i class="screw screw-tr" aria-hidden="true"></i>
+    <i class="screw screw-bl" aria-hidden="true"></i>
+    <i class="screw screw-br" aria-hidden="true"></i>
+
+    <header class="top">
+      <div class="plate">
+        <h1 class="title" id="title">Headline Board</h1>
+        <p class="date" id="date"></p>
+      </div>
+      <div class="dials">
+        <div class="weather" aria-hidden="true"><div class="wbox" id="weather"></div></div>
+        <div class="clock" id="clock" aria-hidden="true"></div>
+      </div>
+      <nav class="controls" aria-label="Board controls">
+        <button class="knob" id="pause" type="button" aria-label="Pause the board" aria-pressed="false">
+          <svg class="icon icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>
+          <svg class="icon icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.8v12.4a.6.6 0 0 0 .9.5l9.8-6.2a.6.6 0 0 0 0-1L8.9 5.3a.6.6 0 0 0-.9.5z"/></svg>
+        </button>
+        <button class="knob" id="sound" type="button" aria-label="Turn the clack on" aria-pressed="false">
+          <svg class="icon icon-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.5h3l4.5-4v13l-4.5-4h-3z"/><path class="wave" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+          <svg class="icon icon-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9.5h3l4.5-4v13l-4.5-4h-3z"/><path d="m16 9.5 5 5m0-5-5 5"/></svg>
+        </button>
+        <button class="knob" id="settings-open" type="button" aria-label="Board settings" aria-haspopup="dialog">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <main class="board" id="board">
+      <h2 class="visually-hidden">Headlines</h2>
+      <div class="rows" id="rows"></div>
+      <div class="sweep" aria-hidden="true"></div>
+    </main>
+
+    <footer class="bottom">
+      <p class="status" id="status" aria-live="polite"><span id="status-main"></span><span class="status-more" id="status-more"></span></p>
+      <div class="pager">
+        <span class="page" id="page"></span>
+        <span class="progress" aria-hidden="true"><i id="progress"></i></span>
+      </div>
+    </footer>
+  </div>
+
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+    <form class="sheet-body" method="dialog">
+      <div class="sheet-head">
+        <h2 id="sheet-title">Board settings</h2>
+        <button class="close" type="submit" aria-label="Close settings">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11m0-11-11 11"/></svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <label for="speed">Next page every</label>
+          <output id="speed-out" for="speed">7 seconds</output>
+        </div>
+        <input class="slider" id="speed" type="range" min="4" max="30" step="1" value="7">
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <label for="sound-on">Clack when flaps turn</label>
+          <input class="switch" id="sound-on" type="checkbox" role="switch">
+        </div>
+        <div class="field-row field-sub">
+          <label for="volume">Volume</label>
+          <output id="volume-out" for="volume">60%</output>
+        </div>
+        <input class="slider" id="volume" type="range" min="0" max="100" step="5" value="60">
+      </div>
+
+      <fieldset class="field">
+        <legend>Look</legend>
+        <div class="segments" role="radiogroup">
+          <label class="segment"><input type="radio" name="scheme" value="auto" checked><span>Auto</span></label>
+          <label class="segment"><input type="radio" name="scheme" value="light"><span>Light</span></label>
+          <label class="segment"><input type="radio" name="scheme" value="dark"><span>Dark</span></label>
+        </div>
+      </fieldset>
+
+      <p class="keys">Space pauses the board. The arrow keys step through pages. Tap a headline to read the story.</p>
+    </form>
+  </dialog>
+</body>
+</html>

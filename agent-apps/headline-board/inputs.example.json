@@ -1,0 +1,21 @@
+{
+  "_notes": {
+    "title": "The board's name, engraved on its top plate.",
+    "sources": "Where the headlines come from, in the order the board cycles them: RSS or Atom feed addresses, \"wikipedia\" for Wikipedia's In the news and Top read, \"hackernews\" for the Hacker News front page, and \"guardian\" or \"guardian:<section>\" when a Guardian key is set. A source can also be {\"url\": \"…\", \"tag\": \"BBC\"} to pick the up-to-five-letter tag shown at the start of its rows.",
+    "rows": "About how many headlines the board shows at once, 2 to 12; it sets the size of the flaps. Each row takes the lines its headline needs, so a phone shows fewer headlines and a big screen more, each one whole.",
+    "secondsPerFlip": "Seconds each page of headlines stays up before the board flips to the next, 3 to 120. The settings sheet on the board can change it for that screen.",
+    "location": "Where the weather line is for: {\"lat\": 51.5072, \"lon\": -0.1276, \"name\": \"London\"}; name is optional. null leaves the weather line off.",
+    "theme": "amber (amber flaps on brushed brass), white (white flaps on brushed steel), or departures (black flaps with yellow letters). Each has a light and a dark look that follows the screen."
+  },
+  "title": "Morning Board",
+  "sources": [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://feeds.npr.org/1001/rss.xml",
+    "wikipedia",
+    "hackernews"
+  ],
+  "rows": 6,
+  "secondsPerFlip": 7,
+  "location": {"lat": 40.7128, "lon": -74.006, "name": "New York"},
+  "theme": "amber"
+}

@@ -1,0 +1,468 @@
+/* The housing: type, spacing, the brushed-metal case, the top plate, the footer, and the buttons. No colors here;
+   every color is a token from theme.css. */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMono-latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-sans: var(--font-mono);
+  --font-display: var(--font-mono);
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 400ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* The flap's own timing: a spin step, and the last flap that lands and settles. */
+  --spin-ms: 80ms;
+  --land-ms: 300ms;
+  --sweep-ms: 14s;
+
+  /* The case's margin holds a screw in each corner, inset from the screen's edge and clear of what the case holds. */
+  --pad: 22px;
+  --pad-b: var(--space-3);
+  --gap: var(--space-3);
+  --screw: 12px;
+  --screw-inset: 7px;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+  .sweep {
+    display: none;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--metal-3);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  line-height: 1.4;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+output {
+  font: inherit;
+  color: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The case: brushed metal lit from above, with a screw in each corner. */
+.housing {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--gap);
+  height: 100vh;
+  height: 100dvh;
+  padding:
+    max(var(--pad), env(safe-area-inset-top))
+    max(var(--pad), env(safe-area-inset-right))
+    max(var(--pad-b), env(safe-area-inset-bottom))
+    max(var(--pad), env(safe-area-inset-left));
+  background:
+    radial-gradient(120% 70% at 22% -12%, var(--metal-sheen), transparent 62%),
+    linear-gradient(180deg, var(--metal-1), var(--metal-2) 46%, var(--metal-3));
+}
+
+.housing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url("../assets/brushed.png") 0 0 / 640px 320px repeat;
+  mix-blend-mode: var(--grain-blend);
+  opacity: var(--grain-opacity);
+  pointer-events: none;
+}
+
+.screw {
+  position: absolute;
+  width: var(--screw);
+  height: var(--screw);
+  border-radius: 50%;
+  background:
+    linear-gradient(135deg, transparent 43%, var(--screw-slot) 43% 57%, transparent 57%),
+    radial-gradient(circle at 35% 30%, var(--screw-1), var(--screw-2) 75%);
+  box-shadow: 0 1px 0 var(--engrave-hi), inset 0 -1px 1px var(--engrave-lo);
+}
+
+.screw-tl,
+.screw-tr { top: max(var(--screw-inset), calc(env(safe-area-inset-top) - 6px)); }
+.screw-bl,
+.screw-br { bottom: max(var(--screw-inset), env(safe-area-inset-bottom)); }
+.screw-tl,
+.screw-bl { left: max(var(--screw-inset), env(safe-area-inset-left)); }
+.screw-tr,
+.screw-br { right: max(var(--screw-inset), env(safe-area-inset-right)); }
+.screw-tr { transform: rotate(70deg); }
+.screw-bl { transform: rotate(25deg); }
+.screw-br { transform: rotate(110deg); }
+
+/* On a narrow phone the "Get this app" bar covers the bottom edge for its first seconds, so the lower screws sit in
+   the side margins level with the board's foot, above the footer. */
+@media (max-width: 639px) {
+  .screw-bl,
+  .screw-br { bottom: calc(max(var(--pad-b), env(safe-area-inset-bottom)) + 44px + (var(--gap) - var(--screw)) / 2); }
+}
+
+/* The top plate: the board's name and date, the weather line, the clock, and three buttons. */
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "plate controls"
+    "dials dials";
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: var(--space-3);
+  min-width: 0;
+}
+
+.plate {
+  grid-area: plate;
+  min-width: 0;
+  justify-self: start;
+  padding: var(--plate-pad, 0);
+  border-radius: var(--radius-sm);
+  background: var(--plate);
+  box-shadow: inset 0 0 0 1px var(--plate-edge);
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--plate-ink);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 var(--engrave-hi), 0 -1px 0 var(--engrave-lo);
+}
+
+.date {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--plate-ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  opacity: 0.78;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 var(--engrave-hi);
+}
+
+/* The weather line and the clock sit together: side by side under the name on a phone, beside it on a wide screen. */
+.dials {
+  grid-area: dials;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.controls {
+  grid-area: controls;
+  display: flex;
+  gap: var(--space-2);
+  justify-self: end;
+}
+
+.knob {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 30%, var(--metal-sheen), transparent 70%),
+    linear-gradient(180deg, var(--metal-1), var(--metal-3));
+  color: var(--engrave);
+  box-shadow:
+    0 0 0 1px var(--engrave-lo),
+    0 2px 5px var(--engrave-lo),
+    inset 0 1px 0 var(--engrave-hi);
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.knob:active {
+  transform: scale(0.94);
+  box-shadow: 0 0 0 1px var(--engrave-lo), inset 0 1px 3px var(--engrave-lo);
+}
+
+.knob:focus-visible,
+.close:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-play path {
+  fill: currentColor;
+  stroke: none;
+}
+
+.icon-play,
+.icon-mute {
+  display: none;
+}
+
+#pause[aria-pressed="true"] .icon-pause,
+#sound[aria-pressed="false"] .icon-sound {
+  display: none;
+}
+
+#pause[aria-pressed="true"] .icon-play,
+#sound[aria-pressed="false"] .icon-mute {
+  display: block;
+}
+
+/* The footer: when the news was fetched, and how long until the next page. */
+.bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 44px;
+  min-width: 0;
+  color: var(--engrave);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-shadow: 0 1px 0 var(--engrave-hi);
+}
+
+.status {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-more {
+  display: none;
+}
+
+.pager {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress {
+  position: relative;
+  width: 72px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--track);
+  box-shadow: inset 0 1px 1px var(--engrave-lo), 0 1px 0 var(--engrave-hi);
+}
+
+.progress i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.paused .progress i {
+  opacity: 0.45;
+}
+
+/* Wide screens: one row across the top, the status in full, and the middle of the footer left clear. */
+@media (min-width: 760px) {
+  :root {
+    --pad: var(--space-5);
+    --pad-b: var(--space-4);
+    --gap: var(--space-4);
+    --screw: 14px;
+  }
+
+  .top {
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
+    grid-template-areas: "plate dials controls";
+    column-gap: var(--space-5);
+  }
+
+  .dials {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: var(--space-4);
+  }
+
+  .title {
+    font-size: var(--text-2xl);
+  }
+
+  .date {
+    font-size: var(--text-md);
+  }
+
+  .status-more {
+    display: inline;
+  }
+
+  /* The footer is tall enough that the board ends above the "Get this app" pill. */
+  .bottom {
+    min-height: 52px;
+  }
+
+  .progress {
+    width: 120px;
+  }
+}
+
+@media (min-width: 1600px) {
+  :root {
+    --pad: var(--space-6);
+    --screw: 16px;
+    --screw-inset: 9px;
+  }
+
+  .title {
+    font-size: var(--text-3xl);
+  }
+
+  .date,
+  .bottom {
+    font-size: var(--text-lg);
+  }
+
+  .progress {
+    width: 160px;
+  }
+}
+
+/* A phone on its side: one short row across the top so the board keeps the height. */
+@media (max-height: 520px) and (min-width: 560px) {
+  :root {
+    --pad: 18px;
+    --pad-b: var(--space-2);
+    --gap: var(--space-2);
+    --screw: 10px;
+    --screw-inset: 5px;
+  }
+
+  .top {
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
+    grid-template-areas: "plate dials controls";
+    column-gap: var(--space-4);
+  }
+
+  .dials {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .title {
+    font-size: var(--text-md);
+  }
+
+  .date {
+    font-size: var(--text-xs);
+  }
+
+  .knob {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* The footer keeps the band where the "Get this app" pill shows clear of the board, and the status stays short so
+     it ends left of the pill. */
+  .bottom {
+    min-height: 68px;
+    font-size: var(--text-xs);
+  }
+
+  .status-more {
+    display: none;
+  }
+}

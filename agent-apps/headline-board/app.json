@@ -1,0 +1,14 @@
+{
+  "id": "01a17f88-0b5f-7eed-bcaa-5db3ea7e4a9f",
+  "version": "2026-10-21",
+  "name": "Headline Board",
+  "shortDescription": "Today's headlines on a split-flap board that clacks as they change.",
+  "description": "A wall board for a kitchen tablet, a big screen, or a phone. Your news feeds, Wikipedia's In the news, and the Hacker News front page roll across rows of split-flap modules: every letter spins through the drum and lands with a clack, row by row. The board carries the time, the weather where you are, and each story's source and age, and a tap on a row opens the story. Pick amber, white, or departures flaps; each has a light and a dark look.",
+  "category": "news",
+  "subcategory": "Headlines",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": ["assets/phone-light.png", "assets/desktop-light.png"],
+  "deploy": "out/headline-board",
+  "setup": "Your agent asks, in one message: which news feeds you read (any RSS or Atom link), whether to add Wikipedia's In the news and the Hacker News front page, how many headlines the board shows at once, which flaps you like (amber, white, or departures), the board's name, and the town for the weather line. No keys are needed. If you want The Guardian by section, your agent asks for a free Guardian Open Platform key through csc key set, never in chat; it stays on your computer and never reaches the page. The news is fetched when the board is built, and the board refreshes Wikipedia, Hacker News, and the weather on its own while it runs. Sound and speed choices stay on the device that shows the board."
+}

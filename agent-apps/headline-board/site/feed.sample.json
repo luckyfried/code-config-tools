@@ -1,0 +1,195 @@
+{
+ "updated": null,
+ "sources": [
+  {
+   "id": "world",
+   "name": "World Desk",
+   "tag": "WORLD",
+   "items": [
+    {
+     "title": "Coastal nations sign a pact to restore mangrove forests along 4,000 miles of shoreline",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Coastal+nations+sign+a",
+     "age": 14
+    },
+    {
+     "title": "Rail link under the Alps opens, cutting the Milan to Zurich trip to two and a half hours",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Rail+link+under+the",
+     "age": 52
+    },
+    {
+     "title": "Monsoon arrives early in the south, easing a long dry spell for rice farmers",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Monsoon+arrives+early+in",
+     "age": 131
+    },
+    {
+     "title": "Ancient trading port uncovered beneath a parking lot during harbor works",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Ancient+trading+port+uncovered",
+     "age": 225
+    },
+    {
+     "title": "Fishing fleets agree to share catch data in real time to protect tuna stocks",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Fishing+fleets+agree+to",
+     "age": 340
+    }
+   ]
+  },
+  {
+   "id": "city",
+   "name": "City Hall",
+   "tag": "CITY",
+   "items": [
+    {
+     "title": "Council approves 40 miles of protected bike lanes across the riverfront",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Council+approves+40+miles",
+     "age": 6
+    },
+    {
+     "title": "Night buses return to every line starting next Monday",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Night+buses+return+to",
+     "age": 47
+    },
+    {
+     "title": "Library card now opens the tool library and the seed bank",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Library+card+now+opens",
+     "age": 118
+    },
+    {
+     "title": "Old power station will reopen as a market hall and rooftop park",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Old+power+station+will",
+     "age": 207
+    },
+    {
+     "title": "Water main work closes Fifth Street between Elm and Oak through Friday",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Water+main+work+closes",
+     "age": 296
+    }
+   ]
+  },
+  {
+   "id": "science",
+   "name": "Science Desk",
+   "tag": "SCI",
+   "items": [
+    {
+     "title": "Astronomers map the coldest known brown dwarf, 20 light years away",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Astronomers+map+the+coldest",
+     "age": 23
+    },
+    {
+     "title": "Deep-sea robot films a squid nursery at 2,000 meters",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Deep-sea+robot+films+a",
+     "age": 76
+    },
+    {
+     "title": "Study finds bumblebees learn faster when flowers are arranged in rows",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Study+finds+bumblebees+learn",
+     "age": 158
+    },
+    {
+     "title": "Comet will be visible to the naked eye after sunset next week",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Comet+will+be+visible",
+     "age": 263
+    },
+    {
+     "title": "Hardy wheat variety holds its yield through a record heat wave",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Hardy+wheat+variety+holds",
+     "age": 389
+    }
+   ]
+  },
+  {
+   "id": "tech",
+   "name": "Tech Desk",
+   "tag": "TECH",
+   "items": [
+    {
+     "title": "Solid-state battery pack charges a city car to 80 percent in 12 minutes",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Solid-state+battery+pack+charges",
+     "age": 31
+    },
+    {
+     "title": "Open-source maps project finishes tracing every building in Kenya",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Open-source+maps+project+finishes",
+     "age": 94
+    },
+    {
+     "title": "Researchers print a working heart valve from a patient's own cells",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Researchers+print+a+working",
+     "age": 172
+    },
+    {
+     "title": "Smallest satellite yet sends its first photo home from orbit",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Smallest+satellite+yet+sends",
+     "age": 248
+    },
+    {
+     "title": "Old payphones turn into free charging posts with street maps",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Old+payphones+turn+into",
+     "age": 411
+    }
+   ]
+  },
+  {
+   "id": "sport",
+   "name": "Sports Desk",
+   "tag": "SPORT",
+   "items": [
+    {
+     "title": "Rookie keeper saves three penalties to send the underdogs to the final",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Rookie+keeper+saves+three",
+     "age": 18
+    },
+    {
+     "title": "Marathon record falls by 11 seconds on a cool, still morning",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Marathon+record+falls+by",
+     "age": 103
+    },
+    {
+     "title": "Women's league sells out its opening weekend for the first time",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Women's+league+sells+out",
+     "age": 189
+    },
+    {
+     "title": "Sailing crew rounds Cape Horn in the lead after a night of 50-knot gusts",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Sailing+crew+rounds+Cape",
+     "age": 302
+    }
+   ]
+  },
+  {
+   "id": "arts",
+   "name": "Arts Desk",
+   "tag": "ARTS",
+   "items": [
+    {
+     "title": "Lost symphony manuscript found in an attic gets its first public performance",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Lost+symphony+manuscript+found",
+     "age": 39
+    },
+    {
+     "title": "Museum opens its storerooms for a week of free late-night tours",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Museum+opens+its+storerooms",
+     "age": 146
+    },
+    {
+     "title": "Film about a lighthouse keeper wins the festival's top prize",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Film+about+a+lighthouse",
+     "age": 277
+    },
+    {
+     "title": "Street piano program grows to 60 pianos in parks and stations",
+     "url": "https://en.wikipedia.org/wiki/Special:Search?search=Street+piano+program+grows",
+     "age": 455
+    }
+   ]
+  }
+ ],
+ "weather": {
+  "temp": 17,
+  "code": 2,
+  "day": true,
+  "high": 21,
+  "low": 12,
+  "place": ""
+ }
+}
