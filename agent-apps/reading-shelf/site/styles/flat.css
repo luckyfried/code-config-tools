@@ -1,0 +1,95 @@
+/* The flat shelf: rows of CSS 3D books for browsers without WebGL. */
+.flat {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 140px var(--space-5) var(--space-7);
+  overflow: auto;
+  background: var(--color-bg);
+  perspective: 1400px;
+}
+.flat-wall {
+  display: grid;
+  gap: var(--space-6);
+  width: min(1100px, 100%);
+}
+.flat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  min-height: 210px;
+  padding: 0 var(--space-4);
+  border-bottom: 14px solid var(--color-surface-2);
+  box-shadow: 0 12px 24px -12px var(--scene-shadow);
+  transform-style: preserve-3d;
+  overflow-x: auto;
+}
+.flat-book {
+  position: relative;
+  flex: none;
+  width: var(--t);
+  height: var(--h);
+  padding: 0;
+  border: 0;
+  background: none;
+  transform-style: preserve-3d;
+  transform-origin: 50% 100%;
+  transition: transform 420ms var(--ease-spring);
+}
+.flat-spine, .flat-cover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  backface-visibility: hidden;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.flat-spine { width: 100%; }
+.flat-cover {
+  width: var(--d);
+  transform-origin: 0 50%;
+  transform: translateX(var(--t)) rotateY(90deg);
+}
+.flat-book.is-face { width: var(--d); }
+.flat-book.is-face .flat-spine { display: none; }
+.flat-book.is-face .flat-cover { transform: none; }
+.flat-book.is-out, .flat-book:focus-visible { transform: translateZ(40px) rotateX(-25deg) rotateY(-14deg); }
+@media (hover: hover) and (pointer: fine) {
+  .flat-book:hover { transform: translateZ(40px) rotateX(-25deg) rotateY(-14deg); }
+}
+
+.flat-open {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 15;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(640px, 92vw);
+  aspect-ratio: 1.36;
+  transform: translate(-50%, -46%) scale(0.92);
+  opacity: 0;
+  transition-property: transform, opacity;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-out);
+  box-shadow: var(--shadow-2);
+}
+.flat-open.is-open { transform: translate(-50%, -50%); opacity: 1; }
+.flat-page {
+  padding: var(--space-6) var(--space-5);
+  background: var(--scene-paper);
+  color: var(--scene-ink);
+  font-family: var(--font-display);
+}
+.flat-left { text-align: center; border-right: 1px solid color-mix(in srgb, var(--scene-ink) 15%, transparent); }
+.flat-left h3 { margin-top: var(--space-6); font-size: var(--text-2xl); font-weight: 560; line-height: 1.15; }
+.flat-author { margin-top: var(--space-2); font-style: italic; }
+.flat-status { margin-top: var(--space-5); font-family: var(--font-sans); font-size: var(--text-sm); }
+.flat-note { font-size: var(--text-lg); line-height: 1.5; }
+
+@media (max-width: 767px) {
+  .flat { padding-top: 150px; }
+  .flat-open { top: 38%; }
+  .app.is-flat[data-open="true"] .flat-open { top: 34%; }
+}

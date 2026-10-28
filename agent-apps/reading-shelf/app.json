@@ -1,0 +1,14 @@
+{
+  "id": "01a17fea-63fb-7df1-9ce8-537cf7c72d5b",
+  "version": "2026-10-21",
+  "name": "Reading Shelf",
+  "shortDescription": "Your books on a lamplit 3D shelf you can pull a volume from and open.",
+  "description": "Your books stand on a real 3D bookcase in a reading room, spines out and sized by page count, with their covers and the spine colors taken from them. Point at a spine or tap it and the book tilts out; open it and it floats up and opens on your note and rating. The books you are reading sit face-out with a bookmark at your page. A list lets you search and change status, rating, and the page you are on; a stats strip shows books and pages by month. Changes stay in your browser, and you can export them.",
+  "category": "entertainment",
+  "subcategory": "Books",
+  "useCase": "web-development",
+  "icon": "assets/icon.svg",
+  "screenshots": ["assets/phone-light.jpg", "assets/desktop-light.jpg"],
+  "deploy": "out/reading-shelf",
+  "setup": "Your agent asks, in one message, for your books: the title and author of each is enough, and an ISBN gets the right cover. It asks which you have read, which you are reading (and the page you are on), and which you want to read, plus a one-line note for any you feel like. You can pick a room (library, studio, or paper) and a shelf finish (oak, white, or black steel). Covers can be image files you keep beside your inputs, or the agent can fetch them from Open Library, which needs no key. Nothing is sent anywhere else."
+}

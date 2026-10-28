@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reading Shelf</title>
+  <meta name="description" content="Your books on a lamplit shelf: pull a volume out, open it, and read your note.">
+  <script>
+    try {
+      var saved = localStorage.getItem("reading-shelf:scheme");
+      if (saved === "light" || saved === "dark") document.documentElement.setAttribute("data-theme", saved);
+    } catch (e) {}
+  </script>
+  <link rel="preload" href="./fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/panels.css">
+  <link rel="stylesheet" href="./styles/flat.css">
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+</head>
+<body>
+  <div class="app" id="app" data-view="shelf">
+    <canvas class="scene" id="scene" aria-label="Your bookshelf" tabindex="0"></canvas>
+    <div class="flat" id="flat" hidden></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="brand">
+        <h1 class="owner" id="owner">Your shelf</h1>
+        <p class="tally" id="tally"></p>
+      </div>
+      <div class="controls">
+        <nav class="views" aria-label="Views">
+          <button type="button" class="view-tab" data-view="shelf" aria-pressed="true">Shelf</button>
+          <button type="button" class="view-tab" data-view="list" aria-pressed="false">List</button>
+          <button type="button" class="view-tab" data-view="stats" aria-pressed="false">Stats</button>
+        </nav>
+        <div class="sort">
+          <button type="button" class="chip-button sort-button" id="sort-button" aria-haspopup="listbox" aria-expanded="false">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M6 10h8M8 14h4"/></svg>
+            <span id="sort-label">Shelf order</span>
+          </button>
+          <ul class="menu" id="sort-menu" role="listbox" aria-label="Sort the shelf" hidden></ul>
+        </div>
+        <button type="button" class="icon-button scheme" id="scheme" aria-label="Switch to dark">
+          <svg class="icon icon-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.4"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg>
+          <svg class="icon icon-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.6A6.5 6.5 0 0 1 7.4 4.5a6.5 6.5 0 1 0 8.1 8.1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="dock" id="dock">
+      <div class="bays" id="bays" hidden>
+        <button type="button" class="bay-step" id="bay-left" aria-label="Bay to the left">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 5l-5 5 5 5"/></svg>
+        </button>
+        <p class="bay-label" id="bay-label" aria-live="polite"></p>
+        <ol class="bay-dots" id="bay-dots" aria-hidden="true"></ol>
+        <button type="button" class="bay-step" id="bay-right" aria-label="Bay to the right">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5l5 5-5 5"/></svg>
+        </button>
+      </div>
+      <section class="now" id="now" aria-label="Now reading"></section>
+    </div>
+
+    <div class="rows" id="rows" hidden>
+      <button type="button" class="icon-button row-step" id="row-up" aria-label="Shelf above">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 12.5l5-5 5 5"/></svg>
+      </button>
+      <ol class="row-dots" id="row-dots" aria-hidden="true"></ol>
+      <button type="button" class="icon-button row-step" id="row-down" aria-label="Shelf below">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5"/></svg>
+      </button>
+    </div>
+
+    <div class="tip" id="tip" aria-live="polite" hidden>
+      <p class="tip-title" id="tip-title"></p>
+      <p class="tip-meta" id="tip-meta"></p>
+    </div>
+
+    <p class="hint" id="hint" hidden></p>
+
+    <aside class="reader" id="reader" aria-label="Book details" hidden>
+      <button type="button" class="icon-button reader-close" id="reader-close" aria-label="Close the book">
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg>
+      </button>
+      <h2 class="reader-title" id="reader-title"></h2>
+      <p class="reader-author" id="reader-author"></p>
+      <div class="segmented" id="reader-status" role="radiogroup" aria-label="Status">
+        <button type="button" role="radio" data-status="read">Read</button>
+        <button type="button" role="radio" data-status="reading">Reading</button>
+        <button type="button" role="radio" data-status="want">Want to read</button>
+      </div>
+      <div class="stars" id="reader-stars" role="radiogroup" aria-label="Rating"></div>
+      <div class="progress" id="reader-progress">
+        <label class="progress-line" for="reader-page">
+          <span>Page</span>
+          <input class="page-input" id="reader-page" type="number" inputmode="numeric" min="0" step="1">
+          <span id="reader-of">of 0</span>
+        </label>
+        <input class="range" id="reader-range" type="range" min="0" max="100" step="1" aria-label="How far you are">
+      </div>
+      <p class="reader-note" id="reader-note"></p>
+      <dl class="facts" id="reader-facts"></dl>
+    </aside>
+
+    <section class="panel list" id="list" aria-label="All books" hidden>
+      <div class="list-head">
+        <label class="search">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.2"/><path d="M13 13l3.5 3.5"/></svg>
+          <input id="search" type="search" placeholder="Search titles, authors, notes" autocomplete="off" aria-label="Search">
+        </label>
+        <div class="filters" id="filters" role="radiogroup" aria-label="Show"></div>
+      </div>
+      <ul class="book-list" id="book-list"></ul>
+      <div class="list-foot">
+        <p class="foot-note">Your changes stay on this device.</p>
+        <div class="foot-actions">
+          <button type="button" class="chip-button" id="export">Export</button>
+          <label class="chip-button file-button">Import<input id="import" type="file" accept="application/json,.json"></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel stats" id="stats" aria-label="Reading stats" hidden></section>
+  </div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./game/main.js"></script>
+  <script src="./badge.js" defer></script>
+</body>
+</html>
