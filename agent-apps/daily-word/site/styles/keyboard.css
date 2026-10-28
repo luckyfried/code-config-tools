@@ -1,0 +1,161 @@
+/* The keyboard: glass chips with a light inside that turns green, amber, or dark as letters resolve. */
+
+.keyboard {
+  --key-h: clamp(46px, 7.2dvh, 58px);
+  --key-gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--key-gap) + 2px);
+  touch-action: manipulation;
+}
+
+.key-row {
+  display: flex;
+  gap: var(--key-gap);
+}
+
+.key-row.is-middle {
+  padding: 0 4.6%;
+}
+
+.key {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--key-h);
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  color: var(--key-ink);
+  background: linear-gradient(180deg, var(--key-glass-2), var(--key-glass) 70%);
+  box-shadow:
+    inset 0 1px 0 var(--key-rim),
+    inset 0 -2px 0 var(--key-shade),
+    0 0 0 1px var(--key-edge),
+    0 2px 4px -1px var(--key-drop);
+  font-family: var(--font-sans);
+  font-size: clamp(1rem, 2.6dvh, 1.25rem);
+  font-weight: 650;
+  line-height: 1;
+  /* The ink keeps its own color until the fill beneath it is nearly in, then turns at once, so a lighting key
+     never shows a white letter on clear glass or a grey one on half-lit color. */
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    color 0s linear var(--motion-base);
+}
+
+.key.is-wide {
+  flex: 1.55 1 0;
+  font-size: clamp(0.8125rem, 1.9dvh, 0.9375rem);
+  font-weight: 700;
+}
+
+.key svg {
+  width: 24px;
+  height: 24px;
+}
+
+.key-label {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+/* The light inside the chip: a state-colored fill that brightens from below, with its own rim and glow, faded in
+   as the letter resolves. Only its opacity moves, so the fade runs on the compositor. */
+.key::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background:
+    radial-gradient(120% 90% at 50% 115%, var(--key-light, transparent) 0%, transparent 70%),
+    linear-gradient(180deg, var(--key-fill-a, transparent), var(--key-fill-b, transparent));
+  box-shadow: var(--key-lit-shadow, none);
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+/* The ring a press sends out. */
+.key::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px var(--key-ring);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.key[data-state]::before {
+  opacity: 1;
+}
+
+.key[data-state="correct"] {
+  --key-fill-a: var(--tile-correct);
+  --key-fill-b: var(--tile-correct-2);
+  --key-light: color-mix(in oklab, var(--tile-correct) 40%, var(--tile-edge-top));
+  --key-lit-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--tile-correct) 50%, var(--tile-edge-top)),
+    inset 0 -2px 0 var(--key-shade),
+    0 0 0 1px color-mix(in oklab, var(--tile-correct) 60%, transparent),
+    0 0 18px -3px var(--glow-correct);
+  color: var(--tile-on-correct);
+}
+
+.key[data-state="present"] {
+  --key-fill-a: var(--tile-present);
+  --key-fill-b: var(--tile-present-2);
+  --key-light: color-mix(in oklab, var(--tile-present) 40%, var(--tile-edge-top));
+  --key-lit-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--tile-present) 50%, var(--tile-edge-top)),
+    inset 0 -2px 0 var(--key-shade),
+    0 0 0 1px color-mix(in oklab, var(--tile-present) 60%, transparent),
+    0 0 18px -3px var(--glow-present);
+  color: var(--tile-on-present);
+}
+
+.key[data-state="absent"] {
+  --key-fill-a: var(--tile-absent);
+  --key-fill-b: var(--tile-absent-2);
+  /* A spent letter reads, but quieter than the keys still in play. */
+  --key-lit-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--tile-absent) 70%, var(--tile-edge-top)),
+    inset 0 -2px 0 var(--key-shade);
+  color: color-mix(in oklab, var(--tile-on-absent) 66%, var(--tile-absent));
+}
+
+.key.is-pressed {
+  transform: translateY(2px) scale(0.95);
+  transition-duration: 60ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .key:not([data-state]):hover {
+    background: linear-gradient(180deg, var(--key-rim), var(--key-glass-2) 70%);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .keyboard {
+    --key-h: clamp(36px, 11.5dvh, 48px);
+    --key-gap: 5px;
+  }
+
+  .key {
+    font-size: 0.9375rem;
+  }
+
+  .key.is-wide {
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 1100px) and (min-height: 620px) {
+  .keyboard {
+    --key-h: clamp(50px, 6.4dvh, 62px);
+    --key-gap: 7px;
+  }
+}

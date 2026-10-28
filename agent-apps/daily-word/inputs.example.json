@@ -1,0 +1,32 @@
+{
+  "_notes": {
+    "title": "The game's name, shown in the header and at the top of the share grid.",
+    "topic": "One line about what the words are, shown under the name and on the how-to-play sheet.",
+    "words": "The answers in play order, one a day: five letters each, letters only. Write 60 to 365 on the topic.",
+    "launchDate": "YYYY-MM-DD. Day 1 is this date; each later day plays the next word, and the list starts over at its end.",
+    "allowExtra": "Extra guesses the game should accept that are not everyday English: names, jargon, in-jokes. Five letters each.",
+    "theme": "paper (cool paper, ink, and sage), night (deep green with emerald and amber light), or candy (bubblegum, mint, and sunshine). Each has a light and a dark side that follows the device.",
+    "hardMode": "true starts every game in hard mode, where every letter you've found must be used again. Players can change it in settings."
+  },
+  "title": "Daily Dough",
+  "topic": "Words from a working kitchen: tools, techniques, and what's on the stove.",
+  "words": [
+    "GRATE", "MAPLE", "POACH", "COCOA", "SNACK", "ROAST", "BREAD", "BROIL", "TONGS", "KNEAD",
+    "TIMER", "DOUGH", "BASIL", "KNIFE", "SUSHI", "PROOF", "SAVOR", "CURRY", "CHIVE", "AIOLI",
+    "BLEND", "PIZZA", "STOCK", "STEAK", "GRAPE", "FLAKE", "SCONE", "RAMEN", "BERRY", "SIEVE",
+    "UMAMI", "TORTE", "SAUCE", "BAGEL", "PEACH", "BOARD", "HONEY", "WAFER", "CLOVE", "LEMON",
+    "MELON", "CUMIN", "SPRIG", "FUDGE", "FLOUR", "CREAM", "MOCHA", "CHILI", "SALSA", "PESTO",
+    "GLAZE", "BACON", "PLATE", "BROTH", "FRESH", "PASTA", "LADLE", "MANGO", "MINCE", "SCALE",
+    "APRON", "ONION", "THYME", "SLICE", "OLIVE", "SAUTE", "TROUT", "WHISK", "STEAM", "CREPE",
+    "GRAVY", "GRILL", "YEAST", "BRINE", "TOAST", "SHRED", "PRAWN", "SPOON", "FEAST", "SALAD",
+    "CHURN", "LUNCH", "HERBS", "SQUID", "SUGAR", "BASTE", "LATTE", "CRUST", "CRISP", "CRUMB",
+    "SPICE"
+  ],
+  "launchDate": "2026-10-01",
+  "allowExtra": [
+    "QUESO",
+    "CREMA"
+  ],
+  "theme": "night",
+  "hardMode": false
+}

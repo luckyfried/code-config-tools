@@ -1,0 +1,105 @@
+/* The stage behind the game: three soft lights drifting slowly, a pool of light under the board, and a fine grain. */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-stage);
+  overflow: hidden;
+  background: var(--color-bg);
+  pointer-events: none;
+}
+
+.stage .blob {
+  position: absolute;
+  width: 80vmax;
+  height: 80vmax;
+  border-radius: 50%;
+  opacity: var(--blob-opacity);
+  will-change: transform;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.stage .blob-a {
+  top: -38vmax;
+  left: -30vmax;
+  background: radial-gradient(closest-side, var(--stage-1), transparent);
+  animation-name: drift-a;
+  animation-duration: 34s;
+}
+
+.stage .blob-b {
+  right: -36vmax;
+  bottom: -42vmax;
+  background: radial-gradient(closest-side, var(--stage-2), transparent);
+  animation-name: drift-b;
+  animation-duration: 41s;
+}
+
+.stage .blob-c {
+  top: 10vmax;
+  right: -46vmax;
+  width: 70vmax;
+  height: 70vmax;
+  background: radial-gradient(closest-side, var(--stage-3), transparent);
+  animation-name: drift-c;
+  animation-duration: 47s;
+}
+
+.stage .pool {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(120vw, 1300px);
+  height: min(90vh, 900px);
+  translate: -50% -50%;
+  background: radial-gradient(closest-side, var(--stage-light), transparent);
+}
+
+.stage .grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("../img/grain.png");
+  background-size: 128px 128px;
+  opacity: var(--grain-opacity);
+}
+
+@keyframes drift-a {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(12vmax, 8vmax, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(22vmax, -2vmax, 0) scale(0.94);
+  }
+}
+
+@keyframes drift-b {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-14vmax, -10vmax, 0) scale(0.92);
+  }
+  100% {
+    transform: translate3d(-24vmax, 4vmax, 0) scale(1.14);
+  }
+}
+
+@keyframes drift-c {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.95);
+  }
+  100% {
+    transform: translate3d(-30vmax, 22vmax, 0) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage .blob {
+    animation: none;
+  }
+}

@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"allowExtra": [], "hardMode": false, "launchDate": "2026-10-01", "theme": "night", "title": "Daily Word", "topic": "Everyday words.", "words": ["GLINT", "BRAVE", "CHORD", "PLANK", "WORTH"]};

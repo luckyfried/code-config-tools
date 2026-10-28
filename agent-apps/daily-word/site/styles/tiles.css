@@ -1,0 +1,310 @@
+/* The board and its tiles. Each tile is a slab: a front face, a back face, and four sides on a preserve-3d
+   transform, lit from above, so a flip turns the whole slab over and shows its edge. A slab is only built in 3D
+   while it turns (.is-turning); at rest it is one flat face, so a settled board costs the compositor nothing. */
+
+.board {
+  --gap: clamp(5px, 1.5cqmin, 10px);
+  --tile-max: 76px;
+  --tile: min(calc((100cqw - 4 * var(--gap)) / 5), calc((100cqh - 5 * var(--gap)) / 6), var(--tile-max));
+  display: grid;
+  grid-template-rows: repeat(6, var(--tile));
+  gap: var(--gap);
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .board {
+    --gap: 6px;
+  }
+}
+
+@media (min-width: 1100px) and (min-height: 620px) {
+  .board {
+    --tile-max: 86px;
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 900px) {
+  .board {
+    --tile-max: 104px;
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(5, var(--tile));
+  gap: var(--gap);
+}
+
+.tile {
+  --depth: calc(var(--tile) * 0.23);
+  --r: calc(var(--tile) * 0.15);
+  --front-a: var(--tile-face);
+  --front-b: var(--tile-face-2);
+  --back-a: var(--tile-face);
+  --back-b: var(--tile-face-2);
+  --back-ink: var(--tile-ink);
+  --back-glow: transparent;
+  position: relative;
+  width: var(--tile);
+  height: var(--tile);
+}
+
+.tile[data-result="correct"] {
+  --back-a: var(--tile-correct);
+  --back-b: var(--tile-correct-2);
+  --back-ink: var(--tile-on-correct);
+  --back-glow: var(--glow-correct);
+}
+
+.tile[data-result="present"] {
+  --back-a: var(--tile-present);
+  --back-b: var(--tile-present-2);
+  --back-ink: var(--tile-on-present);
+  --back-glow: var(--glow-present);
+}
+
+.tile[data-result="absent"] {
+  --back-a: var(--tile-absent);
+  --back-b: var(--tile-absent-2);
+  --back-ink: var(--tile-on-absent);
+}
+
+/* The soft shadow the slab casts on the stage; it stays put while the slab lifts and turns. */
+.tile::before {
+  content: "";
+  position: absolute;
+  inset: 6% 4% 0;
+  border-radius: var(--r);
+  box-shadow: 0 calc(var(--depth) * 0.7) calc(var(--depth) * 1.6) var(--tile-shadow);
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+
+.tile:not([data-state="empty"])::before {
+  opacity: 1;
+}
+
+.slab {
+  position: absolute;
+  inset: 0;
+}
+
+/* Each slab turns under its own eye, centred over it and looking down from above the board, so a turning slab
+   grows evenly on both sides and stays inside its own slot in every column. */
+.tile.is-turning {
+  perspective: calc(var(--tile) * 17);
+  perspective-origin: 50% -120%;
+}
+
+.tile.is-turning .slab {
+  transform-style: preserve-3d;
+}
+
+.tile.is-turning::before {
+  transform: translateZ(calc(var(--depth) / -2 - 1px));
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--r);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.face-front {
+  color: var(--tile-ink);
+  background: var(--tile-socket);
+  box-shadow:
+    inset 0 0 0 1.5px var(--tile-socket-line),
+    inset 0 calc(var(--tile) * 0.05) calc(var(--tile) * 0.12) var(--tile-socket-line);
+}
+
+.tile:not([data-state="empty"]) .face-front {
+  background: linear-gradient(172deg, var(--front-a) 0%, var(--front-b) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--tile-edge-top),
+    inset 0 0 0 1.5px color-mix(in oklab, var(--tile-ink) 22%, transparent),
+    inset 0 calc(var(--tile) * -0.04) 0 color-mix(in oklab, var(--tile-edge-bottom) 35%, transparent);
+}
+
+.tile.is-turning .face-front {
+  transform: translateZ(calc(var(--depth) / 2));
+}
+
+/* At rest the slab shows one face: the front until it is revealed, then the back, lying flat. */
+.face-back,
+.tile.is-revealed:not(.is-turning) .face-front {
+  display: none;
+}
+
+.tile.is-turning .face-back,
+.tile.is-revealed .face-back {
+  display: grid;
+}
+
+.tile.is-turning .face-back {
+  transform: rotateX(180deg) translateZ(calc(var(--depth) / 2));
+}
+
+.face-back {
+  color: var(--back-ink);
+  background: linear-gradient(172deg, var(--back-a) 0%, var(--back-b) 100%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--back-a) 55%, var(--tile-edge-top)),
+    inset 0 calc(var(--tile) * -0.04) 0 color-mix(in oklab, var(--back-b) 70%, var(--tile-edge-bottom));
+}
+
+.tile.is-revealed .face-back {
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--back-a) 55%, var(--tile-edge-top)),
+    inset 0 calc(var(--tile) * -0.04) 0 color-mix(in oklab, var(--back-b) 70%, var(--tile-edge-bottom)),
+    0 0 calc(var(--tile) * 0.5) calc(var(--tile) * -0.08) var(--back-glow);
+}
+
+/* The letter sits above the sheen, so the sweep brightens the face and never washes the letter. */
+.glyph {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 760;
+  font-stretch: 86%;
+  font-size: calc(var(--tile) * 0.54);
+  line-height: 1;
+  translate: 0 3%;
+}
+
+/* A shade in the slab's own deep color holds the letter's edge while the sheen crosses it. */
+.face-back .glyph {
+  text-shadow:
+    0 1px 0 color-mix(in oklab, var(--back-b) 70%, var(--tile-edge-bottom)),
+    0 0 calc(var(--tile) * 0.08) color-mix(in oklab, var(--back-b) 80%, transparent);
+}
+
+.sheen {
+  display: none;
+  position: absolute;
+  inset: -40% -20%;
+  background: linear-gradient(162deg, transparent 38%, var(--sheen) 50%, transparent 62%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-80%);
+}
+
+/* The four sides: each spans the slab's depth, shaded from the back face's color to the front's. They show only
+   while the slab turns (grid.js fades them with the flip); a settled slab is one flat face. */
+.side {
+  display: none;
+  position: absolute;
+  opacity: 0;
+}
+
+.tile.is-turning .sheen,
+.tile.is-turning .side {
+  display: block;
+}
+
+.side-top {
+  left: calc(var(--r) * 0.55);
+  right: calc(var(--r) * 0.55);
+  top: 0;
+  height: var(--depth);
+  transform: translateY(calc(var(--depth) / -2)) rotateX(90deg);
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--back-b) 55%, var(--tile-edge-side)), color-mix(in oklab, var(--tile-edge-side) 70%, var(--tile-edge-top)));
+}
+
+.side-bottom {
+  left: calc(var(--r) * 0.55);
+  right: calc(var(--r) * 0.55);
+  bottom: 0;
+  height: var(--depth);
+  transform: translateY(calc(var(--depth) / 2)) rotateX(-90deg);
+  background: linear-gradient(to bottom, var(--tile-edge-bottom), color-mix(in oklab, var(--back-b) 60%, var(--tile-edge-bottom)));
+}
+
+.side-left {
+  top: calc(var(--r) * 0.55);
+  bottom: calc(var(--r) * 0.55);
+  left: 0;
+  width: var(--depth);
+  transform: translateX(calc(var(--depth) / -2)) rotateY(-90deg);
+  background: linear-gradient(to right, color-mix(in oklab, var(--back-b) 55%, var(--tile-edge-side)), var(--tile-edge-side));
+}
+
+.side-right {
+  top: calc(var(--r) * 0.55);
+  bottom: calc(var(--r) * 0.55);
+  right: 0;
+  width: var(--depth);
+  transform: translateX(calc(var(--depth) / 2)) rotateY(90deg);
+  background: linear-gradient(to right, var(--tile-edge-side), color-mix(in oklab, var(--back-b) 55%, var(--tile-edge-side)));
+}
+
+/* A word the game will not take: the row's slabs flash a red rim. */
+.tile.is-invalid .face-front {
+  box-shadow:
+    inset 0 0 0 2.5px var(--color-danger),
+    0 0 calc(var(--tile) * 0.3) calc(var(--tile) * -0.08) var(--color-danger);
+}
+
+:root.high-contrast {
+  --tile-correct: var(--hc-correct);
+  --tile-correct-2: var(--hc-correct-2);
+  --tile-on-correct: var(--hc-on-correct);
+  --tile-present: var(--hc-present);
+  --tile-present-2: var(--hc-present-2);
+  --tile-on-present: var(--hc-on-present);
+  --glow-correct: var(--hc-glow-correct);
+  --glow-present: var(--hc-glow-present);
+}
+
+/* Mini slabs, flat, for how-to-play examples and the answer on a lost game. */
+.mini-row {
+  --tile: 40px;
+  display: flex;
+  gap: 5px;
+}
+
+.mini {
+  --back-a: var(--tile-face);
+  --back-b: var(--tile-face-2);
+  --back-ink: var(--tile-ink);
+  display: grid;
+  place-items: center;
+  width: var(--tile);
+  height: var(--tile);
+  border-radius: calc(var(--tile) * 0.16);
+  color: var(--back-ink);
+  background: linear-gradient(172deg, var(--back-a), var(--back-b));
+  box-shadow:
+    inset 0 1px 0 var(--tile-edge-top),
+    inset 0 0 0 1px color-mix(in oklab, var(--tile-ink) 18%, transparent),
+    0 calc(var(--tile) * 0.1) 0 color-mix(in oklab, var(--back-b) 50%, var(--tile-edge-bottom)),
+    0 calc(var(--tile) * 0.16) calc(var(--tile) * 0.22) var(--tile-shadow);
+  font-family: var(--font-display);
+  font-weight: 760;
+  font-stretch: 86%;
+  font-size: calc(var(--tile) * 0.54);
+  line-height: 1;
+}
+
+.mini[data-result="correct"] {
+  --back-a: var(--tile-correct);
+  --back-b: var(--tile-correct-2);
+  --back-ink: var(--tile-on-correct);
+}
+
+.mini[data-result="present"] {
+  --back-a: var(--tile-present);
+  --back-b: var(--tile-present-2);
+  --back-ink: var(--tile-on-present);
+}
+
+.mini[data-result="absent"] {
+  --back-a: var(--tile-absent);
+  --back-b: var(--tile-absent-2);
+  --back-ink: var(--tile-on-absent);
+}

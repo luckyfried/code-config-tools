@@ -1,0 +1,17 @@
+{
+  "id": "01a18013-1a9e-7bf0-8695-7da4f36b415d",
+  "version": "2026-10-21",
+  "name": "Daily Word",
+  "shortDescription": "A daily five-letter word on your own topic, with tiles that flip and glow.",
+  "description": "A one-page daily word game made from your own word list: your field, your family, your team's in-jokes. Six guesses at a five-letter word that changes every midnight, on tiles that turn over like real slabs, with a keyboard that lights up green and amber as letters resolve. It keeps your streak and guess distribution on this device, copies a share grid of colored squares that never gives the word away, and has an endless mode, hard mode, high contrast, sound, and three palettes with light and dark sides. Your agent writes the word list on your topic and shows you the first ten.",
+  "category": "games",
+  "subcategory": "Puzzle and word",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/phone-light.webp",
+    "assets/desktop-light.webp"
+  ],
+  "deploy": "out/daily-word",
+  "setup": "Your agent asks, in one message, for the game's name, its topic (your field, your family, your team's in-jokes), the launch date that counts as day 1, and a palette: paper, night, or candy. It then writes 60 to 365 five-letter words on that topic and shows you the first ten to approve before building the page. No keys or accounts are needed, and your stats stay in your browser."
+}

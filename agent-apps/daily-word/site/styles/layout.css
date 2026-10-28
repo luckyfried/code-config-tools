@@ -1,0 +1,312 @@
+/* The page's composition: a phone column, a tablet column, a three-column desktop, and a side-by-side landscape phone. */
+
+.app {
+  position: relative;
+  z-index: var(--z-app);
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "bar"
+    "modes"
+    "caption"
+    "board"
+    "keys";
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    calc(env(safe-area-inset-bottom) + var(--reserve))
+    env(safe-area-inset-left);
+}
+
+.play {
+  display: contents;
+}
+
+.bar {
+  grid-area: bar;
+}
+
+.play > .modes {
+  grid-area: modes;
+}
+
+.caption {
+  grid-area: caption;
+}
+
+.board-wrap {
+  grid-area: board;
+}
+
+.keyboard {
+  grid-area: keys;
+}
+
+.rail {
+  display: none;
+}
+
+/* Header */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.brand {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 82%;
+  font-size: clamp(1.5rem, 6.4vw, 1.875rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dayline {
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tools {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.icon-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text);
+  transition-property: background-color, transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.icon-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-btn:active {
+  transform: scale(0.94);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    background: var(--key-glass-2);
+  }
+}
+
+/* Daily / Endless switch */
+
+.play > .modes {
+  justify-self: center;
+  margin: var(--space-1) 0 0;
+}
+
+.caption {
+  min-height: 1.5em;
+  margin: var(--space-2) var(--space-4) 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.caption strong {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+/* The board's area is a size container, so the tiles size to whatever room the layout leaves. */
+.app {
+  --board-pad-top: var(--space-2);
+}
+
+.board-wrap {
+  position: relative;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: var(--board-pad-top) var(--space-4) var(--space-2);
+}
+
+.keyboard {
+  padding: 0 var(--space-2) var(--space-3);
+}
+
+/* Tablet and small laptop: one composed column. */
+@media (min-width: 720px) {
+  .bar {
+    padding: var(--space-5) var(--space-6) var(--space-2);
+  }
+
+  .wordmark {
+    font-size: 2.25rem;
+  }
+
+  .keyboard {
+    width: min(100%, 600px);
+    justify-self: center;
+    padding: 0 var(--space-4) var(--space-5);
+  }
+
+  .app {
+    --board-pad-top: var(--space-4);
+  }
+
+  .board-wrap {
+    padding: var(--board-pad-top) var(--space-6) var(--space-4);
+  }
+}
+
+/* Desktop: the board in the middle, the game's facts on the left, how to play and settings on the right. */
+@media (min-width: 1100px) and (min-height: 620px) {
+  .app {
+    grid-template-columns: minmax(300px, 1fr) minmax(520px, 700px) minmax(300px, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "left caption right"
+      "left board right"
+      "left keys right";
+  }
+
+  .bar,
+  .play > .modes {
+    display: none;
+  }
+
+  .rail {
+    display: block;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .rail-left {
+    grid-area: left;
+  }
+
+  .rail-right {
+    grid-area: right;
+  }
+
+  .caption {
+    margin: var(--space-6) var(--space-4) 0;
+    font-size: var(--text-md);
+  }
+
+  .app {
+    --board-pad-top: var(--space-5);
+  }
+
+  .board-wrap {
+    padding: var(--board-pad-top) var(--space-4) var(--space-5);
+  }
+
+  .keyboard {
+    width: min(100%, 640px);
+    padding: 0 var(--space-4) var(--space-6);
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 900px) {
+  .app {
+    grid-template-columns: minmax(380px, 1fr) minmax(640px, 820px) minmax(380px, 1fr);
+  }
+
+  .keyboard {
+    width: min(100%, 720px);
+  }
+
+  .caption {
+    font-size: var(--text-lg);
+  }
+}
+
+/* A phone on its side: the board on the left, the header, switch, and keyboard stacked on the right. The pair is
+   centred with equal side margins, each at least the larger safe-area inset, so neither side sits under the sensor
+   housing. The board column is as wide as the board the height allows (tiles.css: six rows, 6px gaps, 76px cap). */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    --edge: max(env(safe-area-inset-left), env(safe-area-inset-right), var(--space-6));
+    --board-h: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--reserve) - 2 * var(--space-3));
+    --board-tile: min(calc((var(--board-h) - 30px) / 6), 76px);
+    grid-template-columns: calc(5 * var(--board-tile) + 24px) minmax(0, 34rem);
+    justify-content: center;
+    column-gap: var(--space-6);
+    padding-left: var(--edge);
+    padding-right: var(--edge);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "board bar"
+      "board modes"
+      "board caption"
+      "board keys";
+  }
+
+  .bar {
+    display: flex;
+    padding: var(--space-3) 0 0;
+  }
+
+  .wordmark {
+    font-size: 1.5rem;
+  }
+
+  .play > .modes {
+    display: inline-flex;
+    justify-self: start;
+    margin: var(--space-2) 0 0;
+  }
+
+  .caption {
+    align-self: center;
+    text-align: left;
+    margin: 0;
+  }
+
+  .app {
+    --board-pad-top: 0px;
+  }
+
+  .board-wrap {
+    padding: var(--space-3) 0;
+  }
+
+  .keyboard {
+    width: 100%;
+    padding: 0 0 var(--space-3);
+  }
+
+  .rail {
+    display: none;
+  }
+}

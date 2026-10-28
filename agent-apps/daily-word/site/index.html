@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="light dark">
+  <title>Daily Word</title>
+  <meta name="description" content="Six guesses at today's five-letter word.">
+  <link rel="icon" href="./img/icon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link id="theme" rel="stylesheet" href="./theme.css">
+  <script>
+    // Applies a saved light/dark choice and palette before the first paint, so neither ever flashes.
+    (function () {
+      try {
+        var s = JSON.parse(localStorage.getItem("daily-word:settings") || "{}");
+        if (s.scheme === "light" || s.scheme === "dark") document.documentElement.setAttribute("data-theme", s.scheme);
+        if (s.highContrast) document.documentElement.classList.add("high-contrast");
+        if (s.palette === "paper" || s.palette === "night" || s.palette === "candy") document.getElementById("theme").href = "./themes/" + s.palette + ".css";
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/stage.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/tiles.css">
+  <link rel="stylesheet" href="./styles/keyboard.css">
+  <link rel="stylesheet" href="./styles/panels.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./main.js"></script>
+  <script src="./badge.js" defer></script>
+</head>
+<body>
+  <div class="stage" aria-hidden="true">
+    <i class="blob blob-a"></i>
+    <i class="blob blob-b"></i>
+    <i class="blob blob-c"></i>
+    <i class="pool"></i>
+    <i class="grain"></i>
+  </div>
+
+  <div class="app">
+    <header class="bar">
+      <div class="brand">
+        <h1 class="wordmark" data-bind="title">Daily Word</h1>
+        <p class="dayline" data-bind="dayline">&nbsp;</p>
+      </div>
+      <nav class="tools" aria-label="Game">
+        <button class="icon-btn" type="button" data-open="help" aria-label="How to play">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>
+        </button>
+        <button class="icon-btn" type="button" data-open="stats" aria-label="Stats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V12"/><path d="M10 20V5"/><path d="M15 20v-9"/><path d="M20 20V8"/></svg>
+        </button>
+        <button class="icon-btn" type="button" data-open="settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <aside class="rail rail-left" aria-label="Today">
+      <div class="rail-inner">
+        <div>
+          <h2 class="wordmark" data-bind="title">Daily Word</h2>
+          <p class="topic" data-bind="topic"></p>
+        </div>
+        <div class="today">
+          <span class="today-day" data-bind="day"></span>
+          <span class="today-next" data-bind="next"></span>
+        </div>
+        <div class="modes" data-modes></div>
+        <section>
+          <h3 class="section-title">Your stats</h3>
+          <div data-panel="stats"></div>
+        </section>
+      </div>
+    </aside>
+
+    <main class="play">
+      <div class="modes" data-modes></div>
+      <p class="caption" data-caption aria-live="polite">&nbsp;</p>
+      <div class="toasts" role="status" aria-live="polite"></div>
+      <div class="board-wrap">
+        <div class="board" role="grid" aria-label="Guesses"></div>
+      </div>
+      <div class="keyboard" role="group" aria-label="Keyboard"></div>
+    </main>
+
+    <aside class="rail rail-right" aria-label="How to play and settings">
+      <div class="rail-inner">
+        <section>
+          <h3 class="section-title">How to play</h3>
+          <div data-panel="help"></div>
+        </section>
+        <section>
+          <h3 class="section-title">Settings</h3>
+          <div data-panel="settings"></div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <canvas class="confetti" aria-hidden="true"></canvas>
+
+  <dialog class="sheet" id="help" aria-labelledby="help-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="help-title">How to play</h2>
+        <button class="icon-btn" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <p class="topic" data-bind="topic"></p>
+      <div data-panel="help"></div>
+      <div class="result-actions">
+        <button class="btn btn-primary" type="button" data-close>Play</button>
+        <button class="btn btn-quiet" type="button" data-replay>Watch a round</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="stats" aria-labelledby="stats-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="stats-title">Your stats</h2>
+        <button class="icon-btn" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div data-panel="stats"></div>
+      <div class="result-next">
+        <span>Next word in</span>
+        <strong data-bind="countdown">00:00:00</strong>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="settings" aria-labelledby="settings-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 class="sheet-title" id="settings-title">Settings</h2>
+        <button class="icon-btn" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <div data-panel="settings"></div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet" id="result" aria-labelledby="result-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <span></span>
+        <button class="icon-btn" type="button" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <h2 class="result-title" id="result-title" data-bind="result-title"></h2>
+      <p class="result-sub" data-bind="result-sub"></p>
+      <div class="result-answer" data-bind="result-answer"></div>
+      <div class="result-actions">
+        <button class="btn btn-primary" type="button" data-share autofocus>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>
+          Copy result
+        </button>
+        <button class="btn btn-quiet" type="button" data-endless>Play endless</button>
+      </div>
+      <div class="sheet-section">
+        <div data-panel="stats"></div>
+      </div>
+      <div class="result-next" data-next-row>
+        <span>Next word in</span>
+        <strong data-bind="countdown">00:00:00</strong>
+      </div>
+    </div>
+  </dialog>
+
+</body>
+</html>

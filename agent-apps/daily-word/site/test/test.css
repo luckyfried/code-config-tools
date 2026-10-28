@@ -1,0 +1,42 @@
+/* The rules test page: a plain list of cases, each marked passed or failed. */
+
+body {
+  overflow: auto;
+}
+
+.test {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.test h1 {
+  font-size: var(--text-3xl);
+}
+
+.test-sum {
+  margin: var(--space-3) 0 var(--space-5);
+  font-weight: 650;
+}
+
+.test-sum.is-pass,
+.test-list .is-pass strong {
+  color: var(--color-ok);
+}
+
+.test-sum.is-fail,
+.test-list .is-fail strong {
+  color: var(--color-danger);
+}
+
+.test-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-left: var(--space-5);
+}
+
+.test-list code {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
