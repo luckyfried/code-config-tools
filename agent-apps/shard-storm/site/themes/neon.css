@@ -1,0 +1,164 @@
+/* Neon: magenta and cyan light on violet black; in light, magenta and teal light on lavender. Tokens only: the page and the scene both read these. */
+
+:root {
+  --font-sans: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Unbounded", "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Chakra Petch", ui-monospace, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 400ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --color-bg: #f4f0fb;
+  --color-surface: rgba(255, 255, 255, 0.78);
+  --color-surface-2: rgba(244, 238, 255, 0.92);
+  --color-text: #1a0e38;
+  --color-muted: #5d5382;
+  --color-accent: #c4128a;
+  --color-on-accent: #ffffff;
+  --color-danger: #d4204f;
+  --color-ok: #0f8a58;
+  --color-border: rgba(60, 30, 120, 0.16);
+  --color-scrim: rgba(244, 240, 251, 0.86);
+  --color-glass: rgba(255, 255, 255, 0.7);
+  --color-glow: rgba(196, 18, 138, 0.18);
+  --color-accent-2: #0a7fa0;
+  --color-slow: #0a7fa0;
+  --color-on-slow: #ffffff;
+  --color-slow-veil: rgba(0, 150, 200, 0.26);
+  --shadow-1: 0 1px 2px rgba(40, 20, 90, 0.08), 0 4px 12px rgba(40, 20, 90, 0.08);
+  --shadow-2: 0 2px 6px rgba(40, 20, 90, 0.1), 0 18px 48px rgba(40, 20, 90, 0.16);
+  --scene-mode: day;
+  --scene-bg: #efe9fa;
+  --scene-bg-2: #d6c8f0;
+  --scene-grid: #4b2a9e;
+  --scene-star: #7a68b8;
+  --bullet-a: #ff1aa8;
+  --bullet-b: #00b2ea;
+  --bullet-c: #7a45ff;
+  --spark: #ff9f0a;
+  --ship: #1d9e4a;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #06041a;
+    --color-surface: rgba(16, 9, 42, 0.74);
+    --color-surface-2: rgba(28, 16, 64, 0.9);
+    --color-text: #f6f0ff;
+    --color-muted: #a99cd0;
+    --color-accent: #ff2bd6;
+    --color-on-accent: #16021c;
+    --color-danger: #ff4d6d;
+    --color-ok: #5cffb0;
+    --color-border: rgba(190, 160, 255, 0.2);
+    --color-scrim: rgba(6, 4, 26, 0.8);
+    --color-glass: rgba(14, 8, 38, 0.66);
+    --color-glow: rgba(255, 43, 214, 0.55);
+    --color-accent-2: #22e6ff;
+    --color-slow: #22e6ff;
+    --color-on-slow: #04121a;
+    --color-slow-veil: rgba(34, 230, 255, 0.3);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 64px rgba(0, 0, 0, 0.5);
+    --scene-mode: glow;
+    --scene-bg: #06041a;
+    --scene-bg-2: #1a0b3d;
+    --scene-grid: #7a4dff;
+    --scene-star: #c9c3ff;
+    --bullet-a: #ff2bd6;
+    --bullet-b: #22e6ff;
+    --bullet-c: #a98bff;
+    --spark: #fff2a8;
+    --ship: #9dff5c;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="light"] {
+  --color-bg: #f4f0fb;
+  --color-surface: rgba(255, 255, 255, 0.78);
+  --color-surface-2: rgba(244, 238, 255, 0.92);
+  --color-text: #1a0e38;
+  --color-muted: #5d5382;
+  --color-accent: #c4128a;
+  --color-on-accent: #ffffff;
+  --color-danger: #d4204f;
+  --color-ok: #0f8a58;
+  --color-border: rgba(60, 30, 120, 0.16);
+  --color-scrim: rgba(244, 240, 251, 0.86);
+  --color-glass: rgba(255, 255, 255, 0.7);
+  --color-glow: rgba(196, 18, 138, 0.18);
+  --color-accent-2: #0a7fa0;
+  --color-slow: #0a7fa0;
+  --color-on-slow: #ffffff;
+  --color-slow-veil: rgba(0, 150, 200, 0.26);
+  --shadow-1: 0 1px 2px rgba(40, 20, 90, 0.08), 0 4px 12px rgba(40, 20, 90, 0.08);
+  --shadow-2: 0 2px 6px rgba(40, 20, 90, 0.1), 0 18px 48px rgba(40, 20, 90, 0.16);
+  --scene-mode: day;
+  --scene-bg: #efe9fa;
+  --scene-bg-2: #d6c8f0;
+  --scene-grid: #4b2a9e;
+  --scene-star: #7a68b8;
+  --bullet-a: #ff1aa8;
+  --bullet-b: #00b2ea;
+  --bullet-c: #7a45ff;
+  --spark: #ff9f0a;
+  --ship: #1d9e4a;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #06041a;
+  --color-surface: rgba(16, 9, 42, 0.74);
+  --color-surface-2: rgba(28, 16, 64, 0.9);
+  --color-text: #f6f0ff;
+  --color-muted: #a99cd0;
+  --color-accent: #ff2bd6;
+  --color-on-accent: #16021c;
+  --color-danger: #ff4d6d;
+  --color-ok: #5cffb0;
+  --color-border: rgba(190, 160, 255, 0.2);
+  --color-scrim: rgba(6, 4, 26, 0.8);
+  --color-glass: rgba(14, 8, 38, 0.66);
+  --color-glow: rgba(255, 43, 214, 0.55);
+  --color-accent-2: #22e6ff;
+  --color-slow: #22e6ff;
+  --color-on-slow: #04121a;
+  --color-slow-veil: rgba(34, 230, 255, 0.3);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 64px rgba(0, 0, 0, 0.5);
+  --scene-mode: glow;
+  --scene-bg: #06041a;
+  --scene-bg-2: #1a0b3d;
+  --scene-grid: #7a4dff;
+  --scene-star: #c9c3ff;
+  --bullet-a: #ff2bd6;
+  --bullet-b: #22e6ff;
+  --bullet-c: #a98bff;
+  --spark: #fff2a8;
+  --ship: #9dff5c;
+  color-scheme: dark;
+}

@@ -1,0 +1,1 @@
+window.__APP_CONFIG__ = {"title": "Shard Storm", "playerName": "Riley", "theme": "neon", "shipColor": "#3dff8b", "runSeconds": 60, "patterns": ["Lotus", "Vortex", "Rain", "Twin Spirals", "Comb", "Pulse Rings", "Scatter", "Wall"]};

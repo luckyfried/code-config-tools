@@ -1,0 +1,415 @@
+/* The top bar: the pilot and the tools on the title, the run's wave, clock, and score in play. */
+
+.topbar {
+  position: absolute;
+  isolation: isolate;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding:
+    calc(env(safe-area-inset-top) + var(--space-4))
+    calc(env(safe-area-inset-right) + var(--space-4))
+    var(--space-3)
+    calc(env(safe-area-inset-left) + var(--space-4));
+  /* The score changes every frame: its own layer and layout keep that from repainting and relaying the page. */
+  contain: layout style;
+  will-change: transform;
+}
+
+/* In play, a soft band of the background behind the bar keeps the numbers clear of the storm. */
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -60% 0;
+  z-index: -1;
+  background: linear-gradient(180deg, var(--color-scrim) 0%, var(--color-scrim) 35%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.app[data-screen="run"] .topbar::before,
+.app[data-screen="demo"] .topbar::before,
+.app[data-screen="dying"] .topbar::before,
+.app[data-screen="paused"] .topbar::before {
+  opacity: 1;
+}
+
+.pilot {
+  grid-column: 1 / 4;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-weight: 600;
+  font-size: var(--text-md);
+  line-height: 1;
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.pilot-mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: var(--ship);
+  stroke: var(--color-text);
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+}
+
+.pilot-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tools {
+  grid-column: 4;
+  grid-row: 1;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.icon-pause {
+  display: none;
+}
+
+.hud-cluster,
+.hud-clock {
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-base);
+  transition-timing-function: var(--ease-out);
+}
+
+.hud-left {
+  grid-column: 1;
+  align-items: flex-start;
+}
+
+.hud-clock {
+  grid-column: 2;
+  align-items: center;
+}
+
+.hud-right {
+  grid-column: 3;
+  align-items: flex-end;
+}
+
+.hud-wave,
+.hud-time-label {
+  font-weight: 600;
+  font-size: var(--text-xs);
+  line-height: 1.2;
+  color: var(--color-muted);
+}
+
+.hud-wave-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.hud-time {
+  font-weight: 600;
+  font-size: var(--text-2xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-score {
+  font-weight: 600;
+  font-size: var(--text-2xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 18px var(--color-glow);
+}
+
+.hud-mult {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hud-mult-x {
+  display: inline-block;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+  min-width: 3.2em;
+  text-align: right;
+}
+
+.hud-mult-bar {
+  position: relative;
+  width: 44px;
+  height: 4px;
+  overflow: hidden;
+  background: var(--color-border);
+  clip-path: polygon(2px 0, 100% 0, calc(100% - 2px) 100%, 0 100%);
+}
+
+.hud-mult-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--p, 0));
+}
+
+.hud-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--ease-out);
+}
+
+.hud-progress-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--color-accent-2), var(--color-accent));
+  transform-origin: 0 50%;
+  transform: scaleX(var(--p, 0));
+}
+
+.app[data-screen="run"] .pilot,
+.app[data-screen="demo"] .pilot,
+.app[data-screen="dying"] .pilot,
+.app[data-screen="paused"] .pilot {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.app[data-screen="run"] .hud-cluster,
+.app[data-screen="run"] .hud-clock,
+.app[data-screen="demo"] .hud-cluster,
+.app[data-screen="demo"] .hud-clock,
+.app[data-screen="dying"] .hud-cluster,
+.app[data-screen="dying"] .hud-clock,
+.app[data-screen="paused"] .hud-cluster,
+.app[data-screen="paused"] .hud-clock {
+  opacity: 1;
+  transform: none;
+}
+
+.app[data-screen="run"] .hud-progress,
+.app[data-screen="demo"] .hud-progress,
+.app[data-screen="dying"] .hud-progress,
+.app[data-screen="paused"] .hud-progress {
+  opacity: 1;
+}
+
+.app[data-screen="run"] .icon-pause {
+  display: inline-grid;
+}
+
+.app[data-screen="run"] .tools [data-action="sound"],
+.app[data-screen="run"] .tools [data-action="fullscreen"],
+.app[data-screen="demo"] .tools [data-action="fullscreen"],
+.app[data-screen="dying"] .tools,
+.app[data-screen="paused"] .tools [data-action="fullscreen"] {
+  display: none;
+}
+
+.app.no-fullscreen .tools [data-action="fullscreen"] {
+  display: none;
+}
+
+.app.is-fullscreen .tools [data-action="fullscreen"] svg {
+  transform: rotate(180deg);
+}
+
+/* Under the clock: the graze streak, which pops on every graze and dims once it lapses, and the slow-time tag. */
+.hud-under {
+  position: absolute;
+  left: 50%;
+  top: calc(env(safe-area-inset-top) + 88px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity var(--motion-base) var(--ease-out);
+  contain: layout style;
+  will-change: transform;
+}
+
+.app[data-screen="run"] .hud-under,
+.app[data-screen="demo"] .hud-under,
+.app[data-screen="dying"] .hud-under,
+.app[data-screen="paused"] .hud-under {
+  opacity: 1;
+}
+
+.hud-streak {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  opacity: 0.4;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.hud-streak.is-live {
+  opacity: 1;
+}
+
+.hud-streak-n {
+  display: inline-block;
+  min-width: 1.4em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-3xl);
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+  text-shadow: 0 0 3px var(--color-scrim), 0 0 22px var(--color-glow);
+  transform-origin: 70% 80%;
+}
+
+.hud-streak-label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--color-text);
+  text-shadow: 0 0 3px var(--color-scrim), 0 0 12px var(--color-scrim);
+}
+
+.hud-slow {
+  --cut: 7px;
+  padding: 6px 12px 5px;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-on-slow);
+  background: var(--color-slow);
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  opacity: 0;
+  transform: translateY(-6px) scale(0.9);
+  transition-property: opacity, transform;
+  transition-duration: var(--motion-fast), var(--motion-base);
+  transition-timing-function: var(--ease-out), var(--ease-spring);
+}
+
+.app.is-slow .hud-slow {
+  opacity: 1;
+  transform: none;
+}
+
+/* The points of each graze float up from where it happened. */
+.pops {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.pop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 600;
+  font-size: var(--text-md);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+  text-shadow: 0 0 3px var(--color-scrim), 0 0 10px var(--color-scrim);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.app:not([data-screen="run"]):not([data-screen="demo"]) .pops {
+  visibility: hidden;
+}
+
+.hud-clock.is-overtime .hud-time {
+  color: var(--color-accent);
+}
+
+@media (min-width: 900px) {
+  .topbar {
+    padding:
+      calc(env(safe-area-inset-top) + var(--space-5))
+      calc(env(safe-area-inset-right) + var(--space-6))
+      var(--space-3)
+      calc(env(safe-area-inset-left) + var(--space-6));
+    gap: var(--space-5);
+  }
+
+  .hud-wave-name {
+    font-size: var(--text-xl);
+  }
+
+  .hud-time {
+    font-size: var(--text-3xl);
+  }
+
+  .hud-score {
+    font-size: var(--text-3xl);
+  }
+
+  .hud-wave,
+  .hud-time-label {
+    font-size: var(--text-sm);
+  }
+
+  .hud-mult-x {
+    font-size: var(--text-md);
+  }
+
+  .hud-mult-bar {
+    width: 64px;
+  }
+
+  .hud-under {
+    top: calc(env(safe-area-inset-top) + 104px);
+  }
+
+  .hud-streak-n {
+    font-size: var(--text-4xl);
+  }
+
+  .hud-streak-label {
+    font-size: var(--text-md);
+  }
+
+  .pop {
+    font-size: var(--text-lg);
+  }
+}
+
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  .hud-under {
+    top: calc(env(safe-area-inset-top) + 72px);
+    flex-direction: row;
+    gap: var(--space-4);
+  }
+
+  .hud-streak-n {
+    font-size: var(--text-2xl);
+  }
+}

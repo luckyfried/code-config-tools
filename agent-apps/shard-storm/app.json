@@ -1,0 +1,14 @@
+{
+  "id": "01a17f4e-0a28-7b21-b995-46548fbdc172",
+  "version": "2026-10-21",
+  "name": "Shard Storm",
+  "shortDescription": "Dodge five thousand glowing shards and graze them for points.",
+  "description": "A bullet-hell survival game you host on your own site. One small ship, eight hand-built patterns (Lotus, Vortex, Rain, Twin Spirals, Comb, Pulse Rings, Scatter, and Wall), and a score that rewards flying as close to the shards as you dare. A run lasts sixty seconds; survive it and the storm speeds up for a high-score chase. Every graze throws sparks and raises your multiplier, and a hit plays out in slow motion before your score counts up. Drag with one finger on a phone, hold a second finger to slow time, or fly with the arrow keys on a desktop. Your name sits on the scoreboard, your ship flies in your color, and three looks (neon, ember, and ice) each come in a light and a dark version. Your best score and longest streak stay in your browser.",
+  "category": "games",
+  "subcategory": "Arcade and action",
+  "useCase": "game-development",
+  "icon": "assets/icon.svg",
+  "screenshots": ["assets/desktop-dark.jpg", "assets/phone-dark.jpg", "assets/desktop-light.jpg", "assets/phone-light.jpg"],
+  "deploy": "out/shard-storm",
+  "setup": ""
+}

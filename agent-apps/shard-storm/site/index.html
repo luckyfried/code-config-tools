@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Shard Storm</title>
+  <meta name="description" content="Dodge thousands of glowing shards for sixty seconds and graze them close for points.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="./fonts/unbounded-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/chakra-petch-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/screens.css">
+  <link rel="stylesheet" href="./styles/hud.css">
+  <script src="./config.js"></script>
+  <script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+  </script>
+  <script type="module" src="./game/main.js"></script>
+</head>
+<body>
+  <canvas id="stage" class="stage" aria-label="The storm"></canvas>
+  <div class="veil" aria-hidden="true"></div>
+
+  <div class="app" data-screen="title">
+    <header class="topbar">
+      <div class="pilot">
+        <svg class="pilot-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 20 20 12 15.5 4 20Z"/></svg>
+        <span class="pilot-name" data-bind="player"></span>
+      </div>
+      <div class="hud-cluster hud-left" aria-hidden="true">
+        <span class="hud-wave" data-bind="wave-num">Wave 1</span>
+        <span class="hud-wave-name" data-bind="wave-name"></span>
+      </div>
+      <div class="hud-clock" aria-hidden="true">
+        <span class="hud-time" data-bind="time">1:00</span>
+        <span class="hud-time-label" data-bind="time-label">left</span>
+      </div>
+      <div class="hud-cluster hud-right" aria-hidden="true">
+        <span class="hud-score" data-bind="score">0</span>
+        <span class="hud-mult"><span class="hud-mult-x" data-bind="mult">×1.0</span><span class="hud-mult-bar"><span class="hud-mult-fill"></span></span></span>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" type="button" data-action="fullscreen" aria-label="Full screen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button class="icon-btn" type="button" data-action="sound" aria-label="Sound off" aria-pressed="true">
+          <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11"/></svg>
+          <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="m16 9.5 5 5m0-5-5 5"/></svg>
+        </button>
+        <button class="icon-btn icon-pause" type="button" data-action="pause" aria-label="Pause">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>
+        </button>
+      </div>
+      <div class="hud-progress" aria-hidden="true"><span class="hud-progress-fill"></span></div>
+    </header>
+
+    <div class="hud-under" aria-hidden="true">
+      <div class="hud-streak">
+        <span class="hud-streak-n" data-bind="streak">0</span>
+        <span class="hud-streak-label">graze streak</span>
+      </div>
+      <span class="hud-slow">Slow time ×0.5</span>
+    </div>
+    <div class="pops" aria-hidden="true"></div>
+
+    <section class="title-screen" aria-labelledby="title">
+      <div class="title-block">
+        <h1 class="title" id="title" data-bind="title">Shard Storm</h1>
+        <p class="tagline">Sixty seconds inside the storm. Fly close to the shards; every graze scores.</p>
+        <dl class="bests">
+          <div class="best"><dt>Best score</dt><dd data-bind="best">0</dd></div>
+          <div class="best"><dt>Longest streak</dt><dd data-bind="best-streak">0</dd></div>
+        </dl>
+      </div>
+      <div class="start-block">
+        <button class="btn btn-primary" type="button" data-action="start">
+          <span class="btn-label">Play</span>
+          <kbd class="btn-key">Space</kbd>
+        </button>
+        <p class="hint hint-touch">Drag anywhere to fly. Hold a second finger to slow time.</p>
+        <p class="hint hint-keys">Arrows or WASD to fly, Shift to slow time, or drag with the mouse.</p>
+      </div>
+    </section>
+
+    <section class="demo-bar" aria-label="Autopilot run">
+      <div class="demo-id">
+        <p class="demo-kicker"><span class="demo-dot"></span>Autopilot is flying</p>
+        <p class="demo-title" data-bind="demo-title">Shard Storm</p>
+      </div>
+      <button class="btn btn-primary" type="button" data-action="start">
+        <span class="btn-label">Play</span>
+        <kbd class="btn-key">Space</kbd>
+      </button>
+    </section>
+
+    <div class="callout" aria-live="polite">
+      <span class="callout-kicker" data-bind="callout-kicker"></span>
+      <span class="callout-word" data-bind="callout-word"></span>
+    </div>
+
+    <section class="card result-card" aria-labelledby="result-title">
+      <p class="card-kicker" data-bind="result-kicker"></p>
+      <h2 class="card-title" id="result-title" data-bind="result-title">Shattered</h2>
+      <p class="result-score"><span data-bind="result-score">0</span><span class="new-best" data-bind="new-best">New best</span></p>
+      <dl class="result-stats">
+        <div><dt>Grazes</dt><dd data-bind="result-grazes">0</dd></div>
+        <div><dt>Longest streak</dt><dd data-bind="result-streak">0</dd></div>
+        <div><dt>Best</dt><dd data-bind="result-best">0</dd></div>
+      </dl>
+      <div class="card-actions">
+        <button class="btn btn-primary" type="button" data-action="again"><span class="btn-label">Play again</span><kbd class="btn-key">Space</kbd></button>
+        <button class="btn btn-quiet" type="button" data-action="share"><span class="btn-label" data-bind="share-label">Copy score</span></button>
+      </div>
+    </section>
+
+    <section class="card pause-card" aria-labelledby="pause-title">
+      <h2 class="card-title" id="pause-title">Paused</h2>
+      <p class="card-line" data-bind="pause-line">The storm waits for you.</p>
+      <div class="card-actions">
+        <button class="btn btn-primary" type="button" data-action="resume"><span class="btn-label">Resume</span><kbd class="btn-key">Esc</kbd></button>
+        <button class="btn btn-quiet" type="button" data-action="quit"><span class="btn-label">End run</span></button>
+      </div>
+    </section>
+
+    <button class="btn btn-quiet offer" type="button" data-action="fullscreen"><span class="btn-label">Play full screen</span></button>
+    <p class="toast" data-bind="toast" role="status"></p>
+  </div>
+  <script src="./badge.js" defer></script>
+</body>
+</html>

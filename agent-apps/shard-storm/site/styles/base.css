@@ -1,0 +1,269 @@
+/* Structure, type, and the shared controls. Every color comes from theme.css. */
+
+@font-face {
+  font-family: "Unbounded";
+  src: url("../fonts/unbounded-latin-wght-normal.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Chakra Petch";
+  src: url("../fonts/chakra-petch-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Chakra Petch";
+  src: url("../fonts/chakra-petch-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  background: var(--scene-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+h1,
+h2,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+/* Slow time: the edges of the field cool and close in, eased in and out. */
+.veil {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse 75% 70% at center, transparent 50%, var(--color-slow-veil) 100%);
+  box-shadow: inset 0 0 120px var(--color-slow-veil);
+  will-change: opacity;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+
+.veil.is-slow {
+  opacity: 1;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app button {
+  pointer-events: auto;
+}
+
+/* The chamfered shard is the one shape every control and panel shares. */
+.btn {
+  --cut: 14px;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: 0 var(--space-6);
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: 1;
+  transition-property: transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.btn::before,
+.btn::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+
+.btn::before {
+  inset: 0;
+}
+
+.btn::after {
+  inset: 1.5px;
+  --cut: 13px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent-2);
+  outline-offset: 4px;
+}
+
+.btn-primary {
+  color: var(--color-on-accent);
+}
+
+.btn-primary::before {
+  background: var(--color-accent);
+  box-shadow: var(--shadow-2);
+}
+
+.btn-primary::after {
+  background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent) 55%, var(--color-accent-2) 240%);
+}
+
+.btn-quiet {
+  color: var(--color-text);
+}
+
+.btn-quiet::before {
+  background: var(--color-border);
+}
+
+.btn-quiet::after {
+  background: var(--color-surface-2);
+}
+
+.btn-key {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  line-height: 1;
+  padding: 5px 7px 4px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  opacity: 0.72;
+}
+
+.icon-btn {
+  --cut: 9px;
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  transition-property: transform;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+.icon-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-glass);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.icon-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-btn:active {
+  transform: scale(0.94);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--color-accent-2);
+  outline-offset: 3px;
+}
+
+.icon-btn .icon-off,
+.icon-btn[aria-pressed="false"] .icon-on {
+  display: none;
+}
+
+.icon-btn[aria-pressed="false"] .icon-off {
+  display: block;
+}
+
+@media (hover: hover) {
+  .btn-primary:hover::after {
+    background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent) 35%, var(--color-accent-2) 200%);
+  }
+
+  .btn-quiet:hover::after {
+    background: var(--color-surface);
+  }
+
+  .icon-btn:hover::before {
+    background: var(--color-surface-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}

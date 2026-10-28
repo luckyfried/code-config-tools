@@ -1,0 +1,16 @@
+{
+  "title": "Shard Storm",
+  "playerName": "Riley",
+  "theme": "neon",
+  "shipColor": "#3dff8b",
+  "runSeconds": 60,
+  "patterns": ["Lotus", "Vortex", "Rain", "Twin Spirals", "Comb", "Pulse Rings", "Scatter", "Wall"],
+  "_notes": {
+    "title": "The name on the title card and the browser tab. Up to 40 characters.",
+    "playerName": "Your name for the scoreboard: shown on the best-score line, the result card, and the copied score. Up to 24 characters.",
+    "theme": "The look: neon (magenta and cyan), ember (orange and gold), or ice (white and blue). Each has a dark and a light version that follows the device's setting.",
+    "shipColor": "Your ship and its wake, as a hex color like #3dff8b.",
+    "runSeconds": "How long a run lasts before the storm is cleared and overtime begins, from 20 to 600 seconds.",
+    "patterns": "The bullet patterns a run cycles through, by name, in any order: Lotus, Vortex, Rain, Twin Spirals, Comb, Pulse Rings, Scatter, Wall."
+  }
+}
