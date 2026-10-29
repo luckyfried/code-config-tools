@@ -1,0 +1,334 @@
+{
+  "_notes": {
+    "theme": "auto (Daylight in a light room, Midnight in a dark one), daylight (white, with blue buttons), or midnight (near black, with blue buttons).",
+    "sample": "The store the page shows when it is opened without its server: the apps, the ones waiting for you to install, and the ones you installed. --serve shows the real store, read with csc app store.",
+    "sampleInbox": "Gets shown on the sample page, so a button reads Waiting or Installing; leave it out for none."
+  },
+  "theme": "auto",
+  "sample": {
+    "apps": [
+      {
+        "id": "01a1628c-6345-7e42-abef-f94005e3df42",
+        "title": "Job Board",
+        "shortDescription": "Your agent finds openings; you sort them with a tap, a swipe, or a key.",
+        "description": "A board of the job openings your agent found for you, each on its own card with the role, the company, the pay, where it is, and what stands out. Tap yes, no, or later, swipe on a phone, or press Y, N, or L on a desktop, and the card moves to its column. Your agent reads your choices when you ask, and before it applies anywhere it asks you first. Each card shows where the agent is with your choice, its notes on the opening, and every choice you made. The openings and choices stay in a folder on your computer.",
+        "category": "productivity",
+        "subcategory": "Careers",
+        "iconUrl": "assets/sample/job-board.svg",
+        "screenshotUrls": [
+          "assets/sample/job-board-phone.jpg",
+          "assets/sample/job-board-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a1628c-6345-7e42-abef-f94005e30000",
+        "picks": 412,
+        "installs": 380,
+        "stars": {
+          "average": 4.7,
+          "count": 128
+        }
+      },
+      {
+        "id": "01a174df-9cc7-7a23-b8b2-a36ed895fce7",
+        "title": "Habit Rings",
+        "shortDescription": "Close your rings every day and watch a year of streaks fill in.",
+        "description": "A habit tracker page for one person. Up to eight habits sit as concentric rings on one dial for today, and one tap closes a ring; a countable habit like eight glasses of water fills a step at a time. The streak of days with every ring closed is the headline, rolled up like an odometer. Under the dial, each habit has a 53-week year map that darkens as a run of days grows, with the date and what was done on any day under a tap or the pointer. On a phone it is one column you open every day, with a swipe across the dial to fix yesterday. On a desktop, Today sits beside the whole year, and keys 1 to 8 close the rings. Days stay in the browser, with Save a copy and Load a copy to move them. Themes: paper, ink, neon, or follow the device.",
+        "category": "productivity",
+        "subcategory": "Habit tracking",
+        "iconUrl": "assets/sample/habit-rings.svg",
+        "screenshotUrls": [
+          "assets/sample/habit-rings-phone.jpg",
+          "assets/sample/habit-rings-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a174df-9cc7-7a23-b8b2-a36ed8950001",
+        "picks": 655,
+        "installs": 610,
+        "stars": {
+          "average": 4.8,
+          "count": 241
+        }
+      },
+      {
+        "id": "01a162ca-d247-720d-b264-88a812b83572",
+        "title": "Meal Week",
+        "shortDescription": "A week of meals on one grid and the grocery list it needs, ready to print.",
+        "description": "Meal Week puts a whole week of meals on one board: breakfast, lunch, and dinner for seven days, each a tile with its cuisine's color down the left edge, a small arc that fills with the minutes it takes to make, and room to breathe, so the week reads like a menu board. Tap a tile to see the meal's ingredients and amounts. An open slot is a dashed tile that names the meal still to plan.\n\nBeside the week sits the grocery list it needs: every ingredient merged by name, amounts in the same unit added up, grouped in your store's aisle order, and the staples already in your kitchen left off. Shop mode turns the list into big checkboxes; each check draws its stroke, strikes the line, and the aisle's count ticks down. What is in the cart stays checked when you change screens or reload.\n\nStep back to an earlier week and the board slides sideways to it. Print gives you two pages: the week in landscape with its name in a serif, then the list in two columns with boxes to tick by pen. On a phone the week shows one day per screen with a day strip on top; on a computer the week and the list sit side by side. Your agent plans the week from what you tell it, then builds the page.",
+        "category": "food-drink",
+        "subcategory": "Meal planning",
+        "iconUrl": "assets/sample/meal-week.svg",
+        "screenshotUrls": [
+          "assets/sample/meal-week-phone.jpg",
+          "assets/sample/meal-week-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a162ca-d247-720d-b264-88a812b80002",
+        "picks": 298,
+        "installs": 260,
+        "stars": {
+          "average": 4.6,
+          "count": 77
+        }
+      },
+      {
+        "id": "01a17af8-e891-7142-97bc-f6d7aa86dba6",
+        "title": "Plant Keeper",
+        "shortDescription": "Every plant on a card with a water ring that drains until you tap.",
+        "description": "A page of your houseplants, one card each. Each card's soil ring drains over that plant's watering interval and turns amber, then red, as the day comes; the plant's leaves droop once it is overdue. Tap Watered and a droplet falls into the pot, the ring fills, and the leaves perk back up. The header counts how many plants are thirsty today, room tabs group the cards, and a fourteen-day strip shows which plants need water on each day ahead. Each plant's sheet holds its light, your notes, and its water log, and you can log a watering on another day. Waterings stay in the browser, with Export and Import to move them. Light and dark themes.",
+        "category": "lifestyle",
+        "subcategory": "Houseplants",
+        "iconUrl": "assets/sample/plant-keeper.svg",
+        "screenshotUrls": [
+          "assets/sample/plant-keeper-phone.jpg",
+          "assets/sample/plant-keeper-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a17af8-e891-7142-97bc-f6d7aa860003",
+        "picks": 341,
+        "installs": 322,
+        "stars": {
+          "average": 4.9,
+          "count": 103
+        }
+      },
+      {
+        "id": "01a17a39-7233-7502-aa96-b8a16e65ebad",
+        "title": "Net Worth Ledger",
+        "shortDescription": "A monthly net worth chart that grows as your agent adds a line.",
+        "description": "One chart of everything you own and owe, one point a month. Assets stack above the zero line, debts mirror them below, and net worth runs as a bold line across both, with a flag where it first crosses each milestone. Drag the scrubber to any month: the headline rolls to that month's net worth and a donut redraws its accounts. A table lists every month with its changes. Each month you tell your agent the balances in one sentence, it adds a line to your ledger file and runs again, and the chart grows by one point. Light and dark themes, phone and desktop, and nothing leaves your machine.",
+        "category": "finance",
+        "subcategory": "Net worth",
+        "iconUrl": "assets/sample/net-worth-ledger.svg",
+        "screenshotUrls": [
+          "assets/sample/net-worth-ledger-phone.jpg",
+          "assets/sample/net-worth-ledger-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a17a39-7233-7502-aa96-b8a16e650004",
+        "picks": 220,
+        "installs": 198,
+        "stars": {
+          "average": 4.5,
+          "count": 64
+        }
+      },
+      {
+        "id": "01a162d6-13c9-778c-8901-b52d7fe70895",
+        "title": "Glass Chess",
+        "shortDescription": "Glass chess on a mirror-polished board, against a friend or the computer.",
+        "description": "A chess page you keep: pieces of clear and smoke glass catch the studio light, refract the squares beneath them, and reflect in a polished lacquer board. A captured piece sinks through a ripple in the board, check lights its square red under the glass, and checkmate dims the room while the beaten king tips over. Play a friend on one screen, with the camera swinging to whoever moves, or play the computer at one of four levels. Pick a clock (none, 5 minutes, 10 minutes, or 15 with a 10 second increment), move by tap, click, arrow keys, or typed moves like Nf3, and undo or resign from the panel. Three boards: black lacquer, amber walnut, and ice marble, each with a light and a dark look. The page opens playing Légal's mate from Paris, 1750, and your game in progress is kept in the browser, so a reload picks up where you left off.",
+        "category": "games",
+        "subcategory": "Board and strategy",
+        "iconUrl": "assets/sample/glass-chess.svg",
+        "screenshotUrls": [
+          "assets/sample/glass-chess-phone.jpg",
+          "assets/sample/glass-chess-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a162d6-13c9-778c-8901-b52d7fe70005",
+        "picks": 506,
+        "installs": 470,
+        "stars": {
+          "average": 4.8,
+          "count": 190
+        }
+      },
+      {
+        "id": "01a17ff3-643e-7595-a591-c8434bd6aead",
+        "title": "Sky Tonight",
+        "shortDescription": "The real night sky over your place, tonight, on your phone or your screen.",
+        "description": "A planetarium page for your town: every star to magnitude 6 in its true color and brightness, the constellations drawn as glowing lines, the planets, and the Moon in its real phase, over a horizon with the compass points. It opens on tonight's sky, then turns time forward and back so the stars wheel and leave trails. Drag to look around, scroll or pinch to zoom, slide the time ribbon through the night, and tap a star for its name, distance, and constellation. On a phone, hold it up and the sky follows. The Tonight card lists sunset, full dark, the Moon's phase and rise or set, and the planets that are up. Pick deep night, red light for the telescope, or a paper star chart. Everything is computed on the page from the star catalog and the clock; nothing is sent anywhere.",
+        "category": "entertainment",
+        "subcategory": "Stargazing",
+        "iconUrl": "assets/sample/sky-tonight.svg",
+        "screenshotUrls": [
+          "assets/sample/sky-tonight-phone.jpg",
+          "assets/sample/sky-tonight-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a17ff3-643e-7595-a591-c8434bd60006",
+        "picks": 377,
+        "installs": 351,
+        "stars": {
+          "average": 4.9,
+          "count": 156
+        }
+      },
+      {
+        "id": "01a1653b-409c-731d-9c2d-fd0a6d443179",
+        "title": "Reading List",
+        "shortDescription": "Your agent's news finds on a front page you sort with a swipe or a key.",
+        "description": "A front page of the stories your agent found for you, laid out like a broadsheet: the lead story across the top, the rest packed tall, wide, and small in their topic's colors. Send a story to read later and it folds into the stack in the corner; skip it and the page closes the gap; ask for more like it and your agent finds more on its next visit; ask it to go deeper and it writes you a longer brief, which opens the story into a long read with the other coverage at its foot. Swipe on a phone, hover or press L, S, M, or D on a desktop. Each story says where the agent is with your choice. The stories and your choices stay in a folder on your computer.",
+        "category": "news",
+        "subcategory": "Reading",
+        "iconUrl": "assets/sample/reading-list.svg",
+        "screenshotUrls": [
+          "assets/sample/reading-list-phone.jpg",
+          "assets/sample/reading-list-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a1653b-409c-731d-9c2d-fd0a6d440007",
+        "picks": 189,
+        "installs": 170,
+        "stars": {
+          "average": 4.4,
+          "count": 41
+        }
+      },
+      {
+        "id": "01a162b3-ec4c-7387-ba3b-4501b3548e83",
+        "title": "Focus Blocks",
+        "shortDescription": "A full-screen focus timer that paints your day as blocks of deep work.",
+        "description": "Pick a length, name what the block is for, and start. A large ring drains as the minutes pass and warms from cool to ember near the end, over a slow color field, with the time left in the tab title. When a block ends, the ring snaps back full in a bloom of light, a soft chime plays, and the block slides onto today's strip. The week view shows seven strips side by side with the hours for each day and the week's total, so you see when you really focus. Pause and Give up sit under the ring, in thumb reach on a phone; on a keyboard, space starts and pauses and Esc twice gives up. Everything you do stays in your browser, and Export saves your blocks to a file you can import on another computer. It works on a phone and on a desktop, in dusk, dawn, and mono themes.",
+        "category": "productivity",
+        "subcategory": "Focus timer",
+        "iconUrl": "assets/sample/focus-blocks.svg",
+        "screenshotUrls": [
+          "assets/sample/focus-blocks-phone.jpg",
+          "assets/sample/focus-blocks-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a162b3-ec4c-7387-ba3b-4501b3540008",
+        "picks": 433,
+        "installs": 402,
+        "stars": {
+          "average": 4.7,
+          "count": 133
+        }
+      },
+      {
+        "id": "01a17304-1abd-76d3-8226-b741f14d53ff",
+        "title": "Lift Log",
+        "shortDescription": "Log sets between lifts and watch your strength curve climb.",
+        "description": "Lift Log is a strength training log built for a phone on a gym bench. Pick the lift, set the weight and reps with big steppers that speed up when you hold them, and log the set; \"+ set\" repeats the last one, and the bar sits large at the top: as the weight changes, the plates for each side slide on and stop against the collar.\n\nBeat your best estimated one-rep max and a gold sweep crosses the whole screen and a PR chip pops in. A thin bar across the top of the screen drains over your rest and ends with a two-tone chime. History shows every set by date and each lift's e1RM curve, with a glowing dot on every record. Week shades a front and back body map, fourteen muscles, by the sets each got this week, with sets and volume per muscle.\n\nOn a laptop it opens as three panes: your week and your lifts, the session, and the chart for the lift you picked. Every set stays in your browser; Settings exports and imports the log as a file and switches between kilograms and pounds.",
+        "category": "health-fitness",
+        "subcategory": "Strength training",
+        "iconUrl": "assets/sample/lift-log.svg",
+        "screenshotUrls": [
+          "assets/sample/lift-log-phone.jpg",
+          "assets/sample/lift-log-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a17304-1abd-76d3-8226-b741f14d0009",
+        "picks": 268,
+        "installs": 240,
+        "stars": {
+          "average": 4.6,
+          "count": 88
+        }
+      },
+      {
+        "id": "01a17b1b-9d30-7fdc-b6f7-7d67d34c3b15",
+        "title": "Morning Paper",
+        "shortDescription": "Your own morning paper, typeset fresh each day and ready to print.",
+        "description": "A newspaper front page with your own masthead, set from the news sources you choose and sorted into the sections you name. It carries a weather ear for where you live, On this day, the most-read article, and the picture of the day from Wikipedia. The page prints itself as it opens: the masthead sets from hairline to black, and a halftone edge wipes down each column as the type is inked. A six-column broadsheet on a desktop, a two-column tabloid on a phone, three looks (cream broadsheet, red-top tabloid, and the evening edition in cream on ink), and a print view set for A4 or Letter. Tap any story for its summary and a link to the full piece. Your inputs and the day's paper stay in your own project folder.",
+        "category": "news",
+        "subcategory": "Daily digest",
+        "iconUrl": "assets/sample/morning-paper.svg",
+        "screenshotUrls": [
+          "assets/sample/morning-paper-phone.jpg",
+          "assets/sample/morning-paper-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a17b1b-9d30-7fdc-b6f7-7d67d34c000a",
+        "picks": 312,
+        "installs": 290,
+        "stars": {
+          "average": 4.7,
+          "count": 97
+        }
+      },
+      {
+        "id": "01a1652f-d360-7cc4-a270-c873eb659740",
+        "title": "Rain Radar",
+        "shortDescription": "Live rain radar over your town, looping two hours back and half an hour ahead.",
+        "description": "Rain Radar puts the live rain radar over a map of your town, tilted like the view from a plane, with your place as a pulsing marker in the middle. The last two hours and the next thirty minutes play as one smooth loop: each radar frame melts into the next instead of stepping, and every rain cell glows so it looks like weather rather than squares. A comet runs along the scrubber as the loop plays; drag it, or tap a step, to look at any moment. Thousands of wind streaks flow over the map from the current wind forecast, so you can see which way the rain is heading. A banner at the bottom says what matters, \"Rain arriving in 24 min\" or \"Dry for the next two hours\", and the strip beside it shows the rain expected in the next hour, five minutes to a bar, with its peak. It has a dark night look and a light paper look that follows your device, works on a phone and a desktop, and keeps your place, layers, units, and loop speed on your device. Without a connection it plays a sample loop of a squall line moving in, so the page is never empty.",
+        "category": "weather",
+        "subcategory": "Radar",
+        "iconUrl": "assets/sample/rain-radar.svg",
+        "screenshotUrls": [
+          "assets/sample/rain-radar-phone.jpg",
+          "assets/sample/rain-radar-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a1652f-d360-7cc4-a270-c873eb65000b",
+        "picks": 254,
+        "installs": 231,
+        "stars": {
+          "average": 4.5,
+          "count": 59
+        }
+      },
+      {
+        "id": "01a1637e-f443-7f8c-a2b9-2b7509783d15",
+        "title": "Movie Night",
+        "shortDescription": "Your watch list as a lit 3D poster wall, and a wheel that picks tonight's film.",
+        "description": "Movie Night turns the household's watch list into a wall of film posters in a small 3D room. The posters stand on a polished floor with soft reflections and a rim of light; you swipe, drag, or scroll and the wall glides with inertia, the poster in front squaring up with a little spring while its neighbors blur back. The film everyone hearted most stands under a spotlight: the cone drops from above, dust drifts in it, it strikes with a flicker, and the rest of the room dims.\n\nTonight is a brass wheel with a slice for every film, wider for every heart. Spin it and the teeth tick past the flapper, the wheel runs a little past its slice and settles back, confetti flies, and the wall glides to the winner as the spotlight lands on it and its title opens up in a variable font. Everyone in the house hearts films on one device, the turn chip saying whose turn it is.\n\nWatched is a shelf of what you have seen, with the date and your stars, and any film can go back on the list. Hearts, the shelf, and the nights stay in this browser, and Export and Import carry them to another one. Three rooms ship: cinema (red velvet), drive-in (a night sky), and arthouse (gallery paper), each with a light and a dark version. On a phone the wall fills the screen with the tabs under your thumb; on a laptop the wheel sits beside the wall. Without WebGL the wall is drawn in CSS 3D, and with reduced motion it is a still grid.",
+        "category": "entertainment",
+        "subcategory": "Movies & TV",
+        "iconUrl": "assets/sample/movie-night.svg",
+        "screenshotUrls": [
+          "assets/sample/movie-night-phone.jpg",
+          "assets/sample/movie-night-wide.jpg"
+        ],
+        "publisherDisplayName": "Code Config",
+        "sharedToolkitId": "01a1637e-f443-7f8c-a2b9-2b750978000c",
+        "picks": 287,
+        "installs": 259,
+        "stars": {
+          "average": 4.6,
+          "count": 72
+        }
+      }
+    ],
+    "waiting": [
+      {
+        "appId": "01a162ca-d247-720d-b264-88a812b83572",
+        "title": "Meal Week",
+        "toolkitId": "01a1897a-1b2c-7d3e-8f40-5a6b7c8d9e01",
+        "toolkitName": "Meal Week",
+        "folder": "/home/muse/workspace/custom-skills/meal_week"
+      }
+    ],
+    "installed": [
+      {
+        "appId": "01a174df-9cc7-7a23-b8b2-a36ed895fce7",
+        "title": "Habit Rings",
+        "toolkitId": "01a1897a-1b2c-7d3e-8f40-5a6b7c8d9e02",
+        "toolkitName": "Habit Rings",
+        "address": "https://habit-rings.muse.app",
+        "isPublic": false
+      },
+      {
+        "appId": "01a17ff3-643e-7595-a591-c8434bd6aead",
+        "title": "Sky Tonight",
+        "toolkitId": "01a1897a-1b2c-7d3e-8f40-5a6b7c8d9e03",
+        "toolkitName": "Sky Tonight",
+        "address": "https://sky-tonight.muse.app",
+        "isPublic": false
+      }
+    ],
+    "readAt": "2026-10-29T20:00:00Z",
+    "problem": null
+  },
+  "sampleInbox": [
+    {
+      "action": "get",
+      "status": "pending",
+      "at": "2026-10-29T20:41:00Z",
+      "payload": {
+        "appId": "01a162d6-13c9-778c-8901-b52d7fe70895",
+        "title": "Glass Chess"
+      }
+    },
+    {
+      "action": "get",
+      "status": "working",
+      "at": "2026-10-29T20:02:00Z",
+      "payload": {
+        "appId": "01a162ca-d247-720d-b264-88a812b83572",
+        "title": "Meal Week"
+      }
+    }
+  ]
+}

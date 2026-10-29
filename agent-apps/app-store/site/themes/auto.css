@@ -1,0 +1,55 @@
+/* Daylight by day, midnight when the device is set to dark. */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+  color-scheme: light;
+  --color-bg: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #e9e9f0;
+  --color-text: #0b0b12;
+  --color-muted: #6c6c78;
+  --color-accent: #2f55f4;
+  --color-on-accent: #ffffff;
+  --color-accent-soft: #e5ebff;
+  --color-danger: #d1352b;
+  --color-danger-soft: #fdeceb;
+  --color-ok: #1f8f4e;
+  --color-ok-soft: #e4f5ea;
+  --color-warn: #b46a00;
+  --color-warn-soft: #fff3df;
+  --color-border: #dcdce4;
+  --color-bar: #f8f8fbe6;
+  --color-scrim: #0b0b1252;
+  --color-hero-ink: #ffffff;
+  --color-hero-fade: #0b0b12b8;
+  --shadow-1: 0 1px 2px #0b0b120f, 0 2px 8px #0b0b120a;
+  --shadow-2: 0 2px 6px #0b0b1214, 0 18px 40px #0b0b121f;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+    color-scheme: dark;
+    --color-bg: #000000;
+    --color-surface: #16161c;
+    --color-surface-2: #24242c;
+    --color-text: #f5f5fa;
+    --color-muted: #9a9aa8;
+    --color-accent: #7c93ff;
+    --color-on-accent: #0a0d24;
+    --color-accent-soft: #232a4d;
+    --color-danger: #ff6a5f;
+    --color-danger-soft: #3a1a18;
+    --color-ok: #4ad07f;
+    --color-ok-soft: #13301f;
+    --color-warn: #ffb547;
+    --color-warn-soft: #362710;
+    --color-border: #2c2c36;
+    --color-bar: #16161ce6;
+    --color-scrim: #000000a3;
+    --color-hero-ink: #ffffff;
+    --color-hero-fade: #000000c7;
+    --shadow-1: 0 1px 2px #00000066;
+    --shadow-2: 0 2px 6px #00000080, 0 18px 40px #000000a6;
+  }
+}

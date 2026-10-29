@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>App Store</title>
+  <meta name="description" content="Browse agent apps, tap Get, and Muse sets each one up for you.">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon.svg">
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./styles/base.css">
+  <link rel="stylesheet" href="./styles/layout.css">
+  <link rel="stylesheet" href="./styles/store.css">
+  <link rel="stylesheet" href="./styles/page.css">
+  <script src="./config.js"></script>
+  <script type="module" src="./app/main.js"></script>
+</head>
+<body>
+  <div class="app">
+    <main class="views">
+      <section class="view" id="view-discover" aria-labelledby="discover-title">
+        <header class="masthead">
+          <p class="eyebrow" id="today"></p>
+          <div class="masthead-row">
+            <h1 class="large-title" id="discover-title">Discover</h1>
+            <img class="masthead-icon" src="./assets/icon.svg" alt="" width="40" height="40">
+          </div>
+        </header>
+        <div class="search">
+          <svg class="search-glass" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
+          <input class="search-field" type="search" id="search" placeholder="Search apps" autocomplete="off" enterkeyhint="search" aria-label="Search apps">
+          <button class="search-clear" type="button" id="search-clear" aria-label="Clear the search" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          </button>
+        </div>
+        <div class="chips" id="chips" role="tablist" aria-label="Categories"></div>
+        <p class="notice" id="notice" role="status" hidden></p>
+        <section class="featured" id="featured" aria-label="Featured apps"></section>
+        <section class="block" aria-labelledby="list-title">
+          <div class="block-head">
+            <h2 class="block-title" id="list-title">Top apps</h2>
+            <p class="block-count" id="list-count"></p>
+          </div>
+          <ol class="app-list" id="list"></ol>
+          <p class="empty" id="empty" hidden></p>
+        </section>
+      </section>
+
+      <section class="view" id="view-yours" aria-labelledby="yours-title" hidden>
+        <header class="masthead">
+          <p class="eyebrow" id="yours-updated"></p>
+          <div class="masthead-row">
+            <h1 class="large-title" id="yours-title">Yours</h1>
+          </div>
+          <p class="lede">Apps Muse runs for you, and the ones it is setting up.</p>
+        </header>
+        <section class="block" id="yours-waiting-block" aria-labelledby="yours-waiting-title" hidden>
+          <h2 class="block-title" id="yours-waiting-title">Waiting for Muse</h2>
+          <ol class="app-list" id="yours-waiting"></ol>
+        </section>
+        <section class="block" id="yours-failed-block" aria-labelledby="yours-failed-title" hidden>
+          <h2 class="block-title" id="yours-failed-title">Didn't install</h2>
+          <ol class="app-list" id="yours-failed"></ol>
+        </section>
+        <section class="block" id="yours-installed-block" aria-labelledby="yours-installed-title" hidden>
+          <h2 class="block-title" id="yours-installed-title">Installed</h2>
+          <ol class="app-list" id="yours-installed"></ol>
+        </section>
+        <div class="empty-yours" id="yours-empty" hidden>
+          <img class="empty-icon" src="./assets/icon.svg" alt="" width="72" height="72">
+          <p class="empty-title">No apps yet</p>
+          <p class="empty-text">Tap Get on any app in Discover. Muse installs it and its link shows up here.</p>
+          <a class="btn btn-accent" href="#discover">Browse apps</a>
+        </div>
+      </section>
+    </main>
+
+    <aside class="waiting-bar" id="waiting-bar" role="status" aria-live="polite" hidden>
+      <span class="waiting-dot" aria-hidden="true"></span>
+      <span class="waiting-words">
+        <strong class="waiting-count" id="waiting-count"></strong>
+        <span class="waiting-hint" id="waiting-hint"></span>
+      </span>
+    </aside>
+
+    <nav class="tabbar" aria-label="Store">
+      <a class="tab" href="#discover" data-tab="discover">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+        <span>Discover</span>
+      </a>
+      <a class="tab" href="#yours" data-tab="yours">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5"/><path d="M4.5 15.5v2a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2"/></svg>
+        <span>Yours</span>
+        <span class="tab-badge" id="yours-badge" hidden></span>
+      </a>
+    </nav>
+  </div>
+
+  <div class="page" id="page" role="dialog" aria-modal="true" aria-labelledby="page-title" hidden>
+    <div class="page-bar">
+      <button class="page-back" type="button" id="page-back">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        <span>Back</span>
+      </button>
+      <p class="page-bar-title" id="page-bar-title"></p>
+      <span class="page-bar-action" id="page-bar-action"></span>
+    </div>
+    <div class="page-scroll" id="page-scroll" tabindex="-1">
+      <article class="page-body" id="page-body"></article>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

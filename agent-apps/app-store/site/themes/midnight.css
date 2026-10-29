@@ -1,0 +1,27 @@
+/* Midnight: near-black glass, a bright periwinkle Get. */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #16161c;
+  --color-surface-2: #24242c;
+  --color-text: #f5f5fa;
+  --color-muted: #9a9aa8;
+  --color-accent: #7c93ff;
+  --color-on-accent: #0a0d24;
+  --color-accent-soft: #232a4d;
+  --color-danger: #ff6a5f;
+  --color-danger-soft: #3a1a18;
+  --color-ok: #4ad07f;
+  --color-ok-soft: #13301f;
+  --color-warn: #ffb547;
+  --color-warn-soft: #362710;
+  --color-border: #2c2c36;
+  --color-bar: #16161ce6;
+  --color-scrim: #000000a3;
+  --color-hero-ink: #ffffff;
+  --color-hero-fade: #000000c7;
+  --shadow-1: 0 1px 2px #00000066;
+  --shadow-2: 0 2px 6px #00000080, 0 18px 40px #000000a6;
+}

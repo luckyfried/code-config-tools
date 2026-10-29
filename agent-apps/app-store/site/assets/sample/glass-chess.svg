@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1c21"/>
+      <stop offset="1" stop-color="#050506"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.28" stop-color="#d8e2ee" stop-opacity="0.35"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="0.8" stop-color="#cfd8e4" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="mirror" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="64" y="372" width="384" height="8" rx="4" fill="#b89a5e"/>
+  <path d="M256 92c-10 0-14 6-14 6v20h-22v18h22v20c-24 8-38 22-38 40 0 14 8 26 20 34l-14 104h92l-14-104c12-8 20-20 20-34 0-18-14-32-38-40v-20h22v-18h-22v-20s-4-6-14-6z" fill="url(#glass)" stroke="#ffffff" stroke-opacity="0.85" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M176 334h160c10 0 18 8 18 18v20H158v-20c0-10 8-18 18-18z" fill="url(#glass)" stroke="#ffffff" stroke-opacity="0.85" stroke-width="5"/>
+  <path d="M176 392h160v14c0 26-36 34-80 34s-80-8-80-34z" fill="url(#mirror)"/>
+</svg>

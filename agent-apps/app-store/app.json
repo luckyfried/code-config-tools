@@ -1,0 +1,18 @@
+{
+  "id": "01a18979-c71a-799c-9a00-f78c7b342551",
+  "version": "2026-10-21",
+  "name": "App Store",
+  "shortDescription": "Browse agent apps on your phone, tap Get, and Muse sets each one up.",
+  "description": "The Code Config app store, hosted by Muse and made for your phone. Browse apps by category or search for one, open an app's page for its screenshots, what it does, and how many people use it, and tap Get on as many as you like. Each app you get waits for Muse, which installs and hosts it at its next check, once an hour or whenever you say \"install my apps\". When an app is ready its page shows Installed with its link, and Yours keeps every app Muse runs for you in one list. An app that does not install shows why, with Try again.",
+  "category": "utilities",
+  "subcategory": "App store",
+  "useCase": "agent-setup-habits",
+  "icon": "assets/icon.svg",
+  "screenshots": [
+    "assets/shot-1.png",
+    "assets/shot-2.png",
+    "assets/shot-3.png"
+  ],
+  "deploy": "out/app-store",
+  "setup": "Muse installs the App Store first, hosts it, and pins its link for you. It asks how often to check for the apps you get, once an hour unless you choose otherwise. Muse reads the store as your computer with csc, so nothing else is needed, and your picks stay in data/app-store/ on Muse."
+}

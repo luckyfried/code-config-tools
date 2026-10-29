@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="cell" cx="0.42" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#ffd84a"/>
+      <stop offset="0.35" stop-color="#2a7bff"/>
+      <stop offset="0.8" stop-color="#5fc8ff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#5fc8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tail" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffcf7a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ffcf7a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#04070c"/>
+  <path d="M10 84c18-6 30 4 46-4s28-22 62-14" fill="none" stroke="#1c3150" stroke-width="3"/>
+  <path d="M18 34l30 10 24-6 40 14M30 104l26-30 30 4" fill="none" stroke="#1b2738" stroke-width="2.5"/>
+  <ellipse cx="50" cy="54" rx="40" ry="30" fill="url(#cell)"/>
+  <circle cx="82" cy="70" r="16" fill="none" stroke="#ffcf7a" stroke-opacity="0.45" stroke-width="2"/>
+  <circle cx="82" cy="70" r="6" fill="#ffcf7a" stroke="#04070c" stroke-width="3"/>
+  <rect x="24" y="106" width="56" height="4" rx="2" fill="url(#tail)"/>
+  <circle cx="82" cy="108" r="5" fill="#ffcf7a"/>
+</svg>
