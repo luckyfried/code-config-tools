@@ -6,7 +6,7 @@
   "description": "Turns the GPX and TCX files you export from Strava, Garmin Connect, or Apple Fitness into a page per activity. Each one replays over real 3D terrain: the track glows in colors for pace, heart rate, or height, a marker with a comet tail runs it, and the camera follows behind and above. Elevation, pace, and heart-rate charts scrub together with the map, splits light up as you pass them, and a poster of the route downloads as a print-ready PNG. Three themes, each with a light and a dark look. Your files stay on your computer.",
   "category": "sports",
   "subcategory": "Running & cycling",
-  "useCase": "data-analysis",
+  "useCase": "health-fitness",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.png",
