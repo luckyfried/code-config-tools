@@ -6,7 +6,7 @@
   "description": "A radio page built like a tuner: a brushed brass plate, a backlit frequency strip behind frosted glass, and a needle that springs from station to station while the lamp warms and glows brighter when a station locks. The station name burns in Nixie tubes, two VU needles and a spectrum glass move with the music (or with a breathing pulse when a stream does not allow it to be read), and tuning plays a short burst of static that fades as the stream comes in. Your presets sit on the dial; Find searches the Radio Browser directory by name, genre, or country and slides results in as paper index cards you can add to the dial or star. Favorites and the last station stay in your browser, with Export and Import. Arrow keys tune, space plays, and the phone's lock screen carries the station. Your agent asks which stations you listen to, any countries or genres to load, and walnut, bakelite, or black steel, then builds the page.",
   "category": "music",
   "subcategory": "Radio",
-  "useCase": "web-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
