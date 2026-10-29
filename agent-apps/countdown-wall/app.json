@@ -6,7 +6,7 @@
   "description": "A wall of the things you're counting down to: a trip, a launch, a birthday, a deadline. The nearest one fills the top of the page with days, hours, minutes, and seconds on split-flap tiles that flip one digit at a time, over a slow color wash in the event's own color. The rest line up as tiles by date, each with a thin bar showing how much of the wait is behind you, and the next one lifts into the top spot when the one before it passes. Past events turn into tiles that count up the days since. Any event opens full screen on its own, digits scaled to the width, with its picture behind it. Two looks ship: celebration, black with full-color tiles and a glow, and calm, bone paper with soft tints, or auto to follow the device.",
   "category": "utilities",
   "subcategory": "Countdowns",
-  "useCase": "web-development",
+  "useCase": "time-tasks",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/phone-light.png", "assets/desktop-light.png"],
   "deploy": "out/countdown-wall",
