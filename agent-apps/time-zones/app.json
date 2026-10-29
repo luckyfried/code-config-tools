@@ -6,7 +6,7 @@
   "description": "One row for you and one for each person you work with, wherever they are. Every row is a strip of their day colored like the sky, from night navy through dawn, daylight, and dusk, all laid on your own day so the hours line up. Drag the line (or scroll the day on a phone) and every row shows its local time, and where everyone is inside their working hours the column glows and the page says it is good for everyone. Each name has a small clock that ticks, and picking a date across a clock change shifts the right strip and flashes its new offset. The Copy times button copies a line like \"Thu 15:00 Lisbon / 10:00 New York / 19:30 Bengaluru\" to paste into a message. Arrow keys move the line by an hour, and with Shift by fifteen minutes. Day and night looks.",
   "category": "utilities",
   "subcategory": "World clock",
-  "useCase": "web-development",
+  "useCase": "email-calendar",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
