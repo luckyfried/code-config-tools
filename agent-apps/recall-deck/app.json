@@ -6,7 +6,7 @@
   "description": "A flashcard deck with spaced repetition in one web page. Type the answer and the card tilts and turns in 3D to show the right one, with every letter you missed marked. Swipe right if you knew it or left to see it again, and the next card rises from the stack while a 30-day forecast re-tallies how many cards come back each day. Every card is scheduled with SM-2, the classic spaced repetition method. Browse searches and sorts the whole deck by tag and due date, and Forecast shows the month ahead, a half year of days studied, and how often you recall. Two themes: a cream index card with a red rule, and a slate blackboard in chalk. Progress stays in your browser, with export and import to carry it to another device. Your agent asks what you want to remember and writes the cards, then builds the page.",
   "category": "education",
   "subcategory": "Flashcards",
-  "useCase": "documentation",
+  "useCase": "learning",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
