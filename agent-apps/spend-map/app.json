@@ -6,7 +6,7 @@
   "description": "Spend Map reads the CSV export from your bank and draws each month as a flow. Income comes in on the left, splits into your own categories in the middle, and runs out to the merchants that took the most on the right, each ribbon as wide as the money it carries. The map draws itself on, and switching months slides every ribbon to its new width, so a costly month shows at a glance. The month's total rolls up in large figures beside what came in and what you kept. Hover or tap any ribbon to light it and read its amount. On a phone the map runs from income to categories, and tapping a category lists its merchants and their amounts under the map. A Months screen stacks every month by category against its income, and a Categories screen lists the month's totals, their share of spending, and the monthly average, sorted any way you like. It comes in a light ledger look and a dark vault look and works on a phone and a desktop.",
   "category": "finance",
   "subcategory": "Spending analysis",
-  "useCase": "data-analysis",
+  "useCase": "personal-budget",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
