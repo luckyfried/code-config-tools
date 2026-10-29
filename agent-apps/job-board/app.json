@@ -6,7 +6,7 @@
   "description": "A board of the job openings your agent found for you, each on its own card with the role, the company, the pay, where it is, and what stands out. Tap yes, no, or later, swipe on a phone, or press Y, N, or L on a desktop, and the card moves to its column. Your agent reads your choices when you ask, and before it applies anywhere it asks you first. Each card shows where the agent is with your choice, its notes on the opening, and every choice you made. The openings and choices stay in a folder on your computer.",
   "category": "productivity",
   "subcategory": "Careers",
-  "useCase": "product-discovery",
+  "useCase": "job-search",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
