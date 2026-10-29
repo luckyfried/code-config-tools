@@ -6,7 +6,7 @@
   "description": "The whole year on one screen: twelve months of thirty-one squares, one square for every day. Tap a day and five mood swatches rise around your finger; pick one and the square takes its color. On opening, the colored days pop in one after another down each month, the days still to come sit as faint dots, and today pulses. A ribbon under the grid shows each month as a blend of its moods, the Stats sheet counts each mood with its longest run and names the best month, and hovering a day on a desktop shows its note. Export and import the year as a file, and print it as an A3, A4, or Letter poster with your name and the year. Light and dark looks.",
   "category": "health-fitness",
   "subcategory": "Mood",
-  "useCase": "data-analysis",
+  "useCase": "health-fitness",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
