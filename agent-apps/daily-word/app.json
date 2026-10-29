@@ -6,7 +6,7 @@
   "description": "A one-page daily word game made from your own word list: your field, your family, your team's in-jokes. Six guesses at a five-letter word that changes every midnight, on tiles that turn over like real slabs, with a keyboard that lights up green and amber as letters resolve. It keeps your streak and guess distribution on this device, copies a share grid of colored squares that never gives the word away, and has an endless mode, hard mode, high contrast, sound, and three palettes with light and dark sides. Your agent writes the word list on your topic and shows you the first ten.",
   "category": "games",
   "subcategory": "Puzzle and word",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.webp",
