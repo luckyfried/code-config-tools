@@ -6,7 +6,7 @@
   "description": "Pick a brand hue and Token Studio builds a ten-step brand ramp in OKLCH, a tinted neutral ramp, light and dark surfaces from the same hue, a type scale, and a spacing scale. Every text color is checked against every background with its contrast ratio and an AA or AAA mark. Drag the hue wheel and the whole page follows: the swatches fan open and flip in, and a walking-series poster, real paragraphs, and the contrast grid all recolor. Turn the poster over to see it by night on the dark surfaces. When it looks right, download tokens.css, or save the system as JSON and import it later to pick up where you left off. Your agent seeds it from your brand color, fonts, and base text size; you tune it by eye.",
   "category": "developer-tools",
   "subcategory": "Design tokens",
-  "useCase": "web-development",
+  "useCase": "ui-design",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
