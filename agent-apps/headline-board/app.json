@@ -6,7 +6,7 @@
   "description": "A wall board for a kitchen tablet, a big screen, or a phone. Your news feeds, Wikipedia's In the news, and the Hacker News front page roll across rows of split-flap modules: every letter spins through the drum and lands with a clack, row by row. The board carries the time, the weather where you are, and each story's source and age, and a tap on a row opens the story. Pick amber, white, or departures flaps; each has a light and a dark look.",
   "category": "news",
   "subcategory": "Headlines",
-  "useCase": "web-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/phone-light.png", "assets/desktop-light.png"],
   "deploy": "out/headline-board",
