@@ -6,7 +6,7 @@
   "description": "A front page of the stories your agent found for you, laid out like a broadsheet: the lead story across the top, the rest packed tall, wide, and small in their topic's colors. Send a story to read later and it folds into the stack in the corner; skip it and the page closes the gap; ask for more like it and your agent finds more on its next visit; ask it to go deeper and it writes you a longer brief, which opens the story into a long read with the other coverage at its foot. Swipe on a phone, hover or press L, S, M, or D on a desktop. Each story says where the agent is with your choice. The stories and your choices stay in a folder on your computer.",
   "category": "news",
   "subcategory": "Reading",
-  "useCase": "content-writing",
+  "useCase": "notes-knowledge",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
