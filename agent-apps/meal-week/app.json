@@ -6,7 +6,7 @@
   "description": "Meal Week puts a whole week of meals on one board: breakfast, lunch, and dinner for seven days, each a tile with its cuisine's color down the left edge, a small arc that fills with the minutes it takes to make, and room to breathe, so the week reads like a menu board. Tap a tile to see the meal's ingredients and amounts. An open slot is a dashed tile that names the meal still to plan.\n\nBeside the week sits the grocery list it needs: every ingredient merged by name, amounts in the same unit added up, grouped in your store's aisle order, and the staples already in your kitchen left off. Shop mode turns the list into big checkboxes; each check draws its stroke, strikes the line, and the aisle's count ticks down. What is in the cart stays checked when you change screens or reload.\n\nStep back to an earlier week and the board slides sideways to it. Print gives you two pages: the week in landscape with its name in a serif, then the list in two columns with boxes to tick by pen. On a phone the week shows one day per screen with a day strip on top; on a computer the week and the list sit side by side. Your agent plans the week from what you tell it, then builds the page.",
   "category": "food-drink",
   "subcategory": "Meal planning",
-  "useCase": "web-development",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
