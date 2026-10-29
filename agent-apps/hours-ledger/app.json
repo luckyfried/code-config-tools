@@ -6,7 +6,7 @@
   "description": "A time tracker for freelancers that lives in one web page. A big timer card counts the hours for the client in hand, with a dot that breathes while it runs; tap another client and the finished block slides into the day's list as the new one starts. The week stacks each day's hours by client color, and a heat strip shows the whole month at a glance. Pick a client and a period and the statement lays out every entry, the rounded hours, the rate, and the total on a printable page. Hours stay in your browser, with CSV and JSON export. Your agent asks for your clients, their rates and colors, your currency, and how you round, then builds the page.",
   "category": "business",
   "subcategory": "Time tracking",
-  "useCase": "web-development",
+  "useCase": "time-tasks",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
