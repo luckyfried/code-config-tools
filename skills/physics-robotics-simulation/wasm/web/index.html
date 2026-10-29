@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MuJoCo preview</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #15171c; color: #dfe3ea; font: 13px system-ui, sans-serif; }
+  #view { position: fixed; inset: 0; }
+  #panel { position: fixed; top: 12px; left: 12px; width: 260px; padding: 12px; background: #1f232bcc;
+           border-radius: 8px; display: grid; gap: 8px; }
+  #panel button { padding: 6px 10px; margin-right: 6px; }
+  label { display: grid; grid-template-columns: 1fr 52px; gap: 4px; }
+  label input { grid-column: 1 / 3; }
+  #status { font-variant-numeric: tabular-nums; white-space: pre; }
+  #error { color: #ff8f80; white-space: pre-wrap; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "/node_modules/three/build/three.module.js",
+               "three/addons/": "/node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="view"></div>
+<div id="panel">
+  <div><button id="play">Pause</button><button id="reset">Reset</button><button id="reload">Reload x20</button></div>
+  <div id="sliders"></div>
+  <div id="status">loading</div>
+  <div id="error"></div>
+</div>
+<script type="module" src="/web/main.js"></script>
+</body>
+</html>

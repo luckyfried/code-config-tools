@@ -1,0 +1,68 @@
+<mujoco model="arm">
+  <!-- SI units throughout: meters, kilograms, seconds, radians. +Z is up, right-handed.
+       Visual meshes come from Blender (blender/make_assets.py) in each body's own frame.
+       Dynamics (inertials, joints, actuators, collision primitives) are authored here. -->
+  <compiler angle="radian" meshdir="meshes" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast" gravity="0 0 -9.81">
+    <flag energy="enable"/>
+  </option>
+  <default>
+    <default class="visual">
+      <geom type="mesh" contype="0" conaffinity="0" group="1" density="0"/>
+    </default>
+    <default class="collision">
+      <geom group="3" rgba="0.9 0.3 0.3 0.3"/>
+    </default>
+    <joint damping="1.0" armature="0.01"/>
+    <position kp="60" ctrlrange="-1.5 1.5" forcerange="-8 8"/>
+  </default>
+  <asset>
+    <mesh name="base_visual" file="base.obj"/>
+    <mesh name="upper_visual" file="upper_link.obj"/>
+    <mesh name="fore_visual" file="fore_link.obj"/>
+  </asset>
+  <worldbody>
+    <light pos="0.3 -1.2 1.5" dir="0 1 -1"/>
+    <camera name="side" pos="0.3 -1.3 0.3" xyaxes="1 0 0 0 0 1"/>
+    <geom name="floor" type="plane" size="1 1 0.05" rgba="0.85 0.85 0.85 1"/>
+    <geom name="pad" type="box" pos="0.45 0 0.03" size="0.06 0.06 0.03" rgba="0.3 0.6 0.3 1"/>
+    <body name="base" pos="0 0 0">
+      <inertial pos="0 0 0.075" mass="2.0" diaginertia="0.00615 0.00615 0.0048"/>
+      <geom name="base_vis" class="visual" mesh="base_visual" rgba="0.3 0.3 0.35 1"/>
+      <geom name="base_col" class="collision" type="box" pos="0 0 0.075" size="0.06 0.06 0.075"/>
+      <body name="upper_link" pos="0 0 0.18">
+        <joint name="shoulder" type="hinge" axis="0 1 0" range="-1.6 1.6"/>
+        <inertial pos="0.15 0 0" mass="0.6" diaginertia="0.00027 0.004635 0.004635"/>
+        <geom name="upper_vis" class="visual" mesh="upper_visual" rgba="0.2 0.45 0.8 1"/>
+        <geom name="upper_col" class="collision" type="capsule" fromto="0 0 0 0.3 0 0" size="0.03"/>
+        <body name="fore_link" pos="0.3 0 0">
+          <joint name="elbow" type="hinge" axis="0 1 0" range="-2.4 2.4"/>
+          <inertial pos="0.125 0 0" mass="0.4" diaginertia="0.000125 0.0021458 0.0021458"/>
+          <geom name="fore_vis" class="visual" mesh="fore_visual" rgba="0.9 0.55 0.1 1"/>
+          <geom name="fore_col" class="collision" type="capsule" fromto="0 0 0 0.25 0 0" size="0.025"/>
+          <site name="tip" pos="0.25 0 0"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <contact>
+    <exclude body1="base" body2="upper_link"/>
+    <exclude body1="upper_link" body2="fore_link"/>
+  </contact>
+  <actuator>
+    <position name="shoulder_servo" joint="shoulder"/>
+    <position name="elbow_servo" joint="elbow"/>
+  </actuator>
+  <sensor>
+    <jointpos name="shoulder_pos" joint="shoulder"/>
+    <jointpos name="elbow_pos" joint="elbow"/>
+    <jointvel name="shoulder_vel" joint="shoulder"/>
+    <jointvel name="elbow_vel" joint="elbow"/>
+    <actuatorfrc name="shoulder_force" actuator="shoulder_servo"/>
+    <actuatorfrc name="elbow_force" actuator="elbow_servo"/>
+    <framepos name="tip_pos" objtype="site" objname="tip"/>
+  </sensor>
+  <keyframe>
+    <key name="start" qpos="0 0" ctrl="0 0"/>
+  </keyframe>
+</mujoco>

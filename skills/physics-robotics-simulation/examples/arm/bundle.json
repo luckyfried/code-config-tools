@@ -1,0 +1,171 @@
+{
+  "format": "mjcf-bundle",
+  "format_version": 1,
+  "model": "model.xml",
+  "units": {
+    "length": "m",
+    "mass": "kg",
+    "time": "s",
+    "angle": "rad"
+  },
+  "frame": {
+    "handedness": "right",
+    "up": "+Z",
+    "forward": "+Y",
+    "quaternion": "wxyz"
+  },
+  "engine": {
+    "mujoco": "3.17.0"
+  },
+  "source": {
+    "blender": "5.2.3",
+    "script": "blender/make_assets.py",
+    "export": {
+      "format": "obj",
+      "forward": "Y",
+      "up": "Z",
+      "scale": 1.0,
+      "scale_applied": true
+    }
+  },
+  "bodies": {
+    "base": {
+      "blender_object": "base",
+      "visual_geom": "base_vis",
+      "visual_mesh": "meshes/base.obj",
+      "collision_geoms": [
+        "base_col"
+      ]
+    },
+    "upper_link": {
+      "blender_object": "upper_link",
+      "visual_geom": "upper_vis",
+      "visual_mesh": "meshes/upper_link.obj",
+      "collision_geoms": [
+        "upper_col"
+      ]
+    },
+    "fore_link": {
+      "blender_object": "fore_link",
+      "visual_geom": "fore_vis",
+      "visual_mesh": "meshes/fore_link.obj",
+      "collision_geoms": [
+        "fore_col"
+      ]
+    }
+  },
+  "joints": {
+    "shoulder": {
+      "parent": "base",
+      "child": "upper_link",
+      "type": "hinge",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    },
+    "elbow": {
+      "parent": "upper_link",
+      "child": "fore_link",
+      "type": "hinge",
+      "axis": [
+        0,
+        1,
+        0
+      ]
+    }
+  },
+  "camera": {
+    "pos": [
+      0.3,
+      -1.3,
+      0.35
+    ],
+    "look_at": [
+      0.25,
+      0.0,
+      0.1
+    ],
+    "lens_mm": 40
+  },
+  "tolerances": {
+    "visual_outside_collision_m": 0.005,
+    "com_outside_collision_m": 0.0
+  },
+  "assets": [
+    {
+      "path": "meshes/base.obj",
+      "sha256": "d026dbf88751c96e088226860b515c28d673ba306eef62e15c9764fb81aa8412",
+      "role": "visual",
+      "body": "base"
+    },
+    {
+      "path": "meshes/upper_link.obj",
+      "sha256": "039a904283cb1efcea5ca0da1d8631ba79458ad3df10917f71fdedf61735279b",
+      "role": "visual",
+      "body": "upper_link"
+    },
+    {
+      "path": "meshes/fore_link.obj",
+      "sha256": "f65a44685205070a6e12a5cee4595a77622a21514d478fd03b4d2a4afd2a8fbb",
+      "role": "visual",
+      "body": "fore_link"
+    }
+  ],
+  "static": [
+    {
+      "name": "floor",
+      "type": "plane",
+      "size": [
+        1.0,
+        1.0,
+        0.05
+      ],
+      "pos": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "quat_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.8500000238418579,
+        0.8500000238418579,
+        0.8500000238418579,
+        1.0
+      ]
+    },
+    {
+      "name": "pad",
+      "type": "box",
+      "size": [
+        0.06,
+        0.06,
+        0.03
+      ],
+      "pos": [
+        0.45,
+        0.0,
+        0.03
+      ],
+      "quat_wxyz": [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rgba": [
+        0.30000001192092896,
+        0.6000000238418579,
+        0.30000001192092896,
+        1.0
+      ]
+    }
+  ],
+  "compiled_sha256": "87fde8454fd5b61fcfbea4cf6c2576f85ff9fbae1d380bcbc619a8ce1d826cb8"
+}
