@@ -6,7 +6,7 @@
   "description": "A planetarium page for your town: every star to magnitude 6 in its true color and brightness, the constellations drawn as glowing lines, the planets, and the Moon in its real phase, over a horizon with the compass points. It opens on tonight's sky, then turns time forward and back so the stars wheel and leave trails. Drag to look around, scroll or pinch to zoom, slide the time ribbon through the night, and tap a star for its name, distance, and constellation. On a phone, hold it up and the sky follows. The Tonight card lists sunset, full dark, the Moon's phase and rise or set, and the planets that are up. Pick deep night, red light for the telescope, or a paper star chart. Everything is computed on the page from the star catalog and the clock; nothing is sent anywhere.",
   "category": "entertainment",
   "subcategory": "Stargazing",
-  "useCase": "web-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.png",
