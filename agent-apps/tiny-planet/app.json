@@ -6,7 +6,7 @@
   "description": "Tiny Planet is a little world of your own to explore. A round explorer walks a planet grown from a word you choose, with continents, mountains, forests, and seas, and the horizon curves away under their feet as they go. Crystals are hidden across the land, each sending a beam of light into the sky, and the sun sets for real while you look: noon blue turns to an amber sunset, then stars and a rising moon. Find every crystal before dark to save the planet, and your time is the score to beat. It plays on a phone with a thumb stick and on a desktop with the keyboard and mouse, with three worlds to pick from (meadow, tundra, and ember), each with a light and a dark title screen. Name the planet and the explorer, and pick how long the day lasts and how many crystals to hide.",
   "category": "games",
   "subcategory": "3D and WebGL worlds",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
