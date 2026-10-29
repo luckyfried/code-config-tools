@@ -6,7 +6,7 @@
   "description": "Numbers Wall puts the four to twelve numbers you check every day on one page. Each tile shows the latest figure in large type, the change since the last reading in green or red, and a sparkline of the last thirty readings with your goal drawn on it. A tile's edge lights up when its goal is met. Tap a tile for its whole history and every raw reading.\n\nTiles come in three sizes, so the numbers that matter most are the biggest on the wall. Press F, or open the page with #tv at the end of the address, for TV mode: just the tiles, sized to read from across a room. On a phone the wall is one column you can scroll.\n\nYour agent keeps the numbers in one file in your project and adds a reading on each refresh, by hand or from a report, a spreadsheet, or a service. Pick a dark, light, or terminal look, or follow the system.",
   "category": "business",
   "subcategory": "KPI dashboard",
-  "useCase": "data-analysis",
+  "useCase": "dashboards-reporting",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
