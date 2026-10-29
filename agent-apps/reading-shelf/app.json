@@ -6,7 +6,7 @@
   "description": "Your books stand on a real 3D bookcase in a reading room, spines out and sized by page count, with their covers and the spine colors taken from them. Point at a spine or tap it and the book tilts out; open it and it floats up and opens on your note and rating. The books you are reading sit face-out with a bookmark at your page. A list lets you search and change status, rating, and the page you are on; a stats strip shows books and pages by month. Changes stay in your browser, and you can export them.",
   "category": "entertainment",
   "subcategory": "Books",
-  "useCase": "web-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/phone-light.jpg", "assets/desktop-light.jpg"],
   "deploy": "out/reading-shelf",
