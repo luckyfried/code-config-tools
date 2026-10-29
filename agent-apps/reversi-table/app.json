@@ -6,7 +6,7 @@
   "description": "An 8x8 Reversi table in 3D: lacquered double-sided discs on a deep green board, flipping outward from every placed disc in a wave you can see and hear. Play the computer at three strengths (Easy, Club, Master) or a friend on the same screen. Glowing dots mark legal moves, a hover or a held touch previews which discs would flip, the last move glows, a pass rattles the passing side's tray, and the end of the game counts the board out in one long wave. The score is two trays of real disc stacks. Undo, hints, arrow keys, and three tables (lacquer green, walnut, neon), each with a day and a night look. Games save on the device.",
   "category": "games",
   "subcategory": "Board and strategy",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
