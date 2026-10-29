@@ -6,7 +6,7 @@
   "description": "A board of the homes your agent found for you, each a tall photo card with the price, the rooms and baths, the floor area, the neighborhood, a link to the listing, and the facts your agent checked, each with where it checked them: the school zone, the flood map, the commute, and the price history. Mark each home yes, no, or maybe with one tap, a swipe on a phone, or a key on a computer, and leave notes on any card. Drag two or three homes into the compare tray to see them side by side, with the best price, the most room, the lowest price per square foot, and the shortest commute lit up. On any home, ask a question for the seller or the listing agent: your agent tells you what it would send and to whom, sends it only when you say so, and the answer unfolds onto the card. A yes means you like a home and never lets your agent contact anyone. Every home, choice, note, and answer stays on your computer in your project's own folder, so a reload changes nothing you decided. Comes in two looks: open house, airy white with sage and brass, and after dark, deep navy with a warm window glow.",
   "category": "lifestyle",
   "subcategory": "Home search",
-  "useCase": "product-discovery",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
