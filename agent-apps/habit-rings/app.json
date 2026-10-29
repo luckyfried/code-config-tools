@@ -6,7 +6,7 @@
   "description": "A habit tracker page for one person. Up to eight habits sit as concentric rings on one dial for today, and one tap closes a ring; a countable habit like eight glasses of water fills a step at a time. The streak of days with every ring closed is the headline, rolled up like an odometer. Under the dial, each habit has a 53-week year map that darkens as a run of days grows, with the date and what was done on any day under a tap or the pointer. On a phone it is one column you open every day, with a swipe across the dial to fix yesterday. On a desktop, Today sits beside the whole year, and keys 1 to 8 close the rings. Days stay in the browser, with Save a copy and Load a copy to move them. Themes: paper, ink, neon, or follow the device.",
   "category": "productivity",
   "subcategory": "Habit tracking",
-  "useCase": "web-development",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/shot-1.png", "assets/shot-2.png"],
   "deploy": "out/habit-rings",
