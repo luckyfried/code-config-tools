@@ -6,7 +6,7 @@
   "description": "A one-person sales board. Stages are columns, deals are cards, and the headline is the weighted value of the pipeline: each deal's value times its stage's chance of closing. Drag a deal to a later stage and the number rolls to its new total as the card lands. Each card shows how long the deal has sat in its stage with a ring that warms from neutral to amber to red. A win flies off the board in a burst of confetti, a loss fades into the Lost drawer, and a funnel and a ninety-day won-and-lost chart sit beside the headline, with the win rate and the average time to close. A List view sorts every deal by value, age, or next step. Deals are saved in the browser, with Export and Import to move them or to hand them to your agent for a weekly summary.",
   "category": "business",
   "subcategory": "Sales pipeline",
-  "useCase": "data-analysis",
+  "useCase": "sales-crm",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
