@@ -1,0 +1,26 @@
+<mujoco model="pendulum">
+  <!-- SI units throughout: meters, kilograms, seconds, radians. +Z is up. -->
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.001" integrator="RK4" gravity="0 0 -9.81">
+    <flag energy="enable"/>
+  </option>
+  <worldbody>
+    <light pos="0 -1.5 2.5" dir="0 1 -1"/>
+    <geom name="floor" type="plane" size="1 1 0.05" pos="0 0 0" rgba="0.85 0.85 0.85 1"/>
+    <body name="pendulum" pos="0 0 1">
+      <joint name="hinge" type="hinge" axis="0 1 0"/>
+      <inertial pos="0 0 -0.5" mass="1" diaginertia="0.0001 0.0001 0.0001"/>
+      <geom name="rod" type="capsule" fromto="0 0 0 0 0 -0.5" size="0.01" contype="0" conaffinity="0" rgba="0.2 0.4 0.8 1"/>
+      <geom name="bob" type="sphere" pos="0 0 -0.5" size="0.05" contype="0" conaffinity="0" rgba="0.9 0.5 0.1 1"/>
+      <site name="bob_center" pos="0 0 -0.5"/>
+    </body>
+  </worldbody>
+  <sensor>
+    <jointpos name="theta" joint="hinge"/>
+    <jointvel name="omega" joint="hinge"/>
+    <framepos name="bob_pos" objtype="site" objname="bob_center"/>
+  </sensor>
+  <keyframe>
+    <key name="start" qpos="0.6"/>
+  </keyframe>
+</mujoco>

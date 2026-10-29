@@ -1,0 +1,18 @@
+{
+  "name": "physics-robotics-simulation-wasm",
+  "private": true,
+  "type": "module",
+  "description": "MuJoCo in WebAssembly: a headless rollout that replays a run.json, a leak check, and a browser preview.",
+  "scripts": {
+    "rollout": "node rollout.mjs",
+    "leaks": "node --expose-gc leak_check.mjs",
+    "serve": "node serve.mjs"
+  },
+  "dependencies": {
+    "@mujoco/mujoco": "3.17.0",
+    "three": "0.186.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

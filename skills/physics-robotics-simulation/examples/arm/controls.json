@@ -1,0 +1,10 @@
+{
+  "about": "Servo targets in radians for shoulder_servo and elbow_servo. Each segment ramps from the previous target to its own with a minimum-jerk profile over ramp_s, then holds until the next segment starts.",
+  "actuators": ["shoulder_servo", "elbow_servo"],
+  "segments": [
+    {"t": 0.0, "ramp_s": 0.6, "target": [-0.4, 0.3]},
+    {"t": 1.2, "ramp_s": 0.8, "target": [0.2, 0.5]},
+    {"t": 2.4, "ramp_s": 0.4, "target": [-0.2, -0.3]}
+  ],
+  "seconds": 3.5
+}

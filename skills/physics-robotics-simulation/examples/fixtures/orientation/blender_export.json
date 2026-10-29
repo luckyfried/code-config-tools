@@ -1,0 +1,91 @@
+{
+  "blender": "5.2.3 LTS",
+  "units": "meters",
+  "axes": {
+    "up": "+Z",
+    "forward": "+Y"
+  },
+  "objects": [
+    {
+      "object": "fixture",
+      "file": "fixture.obj",
+      "vertices": 24,
+      "aabb": [
+        [
+          -0.15000000596046448,
+          -0.10000000149011612,
+          0.0
+        ],
+        [
+          0.15000000596046448,
+          0.10000000149011612,
+          0.10000000149011612
+        ]
+      ],
+      "scale_after_apply": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "export": {
+        "forward": "Y",
+        "up": "Z",
+        "scale": 1.0
+      }
+    },
+    {
+      "object": "fixture",
+      "file": "fixture_wrong_axes.obj",
+      "vertices": 24,
+      "aabb": [
+        [
+          -0.15000000596046448,
+          -0.10000000149011612,
+          0.0
+        ],
+        [
+          0.15000000596046448,
+          0.10000000149011612,
+          0.10000000149011612
+        ]
+      ],
+      "scale_after_apply": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "export": {
+        "forward": "NEGATIVE_Z",
+        "up": "Y",
+        "scale": 1.0
+      }
+    },
+    {
+      "object": "fixture",
+      "file": "fixture_centimeters.obj",
+      "vertices": 24,
+      "aabb": [
+        [
+          -0.15000000596046448,
+          -0.10000000149011612,
+          0.0
+        ],
+        [
+          0.15000000596046448,
+          0.10000000149011612,
+          0.10000000149011612
+        ]
+      ],
+      "scale_after_apply": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "export": {
+        "forward": "Y",
+        "up": "Z",
+        "scale": 100.0
+      }
+    }
+  ]
+}
