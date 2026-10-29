@@ -6,7 +6,7 @@
   "description": "A box of recipes your agent found for you, each a photo card with the dish, its link, the total time, how many it serves, the ingredients, the short steps, and the one line on why the agent picked it. Keep a recipe, skip it, or drag it onto a day of the week on the wooden strip along the bottom. When the week looks right, tap Plan the week: the agent adds up every ingredient for your household, sorts them by aisle, and the shopping list prints up out of the strip like a till receipt, ready to tick off in the store. Every recipe, choice, and list stays on your computer, in your project's own data folder.",
   "category": "food-drink",
   "subcategory": "Recipes",
-  "useCase": "product-discovery",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
