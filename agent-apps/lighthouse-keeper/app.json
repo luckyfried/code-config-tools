@@ -6,7 +6,7 @@
   "description": "Lighthouse Keeper is a night at your own lighthouse. Ghost ships drift in through rolling fog toward the rocks, dark silhouettes with green lanterns, and the only thing that stops them is the beam. Swing it across a moonlit sea, hold it on a ship, and watch it catch light, glow, and burn away, sails first, along a glowing edge. Rain streaks past, thunder lights the sky, and every thirty seconds the fog thickens and the ships come faster, two at a time. When too many close in, fire a flare and light up the whole sea. Keep them off the rocks until dawn to save the night; three ships on the rocks and it is lost, and your best night stays on your device. It plays on a phone (drag to swing the beam, tap the lamp for a flare) and on a desktop (mouse or the arrow keys, Space for a flare), with three nights to pick from (a clear night, a storm, and the hour before dawn), each with a light and a dark look. Name the lighthouse, which is painted around its tower, and the keeper, and pick how long the night lasts.",
   "category": "games",
   "subcategory": "Arcade and action",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
