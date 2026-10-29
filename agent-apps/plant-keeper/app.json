@@ -1,12 +1,12 @@
 {
   "id": "01a17af8-e891-7142-97bc-f6d7aa86dba6",
   "version": "2026-10-21",
-  "name": "plant-keeper",
+  "name": "Plant Keeper",
   "shortDescription": "Every plant on a card with a water ring that drains until you tap.",
   "description": "A page of your houseplants, one card each. Each card's soil ring drains over that plant's watering interval and turns amber, then red, as the day comes; the plant's leaves droop once it is overdue. Tap Watered and a droplet falls into the pot, the ring fills, and the leaves perk back up. The header counts how many plants are thirsty today, room tabs group the cards, and a fourteen-day strip shows which plants need water on each day ahead. Each plant's sheet holds its light, your notes, and its water log, and you can log a watering on another day. Waterings stay in the browser, with Export and Import to move them. Light and dark themes.",
   "category": "lifestyle",
   "subcategory": "Houseplants",
-  "useCase": "web-development",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.png",
