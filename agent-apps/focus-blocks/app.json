@@ -6,7 +6,7 @@
   "description": "Pick a length, name what the block is for, and start. A large ring drains as the minutes pass and warms from cool to ember near the end, over a slow color field, with the time left in the tab title. When a block ends, the ring snaps back full in a bloom of light, a soft chime plays, and the block slides onto today's strip. The week view shows seven strips side by side with the hours for each day and the week's total, so you see when you really focus. Pause and Give up sit under the ring, in thumb reach on a phone; on a keyboard, space starts and pauses and Esc twice gives up. Everything you do stays in your browser, and Export saves your blocks to a file you can import on another computer. It works on a phone and on a desktop, in dusk, dawn, and mono themes.",
   "category": "productivity",
   "subcategory": "Focus timer",
-  "useCase": "web-development",
+  "useCase": "time-tasks",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
