@@ -6,7 +6,7 @@
   "description": "You are the tornado. Steer a twisting funnel through a little low-poly farm town named after a place you pick, and lift everything in your path: fences and hay first, then cows and cars, and finally whole barns that come apart into planks. The funnel grows as it lifts, the camera pulls back, the grass leans toward you, and the roar deepens. Sixty seconds later a damage report says what you took, in plain words: twelve cows, three cars, one barn. Drag to steer on a phone; WASD or the arrow keys and Space for a pulse on a computer. Three looks: green plains, gold dusk, and snow. Your best run is kept on your device.",
   "category": "games",
   "subcategory": "A tiny 3D rampage",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
