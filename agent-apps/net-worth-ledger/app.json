@@ -6,7 +6,7 @@
   "description": "One chart of everything you own and owe, one point a month. Assets stack above the zero line, debts mirror them below, and net worth runs as a bold line across both, with a flag where it first crosses each milestone. Drag the scrubber to any month: the headline rolls to that month's net worth and a donut redraws its accounts. A table lists every month with its changes. Each month you tell your agent the balances in one sentence, it adds a line to your ledger file and runs again, and the chart grows by one point. Light and dark themes, phone and desktop, and nothing leaves your machine.",
   "category": "finance",
   "subcategory": "Net worth",
-  "useCase": "data-analysis",
+  "useCase": "personal-budget",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/shot-1.png", "assets/shot-2.png"],
   "deploy": "out/net-worth-ledger",
