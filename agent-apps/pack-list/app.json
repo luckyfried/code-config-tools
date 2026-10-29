@@ -6,7 +6,7 @@
   "description": "A packing list for your own kinds of trips. Pick a weekend, a beach week, a work trip, or a camping trip, or compose two into one list, and the items show up grouped. A bag in the header fills with liquid as you pack, the percentage rolls beside it, and a weight bar warms to amber as you near your airline limit. Swipe a row right to pack it; packed items sink to the bottom of their group. Checks stay in your browser, and Export carries the list to another device.",
   "category": "utilities",
   "subcategory": "Packing",
-  "useCase": "web-development",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.png",
