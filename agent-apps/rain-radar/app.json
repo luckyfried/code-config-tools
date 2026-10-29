@@ -6,7 +6,7 @@
   "description": "Rain Radar puts the live rain radar over a map of your town, tilted like the view from a plane, with your place as a pulsing marker in the middle. The last two hours and the next thirty minutes play as one smooth loop: each radar frame melts into the next instead of stepping, and every rain cell glows so it looks like weather rather than squares. A comet runs along the scrubber as the loop plays; drag it, or tap a step, to look at any moment. Thousands of wind streaks flow over the map from the current wind forecast, so you can see which way the rain is heading. A banner at the bottom says what matters, \"Rain arriving in 24 min\" or \"Dry for the next two hours\", and the strip beside it shows the rain expected in the next hour, five minutes to a bar, with its peak. It has a dark night look and a light paper look that follows your device, works on a phone and a desktop, and keeps your place, layers, units, and loop speed on your device. Without a connection it plays a sample loop of a squall line moving in, so the page is never empty.",
   "category": "weather",
   "subcategory": "Radar",
-  "useCase": "web-development",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
