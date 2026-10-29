@@ -6,7 +6,7 @@
   "description": "A delivery run through a city at night in the rain, built from a word you choose. Hook a package on a lit roof, carry it on a swinging rope to a lit balcony across town, and beat the shift clock: every delivery adds 15 seconds, a crash costs 5, and skimming the towers at speed earns a near-miss bonus. The city's biggest rooftop signs carry your city's name. Rain streaks past the lens, the streets mirror the neon, and thunder lights the skyline. Three nights to pick from, neon, amber, or ghost, each with a dusk look and a night look. Plays on a phone with two thumbs and on a computer with the keyboard and mouse. Your best shift stays on your device.",
   "category": "games",
   "subcategory": "3D and WebGL worlds",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/shot-1.png", "assets/shot-2.png"],
   "deploy": "out/rain-courier",
