@@ -6,7 +6,7 @@
   "description": "A swipe-and-merge number puzzle in 3D. Glossy cubes sit on a dark glass tray on a lit pedestal, and each one glows brighter as it climbs from a matte cream 2 to a white-hot gold 2048. Swipe or use the arrow keys: every cube slides and leans into the move, two matching cubes squash into one that pops, flares, and throws sparks, and each merge plays a mallet note one step higher, so a chain of merges climbs like a phrase. The camera leans into every swipe, new cubes drop in with a bounce, and reaching 2048 dims the board while the winning cube rises and turns at full glow. Score and best score, one undo, boards from 3 × 3 to 6 × 6, and three looks (night gold, sorbet, and cyber), each with a day and a night version. Put your own twelve labels on the cubes instead of numbers. Your game and your best scores stay on your device.",
   "category": "games",
   "subcategory": "Puzzle and word",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.png",
