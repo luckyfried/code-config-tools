@@ -6,7 +6,7 @@
   "description": "A chess page you keep: pieces of clear and smoke glass catch the studio light, refract the squares beneath them, and reflect in a polished lacquer board. A captured piece sinks through a ripple in the board, check lights its square red under the glass, and checkmate dims the room while the beaten king tips over. Play a friend on one screen, with the camera swinging to whoever moves, or play the computer at one of four levels. Pick a clock (none, 5 minutes, 10 minutes, or 15 with a 10 second increment), move by tap, click, arrow keys, or typed moves like Nf3, and undo or resign from the panel. Three boards: black lacquer, amber walnut, and ice marble, each with a light and a dark look. The page opens playing Légal's mate from Paris, 1750, and your game in progress is kept in the browser, so a reload picks up where you left off.",
   "category": "games",
   "subcategory": "Board and strategy",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
