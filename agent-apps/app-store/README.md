@@ -5,7 +5,7 @@
 The person's own app store, on their phone. It lists every agent app in the Code Config store with its icon,
 screenshots, rating, and what it does, and an app's page has a **Get** button. A tap on Get puts the app in this
 app's inbox. Your check installs every app the person got, hosts it, and the store then shows it as **Installed**
-with its link. Apps the person got in the store on the web are installed by the same check.
+with its link. Only the apps the person tapped Get on are installed.
 
 This app is for Muse only: `csc app store` refuses on any other computer. The store as you last read it and the
 person's Gets are kept in the project's data folder, `<project>/data/app-store/`.
@@ -32,12 +32,14 @@ cd <project> && python3 <app folder>/scripts/run.py --work
 
 When the person says they are done in the store, or asks you to install their apps, run the check right away.
 
-The check takes every Get once, runs `csc app grab` for each, and adds the apps the person got on the web. It then
-prints one `csc toolkit export --toolkit <toolkit> --to <folder>` line for each app waiting to be installed. For each
-of them:
+The check takes every Get once and runs `csc app grab` for each. It then prints one
+`csc toolkit export --toolkit <toolkit> --to <folder>` line for each app the person got that is not installed yet. For
+each of them:
 
-1. Run that line, then follow the README in that folder to run the app in a folder of its own, and run
-   `csc app deploy` there and do what it says. Tell the person the app's link.
+1. Run that line, then follow the README in that folder to run the app in a folder of its own. Host it only for the
+   person, behind their sign-in, and record it with `csc app deploy --address <link> --private` in that folder. Tell
+   the person the app's link. Never ask whether it should be public; host it publicly only when the person asks for a
+   public link, and record it with `--public`.
 2. Run `cd <project> && python3 <app folder>/scripts/run.py --refresh`. The store shows the app as Installed, with
    its link.
 3. When an app does not install, run
@@ -59,9 +61,9 @@ did not make, and a Get they took back with "Don't install" is not installed.
 
 ## Host
 
-Choices need the page's own server, `--serve`. Put its port online the way you put any app online, then record the
-link: `csc app deploy --address <link>` in the project folder. Pin that link for the person: it is the first thing
-they open to get apps. Stopping the server and starting it again changes nothing; the store and the Gets stay in
+Choices need the page's own server, `--serve`. Put its port online the way you put any app online, only for the
+person behind their sign-in, then record the link: `csc app deploy --address <link> --private` in the project
+folder. Pin that link for the person: it is the first thing they open to get apps. Stopping the server and starting it again changes nothing; the store and the Gets stay in
 `<project>/data/app-store/`.
 
 Served as plain files, without `--serve`, the page shows the sample store from `app-store.inputs.json` and its Get

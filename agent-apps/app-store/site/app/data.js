@@ -103,7 +103,7 @@ function getsFor(appId) {
  * What one app's button shows:
  *   installed  Muse runs it; `address` is its link
  *   waiting    the person tapped Get and Muse has not started; `event` can be cancelled
- *   installing Muse has it, or the person got it in the store on the web
+ *   installing Muse has it
  *   failed     Muse could not install it; `reason` says why
  *   get        none of these
  */
@@ -118,7 +118,6 @@ export function stateOf(app) {
   if (last && last.status === "completed" && last.result && last.result.address) {
     return { kind: "installed", address: last.result.address };
   }
-  if (state.store.waiting.some((entry) => entry.appId === app.id)) return { kind: "installing" };
   return { kind: "get" };
 }
 

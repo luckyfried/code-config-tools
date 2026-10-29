@@ -6,7 +6,7 @@ writes theme.css (the chosen theme) and config.js (the inputs) beside its index.
 
   --serve [--port N]       read the store, make the page, then serve it and the inbox on 127.0.0.1 until stopped
   --refresh                read the store with `csc app store --json` and mark every app Muse installed as done
-  --work                   the check: take every Get, grab each app, and print the install line of every app waiting
+  --work                   the check: take every Get, grab each app, and print the install line of every app got
   --failed APP --reason R  record that the app APP did not install, and why
   --check                  print the app's health, one fact per line; exit 1 when it is not ok
 
@@ -167,12 +167,6 @@ def work():
     store = refresh(rt)
     if store is None:
         return 1
-    # An app the person already got here, whatever became of it, is never added again from the web store's list:
-    # one that failed waits for the person's Try again.
-    held = {event["payload"].get("appId") for event in gets(rt) if event["status"] != "cancelled"}
-    for entry in store.get("waiting", []):
-        if entry["appId"] not in held:
-            rt.enqueue("get", None, {"appId": entry["appId"], "title": entry["title"]}, f"web-{entry['toolkitId']}")
     have = {entry["appId"] for entry in store.get("waiting", []) + store.get("installed", [])}
     while (event := rt.claim("run.py --work", lease_seconds=LEASE_SECONDS)) is not None:
         app_id = event["payload"].get("appId")
@@ -198,19 +192,22 @@ def work():
         app_id = event["payload"].get("appId")
         if event["status"] == "working" and app_id not in waiting and app_id not in installed:
             rt.fail(event["id"], "Its toolkit is no longer in your toolkits.", event["attempts"])
-    to_install = [entry for app_id, entry in waiting.items() if not failed_last.get(app_id)]
+    # Only the apps the person tapped Get on are installed; `waiting` only finds each one's toolkit and folder.
+    picked = {event["payload"].get("appId") for event in gets(rt) if event["status"] in ("pending", "working")}
+    to_install = [entry for app_id, entry in waiting.items() if app_id in picked and not failed_last.get(app_id)]
     if not to_install:
-        print("Nothing is waiting to be installed.")
+        print("Nothing the person got is waiting to be installed.")
         return 0
     me = Path(__file__).resolve().as_posix()
     print("Install each app in turn:")
     for entry in to_install:
         print(f"  {entry['title']} (app {entry['appId']}): csc toolkit export --toolkit {entry['toolkitId']} --to {entry['folder']}")
     print(
-        "For each: follow the README in its folder to run the app in a folder of its own, run `csc app deploy` in "
-        f"that folder, and tell the person the link. Then run `python3 {me} --refresh` here, and the store shows it "
-        f"as Installed. If one does not install, run `python3 {me} --failed <appId> --reason \"<what failed>\"` "
-        "here and tell the person once what failed and why."
+        "For each: follow the README in its folder to run the app in a folder of its own, host it only for the person "
+        "behind their sign-in (public only when the person asked for a public link; never ask), run `csc app deploy "
+        "--address <link> --private` in that folder, and tell the person the link. Then run "
+        f"`python3 {me} --refresh` here, and the store shows it as Installed. If one does not install, run "
+        f"`python3 {me} --failed <appId> --reason \"<what failed>\"` here and tell the person once what failed and why."
     )
     return 0
 
