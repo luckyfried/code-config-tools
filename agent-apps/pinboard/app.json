@@ -6,7 +6,7 @@
   "description": "A pinboard of visual cards: each pin an image with its title, the link it came from, a note, tags, and a board. Your agent adds what it finds; you keep, set aside, move, or ask for more like any pin with one tap, and the agent's finds arrive beside the pin that asked. Boards are yours to name, like a kitchen, a trip, or a brand. Every pin and every choice is kept in your project's own data folder on your computer.",
   "category": "lifestyle",
   "subcategory": "Inspiration",
-  "useCase": "product-discovery",
+  "useCase": "notes-knowledge",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
