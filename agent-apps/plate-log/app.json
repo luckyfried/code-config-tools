@@ -6,7 +6,7 @@
   "description": "Plate Log is a food diary built around three rings. Protein, carbs, and fat each fill their own ring inside a calorie arc, and the ring a meal moved most gives a small pulse. Go past a target and the ring keeps going as a second lap in a deeper shade.\n\nYour ten to twenty usual foods sit in a tray of large tiles, ordered by the time of day, so breakfast foods lead in the morning. Tap one, pick the servings in quarter steps, and it slides into the meal list while the calories left count down in the header. Search your foods, add a new one with its numbers, and it stays in your browser.\n\nThe Week view shows seven small rings, your daily averages, and how many days in a row you landed on target. Settings lets you change targets and export or import the whole log as a file. On a phone the rings sit on top and the tray at the bottom; on a laptop Today, Week, and your foods sit side by side.",
   "category": "food-drink",
   "subcategory": "Food tracking",
-  "useCase": "web-development",
+  "useCase": "health-fitness",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
