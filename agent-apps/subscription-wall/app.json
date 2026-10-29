@@ -6,7 +6,7 @@
   "description": "A wall of tiles, one per recurring charge, each in its own color with its yearly cost in big figures and a bar that fills toward the next charge; the most expensive one gets the biggest tile. The yearly total rolls up on top, with the twelve months ahead beside it and the heaviest month lifted. Tap \"What if I cancel?\" on any tile to watch it go gray and the total count down to what you would pay without it. A Calendar screen lists every charge by month and a By category screen shows where the money goes. Your agent keeps the list up to date, and nothing leaves your computer.",
   "category": "finance",
   "subcategory": "Subscriptions",
-  "useCase": "data-analysis",
+  "useCase": "personal-budget",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
