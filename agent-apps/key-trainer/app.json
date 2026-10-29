@@ -6,7 +6,7 @@
   "description": "Practice typing on prose or code in your own keyboard layout. The passage runs as one line while an on-screen keyboard lights the next key and flashes the one you hit by mistake. After each drill the keyboard turns into a heat map of your error rate per key, and one tap builds a drill from your weakest keys. Speed and accuracy are kept per day in your browser, with a thirty-day chart, and you can export and import your history.",
   "category": "education",
   "subcategory": "Typing",
-  "useCase": "content-writing",
+  "useCase": "learning",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/phone-light.png",
