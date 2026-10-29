@@ -6,7 +6,7 @@
   "description": "Weigh in each morning with a big dial that opens on yesterday's trend, so most days it takes a tap or two and Log weigh-in. The chart draws every weigh-in as a faint dot and the trend through them as one smooth line that washes out water and salt, so the real change shows. Your goal is a dashed line, and a marker glides to the day the trend reaches it at its current pace, moving again each time you log. A chip shows how much the trend changed this week, with an arrow that turns to match, and says Holding when it is flat. Look back over 90 days, a year, or every weigh-in, delete a mistake, switch between kilograms and pounds, and change your goal. Everything stays in your browser, and Settings exports your weigh-ins to a file you can import in another one. Comes in a light mist look and a dark slate look, plus an automatic one that follows your system.",
   "category": "health-fitness",
   "subcategory": "Body weight",
-  "useCase": "web-development",
+  "useCase": "health-fitness",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
