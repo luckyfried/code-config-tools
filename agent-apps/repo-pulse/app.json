@@ -6,7 +6,7 @@
   "description": "A dashboard of one repository's year, built from its own git history. A commit heat map with a card for every day that lists its commits. A river of who committed, month by month. A treemap of where the lines changed, folder by folder. The releases as a strip of tags with the gaps in days, the busiest day called out, and the big numbers. Your agent runs two git commands and the app reads the files they write; nothing is sent to GitHub or anywhere else. Light and dark themes, and it works on a phone and a desktop.",
   "category": "developer-tools",
   "subcategory": "Repository analytics",
-  "useCase": "data-analysis",
+  "useCase": "dashboards-reporting",
   "icon": "assets/icon.svg",
   "screenshots": ["assets/phone-light.png", "assets/desktop-light.png"],
   "deploy": "out/repo-pulse",
