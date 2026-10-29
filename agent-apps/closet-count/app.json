@@ -6,7 +6,7 @@
   "description": "A wardrobe page for the clothes you actually wear. It opens with your whole closet sliding into a strip of paint chips sorted by color, then the closet settles below it by kind: tops, bottoms, dresses, layers, shoes, bags, and accessories, each a tinted silhouette with what it now costs per wear. Your outfits hang on a rack you flick through, each laid out flat with its layers drifting as the card passes. One tap while you get dressed marks an outfit or a single piece worn today: its cost per wear rolls down and its ring fills toward thirty wears, closing with a small pop when it gets there. Anything you have not worn in ninety days fades a little more each week and lands on the Dusty shelf, where you keep it or give it away. The capsule shows this season's chosen pieces as one tight grid under a big count. Add pieces, stack new outfits one per slot, filter by color and season, and export or import the whole closet from Settings. It works on a phone and a laptop, needs no account, and keeps every tap in the browser you use.",
   "category": "lifestyle",
   "subcategory": "Wardrobe",
-  "useCase": "web-development",
+  "useCase": "home-daily-life",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
