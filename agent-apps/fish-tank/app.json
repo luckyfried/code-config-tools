@@ -2,11 +2,11 @@
   "id": "01a16373-46d5-7e06-8f7f-1728423a1f0f",
   "version": "2026-10-21",
   "name": "Fish Tank",
-  "shortDescription": "A living aquarium that earns pearls while you are away. Feed it, grow it.",
+  "shortDescription": "Grow an aquarium, feed its fish, and collect pearls while you are away.",
   "description": "Fish Tank is a living aquarium in your browser. Schools of fish swim together for real, turning and gathering the way fish do, under light that ripples across the sand, through rays falling from the surface, past plants that sway and bubbles that rise from the bubbler. Tap the water and food drifts down; the nearest fish swirl in to eat, and fed fish grow a little and drop pearls that glint on the sand until you gather them. The fish keep earning while the page is closed, and a card says what they made when you come back. Pearls buy new fish, decor, and bigger tanks, and every fish in the shop swims live in its card. The tank follows a real day: bright at noon, amber at dusk, and deep blue at night when the tank lamp hums on and the fish slow down. There are three tanks to pick from (a bright coral reef, a planted river, and the glowing deep sea), each with a light and a dark look. It works on phones and desktops, keeps everything on the device, and makes a calm screen to leave open on a second monitor.",
   "category": "games",
   "subcategory": "Idle and simulation",
-  "useCase": "game-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
