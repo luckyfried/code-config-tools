@@ -6,7 +6,7 @@
   "description": "A bracket page for 4 to 64 entrants, single elimination with seeds and byes. On load the lines draw themselves and the results so far play out in order: each winner slides into the next round, an upset flashes the seed that fell, the pool reorders as points land, and the champion's name springs up letter by letter under a burst of confetti. Everyone in the pool makes their picks on the page, one person at a time, and you enter results and scores as the games finish. The pool scores 1 point a pick in round one, doubling each round. Big screen mode fills a TV with the whole bracket and the standings for game day. Phones show one round at a time with snap scrolling and the whole bracket under pinch zoom. Five looks: auto, court, pitch, paper, and broadcast, which fills each chip with its entrant's color.",
   "category": "sports",
   "subcategory": "Tournaments",
-  "useCase": "web-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
