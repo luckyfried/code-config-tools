@@ -6,7 +6,7 @@
   "description": "Movie Night turns the household's watch list into a wall of film posters in a small 3D room. The posters stand on a polished floor with soft reflections and a rim of light; you swipe, drag, or scroll and the wall glides with inertia, the poster in front squaring up with a little spring while its neighbors blur back. The film everyone hearted most stands under a spotlight: the cone drops from above, dust drifts in it, it strikes with a flicker, and the rest of the room dims.\n\nTonight is a brass wheel with a slice for every film, wider for every heart. Spin it and the teeth tick past the flapper, the wheel runs a little past its slice and settles back, confetti flies, and the wall glides to the winner as the spotlight lands on it and its title opens up in a variable font. Everyone in the house hearts films on one device, the turn chip saying whose turn it is.\n\nWatched is a shelf of what you have seen, with the date and your stars, and any film can go back on the list. Hearts, the shelf, and the nights stay in this browser, and Export and Import carry them to another one. Three rooms ship: cinema (red velvet), drive-in (a night sky), and arthouse (gallery paper), each with a light and a dark version. On a phone the wall fills the screen with the tabs under your thumb; on a laptop the wheel sits beside the wall. Without WebGL the wall is drawn in CSS 3D, and with reduced motion it is a still grid.",
   "category": "entertainment",
   "subcategory": "Movies & TV",
-  "useCase": "web-development",
+  "useCase": "games-leisure",
   "icon": "assets/icon.svg",
   "screenshots": [
     "assets/shot-1.png",
