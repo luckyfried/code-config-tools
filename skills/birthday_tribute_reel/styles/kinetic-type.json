@@ -1,0 +1,235 @@
+{
+  "id": "kinetic-type",
+  "name": "Kinetic type",
+  "faces": {
+    "display": {
+      "family": "Bricolage Grotesque",
+      "file": "fonts/styles/kinetic-type/BricolageGrotesque[opsz,wdth,wght].ttf",
+      "weight": 800,
+      "tracking": -0.02,
+      "case": "none",
+      "lineHeight": 0.9
+    },
+    "text": {
+      "family": "Anton",
+      "file": "fonts/styles/kinetic-type/Anton-Regular.ttf",
+      "weight": 400,
+      "tracking": 0.01,
+      "case": "uppercase",
+      "lineHeight": 0.95
+    }
+  },
+  "palette": {
+    "rule": "two-inks",
+    "contrast": 4.5
+  },
+  "moves": [
+    {
+      "id": "word-per-beat-slam",
+      "fits": [
+        "title",
+        "words"
+      ]
+    },
+    {
+      "id": "type-mask-reveal",
+      "fits": [
+        "words"
+      ]
+    },
+    {
+      "id": "width-stretch",
+      "fits": [
+        "words",
+        "place"
+      ]
+    },
+    {
+      "id": "marquee",
+      "fits": [
+        "photo",
+        "landscape",
+        "wall"
+      ]
+    },
+    {
+      "id": "stack-and-split",
+      "fits": [
+        "photo",
+        "people",
+        "wordless",
+        "clip",
+        "screen"
+      ]
+    },
+    {
+      "id": "slam-words",
+      "fits": [
+        "words",
+        "peak"
+      ]
+    },
+    {
+      "id": "counter",
+      "fits": [
+        "peak"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "hard-cut",
+      "fits": [
+        "photo",
+        "words"
+      ]
+    },
+    {
+      "id": "flash-frame",
+      "fits": [
+        "peak",
+        "portrait"
+      ]
+    },
+    {
+      "id": "slide",
+      "fits": [
+        "landscape",
+        "people",
+        "wall",
+        "closer"
+      ]
+    }
+  ],
+  "ease": {
+    "curve": "spring",
+    "enter": [
+      0.34,
+      1.56,
+      0.64,
+      1
+    ],
+    "exit": [
+      0.7,
+      0,
+      0.84,
+      0
+    ],
+    "move": [
+      0.7,
+      0,
+      0.2,
+      1
+    ],
+    "spring": {
+      "damping": 9,
+      "stiffness": 170,
+      "mass": 0.6
+    },
+    "hit": {
+      "damping": 9,
+      "stiffness": 220,
+      "mass": 0.6
+    },
+    "stagger": 0.04,
+    "lean": 0.04
+  },
+  "finish": {
+    "grain": 0,
+    "vignette": 0,
+    "bloom": 0,
+    "dust": 0,
+    "blur": 1.0,
+    "halation": 1,
+    "cadence": 0,
+    "bars": 0,
+    "burn": "#ffffff",
+    "grade": {
+      "lift": [
+        0,
+        0,
+        0
+      ],
+      "gamma": 0.94,
+      "gain": [
+        1,
+        1,
+        1
+      ],
+      "saturation": 1.15
+    },
+    "dip": "none",
+    "matte": "ink",
+    "light": "#ffffff",
+    "words": "finished"
+  },
+  "music": "kinetic-type",
+  "closer": "letter-build",
+  "photo": {
+    "picture": {
+      "show": true,
+      "box": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rim": 0,
+      "rimColor": "paper",
+      "tilt": 0,
+      "tape": 0,
+      "tapeColor": "accent2",
+      "penColor": "accent"
+    },
+    "ground": "bg",
+    "line": {
+      "box": [
+        0,
+        0.32,
+        1,
+        0.6
+      ],
+      "face": "display",
+      "size": 170,
+      "align": "start",
+      "color": "bg",
+      "enter": "slam",
+      "rotate": 0,
+      "scrim": 0.6
+    },
+    "label": {
+      "face": "text",
+      "size": 56,
+      "color": "ink"
+    },
+    "rule": false,
+    "grid": {
+      "cols": 2,
+      "rows": 4,
+      "margin": 0.04,
+      "rules": "none"
+    },
+    "landscape": {
+      "box": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "line": [
+        0,
+        0.32,
+        1,
+        0.6
+      ]
+    }
+  },
+  "axes": {
+    "family": "type",
+    "palette": "complement",
+    "camera": "slam",
+    "transition": "cut",
+    "finish": "flat",
+    "music": "garage"
+  }
+}

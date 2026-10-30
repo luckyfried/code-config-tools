@@ -1,31 +1,45 @@
 #!/usr/bin/env python3
-"""Movement 1, research: who the video is for, and everything the two share. Reads build/library.json, writes
-build/ask.json (what the person said) and build/shared.json.
+"""Movement 1, research: who the video is for, and everything the two share. Reads B/library.json, writes
+B/ask.json (what the person said) and B/shared.json.
 
-USAGE (from the workspace root):
-    python3 S/scripts/shared.py --who "@dani.reyes" [--occasion "her 30th birthday"] [--date 2026-10-24] \\
-        [--words "my favorite travel partner, always late, always worth it"]
+USAGE (from the workspace root; B = the run's folder, build/<run stamp>/):
+    python3 S/scripts/shared.py --who "@dani.reyes" [--occasion "the 30th birthday"] [--date 2026-10-24] \\
+        [--words "my favorite travel partner, always late, always worth it"] [--line "to 30 more years of wandering"] \\
+        [--seconds 45]
 
 --who is the person's own words for the one the video is for: a handle, a name ("Dani", "my mom, Ana Okafor") or
-"us". It is saved in build/ask.json, so later runs may leave it out. The person's words win: an exact handle
+"us". It is saved in B/ask.json, so later runs may leave it out. The name the person calls them ("leila" in "my sister
+leila (@leila.bakes)", "mom" in "my mom") is the name the film shows. The person's words win: an exact handle
 is taken as it is; a name is matched against every account in the data (tagged in their posts, reels and stories,
 @mentioned or named in captions, the owners of posts they comment on, the authors in a saved feed's threads, the
 name on a saved feed); "us", "my partner", "my husband" and the like, or no --who at all, take the account they
 share the most photos with, and that choice is written down as an assumption. The runner-up and the account they
-talk to most are recorded too, so the brief can say why it is this one and not the other.
+talk to most are recorded too, so the brief can say why it is this one and not the other. When no account in the data
+is theirs (a grandpa who is not on Instagram), the posts whose captions name them ("grandpa's tomatoes") are the shared
+photos; when nothing names them either, every photo in the posts is used, and the assumption says which and why.
 
---occasion and --date are the person's words for the occasion; without them the occasion is read from their
-captions about the named one ("turns 30 on october 24", "happy birthday", "five years"), and failing that it is
-"a tribute". --words is anything else the person said about the named one; those lines lead the love list.
+--occasion and --date are the person's words for the occasion; without them the occasion and its day are read from
+their captions about the named one ("on october 24", "happy birthday", "anniversary"), and failing that it is
+"a tribute". The age of a birthday and the years of an anniversary come from the person's words only, never from a
+caption, so a film whose ask gives no age shows none. A farewell, a graduation or a retirement is taken from the
+person's words only, and a caption about a different occasion than the one already found adds nothing. --words is
+anything else the person said about the named one; those lines lead the love list. --line is a line of the person's
+own for the film's closing wish; without one the wish is "happy 30th, dani" (the age only when they gave it),
+"happy birthday, dani", and so on.
+
+--seconds is the length the person asked for. The kit makes films of 20 to 60 s (compose.LENGTH); a length outside
+that prints "not delivered: ..." and writes nothing, so nothing shorter or longer is made in its place.
 
 shared.json carries:
   who         handle, name, how it was matched, the person's words, the runner-up, the most frequent account
-  occasion    kind (birthday, anniversary, tribute), age or years when known, the date, a plain label, where it came from
+  occasion    kind (birthday, anniversary, farewell, graduation, retirement, tribute), the age of a birthday or the years
+              of an anniversary when the person gave it, the date, a plain label, the wish's title, where it came from
   items       every post, reel and story the two share (tagged, @mentioned or named), and the named one's own posts
               that tag the person, oldest first, each with its media, caption, date, place and how it counts as shared
+              (`why`: tagged, mentioned, named, their post tagging you, or in your posts when nothing names them)
   videos      the clips among them; first and latest: the first photo together and the latest
-  exchanges   every comment the two traded (the person's comments on their posts, both sides of the threads on
-              their saved feed), oldest first; pairs: a line and the answer under the same post
+  exchanges   every comment the two traded (the person's comments on their posts, both sides of the threads under
+              the person's own posts and on their saved feed), oldest first; pairs: a line and the answer under the same post
   voice       for each side: how many lines, words a line, capitals, exclamation marks, emoji, samples
   eras        the friendship in at most six chapters (a place, or a run of months), each with its items
   love_lines  the person's own lines about or to the named one (3 to 9 words, cleaned), "you" lines first
@@ -40,6 +54,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import compose  # noqa: E402
 
 PLACES = ["lisbon", "porto", "oaxaca", "sicily", "palermo", "marrakech", "paris", "rome", "london", "tokyo", "mexico city",
           "new york", "berlin", "barcelona", "madrid", "athens", "istanbul", "kyoto", "seoul", "bali", "cape town", "naples",
@@ -49,6 +64,10 @@ US = {"us", "we", "me and", "my partner", "partner", "my husband", "husband", "m
 RELATION = re.compile(r"\b(mom|mum|mother|dad|father|sister|brother|grandma|grandpa|aunt|uncle|son|daughter|wife|husband|"
                       r"partner|boyfriend|girlfriend|friend|bestie|best friend)\b", re.I)
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
+# the occasions besides a birthday and an anniversary, each named by the words that say it
+KINDS = [("farewell", r"\b(farewell|good-?bye|good bye|send-?off|leaving|last day|moving away|bon voyage)\b"),
+         ("graduation", r"\b(graduat\w*|commencement)\b"),
+         ("retirement", r"\b(retir\w*)\b")]
 MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november",
           "december"]
 NUMBERS = {w: i for i, w in enumerate("zero one two three four five six seven eight nine ten eleven twelve thirteen "
@@ -71,6 +90,14 @@ def ordinal(n):
 def number(word):
     word = word.lower()
     return int(word) if word.isdigit() else NUMBERS.get(word)
+
+
+def age_in(text):
+    """The age a line states ("turns 30", "the 30th", "turning thirty"), or None."""
+    t = (text or "").lower()
+    m = re.search(r"\bturns? (\d{1,3}|[a-z]+)\b", t) or re.search(r"\b(\d{1,3})(?:st|nd|rd|th)\b(?: birthday)?", t)
+    n = number(m.group(1)) if m else None
+    return n if n and n > 0 else None
 
 
 def candidates(lib):
@@ -144,6 +171,26 @@ def resolve(lib, words):
     return handle, name, by, runner, most_frequent, notes
 
 
+STOP = {"my", "the", "for", "our", "a", "an", "me", "and", "from", "of", "to", "best", "dear", "little", "big", "old"}
+
+
+def asked_name(words):
+    """The name the person calls the named one, lowercase: the first name in their words ("leila" in "my sister leila
+    (@leila.bakes)"), else the relation they named ("mom" in "my mom"); None for a bare handle, "us" or nothing."""
+    low = re.sub(r"\(?@[\w.]+\)?", " ", (words or "").lower())
+    if low.strip() in US:
+        return None
+    toks = [t[:-2] if t.endswith("'s") else t for t in re.findall(r"[a-z']+", low)]
+    names = [t for t in toks if t not in STOP and t not in US and not RELATION.fullmatch(t)]
+    rel = RELATION.search(low)
+    return names[0] if names else rel.group(1) if rel else None
+
+
+def called(who):
+    """How a line names the one the film is for: their @handle, or the name the person calls them."""
+    return f"@{who['handle']}" if who.get("handle") else who.get("first") or "them"
+
+
 def place_of(text):
     t = (text or "").lower()
     return next((p for p in PLACES if re.search(rf"\b{re.escape(p)}\b", t)), None)
@@ -157,22 +204,32 @@ def clean_line(text, handle, first):
     return t
 
 
+# the label and the closer's wish of each occasion in KINDS
+OTHER = {"farewell": ("{first}'s farewell", "farewell, {name}"),
+         "graduation": ("{first} graduates", "congratulations, {name}"),
+         "retirement": ("{first} retires", "happy retirement, {name}")}
+
+
 def occasion_of(ask, captions, first, now):
-    """The occasion: the person's words first, then their captions about the named one."""
+    """The occasion: the person's words first, then their captions about the named one. A caption gives the kind and
+    the day; the age and the years come from the person's words alone, and their own line is the wish's title."""
     words = " ".join(x for x in (ask.get("occasion"), ask.get("who"), ask.get("words")) if x)
     out = {"kind": None, "age": None, "years": None, "date": ask.get("date"), "from": None}
-    def read(text):
+    def read(text, asked=False):
         t = text.lower()
         k = {}
-        m = re.search(r"\bturns? (\d{1,3}|[a-z]+)\b", t) or re.search(r"\b(\d{1,3})(?:st|nd|rd|th)\b(?: birthday)?", t)
-        if m and number(m.group(1)) and number(m.group(1)) > 0:
-            k.update(kind="birthday", age=number(m.group(1)))
+        if age_in(t):
+            k.update(kind="birthday", age=age_in(t))
         if re.search(r"\b(birthday|bday|b-day)\b", t):
             k["kind"] = "birthday"
-        if re.search(r"\banniversary\b", t) or re.search(r"\b(\d+|[a-z]+) years?\b(?! old)", t) and not k.get("kind"):
-            ym = re.search(r"\b(\d+|[a-z]+) years?\b", t)
-            if ym and number(ym.group(1)):
-                k["years"] = number(ym.group(1))
+        for kind, rx in KINDS:  # only the person names these: a caption's "leaving" is a trip as often as a goodbye
+            if asked and not k.get("kind") and re.search(rx, t):
+                k["kind"] = kind
+        ym = re.search(r"\b(\d+|[a-z]+) years?\b(?! old)", t)
+        years = number(ym.group(1)) if ym else None
+        if re.search(r"\banniversary\b", t) or years and not k.get("kind"):
+            if years:
+                k["years"] = years
             k.setdefault("kind", "anniversary")
         dm = re.search(rf"\b({'|'.join(MONTHS)}) (\d{{1,2}})(?:st|nd|rd|th)?\b", t) or \
             re.search(rf"\b(\d{{1,2}})(?:st|nd|rd|th)? (?:of )?({'|'.join(MONTHS)})\b", t)
@@ -185,7 +242,7 @@ def occasion_of(ask, captions, first, now):
             except ValueError:
                 pass
         return k
-    said = read(words) if words else {}
+    said = read(words, asked=True) if words else {}
     for key, v in said.items():
         if v and not out.get(key):
             out[key] = v
@@ -193,10 +250,12 @@ def occasion_of(ask, captions, first, now):
         out["from"] = "your words"
     for cap in captions:
         k = read(cap)
-        if not k:
+        if not k or out["kind"] and k.get("kind") not in (None, out["kind"]):
             continue
         filled = False
         for key, v in k.items():
+            if key in ("age", "years"):
+                continue
             if v and not out.get(key):
                 out[key] = v
                 filled = True
@@ -214,11 +273,15 @@ def occasion_of(ask, captions, first, now):
     elif out["kind"] == "anniversary":
         out["label"] = "our anniversary"
         out["title"] = "happy anniversary"
+    elif out["kind"] in OTHER:
+        out["label"], out["title"] = (x.format(first=first, name=first.lower()) for x in OTHER[out["kind"]])
     else:
         out["kind"] = out["kind"] or "tribute"
         out["label"] = f"for {first}"
         out["title"] = f"for {first.lower()}"
         out["from"] = out["from"] or "no occasion named or found, so a tribute"
+    if ask.get("line"):
+        out["title"] = ask["line"].strip()
     return out
 
 
@@ -287,20 +350,30 @@ def main():
     ap.add_argument("--occasion")
     ap.add_argument("--date", help="the day of the occasion, YYYY-MM-DD")
     ap.add_argument("--words", help="anything else the person said about the named one")
+    ap.add_argument("--line", help="a line of the person's own for the closing wish")
+    ap.add_argument("--seconds", type=float, help="the length the person asked for, in seconds")
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    if a.seconds is not None and compose.refusal(a.seconds):
+        print(compose.refusal(a.seconds))
+        return 2
+    lib = _env.read_json(f"{_env.B}/library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
-    ask = _env.read_json("build/ask.json") or {}
-    for k in ("who", "occasion", "date", "words"):
+        sys.exit(f"{_env.B}/library.json is missing: run gather.py first")
+    ask = _env.read_json(f"{_env.B}/ask.json") or {}
+    for k in ("who", "occasion", "date", "words", "line"):
         if getattr(a, k):
             ask[k] = getattr(a, k)
-    _env.write_json("build/ask.json", ask)
+    if a.seconds is not None:
+        ask["seconds"] = int(a.seconds) if a.seconds == int(a.seconds) else a.seconds
+    _env.write_json(f"{_env.B}/ask.json", ask)
     me = (lib.get("handle") or "").lower()
     handle, name, by, runner, frequent, notes = resolve(lib, ask.get("who"))
-    if not handle:
+    asked = asked_name(ask.get("who"))
+    if not handle and not asked:
         sys.exit("no account is tagged or named in the data; the video needs photos of the two of you")
-    first = name.split()[0] if name else handle
+    if not handle:
+        name, notes = asked.capitalize(), []
+    first = asked.capitalize() if asked else name.split()[0] if name else handle
     feed = (lib.get("feeds") or {}).get(handle) or {}
     name_re = re.compile(rf"\b{re.escape(first.lower())}('s)?\b") if len(first) >= 3 else None
 
@@ -309,9 +382,9 @@ def main():
         for i, r in enumerate(lib.get(kind, [])):
             cap = r.get("caption") or ""
             why = []
-            if handle in (r.get("tagged") or []):
+            if handle and handle in (r.get("tagged") or []):
                 why.append("tagged")
-            if re.search(rf"@{re.escape(handle)}\b", cap, re.I):
+            if handle and re.search(rf"@{re.escape(handle)}\b", cap, re.I):
                 why.append("mentioned")
             if not why and name_re and name_re.search(cap.lower()):
                 why.append("named")
@@ -326,6 +399,19 @@ def main():
                           "caption": r.get("caption") or "", "media": r["media"], "tagged": r.get("tagged") or [],
                           "why": ["their post tagging you"], "place": place_of(r.get("caption")),
                           "video": any(Path(m).suffix.lower() in {".mp4", ".mov", ".m4v"} for m in r["media"])})
+    if not handle:
+        by = f"no account in the data is theirs, so the posts whose captions name \"{first.lower()}\""
+        if not items:
+            for i, r in enumerate(lib.get("posts", [])):
+                if r.get("media"):
+                    items.append({"id": f"post:{i}", "kind": "post", "from": "mine", "ts": r["ts"], "date": day(r["ts"]),
+                                  "caption": r.get("caption") or "", "media": r["media"], "tagged": r.get("tagged") or [],
+                                  "why": ["in your posts"], "place": place_of(r.get("caption")) or place_of(r.get("place")),
+                                  "video": any(Path(m).suffix.lower() in {".mp4", ".mov", ".m4v"} for m in r["media"])})
+            by = f"nothing in the data tags or names \"{first.lower()}\", so every photo in your posts"
+            notes.append(f"Nothing in your posts tags or names {first}, so every photo in them is used: "
+                         + "; ".join(f"\"{x['caption'][:48] or 'no caption'}\" ({x['date']})" for x in sorted(items, key=lambda x: x["ts"])[:12])
+                         + (f"; and {len(items) - 12} more" if len(items) > 12 else "") + ".")
     items.sort(key=lambda x: x["ts"])
     photos = [x for x in items if not x["video"]]
     videos = [x for x in items if x["video"]]
@@ -338,22 +424,25 @@ def main():
                 seen.add(key)
                 ex.append({"by": me or "you", "to": handle, "text": r["text"].strip(), "ts": r.get("ts"), "post": None})
     pairs = []
-    for i, p in enumerate(feed.get("posts", [])):
+    # the threads under the named one's posts and under the person's own posts, each line with the post it was left on
+    threads = [(f"feed:{i}", p) for i, p in enumerate(feed.get("posts", []))]
+    threads += [(f"{one}:{i}", r) for kind, one in (("posts", "post"), ("reels", "reel")) for i, r in enumerate(lib.get(kind, []))]
+    for pid, p in threads:
         th = [x for x in p.get("thread") or [] if x.get("account") in (me, handle) and x.get("text")]
         for x in th:
             key = (x["text"].strip(), int(x.get("ts") or 0))
             if key in seen:
                 for e in ex:
                     if (e["text"], int(e["ts"] or 0)) == key:
-                        e["post"] = f"feed:{i}"
+                        e["post"] = pid
                 continue
             seen.add(key)
             ex.append({"by": x["account"], "to": handle if x["account"] == me else me, "text": x["text"].strip(), "ts": x.get("ts"),
-                       "post": f"feed:{i}"})
+                       "post": pid})
         k = 0
         while k < len(th) - 1:
             if th[k]["account"] != th[k + 1]["account"]:
-                pairs.append({"post": f"feed:{i}", "photo": (p.get("media") or [None])[0], "first": th[k], "answer": th[k + 1]})
+                pairs.append({"post": pid, "photo": (p.get("media") or [None])[0], "first": th[k], "answer": th[k + 1]})
                 k += 2
             else:
                 k += 1
@@ -375,6 +464,9 @@ def main():
 
     caps_about = [x["caption"] for x in items if x["from"] == "mine"]
     occ = occasion_of(ask, caps_about, first, dt.date.today())
+    if occ["kind"] in ("birthday", "anniversary") and not occ[{"birthday": "age", "anniversary": "years"}[occ["kind"]]]:
+        notes.append(f"You gave no {'age' if occ['kind'] == 'birthday' else 'number of years'}, so the film shows none; "
+                     f"{first}'s name takes its place.")
     eras = eras_of(photos)
     c = candidates(lib)
     def row(h):
@@ -397,8 +489,8 @@ def main():
                    "group_photos": sum(1 for x in items if len(x["tagged"]) >= 3)},
         "assumptions": notes,
     }
-    _env.write_json("build/shared.json", out)
-    print(f"the video is for @{handle} ({name}): {by}")
+    _env.write_json(f"{_env.B}/shared.json", out)
+    print(f"the video is for {called(out['who'])} ({name}): {by}")
     for k in ("runner_up", "most_frequent"):
         r = out["who"][k]
         if r:
@@ -414,7 +506,7 @@ def main():
     print(f"love lines: {len(out['love_lines'])}: " + " / ".join(x["line"] for x in out["love_lines"][:5]))
     for x in notes:
         print(f"assumption: {x}")
-    print("wrote build/shared.json")
+    print(f"wrote {_env.B}/shared.json")
     return 0 if photos else 1
 
 

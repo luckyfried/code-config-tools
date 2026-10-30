@@ -2,20 +2,23 @@
   "name": "birthday-tribute-reel-motion",
   "private": true,
   "version": "1.0.0",
-  "description": "The tribute film in 9:16 and 1:1 and its card, rendered by Remotion from storyboard.json",
+  "description": "The tribute film in 9:16, 1:1 and 16:9 and its stills, rendered by Remotion from the storyboard's boards",
   "scripts": {
-    "studio": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts Film out/film.mp4"
+    "studio": "remotion studio studio/index.ts --public-dir"
   },
   "dependencies": {
+    "@react-three/fiber": "9.8.2",
+    "@react-three/postprocessing": "3.2.1",
     "@remotion/bundler": "4.0.536",
     "@remotion/cli": "4.0.536",
-    "@remotion/layout-utils": "4.0.536",
     "@remotion/renderer": "4.0.536",
-    "@remotion/transitions": "4.0.536",
+    "@remotion/three": "4.0.536",
+    "opentype.js": "1.3.4",
+    "postprocessing": "6.39.5",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "remotion": "4.0.536"
+    "remotion": "4.0.536",
+    "three": "0.186.1"
   },
   "allowScripts": {
     "esbuild@0.28.1": true

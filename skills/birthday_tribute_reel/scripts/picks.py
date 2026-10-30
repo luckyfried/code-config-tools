@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Movement 1, research: prepare the photos the two share and the photos around them. Reads build/library.json
-and build/shared.json; writes build/photo_index.json, build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: prepare the photos the two share and the photos around them. Reads B/library.json
+and B/shared.json; writes B/photo_index.json, B/picks.json and B/photos/*.jpg.
 
-USAGE (from the workspace root):
+USAGE (from the workspace root; B = the run's folder, build/<run stamp>/):
     python3 S/scripts/picks.py
 
 Scores every photo (color, contrast, exposure): the person's own (set "mine"), the named one's saved feed
 ("theirs"), and marks the ones the two share. Finds each one's focal point (where the detail is, so a cover crop
-keeps it), converts HEIC and rotates by EXIF, and saves a 1600 px JPEG copy of every shared photo in build/photos/.
+keeps it), converts HEIC and rotates by EXIF, and saves a 2400 px JPEG copy of every shared photo in B/photos/.
 A shared video gets a poster frame (ffmpeg, 40% of the way in); the video itself stays available as footage.
 
-picks.json carries "shared" (every prepared photo of the two, the only photos a beat may use; qa.py checks it),
+picks.json carries "shared" (every prepared photo of the two, and of the named one's own posts the two talked under:
+the only photos a beat may use; qa.py checks it),
 "items" (each shared photo with its date, caption, era, focal point and colors), "videos", and the chapters:
 "opener" (the most striking shared photo), "first" (the first photo together), "latest" (the latest), "eras" (each
 era's photos in date order) and "best" (the twelve strongest shared photos, spread across the eras). To use
@@ -19,12 +20,14 @@ has to be one of picks.json "shared".
 """
 import datetime as dt
 import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import shared  # noqa: E402
 
 _env.need("PIL")
 from PIL import Image, ImageFilter, ImageOps, ImageStat  # noqa: E402
@@ -36,7 +39,7 @@ try:
 except Exception:
     pillow_heif = None
 
-PHOTOS = Path("build/photos")
+PHOTOS = Path(f"{_env.B}/photos")
 VIDEO = {".mp4", ".mov", ".m4v"}
 
 
@@ -49,7 +52,7 @@ def open_image(path, draft=None):
 
 
 def prepare(path):
-    """A 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
+    """A 2400 px JPEG copy in B/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
     src = Path(path)
     dest = PHOTOS / (hashlib.sha1(str(src.resolve()).encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -60,14 +63,16 @@ def prepare(path):
         print(f"skip {src.name}: cannot open ({e}){' ; HEIC needs pillow-heif' if src.suffix.lower() in ('.heic', '.heif') else ''}",
               file=sys.stderr)
         return None
-    im.thumbnail((1600, 1600), Image.LANCZOS)
+    im.thumbnail((2400, 2400), Image.LANCZOS)
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    im.save(dest, "JPEG", quality=90)
+    tmp = dest.with_name(f".{dest.name}.part")
+    im.save(tmp, "JPEG", quality=90)
+    os.replace(tmp, dest)
     return str(dest.resolve())
 
 
 def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in build/photos/, 40% of the way in. Returns its path or None."""
+    """A reel's poster frame as a 2400 px JPEG in B/photos/, 40% of the way in. Returns its path or None."""
     src = Path(video)
     dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -79,9 +84,13 @@ def poster(video):
         at = float(r.stdout.strip()) * 0.4
     except ValueError:
         at = 0.5
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
-                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
-    return str(dest.resolve()) if dest.exists() and dest.stat().st_size > 0 else None
+    tmp = dest.with_name(f".{dest.name}.part.jpg")
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
+                        "-vf", "scale='min(2400,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
+    if r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0:
+        os.replace(tmp, dest)
+    tmp.unlink(missing_ok=True)
+    return str(dest.resolve()) if dest.exists() else None
 
 
 def analyse(path):
@@ -121,8 +130,8 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
-    sh = _env.read_json("build/shared.json")
+    d = _env.read_json(f"{_env.B}/library.json")
+    sh = _env.read_json(f"{_env.B}/shared.json")
     if not d or not sh:
         sys.exit("run gather.py and shared.py first (research.py runs shared.py)")
     together = {m for x in sh["items"] for m in x["media"]}
@@ -142,7 +151,7 @@ def main():
                           "month": dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).month, **a})
     if not index:
         sys.exit("no photos could be opened; the video needs at least one photo")
-    _env.write_json("build/photo_index.json", index)
+    _env.write_json(f"{_env.B}/photo_index.json", index)
     era_of = {i: e["label"] for e in sh["eras"] for i in e["items"]}
     out = {"for": sh["who"]["handle"], "shared": [], "items": [], "videos": [], "focal": {}, "source_of": {},
            "chapters": {"opener": [], "first": [], "latest": [], "eras": {}, "best": []}}
@@ -160,26 +169,45 @@ def main():
             out["focal"][still] = focal(a)
             out["source_of"][still] = m
             (out["videos"] if video else out["items"]).append(row)
+    # The named one's own posts the two talked under: the photograph a comment and its answer were left on.
+    have = {r["id"] for r in out["items"]}
+    for pid in dict.fromkeys(x["post"] for x in sh.get("pairs") or []):
+        i = int(pid.split(":")[1]) if pid.startswith("feed:") else None
+        r = feed.get("posts", [])[i] if i is not None and i < len(feed.get("posts", [])) else None
+        if pid in have or not r or not r.get("media") or Path(r["media"][0]).suffix.lower() in VIDEO:
+            continue
+        still = prepare(r["media"][0])
+        if not still:
+            continue
+        a = analyse(still)
+        day = dt.datetime.fromtimestamp(int(r["ts"]), dt.timezone.utc).date().isoformat()
+        out["items"].append({"id": pid, "photo": still, "src": r["media"][0], "date": day, "ts": r["ts"], "caption": r.get("caption") or "",
+                             "from": "theirs", "era": None, "video": None, "group": False, "talked": True, **a})
+        out["shared"].append(still)
+        out["focal"][still] = focal(a)
+        out["source_of"][still] = r["media"][0]
+    out["items"].sort(key=lambda r: r["ts"])
     items = out["items"]
     if not items:
-        sys.exit(f"no photo of you and @{sh['who']['handle']} could be opened")
+        sys.exit(f"no photo of you and {shared.called(sh['who'])} could be opened")
     ch = out["chapters"]
-    lit = [r for r in items if r["bright"] > 0.25] or items
+    both = [r for r in items if not r.get("talked")] or items  # the photos the two are in
+    lit = [r for r in both if r["bright"] > 0.25] or both
     ch["opener"] = [max(lit, key=lambda r: r["score"])["photo"]]
-    ch["first"] = [items[0]["photo"]]
-    ch["latest"] = [items[-1]["photo"]]
+    ch["first"] = [both[0]["photo"]]
+    ch["latest"] = [both[-1]["photo"]]
     for e in sh["eras"]:
-        ch["eras"][e["label"]] = [r["photo"] for r in items if r["era"] == e["label"]]
+        ch["eras"][e["label"]] = [r["photo"] for r in both if r["era"] == e["label"]]
     per = max(1, 12 // max(1, len(sh["eras"])))
-    best = {r["photo"] for e in sh["eras"] for r in sorted((r for r in items if r["era"] == e["label"]), key=lambda r: -r["score"])[:per]}
-    ch["best"] = [r["photo"] for r in sorted((r for r in items if r["photo"] in best), key=lambda r: r["ts"])][:12]
-    _env.write_json("build/picks.json", out)
+    best = {r["photo"] for e in sh["eras"] for r in sorted((r for r in both if r["era"] == e["label"]), key=lambda r: -r["score"])[:per]}
+    ch["best"] = [r["photo"] for r in sorted((r for r in both if r["photo"] in best), key=lambda r: r["ts"])][:12]
+    _env.write_json(f"{_env.B}/picks.json", out)
     print(f"indexed {len(index)} photos ({sum(1 for e in index if e['set'] == 'theirs')} from their feed, {skipped} could not be opened); "
-          f"prepared {len(out['shared'])} shared ({len(items)} photos, {len(out['videos'])} video posters) in build/photos/")
-    print(f"first {items[0]['date']} ({Path(items[0]['src']).name}), latest {items[-1]['date']} ({Path(items[-1]['src']).name})")
+          f"prepared {len(out['shared'])} shared ({len(items)} photos, {len(out['videos'])} video posters) in {PHOTOS}/")
+    print(f"first {both[0]['date']} ({Path(both[0]['src']).name}), latest {both[-1]['date']} ({Path(both[-1]['src']).name})")
     for e, ps in ch["eras"].items():
         print(f"  {e}: {len(ps)} photos")
-    print("wrote build/picks.json and build/photo_index.json")
+    print(f"wrote {_env.B}/picks.json and {_env.B}/photo_index.json")
     return 0
 
 

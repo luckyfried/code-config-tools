@@ -3,6 +3,23 @@
 
 USAGE:
     python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18]
+    TRIBUTE_PHOTOS=DIR[:DIR...] python3 make_person.py DEST
+    python3 make_person.py DEST --subjects B     # the storyboard agent's look at each placed photograph, from the table
+
+TRIBUTE_PHOTOS names the photo sets that stand in for the photographs the two share: folders read as files and never
+written, searched in order for each file a post names. Unset, the set is photos/ beside this script (real CC0
+photographs, SOURCES.md names each); set to an empty value, every photograph is drawn. With a set, each post, clip and
+post of the friend's that carries a photograph in its own row (TOGETHER, CLIPS_TOGETHER, FEED, and GENERATED for the
+generated posts by their place in the year) is that set photograph (cut where the row says, at most 2400 px on the
+long side) in place of the drawing; everything else stays drawn, so every count is the same either way.
+Every caption on a set photograph is written from that photograph: it names what the picture shows and never a
+thing it does not, and no set photograph appears in two rows.
+
+Every photograph written carries a subject box, the box that must stay in frame ([x0, y0, x1, y1], fractions of the
+photograph): the people a drawing stands in its foreground, SUBJECTS for a set photograph (the part its caption is
+about, never the whole print by default), the middle of a drawing with no one in it. DEST/fixture-subjects.json holds them by the SHA-1 of each photograph's bytes. --subjects B
+writes each one into the "photos" of B's storyboards, the record the storyboard agent writes after opening each
+photograph (pipeline/2-storyboards.md), so a fixture run checks and renders the way a real one does.
 
 DEST is a folder (a workspace). It receives:
     instagram-maren.okafor-2026-10-18/       the Instagram export, JSON layout:
@@ -285,7 +302,7 @@ def make_reel(job):
     path, still, secs = job
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     frames = int(secs * 30)
-    vf = (f"scale=1080:1920,zoompan=z='1+0.12*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={frames}:s=540x960:fps=30")
+    vf = (f"scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,zoompan=z='1+0.12*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={frames}:s=540x960:fps=30")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", still, "-vf", vf, "-frames:v", str(frames),
                     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", path], check=True)
     return path
@@ -294,25 +311,26 @@ def make_reel(job):
 FRIEND, FRIEND_NAME = "dani.reyes", "Dani Reyes"
 BIRTHDAY = (10, 24)  # the day the person names in a caption: dani turns 30
 SECOND = "theo.makes"  # the account she writes to most, with a much thinner shared history
-TOGETHER = [  # (month, day, scene, place, others tagged, caption): the year of photos the two are in
-    (1, 3, "coffee", "lisbon", [], "first coffee of the year with @dani.reyes, same window, same order"),
-    (1, 18, "oldtown", "lisbon", [], "@dani.reyes found the only bakery open on a sunday"),
-    (2, 7, "table", "home", ["ines.walks", "kofi.cooks"], "soup night at dani's, she made enough for twelve"),
-    (3, 9, "oldtown", "porto", [], "porto with @dani.reyes, who navigates by pastry"),
-    (3, 22, "market", "porto", ["theo.makes"], "the porto market crew"),
-    (4, 12, "coffee", "porto", [], "dani laughing at my film camera again"),
-    (5, 4, "market", "oaxaca", [], "the market in oaxaca with @dani.reyes, she bargains, i hold the bags"),
-    (5, 26, "table", "oaxaca", ["kofi.cooks", "liv.outside"], "mole lesson, nobody followed the recipe"),
-    (6, 14, "hills", "oaxaca", [], "6am on the ridge, @dani.reyes made it look easy"),
-    (7, 6, "beach", "sicily", ["theo.makes", "ines.walks"], "the whole crew in sicily"),
-    (7, 11, "beach", "sicily", [], "swimming before breakfast with @dani.reyes"),
-    (7, 19, "market", "sicily", [], "@dani.reyes and the biggest lemon in sicily"),
-    (7, 27, "sunset", "sicily", [], "last night of the trip, dani cried at the sunset and so did i"),
-    (8, 9, "table", "sicily", ["kofi.cooks", "sam_and_june"], "long table, longer night"),
-    (9, 5, "oldtown", "marrakech", [], "marrakech with my favorite travel partner @dani.reyes"),
-    (9, 20, "oldtown", "marrakech", [], "@dani.reyes in every doorway, a series"),
-    (10, 3, "table", "home", [], "dani turns 30 on october 24 and i'm already planning the table @dani.reyes"),
-    (10, 12, "table", "home", ["ines.walks", "theo.makes", "liv.outside"], "sunday lunch, the usual suspects"),
+TOGETHER = [  # (month, day, scene, place, others tagged, caption, photograph): the year of photos the two are in;
+    # the photograph is a set file, (file, cut) or a list of files for a carousel
+    (1, 3, "coffee", "lisbon", [], "first coffee of the year with @dani.reyes, same window, same order", "coffee.jpg"),
+    (1, 18, "oldtown", "lisbon", [], "@dani.reyes found the only bakery open on a sunday", "bakery.jpg"),
+    (2, 7, "table", "home", ["ines.walks", "kofi.cooks"], "ramen night at dani's, she made enough for twelve", "ramen.jpg"),
+    (3, 9, "oldtown", "porto", [], "porto with @dani.reyes, she stopped at every painted wall", "alfama.jpg"),
+    (3, 22, "market", "porto", ["theo.makes"], "spring in porto, theo stopped at every flower bed", "picnic.jpg"),
+    (4, 12, "coffee", "porto", [], "porto in black and white, on the film camera dani laughs at", "bicycle.jpg"),
+    (5, 4, "market", "oaxaca", [], "oaxaca with @dani.reyes, she picked the tomatoes, i held the bowl", "tomatoes.jpg"),
+    (5, 26, "table", "oaxaca", ["kofi.cooks", "liv.outside"], "pottery class in oaxaca, dani's bowl came out better than mine", "hands-pottery.jpg"),
+    (6, 14, "hills", "oaxaca", [], "6am on the ridge with @dani.reyes, worth every step", "mountain-hike.jpg"),
+    (7, 6, "beach", "sicily", ["theo.makes", "ines.walks"], "the whole crew in sicily", "crew-sunset-shore.jpg"),
+    (7, 11, "beach", "sicily", [], "the surfers were up before breakfast and so were we @dani.reyes", "surf.jpg"),
+    (7, 19, "market", "sicily", [], "@dani.reyes says this palace looks like a lemon", "sintra.jpg"),
+    (7, 27, "sunset", "sicily", [], "last night of the trip, dani cried at the sunset and so did i", "sunset-beach.jpg"),
+    (8, 9, "table", "sicily", ["kofi.cooks", "sam_and_june"], "the grill was going until 2am", "city-night.jpg"),
+    (9, 5, "oldtown", "marrakech", [], "front row in marrakech with my favorite travel partner @dani.reyes", "concert.jpg"),
+    (9, 20, "oldtown", "marrakech", [], "the whole city from the top, @dani.reyes found the lookout", "graca.jpg"),
+    (10, 3, "table", "home", [], "dani turns 30 on october 24 and i'm already planning the table @dani.reyes", ["birthday-cake.jpg", "balloons.jpg"]),
+    (10, 12, "table", "home", ["ines.walks", "theo.makes", "liv.outside"], "sunday walk through the garden, the usual suspects", "garden.jpg"),
 ]
 GROUP_WITHOUT = [  # group photos she is not in
     (6, 2, "table", "oaxaca", ["theo.makes", "kofi.cooks", "liv.outside"], "dinner with the oaxaca crew"),
@@ -324,9 +342,9 @@ THEO_ONLY = [
 ]
 STORIES_TOGETHER = [(1, 4, "coffee"), (2, 8, "table"), (3, 10, "oldtown"), (5, 5, "market"), (6, 15, "hills"),
                     (7, 12, "beach"), (7, 20, "market"), (9, 6, "oldtown"), (10, 4, "table")]
-CLIPS_TOGETHER = [  # the two short videos the two shot together
-    (7, 12, "beach", "sicily", 5, "@dani.reyes swimming before breakfast, the video"),
-    (9, 21, "oldtown", "marrakech", 7, "dani dancing in the medina @dani.reyes"),
+CLIPS_TOGETHER = [  # the two short videos the two shot together: (month, day, scene, place, seconds, caption, the still the clip opens on)
+    (7, 12, "beach", "sicily", 5, "@dani.reyes and the whole empty beach, the video", "couple-beach.jpg"),
+    (9, 21, "oldtown", "marrakech", 7, "dani lost in the rug shop in the medina @dani.reyes", "fes.jpg"),
 ]
 HER_LINES = [  # what the person writes under dani's posts: lowercase, no full stops, warm and plain
     "you look so happy here", "this light on you", "i still think about this lunch", "you are the best travel partner",
@@ -345,24 +363,154 @@ DANI_LINES = [  # how dani writes: capitals, exclamation marks, emoji
     "My favorite photographer!!", "Soup club forever \U0001F372", "Ok you win, it's perfect", "Dancing until they close!! \U0001F483",
     "Love you more \U0001F49B", "Same order, always ☕", "Can't wait for the table!!!",
 ]
+UNDER_TAGGED = {  # the first exchange under each post of dani's that tags the person, by its day: the two of them on what is in it
+    (1, 19): ("you in the tulips, finally", "WE DID IT!! Tulip day \U0001F337"),
+    (3, 11): ("you and every painted wall in porto", "I'd stop at every one again!!"),
+    (5, 6): ("i'd carry your bags anywhere", "Best market. Best bag holder. \U0001F33A"),
+    (7, 13): ("the water was so cold and you went in first", "Someone had to!! \U0001F30A"),
+    (7, 28): ("ok i was crying", "WE BOTH WERE \U0001F62D"),
+    (9, 22): ("you never stop dancing", "Dancing until they close!! \U0001F483"),
+}
 COOL = {  # dani's own feed: cool, bright, nothing like the person's earth tones
     "teal": (40, 140, 150), "coral": (240, 112, 98), "cobalt": (42, 82, 172), "mint": (168, 222, 196),
     "white": (244, 246, 248), "pink": (238, 150, 176), "sky": (126, 186, 230), "navy": (28, 40, 82),
 }
-FEED = [  # (month, day, scene, four cool colors, tags maren, caption)
-    (1, 10, "city", ["sky", "cobalt", "white", "navy"], False, "New year, new neighborhood \U0001F3D9️"),
-    (1, 19, "flowers", ["pink", "coral", "white", "teal"], True, "Sunday bakery run with @maren.okafor!!"),
-    (2, 14, "flowers", ["pink", "coral", "white", "navy"], False, "Galentine's soup club \U0001F372\U0001F49B"),
-    (3, 11, "city", ["teal", "sky", "white", "navy"], True, "Porto!!! With my favorite photographer @maren.okafor"),
-    (4, 2, "rain", ["cobalt", "sky", "white", "navy"], False, "Rain day = museum day"),
-    (5, 6, "flowers", ["coral", "pink", "mint", "teal"], True, "Oaxaca market haul \U0001F33A @maren.okafor held the bags"),
-    (6, 16, "hills", ["mint", "teal", "sky", "navy"], False, "6am club. Never again. (Again tomorrow)"),
-    (7, 13, "beach", ["teal", "sky", "white", "cobalt"], True, "Morning swim with @maren.okafor \U0001F30A"),
-    (7, 28, "sunset", ["coral", "pink", "sky", "navy"], True, "Not crying, you're crying \U0001F62D @maren.okafor"),
-    (8, 20, "city", ["cobalt", "teal", "white", "navy"], False, "Back to real life \U0001F4BC"),
-    (9, 22, "flowers", ["coral", "teal", "pink", "navy"], True, "Marrakech dance floor \U0001F483 @maren.okafor"),
-    (10, 9, "beach", ["sky", "mint", "white", "cobalt"], False, "Almost 30 and still the first one in the water"),
+FEED = [  # (month, day, scene, four cool colors, tags maren, caption, photograph)
+    (1, 10, "city", ["sky", "cobalt", "white", "navy"], False, "Wedding season starts NOW ✌️", "wedding-arms-up.jpg"),
+    (1, 19, "flowers", ["pink", "coral", "white", "teal"], True, "Tulip fields with @maren.okafor!! \U0001F337", "flowers.jpg"),
+    (2, 14, "flowers", ["pink", "coral", "white", "navy"], False, "Park bench, two coffees, zero plans \U0001F49B", "park-portrait.jpg"),
+    (3, 11, "city", ["teal", "sky", "white", "navy"], True, "Porto!!! With my favorite photographer @maren.okafor", "lisbon-tram.jpg"),
+    (4, 2, "rain", ["cobalt", "sky", "white", "navy"], False, "Rain day = couch day", "living-room.jpg"),
+    (5, 6, "flowers", ["coral", "pink", "mint", "teal"], True, "Oaxaca market haul \U0001F33A @maren.okafor held the bags", ("market.jpg", (0.0, 0.48, 1.0, 1.0))),
+    (6, 16, "hills", ["mint", "teal", "sky", "navy"], False, "6am club. Never again. (Again tomorrow)", "morning-run.jpg"),
+    (7, 13, "beach", ["teal", "sky", "white", "cobalt"], True, "Sunset swim with @maren.okafor \U0001F30A", None),
+    (7, 28, "sunset", ["coral", "pink", "sky", "navy"], True, "Not crying, you're crying \U0001F62D @maren.okafor", "desert-sunset.jpg"),
+    (8, 20, "city", ["cobalt", "teal", "white", "navy"], False, "Still finding streamers in my hair \U0001F389", None),
+    (9, 22, "flowers", ["coral", "teal", "pink", "navy"], True, "Marrakech dance floor \U0001F483 @maren.okafor", "crowd-lights.jpg"),
+    (10, 9, "beach", ["sky", "mint", "white", "cobalt"], False, "Almost 30 and still the one who rows", "dolomites.jpg"),
 ]
+
+
+# The generated posts that carry a set photograph, by their place in the year's generation order (seed 7), each with
+# the caption written from that photograph: the dinners and the trip post the films' tables set.
+GENERATED = {
+    46: ("rooftop-garden.jpg", "the rooftop garden from the ninth floor, dinner up there next week"),
+    62: ("spice-stalls.jpg", "the spice stalls before dinner with @theo.makes, he bought one of everything"),
+    64: ("candle.jpg", "dinner by candlelight with @liv.outside"),
+    98: ("bairro-alto.jpg", "dinner downtown with @ines.walks, the fountain all lit up"),
+    117: ("skyline-night.jpg", "last night out, the whole city lit up below the tower"),
+}
+SET_LONGEST = 2400
+SUBJECTS = {  # each set photograph's subject box in its own frame, before any cut: the part its caption is about, drawn
+    # as tight as a careful person would (the people and what they hold, the part of a view, the thing in a still life);
+    "coffee.jpg": [0.3, 0.1, 0.7, 0.4],
+    "bakery.jpg": [0.32, 0.06, 0.72, 0.6],
+    "ramen.jpg": [0.2, 0.33, 0.92, 0.88],
+    "alfama.jpg": [0.48, 0.38, 0.8, 0.82],
+    "picnic.jpg": [0.25, 0.25, 0.75, 0.75],
+    "bicycle.jpg": [0.4, 0.42, 0.7, 0.88],
+    "tomatoes.jpg": [0.33, 0.25, 0.67, 0.82],
+    "mountain-hike.jpg": [0.32, 0.4, 0.68, 0.8],
+    "crew-sunset-shore.jpg": [0.22, 0.6, 0.53, 0.93],
+    "surf.jpg": [0.2, 0.4, 0.36, 0.62],
+    "sintra.jpg": [0.62, 0.22, 1.0, 0.9],
+    "sunset-beach.jpg": [0.04, 0.42, 0.32, 0.74],
+    "city-night.jpg": [0.25, 0.3, 0.62, 0.75],
+    "concert.jpg": [0.2, 0.3, 0.8, 1.0],
+    "graca.jpg": [0.25, 0.47, 0.75, 0.85],
+    "balloons.jpg": [0.25, 0.05, 0.82, 0.45],
+    "birthday-cake.jpg": [0.15, 0.05, 0.93, 0.7],
+    "garden.jpg": [0.32, 0.35, 0.68, 0.85],
+    "hands-pottery.jpg": [0.3, 0.0, 0.77, 0.75],
+    "flowers.jpg": [0.2, 0.25, 0.8, 0.9],
+    "dolomites.jpg": [0.15, 0.45, 0.85, 1.0],
+    "bairro-alto.jpg": [0.15, 0.05, 0.7, 0.85],
+    "couple-beach.jpg": [0.6, 0.45, 0.72, 0.67],
+    "fes.jpg": [0.25, 0.15, 0.75, 0.85],
+    "wedding-arms-up.jpg": [0.05, 0.3, 0.9, 0.8],
+    "park-portrait.jpg": [0.3, 0.25, 0.75, 1.0],
+    "lisbon-tram.jpg": [0.47, 0.47, 0.8, 0.8],
+    "living-room.jpg": [0.35, 0.42, 1.0, 0.85],
+    "market.jpg": [0.39, 0.51, 0.79, 0.66],
+    "morning-run.jpg": [0.55, 0.35, 0.7, 0.7],
+    "desert-sunset.jpg": [0.1, 0.3, 0.7, 0.7],
+    "crowd-lights.jpg": [0.3, 0.68, 0.85, 1.0],
+    "rooftop-garden.jpg": [0.15, 0.5, 0.52, 1.0],
+    "spice-stalls.jpg": [0.1, 0.2, 0.9, 0.8],
+    "candle.jpg": [0.1, 0.3, 0.75, 0.85],
+    "skyline-night.jpg": [0.6, 0.05, 0.85, 0.75],
+}
+
+
+def subject_of(job):
+    """The subject box of the photograph a draw job writes: its set photograph's, carried through the cut, or the
+    people the drawing stands in its foreground (draw_scene's geometry), or the middle of a drawing with no one in it."""
+    path, w, h = job[:3]
+    figures = job[6] if len(job) > 6 else 0
+    if path in SETS:
+        src, cut = SETS[path]
+        x0, y0, x1, y1 = SUBJECTS[Path(src).name]
+        c = cut or (0, 0, 1, 1)
+        fit = lambda v, a, b: round(min(1.0, max(0.0, (v - a) / (b - a))), 3)
+        return [fit(x0, c[0], c[2]), fit(y0, c[1], c[3]), fit(x1, c[0], c[2]), fit(y1, c[1], c[3])]
+    if not figures:  # a drawing with no one in it is a pattern: its middle stands for the part a person would box
+        return [0.3, 0.3, 0.7, 0.7]
+    sw, sh = w // 2, h // 2
+    span = 0.34 + 0.12 * min(figures, 4)
+    reach = (1.5 * max(8, sh * 0.44 * 0.13) + 8) / sw
+    return [round(max(0.0, (1 - span) / 2 + span / (2 * figures) - reach), 3), 0.53,
+            round(min(1.0, (1 - span) / 2 + span * (1 - 1 / (2 * figures)) + reach), 3), 0.97]
+
+
+def subjects_by_file(ws, B):
+    """{photo file name in B: its subject box}, from DEST/fixture-subjects.json through the bytes of each library copy."""
+    import hashlib
+    table = json.loads((Path(ws) / "fixture-subjects.json").read_text())
+    picks = json.loads((Path(B) / "picks.json").read_text())
+    return {Path(r["photo"]).name: table[hashlib.sha1((Path(B) / r["src"]).read_bytes()).hexdigest()] for r in picks.get("items") or []}
+
+
+def record_subjects(ws, B):
+    """Write each storyboard photograph's subject box into B's storyboards."""
+    boxes = subjects_by_file(ws, B)
+    n = 0
+    for f in sorted(Path(B).glob("storyboards/*/storyboard.json")):
+        b = json.loads(f.read_text())
+        for r in b["photos"].values():
+            r["subject"] = boxes[Path(r["file"]).name]
+            n += 1
+        f.write_text(json.dumps(b, indent=2, ensure_ascii=False))
+    print(f"recorded {n} subject boxes into {B}/storyboards")
+
+
+def set_photo(photo):
+    """A row's photograph as (path, cut) when TRIBUTE_PHOTOS names the sets, or None to draw it."""
+    named = os.environ.get("TRIBUTE_PHOTOS", str(Path(__file__).resolve().parent / "photos"))
+    folders = [Path(f) for f in named.split(os.pathsep) if f]
+    if not folders or not photo:
+        return None
+    name, cut = photo if isinstance(photo, tuple) else (photo, None)
+    for f in folders:
+        if (f / name).exists():
+            return str(f / name), cut
+    sys.exit(f"TRIBUTE_PHOTOS has no {name}")
+
+
+def place_set_photo(job):
+    """job = (path, (source, cut)): the set photograph written as a JPEG at path, in place of the drawing."""
+    from PIL import Image, ImageOps
+    path, (src, cut) = job
+    im = ImageOps.exif_transpose(Image.open(src)).convert("RGB")
+    if cut:
+        w, h = im.size
+        im = im.crop((round(cut[0] * w), round(cut[1] * h), round(cut[2] * w), round(cut[3] * h)))
+    im.thumbnail((SET_LONGEST, SET_LONGEST))
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    im.save(path, "JPEG", quality=92)
+    return path
+
+
+SETS = {}  # path -> (set photograph, cut): the photographs place_set_photo writes over the drawings
 
 
 def friendship(rng0, year, end, months, root, jobs, clip_jobs, pal, media_path, insight):
@@ -374,19 +522,26 @@ def friendship(rng0, year, end, months, root, jobs, clip_jobs, pal, media_path, 
     tag = lambda names: [{"username": n} for n in names]
     out = {"posts": [], "insights": [], "reels": [], "reel_insights": [], "stories": [], "comments": [], "feed": []}
 
-    def post(m, d, scene, place, tagged, cap, figures):
+    def post(m, d, scene, place, tagged, cap, figures, photo=None):
         ts = on(m, d)
         w, h = (1080, 1350) if rng.random() < 0.7 else (1080, 1080)
-        uri = media_path("posts", ts, ".jpg")
-        jobs.append((str(root / uri), w, h, scene, pal(m), rng.random(), figures))
-        out["posts"].append({"media": [{"uri": uri, "creation_timestamp": ts, "title": ig_text(cap),
-                                        "media_metadata": {"photo_metadata": {"exif_data": []}},
-                                        "tagged_users": tag(tagged), "cross_post_source": {"source_app": "FB"}}]})
+        seed = rng.random()
+        media = []
+        for ph in (photo if isinstance(photo, list) else [photo]):
+            uri = media_path("posts", ts, ".jpg")
+            jobs.append((str(root / uri), w, h, scene, pal(m), seed, figures))
+            if (sp := set_photo(ph)):
+                SETS[str(root / uri)] = sp
+            media.append({"uri": uri, "creation_timestamp": ts, "title": ig_text(cap) if len(media) == 0 and not isinstance(photo, list) else "",
+                          "media_metadata": {"photo_metadata": {"exif_data": []}},
+                          "tagged_users": tag(tagged), "cross_post_source": {"source_app": "FB"}})
+        out["posts"].append({"media": media} if len(media) == 1 else {"media": media, "title": ig_text(cap), "creation_timestamp": ts})
+        uri = media[0]["uri"]
         likes = int(rng.uniform(120, 210))
         out["insights"].append(insight(uri, ts, likes, int(likes / rng.uniform(8, 14))))
 
-    for m, d, scene, place, others, cap in TOGETHER:
-        post(m, d, scene, place, [FRIEND] + others, cap, 2 + len(others))
+    for m, d, scene, place, others, cap, photo in TOGETHER:
+        post(m, d, scene, place, [FRIEND] + others, cap, 2 + len(others), photo)
     for m, d, scene, place, others, cap in GROUP_WITHOUT:
         post(m, d, scene, place, others, cap, len(others) + 1)
     for m, d, scene, place, cap in THEO_ONLY:
@@ -397,10 +552,12 @@ def friendship(rng0, year, end, months, root, jobs, clip_jobs, pal, media_path, 
         jobs.append((str(root / uri), 1080, 1920, scene, pal(m), rng.random(), 2))
         out["stories"].append({"uri": uri, "creation_timestamp": ts, "title": "", "media_metadata": {"photo_metadata": {}},
                                "tagged_users": tag([FRIEND])})
-    for i, (m, d, scene, place, secs, cap) in enumerate(CLIPS_TOGETHER):
+    for i, (m, d, scene, place, secs, cap, photo) in enumerate(CLIPS_TOGETHER):
         ts = on(m, d, 9)
         still = str(root / f"media/reels/together{i + 1}-still.jpg")
         jobs.append((still, 1080, 1920, scene, pal(m), rng.random(), 2))
+        if (sp := set_photo(photo)):
+            SETS[still] = sp
         uri = f"media/reels/{17845000000000000 + i * 6007}.mp4"
         clip_jobs.append((str(root / uri), still, secs))
         out["reels"].append({"media": [{"uri": uri, "creation_timestamp": ts, "title": ig_text(cap),
@@ -415,18 +572,19 @@ def friendship(rng0, year, end, months, root, jobs, clip_jobs, pal, media_path, 
     her = HER_LINES[:]
     dani = DANI_LINES[:]
     k = 0
-    for m, d, scene, cols, tags_her, cap in FEED:
+    for m, d, scene, cols, tags_her, cap, photo in FEED:
         ts = on(m, d, 12)
         thread = []
         for j in range(2):
             t1 = ts + 3600 * (2 + 5 * j) + rng.randint(0, 900)
             t2 = t1 + 1800 + rng.randint(0, 900)
-            thread.append({"account": HANDLE, "text": her[k % len(her)], "ts": t1})
-            thread.append({"account": FRIEND, "text": dani[k % len(dani)], "ts": t2})
+            mine, theirs = UNDER_TAGGED.get((m, d), (None, None)) if j == 0 else (None, None)
+            thread.append({"account": HANDLE, "text": mine or her[k % len(her)], "ts": t1})
+            thread.append({"account": FRIEND, "text": theirs or dani[k % len(dani)], "ts": t2})
             k += 1
         if rng.random() < 0.5:
             thread.insert(1, {"account": rng.choice(["ines.walks", "kofi.cooks", "liv.outside"]), "text": "obsessed", "ts": ts + 5400})
-        out["feed"].append({"ts": ts, "caption": cap, "scene": scene, "colors": cols, "tagged": [HANDLE] if tags_her else [],
+        out["feed"].append({"ts": ts, "caption": cap, "photo": photo, "scene": scene, "colors": cols, "tagged": [HANDLE] if tags_her else [],
                             "comments": thread, "figures": 2 if tags_her else 1})
         out["comments"] += [comment(FRIEND, c["text"], c["ts"]) for c in thread if c["account"] == HANDLE]
     for line in her[k:]:  # the rest of her lines sit under dani's older posts, outside the reachable feed
@@ -454,6 +612,8 @@ def write_feed(dest, end, jobs, feed):
     for i, f in enumerate(feed):
         name = f"media/{i + 1:02d}.jpg"
         jobs.append((str(base / name), 1080, 1350, f["scene"], [COOL[c] for c in f["colors"]], random.Random(i).random(), f["figures"], "clean"))
+        if (sp := set_photo(f["photo"])):
+            SETS[str(base / name)] = sp
         posts.append({"ts": f["ts"], "caption": f["caption"], "media": [name], "tagged": f["tagged"], "thread": f["comments"]})
     (base).mkdir(parents=True, exist_ok=True)
     (base / "items.json").write_text(json.dumps({"source": f"browser: instagram.com/{FRIEND}", "feed_of": FRIEND,
@@ -469,7 +629,10 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--year", type=int, default=2026)
     ap.add_argument("--end", default="2026-10-18", help="last day of data (the export date)")
+    ap.add_argument("--subjects", metavar="B", help="write the fixture's subject boxes into run folder B's storyboards")
     a = ap.parse_args()
+    if a.subjects:
+        return record_subjects(a.dest, a.subjects)
     rng = random.Random(a.seed)
     end = dt.date.fromisoformat(a.end)
     year = a.year
@@ -499,10 +662,14 @@ def main():
         return cap
 
     posts, insights = [], []
+    made = 0
     for m in months:
         for _ in range(SEASON[m][0]):
             ts = ts_for(rng, year, m, end)
             cap = caption(m)
+            made += 1
+            if made in GENERATED and set_photo(GENERATED[made][0]):
+                cap = GENERATED[made][1]
             n_media = 1 if rng.random() < 0.8 else rng.randint(2, 3)
             items = []
             for k in range(n_media):
@@ -510,6 +677,8 @@ def main():
                 ext = ".heic" if rng.random() < 0.1 else ".jpg"
                 uri = media_path("posts", ts, ext)
                 jobs.append((str(root / uri), w, h, rng.choice(SEASON[m][1]), pal(m), rng.random()))
+                if k == 0 and made in GENERATED and (sp := set_photo(GENERATED[made][0])):
+                    SETS[str(root / uri)] = sp
                 items.append({"uri": uri, "creation_timestamp": ts, "media_metadata": {"photo_metadata": {"exif_data": []}},
                               "title": ig_text(cap) if n_media == 1 else "", "cross_post_source": {"source_app": "FB"}})
             posts.append({"media": items} if n_media == 1 else {"media": items, "title": ig_text(cap), "creation_timestamp": ts})
@@ -670,13 +839,17 @@ def main():
 
     with Pool(max(2, os.cpu_count() or 2)) as pool:
         pool.map(draw_scene, jobs, chunksize=4)
+        pool.map(place_set_photo, list(SETS.items()))
         pool.map(make_reel, clip_jobs)
+    import hashlib
+    (dest / "fixture-subjects.json").write_text(json.dumps(
+        {hashlib.sha1(Path(j[0]).read_bytes()).hexdigest(): subject_of(j) for j in jobs}, indent=1))
     print(json.dumps({"workspace": str(dest), "instagram": root.name, "facebook": fb.name, "handle": HANDLE,
                       "posts": len(posts), "post_media": sum(len(p["media"]) for p in posts), "reels": len(reels),
                       "reel_clips": len(clip_jobs), "stories": len(stories), "likes": 900, "liked_accounts": len(liked),
                       "saved": len(saved), "comments": len(comments), "followers": len(followers),
                       "following": len(following), "facebook_posts": len(fb_posts), "facebook_albums": len(albums),
-                      "images": len(jobs), "friend": friends["summary"], "friend_feed": feed}, indent=2))
+                      "images": len(jobs), "set_photos": len(SETS), "friend": friends["summary"], "friend_feed": feed}, indent=2))
 
 
 if __name__ == "__main__":
