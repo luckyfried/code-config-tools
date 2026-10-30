@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Movement 1: the counting behind the taste profile. Reads build/library.json; writes build/research.json,
-a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
+"""Movement 1: the reading behind the taste profile. Reads build/library.json; writes build/research.json,
+a machine draft of build/taste.json, and build/taste.draft.md (the reading under the five headings the agent
 turns into build/taste.md).
 
 USAGE (from the workspace root):
     python3 S/scripts/research.py
 
-It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's palette), then reads:
+It runs stats.py, picks.py and palette.py first (what the export holds, each month's photograph, the year's palette), then reads:
   palette   the year's colors versus the colors of what they like and save (from the liked media when the
             library has it, else from the color words in the names and captions of the accounts they like,
             save and follow)
@@ -15,9 +15,16 @@ It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's
   cadence   posts per month and weekday, streaks and gaps
   reels     how long their reels run and how fast they cut (ffmpeg scene changes)
   people    who they talk to most; places from captions, albums and check-ins
-  moments   the busiest and quietest month, the top post, the post that changed their numbers, the trip, the eras
-taste.json also carries the type direction, pacing, register, texture and the grade inputs; the agent edits it
-freely before storyboards are drafted.
+  moments   a draft of the year's moments, one a month: the month's photograph (picks.json), the date, their own line
+            from its caption, the people it tags and the place it names; and the eras (where the year was, month to month)
+taste.json carries the register the words and the caption are written in, the palette, the pillars, places and moments,
+words, the film's words in their voice (`signoff`), length, the seconds they asked for (none: the film runs as long as
+the year it has), style, a look they named (an id in styles/), and music, the brief the film's music is made from
+(genre and instrument words only when they name a sound, a tempo only when they ask for one, and what to avoid; never
+an artist, band or song), and ask (true where the agent may ask the person which look to make, false where it picks
+by taste); the agent edits it freely before the storyboard is drafted. Its `moments` is the agent's to curate: what happened each
+month, from the photographs and the captions, the peak of the story marked `"peak": true`; picks.py takes each month's
+photograph from it and the film says its line.
 """
 import collections
 import datetime as dt
@@ -62,7 +69,7 @@ THEMES = {
 }
 PLACES = ["lisbon", "porto", "oaxaca", "sicily", "palermo", "marrakech", "paris", "rome", "london", "tokyo", "mexico city",
           "new york", "berlin", "barcelona", "madrid", "naples", "athens", "istanbul", "kyoto", "seoul", "bali", "cdmx",
-          "los angeles", "san francisco", "chicago", "amsterdam", "copenhagen", "vienna", "prague", "budapest", "home"]
+          "los angeles", "san francisco", "chicago", "amsterdam", "provence", "sintra", "dolomites", "fes", "copenhagen", "vienna", "prague", "budapest", "home"]
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
 FILM = {"film photography"}
 
@@ -208,32 +215,11 @@ def cadence(rows):
     }
 
 
-def moments(posts, stats, place_by_month):
-    out = []
-    b, q = stats.get("busiest") or {}, stats.get("quietest") or {}
-    if b:
-        out.append({"kind": "busiest month", "month": b.get("name"), "posts": b.get("posts"), "total": b.get("total")})
-    if q:
-        out.append({"kind": "quietest month", "month": q.get("name"), "posts": q.get("posts")})
-    tops = stats.get("top_posts") or []
-    if tops:
-        t = tops[0]
-        out.append({"kind": "top post", "date": t.get("date"), "likes": t.get("likes"), "caption": t.get("caption")})
-    liked = [p for p in posts if p.get("likes") is not None]
-    jump = None
-    for i in range(6, len(liked)):
-        base = statistics.mean(p["likes"] for p in liked[i - 6:i]) or 1
-        ratio = liked[i]["likes"] / base
-        if not jump or ratio > jump[0]:
-            jump = (ratio, liked[i])
-    if jump and jump[0] >= 1.6:
-        p = jump[1]
-        out.append({"kind": "the post that changed the numbers", "date": dt.datetime.fromtimestamp(p["ts"], dt.timezone.utc).date().isoformat(),
-                    "likes": p["likes"], "times_usual": round(jump[0], 1), "caption": p.get("caption")})
-    trips = [(m, c.most_common(1)[0]) for m, c in sorted(place_by_month.items()) if c and c.most_common(1)[0][0] != "home"]
-    if trips:
-        m, (place, n) = max(trips, key=lambda x: x[1][1])
-        out.append({"kind": "the trip", "month": MONTHS[m - 1], "place": place, "posts": n})
+def moments(picks, place_by_month):
+    """The year's moments as a first draft, one for each month's photograph: what happened, with whom and where, from
+    the post itself; and the eras, the place each run of months was in."""
+    out = [{"month": m["name"], "date": m.get("date"), "photo": m["src"], "line": m.get("said") or "",
+            "people": m.get("people") or [], "place": m.get("place")} for m in picks.get("months", [])]
     eras, cur = [], None
     for m in sorted(place_by_month):
         top = place_by_month[m].most_common(1)[0][0]
@@ -243,19 +229,6 @@ def moments(posts, stats, place_by_month):
             cur = {"place": top, "from": MONTHS[m - 1], "to": MONTHS[m - 1]}
             eras.append(cur)
     return out, eras
-
-
-def type_direction(themes, register, pacing):
-    film = themes.get("film photography", 0)
-    loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
-    if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
-    if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
 
 
 def main():
@@ -286,12 +259,10 @@ def main():
     top10 = sum(n for _, n in like_accounts.most_common(10))
     pacing = reel_pacing(lib["reels"])
     places, place_by_month = places_in(posts + lib["reels"], lib.get("facebook", []))
-    mom, eras = moments(posts, stats, place_by_month)
-    td = type_direction(own_themes + liked_themes, caps, pacing)
+    mom, eras = moments(_env.read_json("build/picks.json") or {}, place_by_month)
     year_palette = [{"hex": s["hex"], "name": s.get("name"), "share": s.get("share"), "photo": s.get("photo")}
                     for s in (pal.get("year") or [])]
     film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
-    warm_light = (own_themes.get("light", 0) + liked_themes.get("light", 0)) >= 4
     research = {
         "handle": lib["handle"], "year": lib["year"], "source": lib["source"], "doors": lib.get("doors", {}),
         "counts": stats.get("counts"),
@@ -307,37 +278,39 @@ def main():
         "people": stats.get("people", [])[:8],
         "places": [{"place": p, "posts": n} for p, n in places.most_common(8)],
         "moments": mom, "eras": eras,
-        "type": td,
     }
     _env.write_json("build/research.json", research)
     shot = pacing.get("avg_shot_seconds")
+    pillars = [t for t, _ in (own_themes + liked_themes).most_common(4)]
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "year": lib["year"],
         "palette": {"year": year_palette, "likes": likes_palette,
                     "direction": "toward their likes" if likes_palette else "their year"},
-        "type": td,
-        "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
-                   "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
-                   "energy": "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"},
+        "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot},
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
                      "samples": caps.get("samples", [])[:4]},
-        "pillars": [t for t, _ in (own_themes + liked_themes).most_common(4)],
+        "pillars": pillars,
         "people": [p["account"] for p in stats.get("people", [])[:5]],
         "places": [p for p, _ in places.most_common(5) if p != "home"],
         "moments": mom,
-        "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
         "avoid": ["cold blue grading", "neon", "stock-photo gloss"] if film else ["muddy grading"],
+        # the bed is the winning style's own recipe; style words go here only when the person names a sound
+        "music": {"styles": [], "avoid": ["vocals", "spoken word", "harsh distortion"]},
+        # whether the agent may ask the person which look to make; a run with no one to ask sets it false and picks by taste
+        "ask": True,
     }
     if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
         _env.write_json("build/taste.json", taste)
-    lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
+    lines = [f"# taste draft for {'@' + lib['handle'] if lib['handle'] else 'their year'} ({lib['year']})", "",
              "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
              f"- places: {', '.join(f'{p} ({n})' for p, n in places.most_common(6))}",
              f"- eras: {'; '.join(e['place'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') for e in eras)}",
-             f"- moments: {'; '.join(m['kind'] + ': ' + ', '.join(str(v) for k, v in m.items() if k != 'kind') for m in mom)}",
+             "- moments (curate them in taste.json: what happened, with whom, where; mark the story's peak):",
+             *[f"  - {m['month']} {m['date']}: \"{m['line']}\"" + (f" with {', '.join('@' + a for a in m['people'])}" if m['people'] else "")
+               + (f" in {m['place']}" if m['place'] else "") for m in mom],
              "", "## you like",
              f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
              f"- most liked: {', '.join(a for a, _ in like_accounts.most_common(6))}",
@@ -346,7 +319,8 @@ def main():
              f"- palette of their likes ({likes_palette_from}): {', '.join(s['name'] + ' ' + s['hex'] for s in likes_palette)}",
              "", "## your style is",
              f"- reels: {pacing.get('avg_seconds')} s on average, a cut every {shot} s" if shot else "- no reels to measure",
-             f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+             f"- texture: {'film grain and warm light' if film else 'clean'}",
+             f"- music: the winning look's own sound; no {', no '.join(taste['music']['avoid'])}",
              "", "## your voice is",
              f"- {caps.get('avg_words')} words a caption, {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
              f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
@@ -354,12 +328,12 @@ def main():
              f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
              f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
+    _env.write_text("build/taste.draft.md", "\n".join(lines))
     print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
     print(f"year palette: {[s['hex'] for s in year_palette]}; likes palette: {[s['hex'] + ' ' + s['name'] for s in likes_palette]}")
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
-    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; type lead {td['lead']}")
-    print(f"moments: {[m['kind'] for m in mom]}; eras: {len(eras)}")
+    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s")
+    print(f"moments: {len(mom)} drafted; eras: {len(eras)}")
     print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
     return 0
 

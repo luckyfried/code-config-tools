@@ -1,0 +1,836 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "A style card: everything a film's look is, apart from its story",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "faces",
+    "palette",
+    "moves",
+    "transitions",
+    "ease",
+    "finish",
+    "music",
+    "closer",
+    "photo",
+    "axes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "faces": {
+      "type": "object",
+      "required": [
+        "display",
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "display": {
+          "type": "object",
+          "required": [
+            "family",
+            "file",
+            "weight",
+            "tracking",
+            "case",
+            "lineHeight"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "family": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string",
+              "pattern": "^fonts/styles/[a-z-]+/[^/]+\\.ttf$"
+            },
+            "italic": {
+              "type": "string",
+              "pattern": "^fonts/styles/[a-z-]+/[^/]+\\.ttf$"
+            },
+            "weight": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 900
+            },
+            "tracking": {
+              "type": "number"
+            },
+            "case": {
+              "enum": [
+                "none",
+                "uppercase",
+                "lowercase"
+              ]
+            },
+            "lineHeight": {
+              "type": "number",
+              "minimum": 0.5
+            }
+          }
+        },
+        "text": {
+          "type": "object",
+          "required": [
+            "family",
+            "file",
+            "weight",
+            "tracking",
+            "case",
+            "lineHeight"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "family": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string",
+              "pattern": "^fonts/styles/[a-z-]+/[^/]+\\.ttf$"
+            },
+            "italic": {
+              "type": "string",
+              "pattern": "^fonts/styles/[a-z-]+/[^/]+\\.ttf$"
+            },
+            "weight": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 900
+            },
+            "tracking": {
+              "type": "number"
+            },
+            "case": {
+              "enum": [
+                "none",
+                "uppercase",
+                "lowercase"
+              ]
+            },
+            "lineHeight": {
+              "type": "number",
+              "minimum": 0.5
+            }
+          }
+        }
+      }
+    },
+    "palette": {
+      "type": "object",
+      "required": [
+        "rule"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "rule": {
+          "enum": [
+            "photos",
+            "photos-plus-accent",
+            "two-inks",
+            "mono-plus-one",
+            "fixed"
+          ]
+        },
+        "desaturate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "contrast": {
+          "type": "number",
+          "minimum": 1
+        },
+        "by": {
+          "enum": [
+            "warmth"
+          ]
+        },
+        "warm": {
+          "type": "object",
+          "required": [
+            "bg",
+            "ink",
+            "paper",
+            "accent",
+            "accent2",
+            "muted"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "bg": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "ink": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "paper": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "accent": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "accent2": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "muted": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            }
+          }
+        },
+        "cool": {
+          "type": "object",
+          "required": [
+            "bg",
+            "ink",
+            "paper",
+            "accent",
+            "accent2",
+            "muted"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "bg": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "ink": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "paper": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "accent": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "accent2": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "muted": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            }
+          }
+        }
+      }
+    },
+    "moves": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "fits"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+          },
+          "fits": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "title",
+                "photo",
+                "words",
+                "clip",
+                "screen",
+                "wall",
+                "closer",
+                "wordless",
+                "portrait",
+                "landscape",
+                "peak",
+                "people",
+                "place"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "fits"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z]+(-[a-z]+)*$"
+          },
+          "fits": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "title",
+                "photo",
+                "words",
+                "clip",
+                "screen",
+                "wall",
+                "closer",
+                "wordless",
+                "portrait",
+                "landscape",
+                "peak",
+                "people",
+                "place"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "ease": {
+      "type": "object",
+      "required": [
+        "curve",
+        "enter",
+        "exit",
+        "move",
+        "spring",
+        "hit",
+        "stagger",
+        "lean"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "curve": {
+          "enum": [
+            "bezier",
+            "spring",
+            "quart",
+            "sine",
+            "noise"
+          ]
+        },
+        "enter": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "exit": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "move": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "spring": {
+          "type": "object",
+          "required": [
+            "damping",
+            "stiffness",
+            "mass"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "damping": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stiffness": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mass": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "hit": {
+          "type": "object",
+          "required": [
+            "damping",
+            "stiffness",
+            "mass"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "damping": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stiffness": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mass": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "stagger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lean": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "finish": {
+      "type": "object",
+      "required": [
+        "grain",
+        "vignette",
+        "bloom",
+        "dust",
+        "blur",
+        "halation",
+        "cadence",
+        "bars",
+        "burn",
+        "grade",
+        "dip",
+        "matte",
+        "light",
+        "words"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "grain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "bloom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dust": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "blur": {
+          "type": "number",
+          "minimum": 0
+        },
+        "halation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cadence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "frames a second the picture steps at; 0 moves on every frame"
+        },
+        "bars": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.5,
+          "description": "each letterbox bar's height as a share of the frame's height; 0 draws none"
+        },
+        "burn": {
+          "type": "string",
+          "pattern": "^#[0-9a-f]{6}$"
+        },
+        "grade": {
+          "type": "object",
+          "required": [
+            "lift",
+            "gamma",
+            "gain",
+            "saturation"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "lift": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "gamma": {
+              "type": "number",
+              "minimum": 0.1
+            },
+            "gain": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "saturation": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "dip": {
+          "type": "string",
+          "pattern": "^(none|bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$",
+          "description": "the color a dissolve or a fade passes through, never more than about half way, so the pictures carry through it; none: the card's cuts never dip and its dissolves cross picture to picture"
+        },
+        "matte": {
+          "type": "string",
+          "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$",
+          "description": "the letterbox bars, the projector gate's edge and the iris a match cut opens out of"
+        },
+        "light": {
+          "type": "string",
+          "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$",
+          "description": "the light a flash frame, a burn's flash, a lamp and a lens flare are made of, laid over the picture as light"
+        },
+        "words": {
+          "enum": [
+            "finished",
+            "clean"
+          ],
+          "description": "finished: the grade, vignette and grain lie over every word the moves set; clean: the words stand over the finish, as printed"
+        }
+      }
+    },
+    "music": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$"
+    },
+    "closer": {
+      "type": "string",
+      "pattern": "^[a-z]+(-[a-z]+)*$"
+    },
+    "photo": {
+      "type": "object",
+      "required": [
+        "picture",
+        "ground",
+        "line",
+        "label",
+        "rule",
+        "grid",
+        "landscape"
+      ],
+      "additionalProperties": false,
+      "description": "the photo beat's layout: where the photograph stands, the ground around it, and where its label and line are set",
+      "properties": {
+        "picture": {
+          "type": "object",
+          "required": [
+            "show",
+            "box",
+            "rim",
+            "rimColor",
+            "tilt",
+            "tape",
+            "tapeColor",
+            "penColor"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "show": {
+              "type": "boolean",
+              "description": "false sets the line alone on the ground; the photograph is seen only as its slit slides to the wall"
+            },
+            "box": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "x, y, width, height as shares of the frame; a side on the frame's edge runs past it"
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.1,
+              "description": "the print's border, a share of the frame's width; 0 draws none"
+            },
+            "rimColor": {
+              "type": "string",
+              "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$"
+            },
+            "tilt": {
+              "type": "number",
+              "minimum": -8,
+              "maximum": 8,
+              "description": "degrees the print lies turned, clockwise"
+            },
+            "tape": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2,
+              "description": "strips of tape across the print's top corners"
+            },
+            "tapeColor": {
+              "type": "string",
+              "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$",
+              "description": "the tape's color, laid over the print at a little under full opacity"
+            },
+            "penColor": {
+              "type": "string",
+              "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$",
+              "description": "the hand's ink: the pen a doodle is drawn and written in, and the print on a sticker, chosen to read on the card's ground"
+            }
+          }
+        },
+        "ground": {
+          "type": "string",
+          "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$"
+        },
+        "line": {
+          "type": "object",
+          "required": [
+            "box",
+            "face",
+            "size",
+            "align",
+            "color",
+            "enter",
+            "rotate",
+            "scrim"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "box": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "x, y, width, height as shares of the type area: the label then the line, set from its top"
+            },
+            "face": {
+              "enum": [
+                "display",
+                "text"
+              ]
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 32,
+              "maximum": 260,
+              "description": "px of a 1080-wide frame, the largest it is set at"
+            },
+            "align": {
+              "enum": [
+                "start",
+                "center"
+              ]
+            },
+            "color": {
+              "type": "string",
+              "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$"
+            },
+            "enter": {
+              "enum": [
+                "rise",
+                "slam",
+                "type",
+                "fade",
+                "cut"
+              ]
+            },
+            "rotate": {
+              "type": "number",
+              "minimum": -8,
+              "maximum": 8
+            },
+            "scrim": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.8,
+              "description": "how dark the photograph is shaded under the line: clear above it, this much black from the label down to the photograph's foot; 0 shades nothing"
+            }
+          }
+        },
+        "label": {
+          "type": "object",
+          "required": [
+            "face",
+            "size",
+            "color"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "face": {
+              "enum": [
+                "display",
+                "text"
+              ]
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 32,
+              "maximum": 160
+            },
+            "color": {
+              "type": "string",
+              "pattern": "^(bg|ink|paper|accent|accent2|muted|#[0-9a-f]{6})$"
+            }
+          }
+        },
+        "rule": {
+          "type": "boolean",
+          "description": "whether the carried dot draws its line across the photograph and the line stays"
+        },
+        "grid": {
+          "type": "object",
+          "required": [
+            "cols",
+            "rows",
+            "margin",
+            "rules"
+          ],
+          "additionalProperties": false,
+          "description": "the grid the card's moves lay out on: windows, cells, rules, crops and the closer stand on its columns and rows",
+          "properties": {
+            "cols": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "rows": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "margin": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.2,
+              "description": "the margin around the grid, a share of the frame's width"
+            },
+            "rules": {
+              "enum": [
+                "none",
+                "margins",
+                "gutters"
+              ],
+              "description": "where the grid's rules may show: never, as marks in the margins, or along the gutters between cells; never across a photograph"
+            }
+          }
+        },
+        "landscape": {
+          "type": "object",
+          "required": [
+            "box",
+            "line"
+          ],
+          "additionalProperties": false,
+          "description": "the layout a photograph wider than it is tall takes instead of picture.box and line.box, so it fills the frame's foot rather than leaving bare ground under it",
+          "properties": {
+            "box": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "x, y, width, height of the frame, as picture.box"
+            },
+            "line": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "x, y, width, height of the type area, as line.box"
+            }
+          }
+        }
+      }
+    },
+    "axes": {
+      "type": "object",
+      "required": [
+        "family",
+        "palette",
+        "camera",
+        "transition",
+        "finish",
+        "music"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "family": {
+          "type": "string"
+        },
+        "palette": {
+          "type": "string"
+        },
+        "camera": {
+          "type": "string"
+        },
+        "transition": {
+          "type": "string"
+        },
+        "finish": {
+          "type": "string"
+        },
+        "music": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

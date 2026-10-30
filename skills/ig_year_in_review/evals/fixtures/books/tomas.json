@@ -1,0 +1,32 @@
+{
+  "handle": "tomas.travels",
+  "name": "Tomás Reis",
+  "year": 2026,
+  "exported": "2026-12-29",
+  "months": [
+    {"month": 1, "photo": "lisbon-tram.jpg", "posts": 9, "likes": 388,
+     "caption": "first tram of the year with rui, all the way up to graça. lisbon @rui.reis", "more": ["yellow houses all the way up", "rails and washing lines"]},
+    {"month": 2, "photo": "graca.jpg", "posts": 3, "likes": 301,
+     "caption": "sunday under the pines with my sister, the bridge in the haze. lisbon @sofia.reis", "more": ["roofs for days"]},
+    {"month": 3, "photo": "belem.jpg", "posts": 8, "likes": 356,
+     "caption": "low tide at belém. we waited an hour for that light. lisbon @rui.reis", "more": ["clouds over the tagus", "low tide at the tower"]},
+    {"month": 4, "photo": "sintra.jpg", "posts": 10, "likes": 402,
+     "caption": "sintra with sofia. she made us climb every tower. @sofia.reis", "more": ["the palace up close", "tiles on tiles"]},
+    {"month": 5, "photo": "train.jpg", "posts": 12, "likes": 344,
+     "caption": "the slow train north to see grandad. window seat the whole way. porto @avo.reis", "more": ["the slow train north", "an empty carriage"]},
+    {"month": 6, "photo": "mountain-hike.jpg", "posts": 11, "likes": 371,
+     "caption": "hiked the ridges with the club. my legs still hate me. @trilhos.club", "more": ["up above the valley", "one more ridge"]},
+    {"month": 7, "photo": "dolomites.jpg", "posts": 26, "likes": 627,
+     "caption": "rowed out on the lake at six with leonor. the dolomites, finally. @leonor.costa", "more": ["the boat at the jetty", "peaks over the water", "still water at six", "a lake that colour"]},
+    {"month": 8, "photo": "road-trip.jpg", "posts": 15, "likes": 455,
+     "caption": "road trip with leonor. one road, two pines, no plan. @leonor.costa", "more": ["one road, two pines", "dry grass and a white line"]},
+    {"month": 9, "photo": "desert.jpg", "posts": 11, "likes": 498,
+     "caption": "sunset on the dunes. slept under more stars than i knew existed. marrakech", "more": ["sand till the horizon", "dune ridges at dusk"]},
+    {"month": 10, "photo": "fes.jpg", "posts": 10, "likes": 362,
+     "caption": "lost in the fes medina with leonor. bought a rug i can't carry. @leonor.costa", "more": ["lamps and rugs", "tiles under the rugs"]},
+    {"month": 11, "photo": "market.jpg", "posts": 7, "likes": 333,
+     "caption": "market morning with mum before the flight home. @ana.reis", "more": ["blue umbrella over the stall", "market morning"]},
+    {"month": 12, "photo": "bairro-alto.jpg", "posts": 9, "likes": 417,
+     "caption": "home for christmas. rossio at night, the fountain lit. lisbon", "more": ["the square after dark", "lights on the theatre"]}
+  ]
+}
