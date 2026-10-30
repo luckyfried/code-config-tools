@@ -4,9 +4,21 @@ exports, with one subject tracked across all of it.
 
 USAGE:
     python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18]
+    TRANSFORMATION_PHOTOS=/path/to/set python3 make_person.py DEST
+
+TRANSFORMATION_PHOTOS names a photo set to stand in for their pottery photographs: a folder of photographs with a
+manifest.json beside them ({"set": NAME, "items": [{"rank", "file", "why_this_rank": "Month N: ..."}]}), read as
+files and never written. Unset, the pottery photographs are drawn. Named, their pottery posts are the set's photographs
+in rank order, one post each, captioned from SET_CAPTIONS, at the set's own
+resolution up to 2560 px on the long side; the pottery reels are left out, so every count is the set's. A set with
+its own person in SET_PEOPLE is posted by that person (handle, name) on that person's dates, one date per post; any
+other set is theirs, dated inside the month its entry names (month 1 starts on 2025-08-09, the entry that names no
+month is the latest post, 2026-10-14). Each caption
+is written from its photograph and says what the photograph shows: a caption that contradicts its picture is fixed
+here, in SET_CAPTIONS, never downstream.
 
 DEST is a folder (a workspace). It receives:
-    instagram-maren.okafor-2026-10-18/       the Instagram export, JSON layout:
+    instagram-<handle>-2026-10-18/           the Instagram export, JSON layout (handle maren.okafor unless a set names its own):
         personal_information/personal_information/personal_information.json
         your_instagram_activity/content/posts_1.json, reels.json, stories.json
         your_instagram_activity/likes/liked_posts.json
@@ -16,7 +28,7 @@ DEST is a folder (a workspace). It receives:
         logged_information/past_instagram_insights/posts.json      (likes, comments, saves per post)
         logged_information/past_instagram_insights/reels.json      (likes, comments, saves per reel)
         media/posts/YYYYMM/*.jpg|*.heic, media/reels/*.mp4, media/stories/YYYYMM/*.jpg
-    facebook-marenokafor-2026-10-18/         a small Facebook export:
+    facebook-<handle without dots>-2026-10-18/   a small Facebook export:
         your_facebook_activity/posts/your_posts__check_ins__photos_and_videos_1.json
         your_facebook_activity/posts/album/0.json, 1.json
         your_facebook_activity/posts/media/<album>/*.jpg
@@ -26,20 +38,20 @@ espresso). About 120 posts (some carousels), 27 reels, 60 stories, 900 likes acr
 that taste, 70 saves, 200 comments, 412 followers (96 new this year), 180 following. July (two weeks in Sicily) is
 clearly the busiest month and February the quietest.
 
-Her nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
+Their nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
 to October, between 291 and 486 likes, while nothing else reaches 225 (the tenth sits at least 66 below the
 ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table). Strings are written the way
 Meta writes them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic
 name over plain JPEG bytes. Needs Pillow and ffmpeg.
 
-The subject this kit is for: her pottery, 24 posts and 2 reels from 2025-08-09 (day one at the wheel) to
+The subject this kit is for: their pottery, 24 posts and 2 reels from 2025-08-09 (day one at the wheel) to
 2026-10-14 (a shelf of vases, "fourteen months in"), one or two a month, interleaved with about 140 unrelated
 travel and food posts from August 2025 on. The images progress monotonically with the date: one lumpy raw-clay
 bowl becomes a shelf of six tall, symmetric, glazed pieces. Four posts are milestones and say so in the caption
 (2025-10-18 the first bowl that stayed whole, 2026-01-24 the first glaze firing, 2026-05-16 the first matching set,
 2026-09-12 the first sale). The early captions are short and self-deprecating, the recent ones longer and sure.
-A second, shorter subject: her balcony garden, 9 posts from 2026-04-05 to 2026-09-20. The two reels are short mp4
-clips of the wheel (2026-02-20 and 2026-08-02). liked-progress/ holds 12 progress posts she liked (images and
+A second, shorter subject: their balcony garden, 9 posts from 2026-04-05 to 2026-09-20. The two reels are short mp4
+clips of the wheel (2026-02-20 and 2026-08-02). liked-progress/ holds 12 progress posts they liked (images and
 captions.json): seven side-by-side then/now splits, three top/bottom splits, one four-up and one single, captions
 that put dates on both sides ("day 1 vs day 400"). The intended timeline is printed in the summary ("intended").
 """
@@ -56,6 +68,10 @@ from multiprocessing import Pool
 from pathlib import Path
 
 HANDLE, NAME = "maren.okafor", "Maren Okafor"
+SET_PEOPLE = {  # a photo set's own person: (handle, name, the date of each post in rank order)
+    "lisbon": ("ines.duarte", "In\u00eas Duarte", ["2025-11-22", "2025-11-30", "2025-12-21", "2026-01-17", "2026-02-14",
+                                                 "2026-03-21", "2026-04-25", "2026-06-06", "2026-07-18", "2026-09-05"]),
+}
 EARTH = {
     "terracotta": (196, 98, 64), "ochre": (214, 158, 72), "olive": (118, 120, 66), "cream": (238, 224, 198),
     "espresso": (62, 42, 34), "sand": (222, 190, 150), "rust": (160, 72, 44), "sage": (150, 158, 120),
@@ -97,7 +113,7 @@ ACCOUNTS = FRIENDS + [
 assert len(ACCOUNTS) == 40, len(ACCOUNTS)
 
 
-NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked, planted clear of everything else
+NINE = [  # (month, kind, scene, likes, comments, caption): their nine most-liked, planted clear of everything else
     (7, "post", "sunset", 486, 41, "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"),
     (5, "reel", "market", 451, 52, "forty seconds of the oaxaca market at opening time. you asked for the sound of it \U0001F33F"),
     (1, "post", "coffee", 418, 33, "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"),
@@ -110,7 +126,7 @@ NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked,
 ]
 OTHER_CAP = 225  # no other post or reel reaches this many likes
 
-POTTERY = [  # (date, caption, milestone): her pottery, day one to fourteen months in
+POTTERY = [  # (date, caption, milestone): their pottery, day one to fourteen months in
     ("2025-08-09", "day one at the wheel. it's supposed to be a bowl #pottery", False),
     ("2025-08-23", "wobbly again. back tomorrow #pottery", False),
     ("2025-09-06", "clay everywhere, bowl nowhere #pottery", False),
@@ -138,6 +154,49 @@ POTTERY = [  # (date, caption, milestone): her pottery, day one to fourteen mont
 ]
 POTTERY_REELS = [("2026-02-20", "thirty seconds of throwing a cylinder #pottery", 5),
                  ("2026-08-02", "pulling up a vase, start to finish #ceramics", 7)]
+SET_CAPTIONS = {  # set name -> their caption for each photograph, in rank order
+    "pottery": [
+        "day one. dry clay crumbs all over the studio floor and no idea what i'm doing #pottery",
+        "class one tonight. i didn't even touch the wheel #pottery",
+        "centering is the hardest part, nobody warned me #pottery",
+        "milestone: the first pot that survived. lumpy, and i love it #pottery",
+        "a mug, technically. heavy, uneven, mine #pottery",
+        "a stack of early bowls. half of them cracked #pottery",
+        "bigger forms this week, still rough #pottery",
+        "walls getting thinner, handles pulled, not slabbed #pottery",
+        "shelves of greenware drying all weekend #pottery",
+        "rows of them now, every size, ready for bisque #pottery",
+        "one big smooth form. it took all evening #pottery",
+        "a whole kiln load of mine, fingers crossed #pottery",
+        "decoration now, brushed on before the glaze #ceramics",
+        "milestone: first glaze firing. crackled, uneven, and it holds water #ceramics",
+        "matte glaze, doing exactly what i planned #pottery",
+        "milestone: my first matching set, the same cup on purpose #pottery",
+        "brushwork on a thrown jar, no wobble #ceramics",
+        "raku firing. irregular on purpose this time #ceramics",
+        "a bowl made to be used, so i used it #pottery",
+        "slip inlay, three layers, one bowl #ceramics",
+        "beyond bowls and mugs: gourd forms in matte black #ceramics",
+        "milestone: my first sale table. a year ago i couldn't center a lump of clay #ceramics",
+        "a shopfront that stocks my work now #pottery",
+        "carving all week, the finest detail yet #ceramics",
+        "a vase in someone's home, with roses in it #pottery",
+        "tall glazed jugs, side by side on the shelf #ceramics",
+        "fourteen months in. the piece the whole year was aiming at #pottery #ceramics",
+    ],
+    "lisbon": [
+        "day one of walking lisbon with a camera. the old train in, window down #lisbonwalks",
+        "the funicular up the hill, the steepest street so far #lisbonwalks",
+        "street art all the way down into alfama #lisbonwalks",
+        "a flat white at the cafe where i plan the routes #lisbonwalks",
+        "a bookshop with bulbs hanging over the shelves. lost an hour #lisbonwalks",
+        "milestone: the first night walk. rossio and its fountain lit up #lisbonwalks",
+        "finally walked the river all the way to belem tower #lisbonwalks",
+        "milestone: the first walk out of the city, up to the yellow palace in sintra #lisbonwalks",
+        "the vegetable cart on my saturday route, cauliflower piled high #lisbonwalks",
+        "most of the city walked now. the whole of it from the graca lookout #lisbonwalks",
+    ],
+}
 GARDEN = [  # (date, caption): the second, shorter run
     ("2026-04-05", "seedlings on the balcony #balconygarden"), ("2026-04-26", "basil, two tomato plants and a lot of hope #balconygarden"),
     ("2026-05-17", "the balcony is getting greener #balconygarden"), ("2026-06-07", "taller than the railing now #balconygarden"),
@@ -145,7 +204,7 @@ GARDEN = [  # (date, caption): the second, shorter run
     ("2026-08-09", "the balcony jungle #balconygarden"), ("2026-08-30", "picking something every morning #balconygarden"),
     ("2026-09-20", "the last of the summer garden #balconygarden"),
 ]
-LIKED = [  # (account, caption, layout, subject): progress posts she liked
+LIKED = [  # (account, caption, layout, subject): progress posts they liked
     ("wheel.and.wedge", "day 1 vs day 400 #pottery", "lr", "pottery"),
     ("slow.clay.studio", "2024 → 2025, same wheel, same hands #ceramics", "lr", "pottery"),
     ("kiln.diaries", "one year of throwing, side by side", "lr", "pottery"),
@@ -161,6 +220,47 @@ LIKED = [  # (account, caption, layout, subject): progress posts she liked
 ]
 CLAY = {"raw": (150, 132, 116), "bisque": (214, 182, 150), "terracotta": (190, 96, 62), "olive": (112, 118, 64),
         "cream": (236, 224, 200), "espresso": (62, 42, 34), "wall": (226, 214, 194), "wood": (128, 86, 56)}
+
+
+def month_start(n):
+    """The first day of their month `n` at the wheel: month 1 starts on day one, 2025-08-09."""
+    y, m = divmod(2025 * 12 + 7 + n - 1, 12)
+    return dt.date(y, m + 1, 9)
+
+
+def span_label(first, latest):
+    d1, d2 = dt.date.fromisoformat(first), dt.date.fromisoformat(latest)
+    months = (d2.year - d1.year) * 12 + d2.month - d1.month - (1 if d2.day < d1.day else 0)
+    return "a year" if months == 12 else f"{months // 12} years" if months % 12 == 0 else f"{months} months"
+
+
+def pottery_run():
+    """The person (handle, name), their subject posts as (date, caption, milestone, photograph or None) and their
+    subject reels: their drawn pottery, or the photo set TRANSFORMATION_PHOTOS names with its own person."""
+    folder = os.environ.get("TRANSFORMATION_PHOTOS")
+    if not folder:
+        return (HANDLE, NAME), [(d, c, m, None) for d, c, m in POTTERY], POTTERY_REELS
+    import re
+    man = json.loads((Path(folder) / "manifest.json").read_text())
+    items = sorted(man["items"], key=lambda i: i["rank"])
+    caps = SET_CAPTIONS[man["set"]]
+    handle, name, dates = SET_PEOPLE.get(man["set"], (HANDLE, NAME, None))
+    month = lambda i: int(m.group(1)) if (m := re.match(r"\s*Month\s+(\d+)", i.get("why_this_rank", ""))) else None
+    groups = {}
+    for i in items:
+        groups.setdefault(month(i), []).append(i)
+    run = []
+    for at, (i, cap) in enumerate(zip(items, caps)):
+        n = month(i)
+        if dates:
+            day = dt.date.fromisoformat(dates[at])
+        elif n is None:
+            day = dt.date.fromisoformat(POTTERY[-1][0])
+        else:
+            k, g = groups[n].index(i), len(groups[n])
+            day = month_start(n) + dt.timedelta(days=round(k * 28 / g) if n == 1 else round(3 + (k + 0.5) * 24 / g))
+        run.append((day.isoformat(), cap, cap.startswith("milestone:"), str(Path(folder) / i["file"])))
+    return (handle, name), run, []
 
 
 def epoch(day, hour=17):
@@ -208,9 +308,11 @@ def draw_pottery(d, sw, sh, t, rng):
     d.rectangle([0, shelf, sw, shelf + 10], fill=mix(CLAY["wood"], CLAY["cream"], 0.3))
     n = 1 + int(round(t * 5))
     glazes = [CLAY["terracotta"], CLAY["olive"], CLAY["cream"], CLAY["espresso"]]
+    # The shelf is framed the way a person frames it: whole, with about a piece's width of wall at each end.
+    edge = 0.15
     for i in range(n):
-        cx = sw * (i + 0.5) / n + rng.uniform(-6, 6)
-        w = sw / max(2.2, n * 1.15) * (0.9 + 0.2 * t)
+        cx = sw * (edge + (1 - 2 * edge) * (i + 0.5) / n) + rng.uniform(-6, 6)
+        w = min(sw / 2.2, sw * (1 - 2 * edge) / (n * 1.15)) * (0.9 + 0.2 * t)
         h = sh * (0.12 + 0.36 * t) * (0.8 + 0.4 * rng.random() * t)
         glaze = CLAY["raw"] if t < 0.3 else mix(CLAY["bisque"], glazes[i % 4], min(1, (t - 0.25) * 1.6))
         draw_pot(d, cx, shelf, w, h, t, rng, glaze)
@@ -301,6 +403,14 @@ def draw_scene(job):
     """job = (path, w, h, kind, palette, seed). Draws at half size and upscales (soft, photo-like)."""
     from PIL import Image, ImageDraw, ImageFilter
     path, w, h, kind, pal, seed = job
+    if kind.startswith("photo:"):
+        from PIL import ImageOps
+        with Image.open(kind[6:]) as src:
+            im = ImageOps.exif_transpose(src).convert("RGB")
+        im.thumbnail((2560, 2560), Image.LANCZOS)
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        im.save(path, "JPEG", quality=92)
+        return
     rng = random.Random(seed)
     sw, sh = w // 2, h // 2
     im = Image.new("RGB", (sw, sh))
@@ -446,8 +556,9 @@ def main():
     months = [m for m in range(1, 13) if (year, m) <= (end.year, end.month)]
     dest = Path(a.dest)
     dest.mkdir(parents=True, exist_ok=True)
-    root = dest / f"instagram-{HANDLE}-{end.isoformat()}"
-    fb = dest / f"facebook-{HANDLE.replace('.', '')}-{end.isoformat()}"
+    (handle, name), pottery, pottery_reels = pottery_run()
+    root = dest / f"instagram-{handle}-{end.isoformat()}"
+    fb = dest / f"facebook-{handle.replace('.', '')}-{end.isoformat()}"
     for r in (root, fb):
         if r.exists():
             shutil.rmtree(r)
@@ -521,11 +632,11 @@ def main():
                                      "title": ig_text(cap), "cross_post_source": {"source_app": "FB"}}]})
             likes = int(rng.lognormvariate(3.9, 0.45))
             insights.append(insight(uri, ts, min(OTHER_CAP - 1, likes), max(0, int(likes / rng.uniform(9, 22)))))
-    t0, t1 = epoch(POTTERY[0][0]), epoch(POTTERY[-1][0])
-    for day, cap, _ in POTTERY:
+    t0, t1 = epoch(pottery[0][0]), epoch(pottery[-1][0])
+    for day, cap, _, photo in pottery:
         ts = epoch(day, rng.randint(16, 21))
         uri = media_path("posts", ts, ".jpg")
-        jobs.append((str(root / uri), 1080, 1350, f"pottery:{(epoch(day) - t0) / (t1 - t0):.4f}", pal(8), rng.random()))
+        jobs.append((str(root / uri), 1080, 1350, f"photo:{photo}" if photo else f"pottery:{(epoch(day) - t0) / (t1 - t0):.4f}", pal(8), rng.random()))
         posts.append({"media": [{"uri": uri, "creation_timestamp": ts, "media_metadata": {"photo_metadata": {"exif_data": []}},
                                  "title": ig_text(cap), "cross_post_source": {"source_app": "FB"}}]})
         likes = int(rng.lognormvariate(3.9, 0.35) * (0.8 + 0.8 * (ts - t0) / (t1 - t0)))
@@ -566,7 +677,7 @@ def main():
         reels.append({"media": [{"uri": uri, "creation_timestamp": ts, "title": ig_text(cap), "media_metadata": {"video_metadata": {}}}]})
         reel_insights.append(insight(uri, ts, likes, comments))
 
-    for i, (day, cap, secs) in enumerate(POTTERY_REELS):
+    for i, (day, cap, secs) in enumerate(pottery_reels):
         ts = epoch(day, 18)
         still = str(root / f"media/reels/wheel{i + 1}-still.jpg")
         jobs.append((still, 1080, 1920, f"pottery:{(epoch(day) - t0) / (t1 - t0):.4f}", pal(8), rng.random()))
@@ -630,7 +741,7 @@ def main():
 
     write(root, "personal_information/personal_information/personal_information.json",
           {"profile_user": [{"title": "", "media_map_data": {}, "string_map_data": {
-              "Username": {"value": HANDLE}, "Name": {"value": NAME},
+              "Username": {"value": handle}, "Name": {"value": ig_text(name)},
               "Bio": {"value": ig_text("eating my way around on 35mm \U0001F35E\U0001F39E️ lisbon / wherever the bread is")}}}]})
     write(root, "your_instagram_activity/content/posts_1.json", posts)
     write(root, "your_instagram_activity/content/reels.json", {"ig_reels_media": reels})
@@ -659,7 +770,7 @@ def main():
     for i in range(14):
         m = rng.choice(months)
         ts = ts_for(rng, year, m, end)
-        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated her status.")}
+        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{name} updated their status.")}
         if rng.random() < 0.6:
             uri = f"your_facebook_activity/posts/media/timeline/{10161000000000000 + i}.jpg"
             jobs.append((str(fb / uri), 1080, 1080, rng.choice(SEASON[m][1]), pal(m), rng.random()))
@@ -667,7 +778,7 @@ def main():
         fb_posts.append(post)
     write(fb, "your_facebook_activity/posts/your_posts__check_ins__photos_and_videos_1.json", fb_posts)
     write(fb, "personal_information/profile_information/profile_information.json",
-          {"profile_v2": {"name": {"full_name": NAME}}})
+          {"profile_v2": {"name": {"full_name": ig_text(name)}}})
 
     liked_dir = dest / "liked-progress"
     if liked_dir.exists():
@@ -683,15 +794,16 @@ def main():
     with Pool(max(2, os.cpu_count() or 2)) as pool:
         pool.map(draw_scene, jobs, chunksize=4)
         pool.map(make_reel, clip_jobs)
-    print(json.dumps({"workspace": str(dest), "instagram": root.name, "facebook": fb.name, "handle": HANDLE,
+    print(json.dumps({"workspace": str(dest), "instagram": root.name, "facebook": fb.name, "handle": handle,
                       "posts": len(posts), "post_media": sum(len(p["media"]) for p in posts), "reels": len(reels),
                       "reel_clips": len(clip_jobs), "stories": len(stories), "likes": 900, "liked_accounts": len(liked),
                       "saved": len(saved), "comments": len(comments), "followers": len(followers),
                       "following": len(following), "facebook_posts": len(fb_posts), "facebook_albums": len(albums),
                       "images": len(jobs), "liked_progress": len(LIKED),
-                      "intended": {"subject": "pottery", "posts": len(POTTERY), "reels": len(POTTERY_REELS),
-                                   "first": POTTERY[0][0], "latest": POTTERY[-1][0], "span": "14 months",
-                                   "milestones": [d for d, _, m in POTTERY if m],
+                      "intended": {"subject": "pottery", "posts": len(pottery), "reels": len(pottery_reels),
+                                   "first": pottery[0][0], "latest": pottery[-1][0], "span": span_label(pottery[0][0], pottery[-1][0]),
+                                   "photo_set": os.environ.get("TRANSFORMATION_PHOTOS"),
+                                   "milestones": [r[0] for r in pottery if r[2]],
                                    "second_subject": {"subject": "balcony garden", "posts": len(GARDEN),
                                                       "first": GARDEN[0][0], "latest": GARDEN[-1][0]}}}, indent=2))
 
