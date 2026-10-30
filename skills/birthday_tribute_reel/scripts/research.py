@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
 """Movement 1: the research behind the taste profile, for one person and the one the video is for. Reads
-build/library.json; writes build/research.json, a machine draft of build/taste.json, and build/taste.draft.md
-(the numbers under the five headings the agent turns into build/taste.md).
+B/library.json; writes B/research.json, a machine draft of B/taste.json, and B/taste.draft.md
+(the numbers under the five headings the agent turns into B/taste.md).
 
-USAGE (from the workspace root):
-    python3 S/scripts/research.py --who "@dani.reyes" [--occasion "her 30th"] [--date 2026-10-24] [--words "..."]
+USAGE (from the workspace root; B = the run's folder, build/<run stamp>/):
+    python3 S/scripts/research.py --who "@dani.reyes" [--occasion "the 30th"] [--date 2026-10-24] [--words "..."] \\
+        [--line "..."] [--seconds 45]
 
-It runs shared.py first with the same arguments (who the video is for, the occasion, the shared photos, the
-exchanges between the two, the eras), then picks.py (the shared photos, prepared) and palette.py (mine, theirs,
-together), then reads:
+A length outside the 20 to 60 s the kit makes prints "not delivered: ..." and nothing is written. Otherwise it runs
+shared.py first with the same arguments (who the video is for, the occasion, the person's own line for the wish, the
+length they asked for, the shared photos, the exchanges between the two, the eras), then picks.py (the shared photos,
+prepared) and palette.py (mine, theirs, together), then reads:
   the two     who it is for and how they were found, the runner-up and the account the person talks to most
   occasion    what it is and where that came from (the person's words win over their captions)
   shared      how many photos, stories and videos the two share, the first and the latest, the group photos
   eras        the friendship in chapters, each with its place and months
+  moments     the year the film tells, one per shared photograph post with a caption: what it is called in the
+              caption's own words, its line, its place, the people in it and the first two comments the two left
+              under it
   exchanges   the lines the two trade, and the voice of each side (length, capitals, exclamation marks, emoji)
   love lines  the person's own lines about the named one, the source of a "things I love about you" list
   their feed  the named one's own captions (their humor, their emoji) when their feed was reachable
   captions    the person's own register: length, case, emoji, punctuation, hashtags
   reels       how long the person's reels run and how fast they cut (ffmpeg scene changes)
-taste.json also carries the palette (together, mine, theirs), the type direction, pacing, register, texture and
-the grade inputs; the agent edits it freely before storyboards are drafted.
+taste.json also carries the palette (together, mine, theirs), pacing, register, whether their photographs are shot on
+film (the grade reads it), the music brief (a tempo, genre and instrument words, and what to avoid; never an artist,
+band or song; empty words leave the music to the style card's recipe), and `ask`: true when the person can be asked
+which of the three looks they want, false when no one can answer (the agent then picks by taste). The agent edits it
+freely before storyboards are drafted.
 """
 import collections
 import re
@@ -30,6 +38,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import compose  # noqa: E402
+import shared as shared_py  # noqa: E402
 
 S = Path(__file__).resolve().parent
 THEMES = {
@@ -126,68 +136,62 @@ def reel_pacing(reels):
     }
 
 
-def type_direction(themes, register, pacing):
-    film = themes.get("film photography", 0)
-    loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
-    if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
-    if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
-
-
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    for k in ("who", "occasion", "date", "words"):
+    for k in ("who", "occasion", "date", "words", "line"):
         ap.add_argument(f"--{k}")
+    ap.add_argument("--seconds", type=float)
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    if a.seconds is not None and compose.refusal(a.seconds):
+        print(compose.refusal(a.seconds))
+        return 2
+    lib = _env.read_json(f"{_env.B}/library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
-    args = [x for k in ("who", "occasion", "date", "words") if getattr(a, k) for x in (f"--{k}", getattr(a, k))]
-    print(run("shared.py", args).strip().splitlines()[0])
+        sys.exit(f"{_env.B}/library.json is missing: run gather.py first")
+    args = [x for k in ("who", "occasion", "date", "words", "line", "seconds") if getattr(a, k) is not None for x in (f"--{k}", f"{getattr(a, k):g}" if k == "seconds" else getattr(a, k))]
+    said = run("shared.py", args).strip().splitlines()
+    print("\n".join([said[0]] + [x for x in said if x.startswith("assumption: ")]))
     for s in ("picks.py", "palette.py"):
         print(run(s).strip().splitlines()[-1])
-    sh = _env.read_json("build/shared.json")
-    pal = _env.read_json("build/palette.json") or {}
+    sh = _env.read_json(f"{_env.B}/shared.json")
+    pal = _env.read_json(f"{_env.B}/palette.json") or {}
     who, occ, n = sh["who"], sh["occasion"], sh["counts"]
     mine_caps = caption_read(lib["posts"] + lib["reels"] + lib.get("facebook", []))
     feed = (lib.get("feeds") or {}).get(who["handle"]) or {}
+    them = shared_py.called(who)
     their_caps = caption_read(feed.get("posts", []))
     shared_caps = [x["caption"] for x in sh["items"]]
     themes = theme_counts(shared_caps + [p.get("caption") or "" for p in feed.get("posts", [])])
     own_themes = theme_counts([p.get("caption") or "" for p in lib["posts"] + lib["reels"]])
     pacing = reel_pacing(lib["reels"])
-    td = type_direction(own_themes + themes, mine_caps, pacing)
     film = own_themes.get("film photography", 0) >= 5
     vm, vt = sh["voice"]["mine"], sh["voice"]["theirs"]
     swatch = lambda k: [{"hex": c["hex"], "name": c.get("name"), "share": c.get("share"), "photo": c.get("photo")} for c in pal.get(k) or []]
+    moments = compose.draft_moments(sh)
     research = {
         "handle": lib["handle"], "for": who, "occasion": occ, "source": lib["source"], "doors": lib.get("doors", {}),
         "counts": n, "first": sh["first"], "latest": sh["latest"], "eras": sh["eras"],
         "palette": {"together": swatch("together"), "mine": swatch("mine"), "theirs": swatch("theirs"), "roles": pal.get("roles")},
         "voice": sh["voice"], "pairs": sh["pairs"][:12], "love_lines": sh["love_lines"],
         "captions": mine_caps, "their_captions": their_caps, "themes": dict(themes.most_common()),
-        "own_themes": dict(own_themes.most_common()), "reels": pacing, "type": td,
+        "own_themes": dict(own_themes.most_common()), "reels": pacing,
         "their_feed": sh["feed"], "assumptions": sh.get("assumptions", []),
     }
-    _env.write_json("build/research.json", research)
+    _env.write_json(f"{_env.B}/research.json", research)
     shot = pacing.get("avg_shot_seconds")
     loud = (vt.get("exclaims") or 0) >= 0.3 or (vt.get("emoji") or 0) >= 0.5
+    pillars = [t for t, _ in themes.most_common(4)]
+    energy = "high" if loud and (mine_caps.get("emoji_per_caption", 0) > 1 or (shot or 9) < 1.2) else "warm"
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "for": {"handle": who["handle"], "name": who["name"], "first": who["first"]},
         "occasion": {k: occ.get(k) for k in ("kind", "age", "years", "date", "label", "title")},
         "palette": {"together": swatch("together"), "mine": swatch("mine"), "theirs": swatch("theirs"),
                     "direction": "the colors the two share: theirs for the accent, mine for the grade"},
-        "type": td,
         "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
                    "beat_seconds": round(max(2.2, min(4.2, (shot or 2.8) * 1.4)), 2),
-                   "energy": "high" if loud and td["lead"] == "kinetic" else "warm"},
+                   "energy": energy},
         "register": {"lowercase": mine_caps.get("lowercase_share", 0) >= 0.6, "emoji": mine_caps.get("emoji_per_caption", 0),
                      "avg_words": mine_caps.get("avg_words"), "hashtags": mine_caps.get("top_hashtags", [])[:3],
                      "samples": mine_caps.get("samples", [])[:4]},
@@ -195,24 +199,32 @@ def main():
                            "samples": (vt.get("samples") or [])[:4]},
         "eras": [{"label": e["label"], "span": e["span"], "count": e["count"]} for e in sh["eras"]],
         "love_lines": [x["line"] for x in sh["love_lines"][:9]],
-        "pillars": [t for t, _ in themes.most_common(4)],
-        "texture": {"grain": 0.14 if film else 0, "vignette": 0.28 if film else 0.0, "leaks": film},
+        "moments": moments,
+        "pillars": pillars,
+        "texture": {"film": film},
         "avoid": ["cold, clinical grading", "stock-photo gloss", "jokes at their expense"] + (["neon"] if film else []),
+        "music": {"tempo": None, "styles": [], "avoid": ["vocals", "spoken word", "harsh distortion"]},
+        "ask": True,
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
+    if not Path(f"{_env.B}/taste.json").exists() or "research.py draft" in (_env.read_json(f"{_env.B}/taste.json") or {}).get("written_by", ""):
+        _env.write_json(f"{_env.B}/taste.json", taste)
     f, l = sh["first"] or {}, sh["latest"] or {}
-    lines = [f"# taste draft: @{lib['handle']} and @{who['handle']} ({occ['label']})", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below. "
+    lines = [f"# taste draft: @{lib['handle']} and {them} ({occ['label']})", "",
+             f"The agent writes {_env.B}/taste.md from this: one page, five paragraphs that start with the five headings below. "
              "\"You\" is the two of them: who they are together, what they like, how they look, how they talk, what to avoid.", "",
              "## you are",
-             f"- the video is for @{who['handle']} ({who['name']}): {who['matched_by']}",
-             f"- runner-up @{(who.get('runner_up') or {}).get('handle')}; most commented @{(who.get('most_frequent') or {}).get('handle')}",
+             f"- the video is for {them} ({who['name']}): {who['matched_by']}",
+             "- " + "; ".join(f"{k} @{(who.get(key) or {}).get('handle')}" if who.get(key) else f"{k}: none"
+                              for k, key in (("runner-up", "runner_up"), ("most commented", "most_frequent"))),
              f"- occasion: {occ['kind']}, {occ['label']}{', on ' + occ['date'] if occ.get('date') else ''} (from {occ['from']})",
              f"- shared: {n['photos']} photos ({n['posts']} posts, {n['stories']} stories, {n['their_posts_with_you']} of their posts tagging you), "
              f"{n['videos']} videos, {n['group_photos']} group photos",
              f"- first together {f.get('date')}: \"{f.get('caption')}\"; latest {l.get('date')}: \"{l.get('caption')}\"",
              f"- eras: {'; '.join(e['label'] + ' (' + e['span'] + ', ' + str(e['count']) + ')' for e in sh['eras'])}",
+             "- moments (taste.json \"moments\": keep the 15 or 8 that tell the year, name each in its caption's words, mark the peak):",
+             *[f"  - {m['date']} {m['post']}: {m['name']} | \"{m['line']}\"" + (f" | at {m['place']}" if m.get("place") else "")
+               + (f" | with {', '.join('@' + p for p in m['people'])}" if m["people"] else "")
+               + (f" | under it: {' -> '.join(t['text'] for t in m['talk'])}" if m["talk"] else "") for m in moments],
              "", "## you like",
              f"- what the shared photos and their feed are about: {', '.join(f'{k} ({v})' for k, v in themes.most_common(5))}",
              f"- together palette: {', '.join((c.get('name') or '') + ' ' + c['hex'] for c in pal.get('together') or [])}",
@@ -221,7 +233,9 @@ def main():
              f"{', '.join((c.get('name') or '') + ' ' + c['hex'] for c in pal.get('theirs') or []) or 'none'}",
              "", "## your style is",
              f"- your reels: {pacing.get('avg_seconds')} s on average, a cut every {shot} s" if shot else "- no reels of yours to measure",
-             f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+             f"- texture: {'film grain and warm light' if film else 'clean'}",
+             "- music (taste.json \"music\"): the style card's recipe; add three to six genre and instrument words that are the "
+             f"two of them, and a tempo, only when their posts say it; no {', no '.join(taste['music']['avoid'])}",
              "", "## your voice is",
              f"- you: {vm.get('lines')} lines to them, {vm.get('avg_words')} words a line, {int((vm.get('lowercase') or 0) * 100)}% lowercase, "
              f"{vm.get('emoji')} emoji a line: {' / '.join((vm.get('samples') or [])[:4])}",
@@ -236,12 +250,12 @@ def main():
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
     if sh.get("assumptions"):
         lines += ["## assumptions", *[f"- {x}" for x in sh["assumptions"]], ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
-    print(f"for @{who['handle']} ({occ['label']}); {n['photos']} shared photos, {n['videos']} videos, {n['exchanges']} lines traded, {n['eras']} eras")
+    _env.write_text(f"{_env.B}/taste.draft.md", "\n".join(lines))
+    print(f"for {them} ({occ['label']}); {n['photos']} shared photos, {n['videos']} videos, {n['exchanges']} lines traded, {n['eras']} eras")
     print(f"together palette: {[c['hex'] + ' ' + (c.get('name') or '') for c in pal.get('together') or []]}")
     print(f"voice: you {vm.get('avg_words')} words lowercase {vm.get('lowercase')}; them exclaims {vt.get('exclaims')} emoji {vt.get('emoji')}")
-    print(f"reels: {pacing.get('reels_measured')} measured, shot {shot} s; type lead {td['lead']}")
-    print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
+    print(f"reels: {pacing.get('reels_measured')} measured, shot {shot} s")
+    print(f"wrote {_env.B}/research.json, {_env.B}/taste.json (draft) and {_env.B}/taste.draft.md; now write {_env.B}/taste.md")
     return 0
 
 
