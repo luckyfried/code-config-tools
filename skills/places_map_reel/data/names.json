@@ -1,0 +1,38 @@
+{
+  "about": "Names printed on the films' maps as texture: seas at the sea point nearest their anchor that holds the whole name, countries at their anchor in their own language. lon/lat; bbox [w, s, e, n] bounds where a sea's name may sit.",
+  "seas": [
+    {"name": "atlantic ocean", "at": [-30, 30], "bbox": [-80, -60, 20, 66]},
+    {"name": "pacific ocean", "at": [-120, 10], "bbox": [-180, -60, -70, 60]},
+    {"name": "pacific ocean", "at": [160, 10], "bbox": [120, -60, 180, 60]},
+    {"name": "indian ocean", "at": [80, -20], "bbox": [30, -60, 115, 25]},
+    {"name": "mediterranean sea", "at": [18, 35], "bbox": [-5.5, 30, 36, 46]},
+    {"name": "north sea", "at": [3, 56], "bbox": [-4, 51, 10, 61]},
+    {"name": "baltic sea", "at": [19, 57], "bbox": [10, 53, 30, 66]},
+    {"name": "black sea", "at": [34, 43.3], "bbox": [27.5, 40.8, 41.5, 46.6]},
+    {"name": "caribbean sea", "at": [-75, 15], "bbox": [-88, 9, -60, 22]},
+    {"name": "gulf of mexico", "at": [-91, 25], "bbox": [-98, 18, -81, 30.5]},
+    {"name": "bay of biscay", "at": [-5, 45.5], "bbox": [-10, 43.4, -1.2, 48]},
+    {"name": "red sea", "at": [38, 20], "bbox": [32, 12, 44, 30]},
+    {"name": "arabian sea", "at": [64, 15], "bbox": [50, 0, 75, 25]},
+    {"name": "south china sea", "at": [114, 13], "bbox": [100, 0, 122, 23]},
+    {"name": "sea of japan", "at": [135, 40], "bbox": [128, 33, 142, 51]},
+    {"name": "tasman sea", "at": [160, -38], "bbox": [147, -50, 175, -28]}
+  ],
+  "countries": [
+    {"name": "españa", "at": [-3.6, 39.9]}, {"name": "portugal", "at": [-8.0, 39.6]}, {"name": "france", "at": [2.4, 46.6]},
+    {"name": "maroc", "at": [-6.0, 32.6]}, {"name": "algérie", "at": [2.6, 28.0]}, {"name": "italia", "at": [12.6, 42.8]},
+    {"name": "deutschland", "at": [10.4, 51.1]}, {"name": "schweiz", "at": [8.2, 46.8]}, {"name": "österreich", "at": [14.5, 47.5]},
+    {"name": "nederland", "at": [5.6, 52.2]}, {"name": "belgique", "at": [4.6, 50.6]}, {"name": "united kingdom", "at": [-1.8, 52.8]},
+    {"name": "éire", "at": [-8.0, 53.2]}, {"name": "danmark", "at": [9.2, 56.0]}, {"name": "norge", "at": [9.5, 61.5]},
+    {"name": "sverige", "at": [15.5, 62.5]}, {"name": "suomi", "at": [26.0, 63.0]}, {"name": "polska", "at": [19.4, 52.0]},
+    {"name": "česko", "at": [15.4, 49.8]}, {"name": "magyarország", "at": [19.4, 47.1]}, {"name": "românia", "at": [25.0, 45.9]},
+    {"name": "elláda", "at": [22.0, 39.3]}, {"name": "türkiye", "at": [35.2, 39.0]}, {"name": "hrvatska", "at": [16.0, 45.3]},
+    {"name": "méxico", "at": [-102.5, 23.6]}, {"name": "united states", "at": [-98.5, 39.5]}, {"name": "canada", "at": [-106.0, 56.0]},
+    {"name": "guatemala", "at": [-90.3, 15.6]}, {"name": "cuba", "at": [-78.6, 21.7]}, {"name": "colombia", "at": [-73.0, 4.0]},
+    {"name": "perú", "at": [-75.0, -9.5]}, {"name": "brasil", "at": [-52.0, -10.0]}, {"name": "argentina", "at": [-64.5, -35.0]},
+    {"name": "chile", "at": [-71.0, -33.0]}, {"name": "egypt", "at": [30.0, 26.5]}, {"name": "tunisie", "at": [9.4, 34.0]},
+    {"name": "india", "at": [79.0, 22.5]}, {"name": "nihon", "at": [138.5, 36.5]}, {"name": "zhōngguó", "at": [104.0, 35.0]},
+    {"name": "prathet thai", "at": [101.0, 15.5]}, {"name": "việt nam", "at": [106.0, 15.5]}, {"name": "indonesia", "at": [113.0, -1.0]},
+    {"name": "australia", "at": [134.0, -25.0]}, {"name": "new zealand", "at": [172.5, -42.0]}, {"name": "south africa", "at": [24.0, -30.0]}
+  ]
+}

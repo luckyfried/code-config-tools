@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the numbers. Reads build/library.json, writes build/stats.json.
+"""Movement 1, research: the numbers. Reads library.json, writes stats.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/stats.py
@@ -8,7 +8,7 @@ Counts (posts, reels, stories, likes given, comments written, new followers; eac
 it), every month's activity with the busiest and the quietest, the people (accounts commented on and @mentioned
 most), the accounts liked most, and the person's caption register (lowercase, emoji, length, hashtags, sample
 captions) for writing copy in their voice. The places, their visits and distances are places.py's
-(build/places.json); every other number the film shows comes from this file.
+(places.json); every other number the film shows comes from this file.
 """
 import calendar
 import datetime as dt
@@ -36,9 +36,10 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
+    _env.enter_run()
+    d = _env.read_json("library.json")
     if not d:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     year, src = d["year"], d["source"]
     exp = src == "export"
     posts, reels, stories = d["posts"], d["reels"], d["stories"]
@@ -104,15 +105,15 @@ def main():
            "counts": counts, "numbers": [{"key": k, "value": v, "label": lab} for k, v, lab in numbers],
            "months": months, "busiest": busiest, "quietest": quietest,
            "people": people[:5], "loved": loved, "register": register}
-    _env.write_json("build/stats.json", out)
-    print(f"@{d['handle']} {year}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
+    _env.write_json("stats.json", out)
+    print((f"@{d['handle']} " if d["handle"] else "") + f"{year}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
     if busiest:
         print(f"busiest {busiest['name']} ({busiest['posts']} posts), quietest {quietest['name']} ({quietest['posts']} posts)")
     print("people: " + ", ".join(f"@{p['account']} {p['total']}" for p in people[:5]))
     print("loved: " + ", ".join(f"@{p['account']} {p['likes']}" for p in loved))
     print(f"register: lowercase {register['lowercase_share']}, emoji/caption {register['emoji_per_caption']}, "
           f"avg words {register['avg_words']}, hashtags {register['top_hashtags'][:3]}")
-    print("wrote build/stats.json")
+    print("wrote stats.json")
     return 0
 
 
