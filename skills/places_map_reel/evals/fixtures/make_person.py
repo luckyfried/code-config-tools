@@ -2,7 +2,7 @@
 """Build one invented person's year of places on Instagram and Facebook, as the two "Download your information" exports.
 
 USAGE:
-    python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18]
+    python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18] [--set DIR]
 
 DEST is a folder (a workspace). It receives:
     instagram-maren.okafor-2026-10-18/       the Instagram export, JSON layout:
@@ -18,17 +18,24 @@ DEST is a folder (a workspace). It receives:
         your_facebook_activity/posts/your_posts__check_ins__photos_and_videos_1.json
         your_facebook_activity/posts/album/0.json, 1.json
         your_facebook_activity/posts/media/<album>/*.jpg
+    photos-of-the-year/<place>/                with --set DIR: a copy of a photo set of the eleven places (a folder per
+                                               place, each with its manifest.json ranking the photographs best first),
+                                               the photographs the person hands over beside the exports; every post
+                                               and story photograph of a place the set holds is then one of the set's
+                                               own photographs of it, so no proof reads drawn placeholder art
 
-The person lives in Lisbon (her bio says so) and travelled through eleven places in 2026, January to October:
+The person lives in Lisbon (their bio says so) and traveled through eleven places in 2026, January to October:
 Lisbon, Porto, Coimbra, Aveiro, Évora, Seville, Córdoba, Granada, Faro, Oaxaca and Madrid. Porto (March and
 September) and Seville (May and August) were visited twice, so the count is of places, not visits. Oaxaca is the
 one far trip (about 8,600 km from home); every other place is in Portugal and Spain. Coimbra and Córdoba carry no
 geotags: they are named only in captions (Córdoba's name is shared with cities in Mexico and Argentina, so the
 place has to be read from when it was posted). Most other posts and stories carry the geotag Instagram writes into
-media_metadata.photo_metadata.exif_data, a few metres to a few kilometres from the city center. Her travel photos are
-warm earth tones (terracotta, ochre, olive, sand); her Lisbon photos are cool (slate, fog, harbor blue, linen), so
+media_metadata.photo_metadata.exif_data, a few meters to a few kilometers from the city center. Their travel photos are
+warm earth tones (terracotta, ochre, olive, sand); their Lisbon photos are cool (slate, fog, harbor blue, linen), so
 the travel palette and the everyday palette differ. Three reels are short clips shot in Porto, Seville and Oaxaca,
-geotagged. INTENDED below is the place list the kit should find. Strings are written the way Meta writes them
+geotagged. Each stay's first post carries what they did there in their own words (MOMENTS: a tram ride, a port tasting,
+a mole cooked from scratch), with the friends who were there tagged and the place named. INTENDED below is the place list the kit
+should find. Strings are written the way Meta writes them
 (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic name over plain
 JPEG bytes. Needs Pillow and ffmpeg.
 """
@@ -41,6 +48,7 @@ import random
 import shutil
 import subprocess
 import sys
+import unicodedata
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -52,7 +60,7 @@ COLORS = {
     "ink": (34, 40, 52), "tile": (70, 128, 168),
 }
 HOME_PAL = ["fog", "slate", "harbor", "linen"]
-PLACES = {  # name: (lat, lon, geotagged, four colors, scenes, how her captions name it)
+PLACES = {  # name: (lat, lon, geotagged, four colors, scenes, how their captions name it)
     "Lisbon": (38.7223, -9.1393, True, HOME_PAL, ["coffee", "oldtown", "table", "city"], "lisbon"),
     "Porto": (41.1496, -8.6110, True, ["terracotta", "sand", "cream", "espresso"], ["oldtown", "market", "table"], "porto"),
     "Coimbra": (40.2033, -8.4103, False, ["ochre", "cream", "olive", "espresso"], ["oldtown", "coffee"], "coimbra"),
@@ -65,7 +73,7 @@ PLACES = {  # name: (lat, lon, geotagged, four colors, scenes, how her captions 
     "Oaxaca": (17.0732, -96.7266, True, ["rosa", "terracotta", "ochre", "espresso"], ["market", "hills", "table", "oldtown"], "oaxaca"),
     "Madrid": (40.4168, -3.7038, True, ["terracotta", "sand", "cream", "espresso"], ["city", "oldtown", "coffee"], "madrid"),
 }
-STAYS = [  # (place, month, first day, last day, posts, stories): the year in the order she lived it
+STAYS = [  # (place, month, first day, last day, posts, stories): the year in the order they lived it
     ("Lisbon", 1, 2, 30, 8, 6), ("Lisbon", 2, 1, 27, 4, 3),
     ("Porto", 3, 2, 10, 6, 5), ("Coimbra", 3, 12, 16, 4, 2),
     ("Lisbon", 3, 22, 29, 2, 1),
@@ -77,8 +85,26 @@ STAYS = [  # (place, month, first day, last day, posts, stories): the year in th
     ("Porto", 9, 3, 9, 4, 3), ("Madrid", 9, 15, 21, 5, 4),
     ("Lisbon", 10, 1, 17, 5, 4),
 ]
+MOMENTS = {  # (place, month): the caption of the stay's first post, what they did there
+    ("Lisbon", 1): "rode the 28 end to end in the rain with @dani.reyes, soaked and happy",
+    ("Lisbon", 2): "@dani.reyes finally came to stay, we ate pastéis on the sofa all week",
+    ("Porto", 3): "port tasting down by the river with @theo.makes, we stayed for sunset",
+    ("Coimbra", 3): "heard fado in coimbra with @ines.walks, a student sang it in the street",
+    ("Lisbon", 3): "home for a week and i walked the whole river front twice",
+    ("Aveiro", 4): "rode a painted moliceiro down the canals of aveiro with @kofi.cooks",
+    ("Évora", 4): "dinner out on the square in évora, the whole town was there",
+    ("Seville", 5): "rowed a little boat round plaza de españa with @liv.outside, terribly",
+    ("Córdoba", 5): "lost a whole morning under the arches of the mezquita in córdoba",
+    ("Granada", 6): "up at six for the alhambra with @sam_and_june and worth every minute",
+    ("Faro", 6): "first swim of the year in faro, the water was freezing and perfect",
+    ("Oaxaca", 7): "cooked mole from scratch in oaxaca with @kofi.cooks, best day of the year",
+    ("Seville", 8): "back in seville for @dani.reyes's birthday, we danced until the bars closed",
+    ("Porto", 9): "ran across the dom luís bridge at sunrise, porto all gold below",
+    ("Madrid", 9): "madrid rooftops at golden hour with @theo.makes, we never wanted to come down",
+    ("Lisbon", 10): "home again and the river was silver the whole week long",
+}
 INTENDED = ["Lisbon", "Porto", "Coimbra", "Aveiro", "Évora", "Seville", "Córdoba", "Granada", "Faro", "Oaxaca", "Madrid"]
-CLIPS = [("Porto", 3, 5), ("Seville", 5, 6), ("Oaxaca", 7, 7)]  # (place, month, seconds): her three reels
+CLIPS = [("Porto", 3, 5), ("Seville", 5, 6), ("Oaxaca", 7, 7)]  # (place, month, seconds): their three reels
 NAMED = [  # captions that name the place ({p})
     "golden hour in {p} again {e}", "the market in {p} is my whole personality", "took the long way through {p}",
     "back in {p} with @{f}", "everything is orange in {p} {e}", "last light over {p}", "postcards from {p}",
@@ -262,6 +288,34 @@ def draw_scene(job):
     return path
 
 
+def from_set(root, place_of):
+    """Every post and story photograph of a place the set holds is one of the set's photographs of that place (best
+    first, in turn), cropped to the post's frame and saved as JPEG under its own name, so the export shows the person's
+    real photographs. Returns how many were replaced."""
+    from PIL import Image, ImageOps
+    fold = lambda t: unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower().strip()
+    folders = {fold(d.name): d for d in root.iterdir() if d.is_dir()}
+    shown, turn = 0, {}
+    for path, place in sorted(place_of.items()):
+        d = folders.get(fold(place))
+        if d is None:
+            continue
+        man = d / "manifest.json"
+        items = sorted(json.loads(man.read_text()).get("items") or [], key=lambda it: it.get("rank", 1e9)) if man.exists() else []
+        files = [d / Path(it["file"]).name for it in items] or sorted(f for f in d.iterdir() if f.suffix.lower() in (".jpg", ".jpeg", ".png"))
+        files = [f for f in files if f.exists()]
+        if not files:
+            continue
+        k = turn.get(place, 0)
+        turn[place] = k + 1
+        with Image.open(path) as drawn:
+            size = drawn.size
+        im = ImageOps.fit(Image.open(files[k % len(files)]).convert("RGB"), size, Image.LANCZOS)
+        im.save(path, "JPEG", quality=90)
+        shown += 1
+    return shown
+
+
 def make_reel(job):
     """job = (path, still, seconds): a slow push across one still, 540x960, 30 fps."""
     path, still, secs = job
@@ -280,6 +334,7 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--year", type=int, default=2026)
     ap.add_argument("--end", default="2026-10-18", help="last day of data (the export date)")
+    ap.add_argument("--set", help="a photo set of the eleven places to copy in as photos-of-the-year/")
     a = ap.parse_args()
     rng = random.Random(a.seed)
     end = dt.date.fromisoformat(a.end)
@@ -291,7 +346,7 @@ def main():
     for r in (root, fb):
         if r.exists():
             shutil.rmtree(r)
-    jobs, counter = [], [0]
+    jobs, counter, place_of = [], [0], {}
 
     def pal(place):
         return [COLORS[k] for k in PLACES[place][3]]
@@ -329,9 +384,11 @@ def main():
     posts, insights, stories = [], [], []
     for place, m, d0, d1, n_posts, n_stories in STAYS:
         tagged = PLACES[place][2]
-        for _ in range(n_posts):
+        for k_post in range(n_posts):
             ts = when(m, d0, d1)
             cap = caption(place)
+            if k_post == 0:
+                cap = MOMENTS[(place, m)]
             n_media = 1 if rng.random() < 0.8 else rng.randint(2, 3)
             exif = [geo(place)] if tagged and rng.random() < 0.88 else []
             items = []
@@ -340,6 +397,7 @@ def main():
                 ext = ".heic" if rng.random() < 0.1 else ".jpg"
                 uri = media_path("posts", ts, ext)
                 jobs.append((str(root / uri), w, h, rng.choice(PLACES[place][4]), pal(place), rng.random(), cool(place)))
+                place_of[str(root / uri)] = place
                 items.append({"uri": uri, "creation_timestamp": ts, "media_metadata": {"photo_metadata": {"exif_data": exif}},
                               "title": ig_text(cap) if n_media == 1 else "", "cross_post_source": {"source_app": "FB"}})
             posts.append({"media": items} if n_media == 1 else {"media": items, "title": ig_text(cap), "creation_timestamp": ts})
@@ -353,6 +411,7 @@ def main():
             ts = when(m, d0, d1)
             uri = media_path("stories", ts, ".jpg")
             jobs.append((str(root / uri), 1080, 1920, rng.choice(PLACES[place][4]), pal(place), rng.random(), cool(place)))
+            place_of[str(root / uri)] = place
             exif = [geo(place)] if tagged and rng.random() < 0.8 else []
             stories.append({"uri": uri, "creation_timestamp": ts, "title": "", "media_metadata": {"photo_metadata": {"exif_data": exif}}})
     rng.shuffle(posts)
@@ -441,7 +500,7 @@ def main():
     for i in range(8):
         place, m, d0, d1 = rng.choice(STAYS)[:4]
         ts = when(m, d0, d1)
-        post = {"timestamp": ts, "data": [{"post": ig_text(caption(place))}], "title": ig_text(f"{NAME} updated her status.")}
+        post = {"timestamp": ts, "data": [{"post": ig_text(caption(place))}], "title": ig_text(f"{NAME} updated their status.")}
         if rng.random() < 0.6:
             uri = f"your_facebook_activity/posts/media/timeline/{10161000000000000 + i}.jpg"
             jobs.append((str(fb / uri), 1080, 1080, rng.choice(PLACES[place][4]), pal(place), rng.random(), cool(place)))
@@ -455,6 +514,10 @@ def main():
         pool.map(draw_scene, jobs, chunksize=4)
         pool.map(make_reel, clip_jobs)
     visits = [s[0] for s in STAYS]
+    if a.set:
+        shutil.copytree(a.set, dest / "photos-of-the-year", dirs_exist_ok=True)
+        shown = from_set(Path(a.set), place_of)
+        print(f"{shown} of the export's photographs are the set's own", file=sys.stderr)
     print(json.dumps({"workspace": str(dest), "instagram": root.name, "facebook": fb.name, "handle": HANDLE,
                       "intended_places": INTENDED, "intended_count": len(INTENDED), "visits": visits,
                       "caption_only": [p for p in INTENDED if not PLACES[p][2]],

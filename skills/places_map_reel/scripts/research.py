@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Movement 1: the counting behind the taste profile. Reads build/library.json; writes build/research.json,
-a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
-turns into build/taste.md).
+"""Movement 1: the counting behind the taste profile. Reads library.json; writes research.json,
+a machine draft of taste.json, and taste.draft.md (the numbers under the five headings the agent
+turns into taste.md).
 
-USAGE (from the workspace root):
-    python3 S/scripts/research.py
+USAGE (from the workspace root; the files named below are in the run's folder, build/<run>/):
+    python3 S/scripts/research.py [--set DIR]
 
 It runs places.py, stats.py, picks.py and palette.py first (the places and the route, counts, each place's
 photos, the palettes), then reads:
   places    every place of the year in the order they were visited, with its coordinates, its date span, its
             posts, stories and photos, where the place came from (the geotag, their words, both), the visits,
-            the legs between them in kilometers, the total, the farthest place and the longest leg, the places
-            named once and left off, and the region the map is drawn at (home's region, and the far trips)
+            the legs between them, the places named once and left off, and the region the map is drawn at (home's
+            region, and the far trips)
   palette   the travel palette (photos away from home) against the everyday palette (photos at home) and how
             far apart they read, with the colors of what they like and save beside them
   captions  length, case, emoji, punctuation, hashtags, how they open and close, sample lines, and the words
@@ -20,9 +20,11 @@ photos, the palettes), then reads:
   cadence   posts per month and weekday, streaks and gaps
   reels     how long their reels run and how fast they cut (ffmpeg scene changes)
   people    who they talk to most
-  moments   the busiest and quietest month, the far trip, the longest stay, the places they went back to
-taste.json also carries the type direction, pacing, register, texture and the grade inputs; the agent edits it
-freely (and runs places.py with --add, --drop, --home or --rename when the person says where they went) before
+  moments   one per visit of the route: its first post (their line, the people tagged in it, its photograph) and every
+            caption of the visit in time order with its post, from picks.py
+taste.json also carries the look they named (`style`, none until they name one) and whether the agent may ask them
+to choose (`ask`), pacing, register, the grade inputs and music, the brief the film's music is made from (a tempo
+only when they name one, genre and instrument words, and what to avoid; never an artist, band or song); the agent edits it freely (and runs places.py with --add, --drop, --home or --rename when the person says where they went) before
 storyboards are drafted.
 """
 import collections
@@ -67,11 +69,10 @@ THEMES = {
     "design": ["design", "type", "studio", "poster", "print"],
 }
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
-FILM = {"film photography"}
 
 
-def run(script):
-    p = subprocess.run([sys.executable, str(S / script)], capture_output=True, text=True)
+def run(script, *args):
+    p = subprocess.run([sys.executable, str(S / script), *args], capture_output=True, text=True)
     if p.returncode:
         sys.exit(f"{script} failed:\n{p.stdout[-1500:]}\n{p.stderr[-1500:]}")
     return p.stdout
@@ -216,57 +217,40 @@ def color_name(rgb):
 
 
 
-def type_direction(themes, register, pacing):
-    film = themes.get("film photography", 0)
+def lean(themes, register, pacing):
+    """Which of the kit's three looks their year leans to, and why, for the pick made without asking (taste.json `ask`
+    false): film photography reads as the letterbox, fast cuts and heavy emoji as the poster grid, and everything
+    else, slow and warm, as the scrapbook."""
     loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
+    if themes.get("film photography", 0) >= 3:
+        return {"style": "cinematic-letterbox", "why": "they shoot and like film photography: a film's frame and its slow fades"}
     if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
-    if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
+        return {"style": "swiss-grid", "why": "fast reels and heavy emoji: a bold poster grid that cuts on the beat"}
+    return {"style": "scrapbook", "why": "quiet captions and slow travel: prints taped into a travel journal"}
 
 
-def moments(stats, pl):
-    out = []
-    b, q = stats.get("busiest") or {}, stats.get("quietest") or {}
-    if b:
-        out.append({"kind": "busiest month", "month": b.get("name"), "posts": b.get("posts"), "total": b.get("total")})
-    if q:
-        out.append({"kind": "quietest month", "month": q.get("name"), "posts": q.get("posts")})
-    places = {p["id"]: p for p in pl.get("places", [])}
-    away = [p for p in places.values() if not p["home"]]
-    if away:
-        far = max(away, key=lambda p: p["km_from_home"])
-        out.append({"kind": "the farthest place", "place": far["name"], "km": far["km_from_home"], "from": far["first"], "to": far["last"]})
-    vs = [v for v in pl.get("visits", []) if v.get("from") and places.get(v["place"]) and not places[v["place"]]["home"]]
-    if vs:
-        long = max(vs, key=lambda v: (dt.date.fromisoformat(v["to"]) - dt.date.fromisoformat(v["from"])).days)
-        out.append({"kind": "the longest stay", "place": places[long["place"]]["name"], "from": long["from"], "to": long["to"],
-                    "days": (dt.date.fromisoformat(long["to"]) - dt.date.fromisoformat(long["from"])).days + 1})
-    back = [p["name"] for p in away if p["visits"] > 1]
-    if back:
-        out.append({"kind": "went back to", "places": back})
-    if pl.get("legs"):
-        lg = max(pl["legs"], key=lambda l: l["km"])
-        out.append({"kind": "the longest leg", "from": places[lg["from"]]["name"], "to": places[lg["to"]]["name"], "km": lg["km"]})
-    return out
+def moments(picks, pl):
+    """The year's moments, one per visit of the route: their line from that visit, who is in it, its photograph."""
+    names = {p["id"]: p["name"] for p in pl.get("places", [])}
+    return [{"place": m["place"], "name": names.get(m["place"], m["place"]), "n": m["n"], "from": m["from"], "to": m["to"],
+             "line": m["line"], "with": m["with"], "post": m["post"], "photo": m["photo"], "captions": m["captions"]}
+            for m in (picks or {}).get("moments") or []]
 
 
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    ap.add_argument("--set", help="a folder of the person's photographs, one folder per place (picks.py --set)")
+    a = ap.parse_args()
+    _env.enter_run()
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     for s in ("places.py", "stats.py", "picks.py", "palette.py"):
-        print(run(s).strip().splitlines()[-1])
-    stats = _env.read_json("build/stats.json")
-    pal = _env.read_json("build/palette.json") or {}
-    pl = _env.read_json("build/places.json") or {}
+        print(run(s, *(["--set", str(_env.home_path(a.set))] if s == "picks.py" and a.set else [])).strip().splitlines()[-1])
+    stats = _env.read_json("stats.json")
+    pal = _env.read_json("palette.json") or {}
+    pl = _env.read_json("places.json") or {}
     posts = lib["posts"]
     captioned = posts + lib["reels"] + lib.get("facebook", [])
     caps = caption_read(captioned)
@@ -283,23 +267,21 @@ def main():
     liked_themes = theme_counts(list(like_accounts.elements()) + list(saved_accounts.elements()) + follow)
     top10 = sum(n for _, n in like_accounts.most_common(10))
     pacing = reel_pacing(lib["reels"])
-    mom = moments(stats, pl)
-    td = type_direction(own_themes + liked_themes, caps, pacing)
+    mom = moments(_env.read_json("picks.json"), pl)
+    td = lean(own_themes + liked_themes, caps, pacing)
     keep = lambda pal_: [{"hex": s["hex"], "name": s.get("name"), "share": s.get("share"), "photo": s.get("photo")} for s in (pal_ or [])]
     year_palette, travel, everyday = keep(pal.get("year")), keep(pal.get("travel")), keep(pal.get("everyday"))
-    film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
-    warm_light = (own_themes.get("light", 0) + liked_themes.get("light", 0)) >= 4
     places = pl.get("places", [])
     far = [p for p in places if p["far"]]
     legs = pl.get("legs", [])
     place_rows = [{"id": p["id"], "name": p["name"], "country": p["country"], "lat": p["lat"], "lon": p["lon"], "home": p["home"],
                    "far": p["far"], "first": p["first"], "last": p["last"], "visits": p["visits"], "posts": p["posts"],
-                   "stories": p["stories"], "photos": len(p["photos"]), "reels": len(p["clips"]), "km_from_home": p["km_from_home"],
+                   "stories": p["stories"], "photos": len(p["photos"]), "reels": len(p["clips"]),
                    "source": p["source"], "words": p["words"]} for p in places]
     research = {
         "handle": lib["handle"], "year": lib["year"], "source": lib["source"], "doors": lib.get("doors", {}),
         "counts": stats.get("counts"),
-        "places": place_rows, "count": len(places), "route": pl.get("route"), "legs": legs, "total_km": pl.get("total_km"),
+        "places": place_rows, "count": len(places), "route": pl.get("route"), "legs": legs,
         "home": pl.get("home"), "far": [p["id"] for p in far], "mentioned": pl.get("mentioned"), "unplaced": pl.get("unplaced"),
         "palette": {"year": year_palette, "travel": travel, "everyday": everyday, "apart": pal.get("apart"),
                     "likes": likes_palette, "likes_from": likes_palette_from, "roles": pal.get("roles")},
@@ -313,48 +295,59 @@ def main():
         "reels": pacing,
         "people": stats.get("people", [])[:8],
         "moments": mom,
-        "type": td,
+        "lean": td,
         "assumptions": pl.get("assumptions", []),
     }
-    _env.write_json("build/research.json", research)
+    _env.write_json("research.json", research)
     shot = pacing.get("avg_shot_seconds")
+    pillars = [t for t, _ in (own_themes + liked_themes).most_common(4)]
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "year": lib["year"],
         "palette": {"year": year_palette, "travel": travel, "everyday": everyday, "apart": pal.get("apart"), "likes": likes_palette,
                     "direction": "travel"},
-        "type": td,
+        # the look the person names ("style", one of look.TRIO or any card in styles/), and whether the agent may ask
+        # them to choose from the boards (false: it picks by this taste, from research.json's lean)
+        "style": None, "ask": True,
         "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
                    "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
-                   "energy": "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"},
+                   "energy": "high" if shot and shot < 1.5 else "calm" if shot and shot > 3 else "measured"},
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
                      "samples": caps.get("samples", [])[:4]},
-        "pillars": [t for t, _ in (own_themes + liked_themes).most_common(4)],
+        "pillars": pillars,
+        # the film's length in seconds when they ask for one (20 to 40, made as near as the places make); none runs it at
+        # its own pace
+        "seconds": None,
         "people": [p["account"] for p in stats.get("people", [])[:5]],
         "places": [{"id": p["id"], "name": p["name"], "words": p["words"][:1]} for p in places],
-        "count": len(places), "total_km": pl.get("total_km"),
-        "moments": mom,
-        "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
-        "avoid": ["cold blue grading", "neon", "stock-photo gloss", "map tiles or a satellite look"] if film else
-                 ["muddy grading", "map tiles or a satellite look"],
+        "count": len(places),
+        "moments": [{k: m[k] for k in ("place", "n", "line", "with", "post")} for m in mom],
+        "avoid": ["map tiles or a satellite look"],
+        # the music brief, in their words: a tempo only when they name one (else the board's), genre and instrument
+        # words the picked style's recipe takes in, and what to keep out; never an artist, band or song
+        "music": {"tempo": None, "styles": [], "avoid": ["vocals", "spoken word"]},
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
+    if not Path("taste.json").exists() or "research.py draft" in (_env.read_json("taste.json") or {}).get("written_by", ""):
+        _env.write_json("taste.json", taste)
     names = {p["id"]: p["name"] for p in places}
-    lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
+    lines = [f"# taste draft{' for @' + lib['handle'] if lib['handle'] else ''} ({lib['year']})", "",
+             "The agent writes taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are",
-             f"- {len(places)} places in {lib['year']}, home {names.get(pl.get('home'), '?')}; {pl.get('total_km', 0):,} km along the route",
-             "- the places, in the order visited (first seen, visits, posts and stories, where the place came from, their words):"]
-    lines += [f"  {i + 1}. {p['name']}, {p['country']}: {p['first']} to {p['last']}, {p['visits']} visit{'s' if p['visits'] > 1 else ''}, "
-              f"{p['posts']} posts and {p['stories']} stories, {p['km_from_home']:,} km from home{', far' if p['far'] else ''}; {p['source']}"
+             f"- {len(places)} places in {lib['year']}, home {names.get(pl.get('home'), '?')}",
+             "- the places, in the order visited (first seen, visits, where the place came from, their words):"]
+    lines += [f"  {i + 1}. {p['name']}, {p['country']}: {p['first']} to {p['last']}, {p['visits']} visit{'s' if p['visits'] > 1 else ''}"
+              f"{', far' if p['far'] else ''}; {p['source']}"
               + (f"; \"{p['words'][0]}\"" if p['words'] else "") for i, p in enumerate(places)]
     lines += [f"- route: {' > '.join(names.get(r, r) for r in pl.get('route', []))}",
-              f"- legs: {'; '.join(names[l['from']] + ' to ' + names[l['to']] + ' ' + format(l['km'], ',') + ' km' for l in legs)}",
               f"- left off the map: {', '.join(m['name'] for m in pl.get('mentioned') or []) or 'nothing'}; {pl.get('unplaced', 0)} rows with no place",
               f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
-              f"- moments: {'; '.join(m['kind'] + ': ' + ', '.join(str(v) for k, v in m.items() if k != 'kind') for m in mom)}",
+              "- moments, one per visit (its first post's line, else wordless; every caption of the visit after it, [post]):"]
+    lines += [f"  {i + 1}. {m['name']}{' again' if m['n'] > 1 else ''}, {m['from']}: "
+              + (f"\"{m['line']}\"" if m["line"] else "wordless")
+              + f" [{m['post']}]" + "".join(f" / {c['line']} [{c['post']}]" for c in m["captions"] if c["post"] != m["post"])
+              for i, m in enumerate(mom)]
+    lines += [
               "", "## you like",
               f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
               f"- most liked: {', '.join(a for a, _ in like_accounts.most_common(6))}",
@@ -365,7 +358,8 @@ def main():
               f"- palette of their likes ({likes_palette_from}): {', '.join(s['name'] + ' ' + s['hex'] for s in likes_palette)}",
               "", "## your style is",
               f"- reels: {pacing.get('avg_seconds')} s on average, a cut every {shot} s" if shot else "- no reels to measure",
-              f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+              f"- the look their year leans to: {td['style']} ({td['why']})",
+              f"- pillars: {', '.join(pillars)}",
               "", "## your voice is",
               f"- {caps.get('avg_words')} words a caption, {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
               f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
@@ -373,14 +367,14 @@ def main():
               f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
               f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
               "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
-    print(f"places: {len(places)} ({', '.join(p['name'] for p in places)}); route {len(pl.get('route', []))} stops, {pl.get('total_km', 0):,} km")
+    _env.write_text("taste.draft.md", "\n".join(lines))
+    print(f"places: {len(places)} ({', '.join(p['name'] for p in places)}); route {len(pl.get('route', []))} stops")
     print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
     print(f"travel palette: {[s['hex'] for s in travel]}; everyday: {[s['hex'] for s in everyday]}; apart {pal.get('apart')}")
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
-    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; type lead {td['lead']}")
-    print(f"moments: {[m['kind'] for m in mom]}")
-    print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
+    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; leans to {td['style']}")
+    print(f"moments: {sum(1 for m in mom if m['line'])} of {len(mom)} visits with a line of theirs")
+    print("wrote research.json, taste.json (draft) and taste.draft.md; now write taste.md")
     return 0
 
 

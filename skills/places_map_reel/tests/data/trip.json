@@ -1,0 +1,839 @@
+{
+  "places": {
+    "year": 2026,
+    "home": "lisbon",
+    "places": [
+      {
+        "id": "lisbon",
+        "name": "Lisbon",
+        "country": "Portugal",
+        "lat": 38.7247,
+        "lon": -9.1468
+      },
+      {
+        "id": "porto",
+        "name": "Porto",
+        "country": "Portugal",
+        "lat": 41.152,
+        "lon": -8.6219
+      },
+      {
+        "id": "coimbra",
+        "name": "Coimbra",
+        "country": "Portugal",
+        "lat": 40.2004,
+        "lon": -8.4167
+      },
+      {
+        "id": "aveiro",
+        "name": "Aveiro",
+        "country": "Portugal",
+        "lat": 40.641,
+        "lon": -8.651
+      },
+      {
+        "id": "evora",
+        "name": "Évora",
+        "country": "Portugal",
+        "lat": 38.56,
+        "lon": -7.906
+      },
+      {
+        "id": "seville",
+        "name": "Seville",
+        "country": "Spain",
+        "lat": 37.405,
+        "lon": -5.98
+      },
+      {
+        "id": "cordoba",
+        "name": "Córdoba",
+        "country": "Spain",
+        "lat": 37.88,
+        "lon": -4.77
+      },
+      {
+        "id": "granada",
+        "name": "Granada",
+        "country": "Spain",
+        "lat": 37.165,
+        "lon": -3.585
+      },
+      {
+        "id": "faro",
+        "name": "Faro",
+        "country": "Portugal",
+        "lat": 37.0171,
+        "lon": -7.9333
+      },
+      {
+        "id": "oaxaca",
+        "name": "Oaxaca",
+        "country": "Mexico",
+        "lat": 17.0827,
+        "lon": -96.67
+      },
+      {
+        "id": "madrid",
+        "name": "Madrid",
+        "country": "Spain",
+        "lat": 40.402,
+        "lon": -3.6853
+      }
+    ],
+    "route_visits": [
+      {
+        "place": "lisbon",
+        "from": "2026-01-02",
+        "to": "2026-02-27",
+        "rows": 21
+      },
+      {
+        "place": "porto",
+        "from": "2026-03-03",
+        "to": "2026-03-10",
+        "rows": 12
+      },
+      {
+        "place": "coimbra",
+        "from": "2026-03-12",
+        "to": "2026-03-15",
+        "rows": 6
+      },
+      {
+        "place": "aveiro",
+        "from": "2026-04-03",
+        "to": "2026-04-07",
+        "rows": 8
+      },
+      {
+        "place": "evora",
+        "from": "2026-04-18",
+        "to": "2026-04-22",
+        "rows": 8
+      },
+      {
+        "place": "seville",
+        "from": "2026-05-01",
+        "to": "2026-05-09",
+        "rows": 17
+      },
+      {
+        "place": "cordoba",
+        "from": "2026-05-11",
+        "to": "2026-05-14",
+        "rows": 6
+      },
+      {
+        "place": "granada",
+        "from": "2026-06-02",
+        "to": "2026-06-08",
+        "rows": 10
+      },
+      {
+        "place": "faro",
+        "from": "2026-06-18",
+        "to": "2026-06-26",
+        "rows": 9
+      },
+      {
+        "place": "oaxaca",
+        "from": "2026-07-05",
+        "to": "2026-07-24",
+        "rows": 27
+      },
+      {
+        "place": "seville",
+        "from": "2026-08-06",
+        "to": "2026-08-14",
+        "rows": 10
+      },
+      {
+        "place": "porto",
+        "from": "2026-09-03",
+        "to": "2026-09-09",
+        "rows": 9
+      },
+      {
+        "place": "madrid",
+        "from": "2026-09-15",
+        "to": "2026-09-20",
+        "rows": 9
+      },
+      {
+        "place": "lisbon",
+        "from": "2026-10-02",
+        "to": "2026-10-17",
+        "rows": 9
+      }
+    ]
+  },
+  "photos": [
+    {
+      "place": "lisbon",
+      "n": 1,
+      "k": 1,
+      "file": "photos/lisbon-1-1.jpg",
+      "w": 2560,
+      "h": 1707,
+      "aspect": 0.6668,
+      "color": "#5b4823",
+      "focus": [
+        0.44,
+        0.541
+      ],
+      "line": [
+        0.0,
+        0.61,
+        1.0,
+        0.6
+      ],
+      "home": true,
+      "source": "photos-of-the-year/lisbon/01-tram-28-wet-night-street.jpg"
+    },
+    {
+      "place": "lisbon",
+      "n": 1,
+      "k": 2,
+      "file": "photos/lisbon-1-2.jpg",
+      "w": 1920,
+      "h": 2560,
+      "aspect": 1.3333,
+      "color": "#907d5c",
+      "focus": [
+        0.518,
+        0.435
+      ],
+      "line": null,
+      "home": true,
+      "source": "photos-of-the-year/lisbon/05-alfama-alley-washing.jpg"
+    },
+    {
+      "place": "porto",
+      "n": 1,
+      "k": 1,
+      "file": "photos/porto-1-1.jpg",
+      "w": 2560,
+      "h": 1447,
+      "aspect": 0.5652,
+      "color": "#d1c6a9",
+      "focus": [
+        0.492,
+        0.525
+      ],
+      "line": [
+        0.0,
+        0.62,
+        1.0,
+        0.62
+      ],
+      "home": false,
+      "source": "photos-of-the-year/porto/01-riverside-houses-balconies.jpg"
+    },
+    {
+      "place": "porto",
+      "n": 1,
+      "k": 2,
+      "file": "photos/porto-1-2.jpg",
+      "w": 2048,
+      "h": 946,
+      "aspect": 0.4619,
+      "color": "#a88d48",
+      "focus": [
+        0.511,
+        0.577
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/porto/02-iron-bridge-night-douro.jpg"
+    },
+    {
+      "place": "coimbra",
+      "n": 1,
+      "k": 1,
+      "file": "photos/coimbra-1-1.jpg",
+      "w": 2560,
+      "h": 1707,
+      "aspect": 0.6668,
+      "color": "#d8c27c",
+      "focus": [
+        0.499,
+        0.432
+      ],
+      "line": [
+        0.22,
+        0.46,
+        0.78,
+        0.46
+      ],
+      "home": false,
+      "source": "photos-of-the-year/coimbra/01-jardim-da-manga-yellow-towers.jpg"
+    },
+    {
+      "place": "coimbra",
+      "n": 1,
+      "k": 2,
+      "file": "photos/coimbra-1-2.jpg",
+      "w": 2560,
+      "h": 1707,
+      "aspect": 0.6668,
+      "color": "#9e9470",
+      "focus": [
+        0.549,
+        0.532
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/coimbra/04-bamboo-grove-moss-dome.jpg"
+    },
+    {
+      "place": "aveiro",
+      "n": 1,
+      "k": 1,
+      "file": "photos/aveiro-1-1.jpg",
+      "w": 2560,
+      "h": 1244,
+      "aspect": 0.4859,
+      "color": "#647081",
+      "focus": [
+        0.546,
+        0.454
+      ],
+      "line": [
+        0.0,
+        0.48,
+        1.0,
+        0.47
+      ],
+      "home": false,
+      "source": "photos-of-the-year/aveiro/01-painted-houses-canal-mirror.jpg"
+    },
+    {
+      "place": "aveiro",
+      "n": 1,
+      "k": 2,
+      "file": "photos/aveiro-1-2.jpg",
+      "w": 2560,
+      "h": 2560,
+      "aspect": 1.0,
+      "color": "#3e464d",
+      "focus": [
+        0.493,
+        0.469
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/aveiro/02-moliceiro-down-the-canal.jpg"
+    },
+    {
+      "place": "evora",
+      "n": 1,
+      "k": 1,
+      "file": "photos/evora-1-1.jpg",
+      "w": 2560,
+      "h": 1920,
+      "aspect": 0.75,
+      "color": "#937e67",
+      "focus": [
+        0.466,
+        0.526
+      ],
+      "line": [
+        0.0,
+        0.5,
+        1.0,
+        0.49
+      ],
+      "home": false,
+      "source": "photos-of-the-year/evora/01-giraldo-square-blue-hour.jpg"
+    },
+    {
+      "place": "evora",
+      "n": 1,
+      "k": 2,
+      "file": "photos/evora-1-2.jpg",
+      "w": 2560,
+      "h": 1227,
+      "aspect": 0.4793,
+      "color": "#7bc7eb",
+      "focus": [
+        0.446,
+        0.535
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/evora/02-roman-temple-visitors.jpg"
+    },
+    {
+      "place": "seville",
+      "n": 1,
+      "k": 1,
+      "file": "photos/seville-1-1.jpg",
+      "w": 2560,
+      "h": 1920,
+      "aspect": 0.75,
+      "color": "#a98d6b",
+      "focus": [
+        0.489,
+        0.466
+      ],
+      "line": [
+        0.02,
+        0.62,
+        0.98,
+        0.6
+      ],
+      "home": false,
+      "source": "photos-of-the-year/seville/01-plaza-de-espana-tiled-bridge.jpg"
+    },
+    {
+      "place": "seville",
+      "n": 1,
+      "k": 2,
+      "file": "photos/seville-1-2.jpg",
+      "w": 1704,
+      "h": 2560,
+      "aspect": 1.5023,
+      "color": "#b3c5dc",
+      "focus": [
+        0.528,
+        0.59
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/seville/06-torre-del-oro-bougainvillea.jpg"
+    },
+    {
+      "place": "cordoba",
+      "n": 1,
+      "k": 1,
+      "file": "photos/cordoba-1-1.jpg",
+      "w": 1707,
+      "h": 2560,
+      "aspect": 1.4997,
+      "color": "#bda77c",
+      "focus": [
+        0.487,
+        0.505
+      ],
+      "line": [
+        0.0,
+        0.58,
+        1.0,
+        0.58
+      ],
+      "home": false,
+      "source": "photos-of-the-year/cordoba/01-mezquita-horseshoe-arches.jpg"
+    },
+    {
+      "place": "cordoba",
+      "n": 1,
+      "k": 2,
+      "file": "photos/cordoba-1-2.jpg",
+      "w": 1080,
+      "h": 1714,
+      "aspect": 1.587,
+      "color": "#192348",
+      "focus": [
+        0.526,
+        0.538
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/cordoba/02-flower-lane-bell-tower-night.jpg"
+    },
+    {
+      "place": "granada",
+      "n": 1,
+      "k": 1,
+      "file": "photos/granada-1-1.jpg",
+      "w": 1536,
+      "h": 2048,
+      "aspect": 1.3333,
+      "color": "#725f4c",
+      "focus": [
+        0.476,
+        0.441
+      ],
+      "line": [
+        0.0,
+        0.57,
+        1.0,
+        0.57
+      ],
+      "home": false,
+      "source": "photos-of-the-year/granada/01-partal-pool-palm-reflection.jpg"
+    },
+    {
+      "place": "granada",
+      "n": 1,
+      "k": 2,
+      "file": "photos/granada-1-2.jpg",
+      "w": 2560,
+      "h": 1704,
+      "aspect": 0.6656,
+      "color": "#bb8842",
+      "focus": [
+        0.487,
+        0.559
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/granada/03-alcazaba-golden-hour.jpg"
+    },
+    {
+      "place": "faro",
+      "n": 1,
+      "k": 1,
+      "file": "photos/faro-1-1.jpg",
+      "w": 2560,
+      "h": 2550,
+      "aspect": 0.9961,
+      "color": "#7fa9ce",
+      "focus": [
+        0.504,
+        0.617
+      ],
+      "line": [
+        0.08,
+        0.37,
+        0.92,
+        0.37
+      ],
+      "home": false,
+      "source": "photos-of-the-year/faro/01-igreja-do-carmo-twin-towers.jpg"
+    },
+    {
+      "place": "faro",
+      "n": 1,
+      "k": 2,
+      "file": "photos/faro-1-2.jpg",
+      "w": 2560,
+      "h": 1920,
+      "aspect": 0.75,
+      "color": "#f3dbbc",
+      "focus": [
+        0.499,
+        0.528
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/faro/02-bank-of-portugal-golden-light.jpg"
+    },
+    {
+      "place": "oaxaca",
+      "n": 1,
+      "k": 1,
+      "file": "photos/oaxaca-1-1.jpg",
+      "w": 2048,
+      "h": 1536,
+      "aspect": 0.75,
+      "color": "#a2925e",
+      "focus": [
+        0.498,
+        0.506
+      ],
+      "line": [
+        0.0,
+        0.59,
+        1.0,
+        0.59
+      ],
+      "home": false,
+      "source": "photos-of-the-year/oaxaca/01-organ-cactus-pool-mirror.jpg"
+    },
+    {
+      "place": "oaxaca",
+      "n": 1,
+      "k": 2,
+      "file": "photos/oaxaca-1-2.jpg",
+      "w": 2560,
+      "h": 1920,
+      "aspect": 0.75,
+      "color": "#f4e6b2",
+      "focus": [
+        0.489,
+        0.521
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/oaxaca/02-flame-tree-santo-domingo.jpg"
+    },
+    {
+      "place": "oaxaca",
+      "n": 1,
+      "k": 3,
+      "file": "photos/oaxaca-1-3.jpg",
+      "w": 2400,
+      "h": 1800,
+      "aspect": 0.75,
+      "color": "#b04d3c",
+      "focus": [
+        0.461,
+        0.525
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/oaxaca/03-bird-stencil-red-wall.jpg"
+    },
+    {
+      "place": "seville",
+      "n": 2,
+      "k": 1,
+      "file": "photos/seville-2-1.jpg",
+      "w": 2048,
+      "h": 1536,
+      "aspect": 0.75,
+      "color": "#ebd27e",
+      "focus": [
+        0.513,
+        0.567
+      ],
+      "line": [
+        0.0,
+        0.44,
+        1.0,
+        0.42
+      ],
+      "home": false,
+      "source": "photos-of-the-year/seville/02-san-luis-golden-facade.jpg"
+    },
+    {
+      "place": "seville",
+      "n": 2,
+      "k": 2,
+      "file": "photos/seville-2-2.jpg",
+      "w": 1707,
+      "h": 2560,
+      "aspect": 1.4997,
+      "color": "#c3d3e2",
+      "focus": [
+        0.483,
+        0.432
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/seville/09-patio-de-las-munecas.jpg"
+    },
+    {
+      "place": "porto",
+      "n": 2,
+      "k": 1,
+      "file": "photos/porto-2-1.jpg",
+      "w": 2560,
+      "h": 1920,
+      "aspect": 0.75,
+      "color": "#bb9f7b",
+      "focus": [
+        0.488,
+        0.616
+      ],
+      "line": [
+        0.0,
+        0.44,
+        0.4,
+        0.46
+      ],
+      "home": false,
+      "source": "photos-of-the-year/porto/08-hillside-houses-evening-sun.jpg"
+    },
+    {
+      "place": "porto",
+      "n": 2,
+      "k": 2,
+      "file": "photos/porto-2-2.jpg",
+      "w": 1500,
+      "h": 2048,
+      "aspect": 1.3653,
+      "color": "#afdeec",
+      "focus": [
+        0.498,
+        0.553
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/porto/03-blue-tiled-church-steps.jpg"
+    },
+    {
+      "place": "madrid",
+      "n": 1,
+      "k": 1,
+      "file": "photos/madrid-1-1.jpg",
+      "w": 2048,
+      "h": 1153,
+      "aspect": 0.563,
+      "color": "#b67c61",
+      "focus": [
+        0.49,
+        0.561
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/madrid/01-terracotta-rooftops-panorama.jpg"
+    },
+    {
+      "place": "madrid",
+      "n": 1,
+      "k": 2,
+      "file": "photos/madrid-1-2.jpg",
+      "w": 1537,
+      "h": 2048,
+      "aspect": 1.3325,
+      "color": "#a9844f",
+      "focus": [
+        0.5,
+        0.54
+      ],
+      "line": null,
+      "home": false,
+      "source": "photos-of-the-year/madrid/06-royal-palace-sabatini-dusk.jpg"
+    },
+    {
+      "place": "lisbon",
+      "n": 2,
+      "k": 1,
+      "file": "photos/lisbon-2-1.jpg",
+      "w": 2048,
+      "h": 1536,
+      "aspect": 0.75,
+      "color": "#b49b85",
+      "focus": [
+        0.487,
+        0.627
+      ],
+      "line": [
+        0.0,
+        0.46,
+        1.0,
+        0.45
+      ],
+      "home": true,
+      "source": "photos-of-the-year/lisbon/07-viewpoint-castle-hill.jpg"
+    },
+    {
+      "place": "lisbon",
+      "n": 2,
+      "k": 2,
+      "file": "photos/lisbon-2-2.jpg",
+      "w": 2048,
+      "h": 1536,
+      "aspect": 0.75,
+      "color": "#bfa984",
+      "focus": [
+        0.493,
+        0.462
+      ],
+      "line": null,
+      "home": true,
+      "source": "photos-of-the-year/lisbon/03-green-tiled-facade-balcony.jpg"
+    }
+  ],
+  "handle": "maren.okafor",
+  "taste": {
+    "type": {
+      "lead": "editorial",
+      "display": "Fraunces",
+      "text": "Inter",
+      "why": "quiet captions and film photography: a soft serif with a plain sans for labels"
+    },
+    "register": {
+      "lowercase": true
+    },
+    "palette": {
+      "year": [
+        {
+          "hex": "#8F7758",
+          "name": "taupe"
+        },
+        {
+          "hex": "#55382E",
+          "name": "chocolate"
+        },
+        {
+          "hex": "#384A5F",
+          "name": "slate"
+        },
+        {
+          "hex": "#88939F",
+          "name": "stone gray"
+        },
+        {
+          "hex": "#904A48",
+          "name": "berry"
+        }
+      ]
+    }
+  },
+  "moments": [
+    {
+      "place": "lisbon",
+      "n": 1,
+      "line": "rode the 28 end to end in the rain"
+    },
+    {
+      "place": "porto",
+      "n": 1,
+      "line": "port tasting down by the river"
+    },
+    {
+      "place": "coimbra",
+      "n": 1,
+      "line": null
+    },
+    {
+      "place": "aveiro",
+      "n": 1,
+      "line": "rode a painted moliceiro"
+    },
+    {
+      "place": "evora",
+      "n": 1,
+      "line": null
+    },
+    {
+      "place": "seville",
+      "n": 1,
+      "line": "rowed a little boat round plaza de españa"
+    },
+    {
+      "place": "cordoba",
+      "n": 1,
+      "line": "lost a whole morning under the arches"
+    },
+    {
+      "place": "granada",
+      "n": 1,
+      "line": "up at six for the alhambra"
+    },
+    {
+      "place": "faro",
+      "n": 1,
+      "line": "first swim of the year"
+    },
+    {
+      "place": "oaxaca",
+      "n": 1,
+      "line": "cooked mole from scratch"
+    },
+    {
+      "place": "seville",
+      "n": 2,
+      "line": "back for @dani.reyes's birthday"
+    },
+    {
+      "place": "porto",
+      "n": 2,
+      "line": null
+    },
+    {
+      "place": "madrid",
+      "n": 1,
+      "line": "madrid rooftops at golden hour"
+    },
+    {
+      "place": "lisbon",
+      "n": 2,
+      "line": "the river was silver the whole week long"
+    }
+  ]
+}

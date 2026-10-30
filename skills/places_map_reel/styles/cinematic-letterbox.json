@@ -1,0 +1,246 @@
+{
+  "id": "cinematic-letterbox",
+  "name": "Cinematic letterbox",
+  "faces": {
+    "display": {
+      "family": "Cinzel",
+      "file": "fonts/styles/cinematic-letterbox/Cinzel[wght].ttf",
+      "weight": 400,
+      "tracking": 0.08,
+      "case": "uppercase",
+      "lineHeight": 1.1
+    },
+    "text": {
+      "family": "Cormorant",
+      "file": "fonts/styles/cinematic-letterbox/Cormorant[wght].ttf",
+      "weight": 300,
+      "tracking": 0.02,
+      "case": "none",
+      "lineHeight": 1.15
+    }
+  },
+  "palette": {
+    "rule": "fixed",
+    "by": "warmth",
+    "warm": {
+      "bg": "#000000",
+      "ink": "#0b0d10",
+      "paper": "#f2e6d0",
+      "accent": "#e09a4a",
+      "accent2": "#2c6e73",
+      "muted": "#8c8072"
+    },
+    "cool": {
+      "bg": "#000000",
+      "ink": "#0a0d10",
+      "paper": "#e6ecef",
+      "accent": "#8fb4c4",
+      "accent2": "#c7a46b",
+      "muted": "#7d8790"
+    }
+  },
+  "moves": [
+    {
+      "id": "bars-open",
+      "fits": [
+        "title"
+      ]
+    },
+    {
+      "id": "anamorphic-push",
+      "fits": [
+        "photo",
+        "peak",
+        "portrait"
+      ]
+    },
+    {
+      "id": "lateral-dolly",
+      "fits": [
+        "photo",
+        "landscape",
+        "place"
+      ]
+    },
+    {
+      "id": "long-fade-title",
+      "fits": [
+        "words",
+        "wall"
+      ]
+    },
+    {
+      "id": "match-cut",
+      "fits": [
+        "people",
+        "wordless",
+        "clip",
+        "screen"
+      ]
+    },
+    {
+      "id": "picture-tunnel",
+      "fits": [
+        "photo",
+        "peak",
+        "place"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "long-dissolve",
+      "fits": [
+        "photo",
+        "landscape"
+      ]
+    },
+    {
+      "id": "bars-close",
+      "fits": [
+        "closer",
+        "wall",
+        "peak"
+      ]
+    },
+    {
+      "id": "hard-cut",
+      "fits": [
+        "portrait",
+        "people",
+        "words"
+      ]
+    }
+  ],
+  "ease": {
+    "curve": "sine",
+    "enter": [
+      0.37,
+      0,
+      0.63,
+      1
+    ],
+    "exit": [
+      0.37,
+      0,
+      0.63,
+      1
+    ],
+    "move": [
+      0.37,
+      0,
+      0.63,
+      1
+    ],
+    "spring": {
+      "damping": 26,
+      "stiffness": 60,
+      "mass": 1.4
+    },
+    "hit": {
+      "damping": 24,
+      "stiffness": 90,
+      "mass": 1.2
+    },
+    "stagger": 0.12,
+    "lean": 0.01
+  },
+  "finish": {
+    "grain": 0.14,
+    "vignette": 0.32,
+    "bloom": 0.35,
+    "dust": 0.12,
+    "blur": 0.8,
+    "halation": 0.9,
+    "cadence": 0,
+    "bars": 0.13,
+    "burn": "#ffb36b",
+    "grade": {
+      "lift": [
+        0,
+        0.03,
+        0.05
+      ],
+      "gamma": 1,
+      "gain": [
+        1.05,
+        0.98,
+        0.9
+      ],
+      "saturation": 0.9
+    },
+    "dip": "ink",
+    "matte": "#060708",
+    "light": "#d6e4ff",
+    "words": "finished"
+  },
+  "music": "cinematic-letterbox",
+  "closer": "title-card",
+  "photo": {
+    "picture": {
+      "show": true,
+      "box": [
+        0,
+        0,
+        1,
+        0.52
+      ],
+      "rim": 0,
+      "rimColor": "paper",
+      "tilt": 0,
+      "tape": 0,
+      "tapeColor": "accent2",
+      "penColor": "paper"
+    },
+    "ground": "bg",
+    "line": {
+      "box": [
+        0.05,
+        0.8,
+        0.9,
+        0.2
+      ],
+      "face": "text",
+      "size": 68,
+      "align": "center",
+      "color": "paper",
+      "enter": "fade",
+      "rotate": 0,
+      "scrim": 0.75
+    },
+    "label": {
+      "face": "display",
+      "size": 34,
+      "color": "accent"
+    },
+    "rule": false,
+    "grid": {
+      "cols": 1,
+      "rows": 3,
+      "margin": 0.05,
+      "rules": "none"
+    },
+    "landscape": {
+      "box": [
+        0,
+        0,
+        1,
+        0.52
+      ],
+      "line": [
+        0.05,
+        0.8,
+        0.9,
+        0.2
+      ]
+    }
+  },
+  "axes": {
+    "family": "cinema",
+    "palette": "film-stock",
+    "camera": "dolly",
+    "transition": "dissolve",
+    "finish": "grain",
+    "music": "trailer"
+  }
+}

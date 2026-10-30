@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the palettes, from the person's own photos. Reads build/photo_index.json and
-build/places.json, writes build/palette.json.
+"""Movement 1, research: the palettes, from the person's own photos. Reads photo_index.json and
+places.json, writes palette.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/palette.py [--accent "#E8743B"]
@@ -137,10 +137,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--accent")
     a = ap.parse_args()
-    idx = _env.read_json("build/photo_index.json")
+    _env.enter_run()
+    idx = _env.read_json("photo_index.json")
     if not idx:
-        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
-    home = (_env.read_json("build/places.json") or {}).get("home")
+        sys.exit("photo_index.json missing: run picks.py first (research.py runs it)")
+    home = (_env.read_json("places.json") or {}).get("home")
     travel_idx = [e for e in idx if e.get("place") and e["place"] != home]
     every_idx = [e for e in idx if e.get("place") == home]
     year = palette_of(idx)
@@ -163,7 +164,7 @@ def main():
     accent2 = lift(next((c for c in vivid[1:] if dist(c, vivid[0]) > 25), vivid[-1]))
     roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
              "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
-    _env.write_json("build/palette.json", {"year": year, "travel": travel, "everyday": everyday, "apart": apart, "roles": roles,
+    _env.write_json("palette.json", {"year": year, "travel": travel, "everyday": everyday, "apart": apart, "roles": roles,
                                             "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
                                                       "ink_on_bg": round(contrast(ink, bg), 2)}})
     for k, pal in (("year", year), ("travel", travel), ("everyday", everyday)):
@@ -171,7 +172,7 @@ def main():
     print(f"travel against everyday: {apart} apart (CIELAB)")
     print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
     print(f"accent on bg {contrast(accent, bg):.1f}:1, ink on bg {contrast(ink, bg):.1f}:1")
-    print("wrote build/palette.json")
+    print("wrote palette.json")
     return 0
 
 

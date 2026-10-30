@@ -1,38 +1,48 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the year's places. Reads build/library.json and the kit's gazetteer; writes build/places.json
-and the map's land shapes (build/public/map/land.json).
+"""Movement 1, research: the year's places. Reads library.json and the kit's gazetteer; writes places.json.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/places.py [--home Lisbon] [--add "Sintra@38.80,-9.38"] [--add Coimbra] [--drop Madrid]
                                 [--rename "Vila Nova de Gaia=Porto"] [--reset]
 
 How a row (a post, reel, story or Facebook photo) gets its place, in order:
-  1. Their own words: a place named in its caption, its album, its photo folder or a check-in, when that name is in
+  1. Their own words: a place named in its caption, its album, its photo folder or file name, or a check-in, when that name is in
      the gazetteer (S/data/places.tsv, Natural Earth populated places) and, for a name that is also a common
-     English word ("Nice", "Reading"), when it follows "in", "to", "from", "at" and the like or is a hashtag. A name
+     English word ("Nice", "Reading"), when it follows "in", "to", "from", "at" and the like or is a hashtag; a name of
+     three letters ("Fes", "Ulm") counts as a hashtag, capitalized after one of those words, or as the whole text. A name
      several places share (Córdoba in Spain, Mexico and Argentina) is the one nearest the geotags posted within
-     30 days, else nearest home. A named place within 80 km of the row's geotag replaces the geotag's town.
+     30 days, else nearest home. A named place within 80 km of the row's geotag replaces the geotag's town. A
+     location the post carries that the gazetteer lacks (a village, a lake) is a place of its own at the row's
+     geotag when the geotag's town is more than 15 km away; nearer, it is a venue inside that town.
   2. The geotag: the most populous gazetteer place near it (within 40 km, nearer wins over bigger), else the
      nearest one within 150 km.
   3. A neighbor in time: a row with neither takes the place of the nearest placed row within two days.
 A place named in one caption only, with no geotag, is listed under "mentioned" and left off the map (a caption can
-name a place they only miss); --add puts it on. Home is the place in their bio, else the place with the most
-months. Visits are runs of rows in one place; the route is the visits in order with the stays at home between trips
-left out, so it reads as one journey that starts and ends at home. Places within 2,500 km of home are the region;
+name a place they only miss); a check-in, an album, a folder or a file name says they were there and puts it on. A
+check-in or file name the gazetteer lacks, on a row with no geotag, is listed in the assumptions with the --add that
+puts it on; --add NAME@lat,lon makes the name one their rows can say, so the rows that name it are its photographs.
+The pair is checked: the assumptions say the nearest town it lands by and how far from home, and a pair with latitude
+and longitude swapped, or one far from home and from every other place of the route, is refused. Home is the place in their bio (or --home), else the place with the
+most months; home_said records which, and only a home they named is ever called home on screen. Visits are runs of
+rows in one place; the route is the visits in order with the stays at home between trips left out, so it reads as one
+journey that starts and ends at home. Places within 2,500 km of home are the region;
 the rest are far. Distances are great-circle kilometers.
+A place keeps the name they spell it by in their own words ("Fes" where the gazetteer has "Fez"), on the map and in
+every caption.
 --home, --add (a gazetteer name, or NAME@lat,lon for a place it lacks), --drop and --rename are the person's word:
-they are kept in build/places.args.json and applied on every later run (--reset clears them).
+they are kept in places.args.json and applied on every later run (--reset clears them). --rename "Old=New" shows the
+place as New, spelled as typed ("Fez=Fes"); the place moves only when New is another place in the gazetteer
+("Vila Nova de Gaia=Porto").
 
-build/places.json: places [{id, name, country, lat, lon, x, y, home, far, rows, posts, stories, reels, photos,
+places.json: places [{id, name, country, lat, lon, x, y, home, far, rows, posts, stories, reels, photos,
 clips, first, last, months, visits, source, words}], visits, route (place ids in order), route_visits (the visit
-behind each stop of the route, with its dates), legs [{from, to, km, far}],
-total_km, home, region, far, mentioned, unplaced, rows ({"posts:3": id, ...}), assumptions.
+behind each stop of the route, with its dates), legs [{from, to, far}],
+home, home_said, region, far, mentioned, unplaced, rows ({"posts:3": id, ...}), assumptions.
 x, y are Web Mercator in world units (0 to 1000 across the world), the map's coordinates.
 """
 import argparse
 import collections
 import datetime as dt
-import json
 import math
 import re
 import sys
@@ -47,6 +57,7 @@ KINDS = ("posts", "reels", "stories", "facebook")
 LOCATIVE = {"in", "to", "from", "at", "visiting", "around", "through", "leaving", "near", "via", "toward", "towards",
             "into", "across", "outside", "landed", "arrived", "hello", "goodbye", "bye", "back"}
 REGION_KM = 2500
+VENUE_KM = 15
 WORLD = 1000.0
 
 
@@ -79,7 +90,7 @@ def load_gazetteer():
     names = collections.defaultdict(list)
     for g in rows:
         for n in {g["plain"], *g["alt"]}:
-            if len(n) >= 4:
+            if len(n) >= 3:
                 names[n].append(g)
     return rows, names
 
@@ -115,38 +126,81 @@ def town_of(grid, lat, lon):
     return None, None
 
 
+def coords(name, at):
+    """The pair NAME@lat,lon names, refusing one that is not a latitude and a longitude."""
+    try:
+        lat, lon = (float(v) for v in at.split(","))
+    except ValueError:
+        sys.exit(f"--add \"{name}@{at}\": write the place as {name}@lat,lon, two numbers, latitude first.")
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        sys.exit(f"--add \"{name}@{at}\": {lat:g} is not a latitude or {lon:g} not a longitude; latitude comes first.")
+    return lat, lon
+
+
+def where_added(grid, g, home, others):
+    """Where a place added by its coordinates lands, said plainly for the agent to check against what it knows of the
+    place: the nearest town the kit knows and its country, and whether it stands in the route's region. A pair that
+    lands outside the region while its swapped pair lands inside it is refused, latitude and longitude having been
+    swapped; a pair nowhere near home or any other place of the route is refused too, since a far trip still has a
+    place of the route within REGION_KM of it."""
+    near = grid.near(g["lat"], g["lon"], 150)
+    town = min(near, key=lambda dg: dg[0]) if near else None
+    at = f"{g['name']} ({g['lat']:g},{g['lon']:g})"
+    said = f"{at} lands {round(town[0])} km from {town[1]['name']}, {town[1]['country']}" if town else f"{at} lands more than 150 km from any town the kit knows"
+    if not home:
+        return said + "."
+    d = km((g["lat"], g["lon"]), (home["lat"], home["lon"]))
+    if d <= REGION_KM:
+        return said + f", {round(d):,} km from home, inside the route's region."
+    if -90 <= g["lon"] <= 90 and km((g["lon"], g["lat"]), (home["lat"], home["lon"])) <= REGION_KM:
+        sys.exit(f"{said}, {round(d):,} km from home; {g['lon']:g},{g['lat']:g} lands inside the route's region: latitude and "
+                 f"longitude look swapped. Add it as \"{g['name']}@{g['lon']:g},{g['lat']:g}\" if that is where it is.")
+    if not any(km((g["lat"], g["lon"]), (o["lat"], o["lon"])) <= REGION_KM for o in others):
+        sys.exit(f"{said}, {round(d):,} km from home and from every other place of the route. Check the coordinates.")
+    return said + f", {round(d):,} km from home: a far trip, drawn on its own map."
+
+
 def words_of(text):
-    """(plain words, original words) of a text; a hashtag counts as a word and stays marked."""
+    """The words of a text: (plain word, hashtag, capitalized, (start, end) of the word as written in the text); a
+    hashtag counts as a word and stays marked."""
     out = []
-    for tok in re.findall(r"#?[^\W_][\w'’-]*", text or "", re.U):
+    for m in re.finditer(r"#?[^\W_][\w'’-]*", text or "", re.U):
+        tok = m.group(0)
         tag = tok.startswith("#")
-        w = plain(tok.lstrip("#"))
-        if w:
-            for part in w.split():
-                out.append((part, tag, tok.lstrip("#")[:1].isupper()))
+        a = m.start() + tag
+        parts = plain(tok[tag:]).split()
+        runs = [(a + r.start(), a + r.end()) for r in re.finditer(r"[^\W_]+", tok[tag:], re.U)]
+        if len(runs) != len(parts):
+            runs = [(a, m.end())] * len(parts)
+        for part, span in zip(parts, runs):
+            out.append((part, tag, tok[tag:tag + 1].isupper(), span))
     return out
 
 
 def named_in(text, names, strong=False):
-    """Gazetteer names in a text: [(plain name, how it was said)], longest match first, each word used once."""
+    """Gazetteer names in a text: [(plain name, how it was said, the name as it is spelled in the text)], longest match
+    first, each word used once."""
     ws = words_of(text)
     hits, used = [], set()
     for n in (3, 2, 1):
         for i in range(len(ws) - n + 1):
             if any(k in used for k in range(i, i + n)):
                 continue
-            cand = " ".join(w for w, _, _ in ws[i:i + n])
-            if cand not in names or len(cand) < 4:
+            cand = " ".join(w for w, _, _, _ in ws[i:i + n])
+            if cand not in names:
                 continue
-            tag = any(t for _, t, _ in ws[i:i + n])
+            tag = any(t for _, t, _, _ in ws[i:i + n])
             cap = ws[i][2]
             loc = i > 0 and ws[i - 1][0] in LOCATIVE
             common = all(g["common"] for g in names[cand])
             if common and not (tag or loc or strong):
                 continue
-            hits.append((i, cand, "hashtag" if tag else "after '%s'" % ws[i - 1][0] if loc else "capitalized" if cap else "named"))
+            if len(cand) == 3 and not (tag or (loc and cap) or len(ws) == 1):
+                continue
+            how = "hashtag" if tag else "after '%s'" % ws[i - 1][0] if loc else "capitalized" if cap else "named"
+            hits.append((i, cand, how, text[ws[i][3][0]:ws[i + n - 1][3][1]]))
             used |= set(range(i, i + n))
-    return [(c, how) for _, c, how in sorted(hits)]
+    return [(c, how, spelt) for _, c, how, spelt in sorted(hits)]
 
 
 def date(ts):
@@ -157,31 +211,6 @@ def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", plain(s)).strip("-") or "place"
 
 
-def land_for(places, out):
-    """Land rings that touch the map's area (all places, padded), in world units, as SVG path data."""
-    src = json.loads((DATA / "land.json").read_text())
-    lats = [p["lat"] for p in places] or [0]
-    lons = [p["lon"] for p in places] or [0]
-    pad_lat = max(8, (max(lats) - min(lats)) * 0.6)
-    pad_lon = max(12, (max(lons) - min(lons)) * 0.6)
-    box = (min(lons) - pad_lon, min(lats) - pad_lat, max(lons) + pad_lon, max(lats) + pad_lat)
-    paths = []
-    for r in src["rings"]:
-        b = r["bbox"]
-        if b[2] < box[0] or b[0] > box[2] or b[3] < box[1] or b[1] > box[3]:
-            continue
-        pts = [merc(r["ring"][i + 1], r["ring"][i]) for i in range(0, len(r["ring"]), 2)]
-        pts = [p for k, p in enumerate(pts) if k == 0 or (round(p[0], 1), round(p[1], 1)) != (round(pts[k - 1][0], 1), round(pts[k - 1][1], 1))]
-        if len(pts) < 4:
-            continue
-        paths.append("M" + "L".join(f"{x:.2f} {y:.2f}" for x, y in pts) + "Z")
-    bx0, by0 = merc(box[3], box[0])
-    bx1, by1 = merc(box[1], box[2])
-    _env.write_json(out, {"source": src["source"], "projection": "web mercator, 0 to 1000 across the world",
-                          "box": [bx0, by0, bx1, by1], "paths": paths})
-    return len(paths)
-
-
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--home")
@@ -190,15 +219,25 @@ def main():
     ap.add_argument("--rename", action="append", default=[])
     ap.add_argument("--reset", action="store_true")
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.enter_run()
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
-    saved = {} if a.reset else (_env.read_json("build/places.args.json") or {})
+        sys.exit("library.json is missing: run gather.py first")
+    saved = {} if a.reset else (_env.read_json("places.args.json") or {})
     args = {"home": a.home or saved.get("home"), "add": list(dict.fromkeys(saved.get("add", []) + a.add)),
             "drop": list(dict.fromkeys(saved.get("drop", []) + a.drop)),
             "rename": list(dict.fromkeys(saved.get("rename", []) + a.rename))}
-    _env.write_json("build/places.args.json", args)
+    _env.write_json("places.args.json", args)
     gaz, names = load_gazetteer()
+    at_coords = {}
+    for ad in args["add"]:
+        nm, _, at = ad.partition("@")
+        if at:
+            lat, lon = coords(nm, at)
+            g = {"name": nm.strip(), "plain": plain(nm), "country": "", "region": "", "lat": lat, "lon": lon, "pop": 0,
+                 "common": False, "alt": []}
+            names[g["plain"]].append(g)
+            at_coords[ad] = g
     grid = Grid(gaz)
     assumptions = []
     rows = []
@@ -224,26 +263,29 @@ def main():
     months_at = collections.defaultdict(set)
     for x in tagged:
         months_at[gid(x["town"])].add(date(x["ts"]).month)
-    home_g = None
+    # home_said: they named it themselves (their bio, or --home from their own words); the film says "home" only then
+    home_g, home_said = None, False
     bio = lib.get("bio") or ""
-    for c, how in named_in(bio, names, strong=True):
+    for c, how, _ in named_in(bio, names, strong=True):
         cands = names[c]
         if tagged:
             cands = sorted(cands, key=lambda g: min(km((g["lat"], g["lon"]), t["geo"]) for t in tagged))
         else:
             cands = sorted(cands, key=lambda g: -g["pop"])
-        home_g = cands[0]
+        home_g, home_said = cands[0], True
         assumptions.append(f"Home is {home_g['name']}: your bio names it.")
         break
     if args["home"]:
         c = plain(args["home"])
         if names.get(c):
             home_g = max(names[c], key=lambda g: (len(months_at.get(gid(g), ())), g["pop"]))
+            home_said = True
             assumptions.append(f"Home is {home_g['name']}, as you said.")
     if not home_g and months_at:
         best = max(months_at, key=lambda k: (len(months_at[k]), sum(1 for x in tagged if gid(x["town"]) == k)))
         home_g = next(x["town"] for x in tagged if gid(x["town"]) == best)
-        assumptions.append(f"Home is {home_g['name']}: you posted from there in {len(months_at[best])} months, more than anywhere else.")
+        assumptions.append(f"The map measures distance from {home_g['name']}: you posted from there in {len(months_at[best])} months, "
+                           "more than anywhere else. The film never calls it home, as you did not say so.")
 
     # their own words
     def resolve(c, ts):
@@ -260,13 +302,25 @@ def main():
     for x in rows:
         r = x["row"]
         said = []
-        for field, strong in (("place", True), ("album", True), ("folder", True), ("caption", False)):
-            for c, how in named_in(r.get(field) or "", names, strong=strong):
-                said.append((c, f"{field} ({how})" if field != "caption" else f"caption ({how})"))
+        # a location reads as "place, region, country": the place is its first part
+        for field, strong in (("place", True), ("album", True), ("folder", True), ("file", True), ("caption", False)):
+            text = (r.get(field) or "").split(",")[0] if field == "place" else r.get(field) or ""
+            for c, how, spelt in named_in(text, names, strong=strong):
+                said.append((c, f"{field} ({how})" if field != "caption" else f"caption ({how})", spelt))
         if said:
-            c, how = said[0]
+            c, how, spelt = said[0]
             g = resolve(c, x["ts"])
-            x["said"], x["said_how"] = g, how
+            x["said"], x["said_how"], x["spelt"] = g, how, spelt
+        elif r.get("place") and x.get("geo") and (not x["town"] or km((x["town"]["lat"], x["town"]["lon"]), x["geo"]) > VENUE_KM):
+            # a location the gazetteer lacks (a village, a lake) names its own place at its geotag; nearer a town than
+            # VENUE_KM it is taken for a venue inside that town
+            nm = r["place"].split(",")[0].strip()
+            town = x["town"] or {}
+            x["said"] = {"name": nm, "plain": plain(nm), "country": town.get("country", ""), "region": town.get("region", ""),
+                         "lat": x["geo"][0], "lon": x["geo"][1], "pop": 0, "common": False, "alt": []}
+            x["said_how"] = "place (its own location)"
+        elif not x.get("geo") and (r.get("place") or r.get("file")):
+            x["unknown"] = r["place"].split(",")[0].strip() if r.get("place") else r["file"]
     for x in rows:
         g = None
         if x.get("said") and x.get("geo"):
@@ -293,15 +347,32 @@ def main():
     def find(name):
         c = plain(name)
         return names.get(c) or []
+    # a rename shows the place under the new name as they typed it; the place moves only when that name is another
+    # place in the gazetteer, else it keeps its coordinates
     renames = {}
     for rr in args["rename"]:
         old, _, new = rr.partition("=")
         tgt = find(new)
-        if tgt:
-            renames[plain(old)] = tgt[0] if len(tgt) == 1 else min(tgt, key=lambda g: km((g["lat"], g["lon"]), (home_g or g)["lat"] and ((home_g or g)["lat"], (home_g or g)["lon"])))
+        to = (tgt[0] if len(tgt) == 1 else min(tgt, key=lambda g: km((g["lat"], g["lon"]), ((home_g or g)["lat"], (home_g or g)["lon"])))) if tgt else None
+        renames[plain(old)] = (to, new.strip())
+    named = {}
     for x in rows:
-        if x["place"] and x["place"]["plain"] in renames:
-            x["place"], x["source"] = renames[x["place"]["plain"]], "renamed by you"
+        g = x["place"]
+        if not g:
+            continue
+        own = plain(x["spelt"]) if x.get("spelt") and x.get("said") is g else None
+        hit = next((renames[n] for n in (g["plain"], *g["alt"], own) if n in renames), None)
+        if hit:
+            to, name = hit
+            if to and gid(to) != gid(g):
+                x["place"] = to
+            x["source"] = "renamed by you"
+            named[gid(x["place"])] = name
+    # the name as they spell it in their own words, the one they use most, wins over the gazetteer's
+    spelt = collections.defaultdict(collections.Counter)
+    for x in rows:
+        if x.get("spelt") and x["place"] and x.get("said") is x["place"]:
+            spelt[gid(x["place"])][x["spelt"]] += 1
     dropped = {plain(d) for d in args["drop"]}
     by = collections.OrderedDict()
     for x in rows:
@@ -314,24 +385,43 @@ def main():
     for ad in args["add"]:
         nm, _, at = ad.partition("@")
         if at:
-            lat, lon = (float(v) for v in at.split(","))
-            g = {"name": nm.strip(), "plain": plain(nm), "country": "", "region": "", "lat": lat, "lon": lon, "pop": 0, "common": False, "alt": []}
+            g = at_coords[ad]
         else:
             c = find(nm)
             if not c:
                 assumptions.append(f"{nm} is not in the kit's gazetteer; add it as {nm}@lat,lon to put it on the map.")
                 continue
             g = next((xs[0]["place"] for k, xs in by.items() if xs[0]["place"]["plain"] == plain(nm)), None) or resolve(plain(nm), rows[len(rows) // 2]["ts"] if rows else 0)
+            if plain(nm) != plain(g["name"]):
+                named.setdefault(gid(g), nm.strip())
         adds[gid(g)] = g
+
+    def name_of(k, g):
+        """The place's name on the map and in every caption: their rename, else their own spelling, else the gazetteer's."""
+        if k in named:
+            return named[k]
+        said = spelt.get(k)
+        if not said:
+            return g["name"]
+        votes = collections.Counter()
+        for v, n in said.items():
+            votes[plain(v)] += n
+        top = max(votes, key=votes.get)
+        if top == plain(g["name"]):
+            return g["name"]
+        forms = [v for v in said if plain(v) == top]
+        v = max(forms, key=lambda v: (not v.islower(), said[v]))
+        return " ".join(w[:1].upper() + w[1:] for w in v.split()) if v.islower() else v
+
     keep = collections.OrderedDict()
     for k, xs in by.items():
         g = xs[0]["place"]
-        if g["plain"] in dropped:
-            assumptions.append(f"{g['name']} is left off, as you said.")
+        if g["plain"] in dropped or plain(name_of(k, g)) in dropped:
+            assumptions.append(f"{name_of(k, g)} is left off, as you said.")
             continue
         has_geo = any(x.get("geo") for x in xs)
         said = [x for x in xs if x.get("said") and gid(x["said"]) == k]
-        if not has_geo and len(said) < 2 and k not in adds and not any("album" in (x.get("said_how") or "") or "folder" in (x.get("said_how") or "") for x in said):
+        if not has_geo and len(said) < 2 and k not in adds and all((x.get("said_how") or "").startswith("caption") for x in said):
             mentioned.append({"name": g["name"], "country": g["country"], "rows": len(xs),
                               "caption": ((said or xs)[0]["row"].get("caption") or "")[:120]})
             for x in xs:
@@ -341,13 +431,12 @@ def main():
     for k, g in adds.items():
         if k not in keep:
             keep[k] = []
-            assumptions.append(f"{g['name']} is on the map because you said you were there.")
-        for xs in keep[k]:
-            pass
+            assumptions.append(f"{name_of(k, g)} is on the map because you said you were there.")
     gaz_of = {k: (xs[0]["place"] if xs else adds[k]) for k, xs in keep.items()}
+    # a home is a stop only where they posted from it; with none there it still measures the distances
     if home_g and gid(home_g) not in gaz_of:
-        gaz_of[gid(home_g)] = home_g
-        keep[gid(home_g)] = []
+        assumptions.append(f"{home_g['name']} is not a stop on the map: you posted nothing from there.")
+    gaz_of = {k: dict(g, name=name_of(k, g)) for k, g in gaz_of.items()}
 
     # ids
     ids, taken = {}, set()
@@ -390,7 +479,8 @@ def main():
     if home_id:
         stays = sum(1 for v in out_visits[1:-1] if v["place"] == home_id)
         if stays:
-            assumptions.append(f"The route leaves out the {stays} stay{'s' if stays > 1 else ''} at home between trips, so it reads as one journey.")
+            where = "at home" if home_said else f"in {home_g['name']}"
+            assumptions.append(f"The route leaves out the {stays} stay{'s' if stays > 1 else ''} {where} between trips, so it reads as one journey.")
     places = []
     hg = home_g
     for k, g in gaz_of.items():
@@ -408,7 +498,7 @@ def main():
         ts = [x["ts"] for x in xs]
         places.append({
             "id": ids[k], "name": g["name"], "country": g["country"], "region": g["region"], "lat": g["lat"], "lon": g["lon"],
-            "x": x0, "y": y0, "home": k == hk, "far": dk > REGION_KM, "km_from_home": dk,
+            "x": x0, "y": y0, "home": k == hk, "far": dk > REGION_KM,
             "rows": len(xs), "posts": sum(1 for x in xs if x["kind"] == "posts"), "stories": sum(1 for x in xs if x["kind"] == "stories"),
             "reels": sum(1 for x in xs if x["kind"] == "reels"), "facebook": sum(1 for x in xs if x["kind"] == "facebook"),
             "photos": photos, "clips": clips,
@@ -421,12 +511,14 @@ def main():
     pos = {p["id"]: p for p in places}
     legs = []
     for a_, b_ in zip(route, route[1:]):
-        d = km((pos[a_]["lat"], pos[a_]["lon"]), (pos[b_]["lat"], pos[b_]["lon"]))
-        legs.append({"from": a_, "to": b_, "km": round(d), "far": pos[a_]["far"] or pos[b_]["far"]})
+        legs.append({"from": a_, "to": b_, "far": pos[a_]["far"] or pos[b_]["far"]})
     for x in rows:
         if x.get("town_km") and x["place"] is x.get("town"):
             assumptions.append(f"A geotag {x['town_km']} km from the nearest town in the gazetteer is counted as {x['town']['name']}.")
             break
+    for ad, g in at_coords.items():
+        if gid(g) in ids:
+            assumptions.append(where_added(grid, g, hg, [o for k, o in gaz_of.items() if k != gid(g)]))
     unplaced = sum(1 for x in rows if not x["place"])
     rowmap = {x["key"]: ids[gid(x["place"])] for x in rows if x["place"] and gid(x["place"]) in ids}
     region = [p["id"] for p in places if not p["far"]]
@@ -439,25 +531,27 @@ def main():
                            f"(\"{m['caption'][:60]}\"); say so and it goes on.")
     words_only = [p["name"] for p in places if p["rows"] and "geotag" not in p["source"]]
     if words_only:
-        assumptions.append(f"{', '.join(words_only)} carr{'ies' if len(words_only) == 1 else 'y'} no geotag: placed from your captions.")
+        assumptions.append(f"{', '.join(words_only)} carr{'ies' if len(words_only) == 1 else 'y'} no geotag: placed from your own words.")
+    unknown = collections.Counter(x["unknown"] for x in rows if not x["place"] and x.get("unknown"))
+    for nm, n in unknown.items():
+        assumptions.append(f"{nm} ({n} row{'s' if n > 1 else ''}) is not in the kit's gazetteer and has no geotag: "
+                           f"places.py --add \"{nm}@lat,lon\" puts it on the map.")
     if unplaced:
-        assumptions.append(f"{unplaced} posts and stories have no geotag and name no place; they are not counted at any place.")
-    total = sum(l["km"] for l in legs)
+        assumptions.append(f"{unplaced} posts and stories have no geotag and name no place the kit knows; they are not counted at any place.")
     res = {"year": lib.get("year"), "count": len(places), "places": places, "visits": out_visits, "route": route, "route_visits": route_visits, "legs": legs,
-           "total_km": total, "home": home_id, "region": region, "far": far, "mentioned": mentioned, "unplaced": unplaced,
+           "home": home_id, "home_said": home_said, "region": region, "far": far, "mentioned": mentioned, "unplaced": unplaced,
            "rows": rowmap, "assumptions": assumptions}
-    _env.write_json("build/places.json", res)
-    n = land_for(places, "build/public/map/land.json")
-    print(f"{len(places)} places, {len(out_visits)} visits, route of {len(route)} stops, {total:,} km; home {home_id}; far {far}")
+    _env.write_json("places.json", res)
+    print(f"{len(places)} places, {len(out_visits)} visits, route of {len(route)} stops; home {home_id}; far {far}")
     for p in places:
         print(f"  {p['name']:<14} {p['country']:<10} rows {p['rows']:>3}  visits {p['visits']}  {p['first']} to {p['last']}  "
-              f"{p['km_from_home']:>5} km from home  ({p['source']})")
+              f"({p['source']})")
     for m in mentioned:
         print(f"  mentioned only: {m['name']} ({m['rows']} rows)")
-    print(f"unplaced rows: {unplaced}; land: {n} shapes -> build/public/map/land.json")
+    print(f"unplaced rows: {unplaced}")
     for x in assumptions:
         print("assumption:", x)
-    print("wrote build/places.json")
+    print("wrote places.json")
     return 0
 
 

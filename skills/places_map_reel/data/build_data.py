@@ -11,7 +11,9 @@ github.com/nvkelso/natural-earth-vector (geojson/). Writes, beside this file:
     places.tsv   the populated places layer: name, plain name, country, region, lat, lon, population, whether
                  the plain name is also a common English word (such a name counts from a caption only after "in",
                  "to", "from" and the like, or as a hashtag), and the place's other plain names (local or
-                 longer forms such as "lisboa" or "oaxaca de juarez"), separated by "|"
+                 longer forms such as "lisboa" or "oaxaca de juarez"), separated by "|"; then, in the same columns,
+                 every town of towns.tsv (beside this file) whose plain name the layer does not already hold: the
+                 towns a ski, hiking or travel year often reaches that the layer leaves out
 The kit reads only these two files; nothing is fetched when it runs.
 """
 import json
@@ -80,6 +82,21 @@ def dp(pts, tol):
     return [p for p, k in zip(pts, keep) if k]
 
 
+def town_rows(seen):
+    """towns.tsv as places.tsv rows, leaving out every town whose plain name is in `seen`."""
+    rows = []
+    for ln in (HERE / "towns.tsv").read_text().splitlines():
+        if not ln or ln.startswith("#"):
+            continue
+        name, country, region, lat, lon, pop, alt = (ln.split("\t") + [""] * 7)[:7]
+        pl = plain(name)
+        if pl in seen:
+            continue
+        rows.append("\t".join([name, pl, country, region, f"{float(lat):.4f}", f"{float(lon):.4f}", str(int(pop or 0)),
+                               "1" if pl in COMMON else "0", "|".join(sorted({plain(v) for v in alt.split("|") if v}))]))
+    return rows
+
+
 def main():
     ne = Path(sys.argv[1])
     land = json.loads((ne / "ne_50m_land.geojson").read_text())
@@ -114,6 +131,7 @@ def main():
         rows.append("\t".join([name, pl, p.get("adm0name") or "", p.get("adm1name") or "", f"{p['latitude']:.4f}",
                                f"{p['longitude']:.4f}", str(int(p.get("pop_max") or 0)), "1" if pl in COMMON else "0",
                                "|".join(alt)]))
+    rows += town_rows({r.split("\t")[1] for r in rows[1:]})
     (HERE / "places.tsv").write_text("\n".join(rows) + "\n")
     print(f"land.json: {len(rings)} rings; places.tsv: {len(rows) - 1} places")
 

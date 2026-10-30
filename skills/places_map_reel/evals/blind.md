@@ -19,13 +19,16 @@ Any one of these, typed as the whole request:
 python3 S/evals/fixtures/make_person.py SANDBOX
 ```
 
-writes one invented person, Maren Okafor (@maren.okafor), who lives in Lisbon and went to eleven places in 2026:
-an Instagram export in the JSON layout (posts, reels and stories, most of them geotagged, likes across 40 accounts,
+writes one invented person, Maren Okafor (@maren.okafor), who lives in Lisbon and went to eleven places in 2026: an
+Instagram export in the JSON layout (posts, reels and stories, most of them geotagged, likes across 40 accounts,
 saves, comments, followers and following, per-post insights, media), a small Facebook export (posts, check-ins and
 albums), photos warm away from home and cool at home (some named `.heic` that are JPEG inside), and three short mp4
 reels shot in Porto, Seville and Oaxaca. Coimbra and Córdoba are named only in captions; Porto and Seville were
-visited twice; Oaxaca is the one far trip. It prints the intended place list (`intended_places`) and runs in a few
-seconds.
+visited twice; Oaxaca is the one far trip. With `--set DIR` it also copies a set of photographs of the eleven places
+(a folder per place, each with its `manifest.json`) to `photos-of-the-year/`, the photographs they hand over beside
+the exports, and every post and story photograph of a place the set holds is one of the set's own photographs of it,
+so the film shows real photographs and never the fixture's drawings; the agent reads it with `research.py --set photos-of-the-year`. It prints the intended place list
+(`intended_places`) and runs in a few seconds.
 
 ## The run
 
@@ -47,28 +50,17 @@ without-kit run is the same command in a sandbox with the fixture and no `.claud
 
 - **No Instagram or Facebook account, no signed-in browser.** gather.py records both doors closed and opens the
   export door; `brief.md` lists all of them.
-- **No video model.** The agent generates nothing and runs `clips.py normalize --why "no video model in this
-  session"`: every clip of the winning board is substituted with an animated treatment of one of their photos,
-  a clip of their own reels stays as it is, and `brief.md` says which clips were substituted and why. The
-  generated-clip path is proven by hand instead: copy one or two of the fixture's reels
-  (`instagram-*/media/reels/*.mp4`) to `build/clips/01.mp4` and `02.mp4` as stand-ins for the model's output and
-  run `clips.py normalize`; they arrive as "generated".
-- **No music.** The export carries none, so `music.py find` exits 3 and `music.py make` writes the bed; `brief.md`
-  names the origin.
+- **No music.** The export carries none, so `music.py find` makes a bed from the picked look's recipe, steered by the person's
+  music brief; `brief.md` names the origin.
 
 ## Pass
 
-The run ends with `out/film.mp4`, `out/poster.png` (1080×1350), `out/caption.md`, `out/review.html` and
-`out/brief.md`; `python3 S/scripts/qa.py gate` prints `GATE GREEN`; the three style sheets
-(`build/storyboards/N/sheet.png`), `build/vote.md` and the cut scores in `build/critic/` exist; and
-
-```
-ffprobe -v error -show_entries stream=width,height,codec_name,r_frame_rate,duration -of csv out/film.mp4
-```
-
-shows h264 1080×1920 at 30/1 for 30–60 s and an aac track. The places in `out/brief.md`'s table are the
-fixture's `intended_places`, eleven, and the caption says 11. Then one frame per beat for the eye:
-`python3 S/scripts/film.py frames --out frames`.
+The run ends with a green gate: `python3 S/scripts/qa.py gate` prints `GATE GREEN`, and the run's folder
+(`build/<run stamp>/`, named in `build/RUN`) holds `out/film.mp4`, `out/film-16x9.mp4`, `out/film-square.mp4`,
+`out/post.png`, `out/story.png`, `out/caption.md`, `out/boards.png` and `out/review.html` and nothing else in `out/`; `brief.md` beside
+`out/`; the three looks' sheets (`storyboards/<style>/sheet.png`), `vote.md` and the cut scores in `critic/`. The places in
+`brief.md`'s table are the fixture's `intended_places`, eleven, and the caption says 11. The film at 2 fps for the eye
+is `qa/film-strip2.png`, which `film.py render` writes through its last step, `qa.py check`.
 
 ## Judging
 
