@@ -1,5 +1,5 @@
-"""The bounds check on the bakery's boards: clean boards pass in every tone, format and count of posts, and every
-overlap or crop found by eye in the reviewed films is a case the check fails on.
+"""The bounds check on the bakery's boards: clean boards pass in every style and format at every length the kit
+makes, and every overlap or crop found by eye in the reviewed films is a case the check fails on.
 
     python3 -I -m unittest discover -s S/tests
 """
@@ -13,39 +13,42 @@ sys.path.insert(0, str(KIT / "scripts"))
 import bounds  # noqa: E402
 import compose  # noqa: E402
 import picks  # noqa: E402
+import story  # noqa: E402
 import storyboard  # noqa: E402
 import studio  # noqa: E402
-from tones import drive  # noqa: E402
 
 BOOK = json.loads((KIT / "tests" / "cornerloaf.json").read_text())
 
 
-def board(tone, fmt="reel", n=9):
-    posts = [dict(p) for p in BOOK["posts"][:n]]
-    b = storyboard.board_for(tone, posts, fmt, storyboard.words_default(BOOK["year"])[tone], BOOK["handle"], BOOK["year"])["board"]
-    b.setdefault("tone", tone)
-    return b
+def posts():
+    return [dict(p) for p in BOOK["posts"]]
+
+
+def board(style=compose.TRIO[0], fmt="reel", seconds=None):
+    return storyboard.board_for(style, posts(), fmt, storyboard.words_default(BOOK["year"]), BOOK["handle"], BOOK["year"], None,
+                                seconds)["board"]
 
 
 def beat(b, bid):
-    return next(i for i, x in enumerate(b["beats"]) if x["id"] == bid)
+    return next(x for x in b["beats"] if x["id"] == bid)
 
 
-def layers(b, i, kind):
-    return [L for L in b["beats"][i]["layers"] if L["kind"] == kind]
-
-
-def items(b, i, kind):
-    return [e for e in bounds.Shot(b, i).items if e["kind"] == kind]
+def first(b, kind, *forms):
+    """The first beat holding a layer of `kind` (of one of `forms` when named) and that layer."""
+    for x in b["beats"]:
+        for L in x["layers"]:
+            if L["kind"] == kind and (not forms or x["form"] in forms):
+                return x, L
+    raise LookupError(kind)
 
 
 class Clean(unittest.TestCase):
-    def test_every_tone_format_and_count_is_clean(self):
-        for tone in storyboard.TONES:
+    def test_every_style_format_and_length_is_clean(self):
+        for style in compose.TRIO:
             for fmt in compose.FORMATS:
-                for n in range(1, 10):
-                    with self.subTest(tone=tone, fmt=fmt, n=n):
-                        self.assertEqual(bounds.check(board(tone, fmt, n)), [])
+                for seconds in (*storyboard.LENGTH, storyboard.SECONDS):
+                    with self.subTest(style=style, fmt=fmt, seconds=seconds):
+                        self.assertEqual(bounds.check(board(style, fmt, seconds)), [])
 
 
 class EyeCases(unittest.TestCase):
@@ -55,100 +58,95 @@ class EyeCases(unittest.TestCase):
         found = bounds.check(b)
         self.assertTrue(any(all(w in f for w in words) for f in found), f"no finding with {words}: {found[:6]}")
 
-    def test_drive_count_over_the_edge_onto_its_photograph(self):
-        b = board("drive")
-        num = layers(b, beat(b, "piece-4"), "Words")[0]["lines"][0]
-        num["y"] += 120
-        num["pivot"][1] += 120
-        self.fails(b, "piece-4", "crosses the cut onto its photograph")
+    def words_on_ground(self, b):
+        for x in b["beats"]:
+            for L in x["layers"]:
+                if L["kind"] == "Words" and not L.get("over") and x["form"] == "photo" and len(L["lines"]) > 1:
+                    return x, L
+        raise LookupError("no ground words")
 
-    def test_drive_turned_caption_past_the_safe_area(self):
-        b = board("drive")
-        cap = layers(b, beat(b, "piece-4"), "Words")[1]["lines"][-1]
-        x = b["format"]["width"] - 110 - compose.text_width(b["system"], cap)
-        cap.update(x=x, rotate=-8, pivot=[x, cap["y"]])
-        self.fails(b, "piece-4", "leaves the safe area")
+    def test_a_line_past_the_edge_leaves_the_safe_area(self):
+        for style in compose.TRIO:
+            with self.subTest(style=style):
+                b = board(style)
+                x, L = self.words_on_ground(b)
+                L["lines"][-1]["x"] = b["format"]["width"] - 20
+                self.fails(b, x["id"], "leaves the safe area")
 
-    def test_drive_count_into_a_bar(self):
-        b = board("drive")
-        i = beat(b, "nine")
-        bar = layers(b, i, "Bars")[0]["bars"][1]
-        bar[2] += 200
-        self.fails(b, "nine", "runs into a bar")
+    def test_two_lines_set_on_one_place_overlap(self):
+        b = board()
+        x, L = self.words_on_ground(b)
+        L["lines"][1]["y"] = L["lines"][0]["y"]
+        self.fails(b, x["id"], "overlap")
 
-    def test_drive_closer_slice_under_the_floor(self):
-        b = board("drive")
-        poly = layers(b, beat(b, "closer"), "Slice")[0]["poly"]
-        poly[2][1] = poly[3][1] = 180
-        self.fails(b, "closer", "on its short side, under 240")
+    def test_ground_words_moved_onto_their_photograph_run_onto_it(self):
+        b = board()
+        x, L = self.words_on_ground(b)
+        photo = next(P for P in x["layers"] if P["kind"] == "Photo")
+        win = photo.get("window") or photo["box"]
+        dy = win[1] + win[3] / 2 - L["lines"][0]["y"]
+        dx = max(win[0], 0) + 40 - L["lines"][0]["x"]
+        for ln in L["lines"]:
+            ln["y"] += dy
+            ln["x"] += dx
+        self.fails(b, x["id"], "runs onto the photograph")
 
-    def test_drive_closer_count_onto_a_slice(self):
-        b = board("drive")
-        i = beat(b, "closer")
-        num = layers(b, i, "Words")[0]["lines"][0]
-        poly = layers(b, i, "Slice")[0]["poly"]
-        dy = (poly[0][1] + poly[3][1]) / 2 + 60 - num["y"]
-        num["y"] += dy
-        if num.get("pivot"):
-            num["pivot"][1] += dy
-        self.fails(b, "closer", "runs onto photograph")
+    def test_words_over_a_photograph_with_the_shade_taken_away_have_none_under_them(self):
+        b = board()
+        x, _ = first(b, "Shade", "photo")
+        x["layers"] = [L for L in x["layers"] if L["kind"] != "Shade"]
+        self.fails(b, x["id"], "no shade under it")
 
+    def test_a_display_line_under_the_floor(self):
+        b = board()
+        x, L = self.words_on_ground(b)
+        ln = next(ln for ln in L["lines"] if ln["face"] == "display")
+        ln["size"] = story.FLOOR["reel"] - 10
+        self.fails(b, x["id"], "under the", "floor")
 
-class DriveTiming(unittest.TestCase):
-    def test_every_move_after_the_hook_starts_inside_its_shot(self):
-        b = board("drive")
-        for beat in b["beats"][1:]:
-            beats = beat["frames"] / compose.pulse_of(b["bpm"])
-            for L in beat["layers"]:
-                with self.subTest(beat=beat["id"], kind=L["kind"]):
-                    self.assertTrue(0 <= L["at"] < beats, f"{beat['id']} {L['kind']} starts at beat {L['at']} of {beats:.2f}")
+    def test_a_subject_cropped_out_of_its_box(self):
+        b = board()
+        x, P = first(b, "Photo", "photo")
+        P["focus"] = [P["uv"][2] + 0.05, P["uv"][3] + 0.05]
+        self.fails(b, x["id"], "cropped out of its box")
 
-    def test_the_run_fills_whole_bars(self):
-        for n in range(1, 10):
-            with self.subTest(n=n):
-                self.assertEqual(sum(drive.run_beats(n)) % 4, 0)
-
-    def test_the_counts_run_down_from_the_lowest_rank_to_the_top_post(self):
-        for n in (3, 9):
-            with self.subTest(n=n):
-                b = board("drive", n=n)
-                ids = [x["id"] for x in b["beats"] if x["id"].startswith("piece-")]
-                self.assertEqual(ids, [f"piece-{r}" for r in range(n, 0, -1)])
-
-    def test_nine_posts_fit_the_band_at_a_multiple_of_every_heard_tempo(self):
-        beats = drive.HOOK_BEATS + sum(drive.run_beats(9)) + drive.NINE_BEATS + drive.CLOSER_BEATS
-        lo, hi = storyboard.length_band(9)
-        self.assertTrue(lo <= beats * 60 / drive.BPM <= hi, f"{beats} beats at {drive.BPM} bpm")
-        # music.py hears a tempo between 70 and 140 bpm; snap takes its half, whole or double
-        for bpm in range(70, 141):
-            with self.subTest(bpm=bpm):
-                self.assertTrue(any(lo <= beats * 60 / (bpm * k) <= hi for k in (0.5, 1, 2)), f"{beats} beats at {bpm} bpm")
+    def test_a_grid_tile_off_the_frame_and_two_that_meet(self):
+        b = board()
+        tiles = [L for L in beat(b, "grid")["layers"] if L["kind"] == "Slice"]
+        tiles[0]["box"][0] = -50
+        tiles[2]["box"] = list(tiles[1]["box"])
+        self.fails(b, "grid", "leaves the frame")
+        self.fails(b, "grid", "two grid tiles meet")
 
 
-class DriveField(unittest.TestCase):
-    def field(self, rgb):
-        import os
-        import tempfile
-        from PIL import Image
-        here = os.getcwd()
-        with tempfile.TemporaryDirectory() as d:
-            os.chdir(d)
-            try:
-                Path("public").mkdir()
-                Image.new("RGB", (300, 300), rgb).save("public/p.png")
-                compose.pixels.cache_clear()
-                frame = compose.Frame("reel")
-                edge = drive.Edge(frame, drive.EDGE["reel"]["count"], 0)
-                return drive.field_for(drive.sys_(), frame, {"file": "p.png", "aspect": 1.0, "focus": [0.5, 0.5]}, edge)
-            finally:
-                os.chdir(here)
-                compose.pixels.cache_clear()
+class Timing(unittest.TestCase):
+    def test_every_layer_starts_inside_its_shot(self):
+        for style in compose.TRIO:
+            b = board(style)
+            for x in b["beats"][1:]:
+                beats = x["frames"] / compose.pulse_of(b["bpm"])
+                for L in x["layers"]:
+                    with self.subTest(style=style, beat=x["id"], kind=L["kind"]):
+                        self.assertTrue(0 <= L.get("at", 0) < beats, f"{x['id']} {L['kind']} starts at beat {L.get('at')} of {beats:.2f}")
 
-    def test_a_picture_the_paper_colour_takes_the_accent_field(self):
-        self.assertEqual(self.field((236, 230, 220)), "accent")
+    def test_the_grid_and_the_closer_start_on_a_beat(self):
+        for seconds in (*storyboard.LENGTH, 33):
+            b = board(seconds=seconds)
+            f = 0
+            for x in b["beats"]:
+                if x["id"] in ("grid", "closer"):
+                    with self.subTest(seconds=seconds, beat=x["id"]):
+                        at = f / compose.pulse_of(b["bpm"])
+                        self.assertAlmostEqual(at, round(at), delta=0.5 / compose.pulse_of(b["bpm"]) + 1e-9)
+                f += x["frames"]
 
-    def test_a_picture_apart_from_the_paper_keeps_the_paper(self):
-        self.assertEqual(self.field((70, 50, 30)), "paper")
+    def test_every_asked_length_fits_at_a_multiple_of_every_heard_tempo(self):
+        for seconds in storyboard.LENGTH:
+            self.assertTrue(story.fits(posts(), seconds, story.BPM), f"{seconds} s at {story.BPM} bpm")
+            # music.py hears a tempo between 70 and 140 bpm; snap takes its half, whole or double
+            for bpm in range(70, 141):
+                with self.subTest(seconds=seconds, bpm=bpm):
+                    self.assertTrue(any(story.fits(posts(), seconds, bpm * k) for k in (0.5, 1, 2)), f"no multiple of {bpm} bpm fits {seconds} s")
 
 
 class QuietSeconds(unittest.TestCase):

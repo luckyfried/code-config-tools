@@ -25,7 +25,7 @@ writes one invented person, Maren Okafor (@maren.okafor), with a clear taste (fi
 earth tones): an Instagram export in the JSON layout (120 posts, 25 reels, 60 stories, 900 likes across 40
 accounts, saves, 200 comments, followers and following, per-post insights, media), a small Facebook export (posts
 and albums), photos in one palette (portrait and square, some named `.heic` that are JPEG inside), four short mp4
-reels. July is clearly the busiest month. Her nine most-liked posts stand clear of the tenth (a gap of more than
+reels. July is clearly the busiest month. Their nine most-liked posts stand clear of the tenth (a gap of more than
 a hundred likes), spread across the year, include two reels, and carry captions that say why they worked. It runs
 in a few seconds.
 
@@ -57,26 +57,29 @@ without-kit run is the same command in a sandbox with the fixture and no `.claud
 
 - **No Instagram or Facebook account, no signed-in browser.** gather.py records both doors closed and opens the
   export door; `brief.md` lists all of them.
-- **No music.** The export carries none, so `music.py find` exits 3 and `music.py make` writes the bed; `brief.md`
-  names the origin.
+- **No music.** The export carries none and the session has no music key, so `music.py find` makes a bed in the
+  picked look's own sound; `brief.md` names the origin and why.
+- **Nobody to ask.** A run under `claude -p` may ask nothing, so `taste.json` `ask` is `false` and the agent picks
+  the look by taste with a one-line reason; `brief.md` names it.
 - **No graphics card.** The render runs on the processor; brief.md says which one made the film.
 
 ## Pass
 
-The run ends with one run folder `build/<stamp>/` whose `out/` holds `film.mp4`, `film-square.mp4`, `film-wide.mp4`,
-`best-nine.png` (1080x1080), `story.png` (1080x1920), `caption.md`, `review.html` and `brief.md`;
+The run ends with one run folder `build/<stamp>/` whose `out/` holds `film.mp4`, `best-nine.png` (1080x1080),
+`caption.md` and `review.html`, with `brief.md` beside `out/` in the run, and no square or wide film and no story
+card, as the prompt asks for none; the final reply names `build/<stamp>/out/film.mp4` first;
 `python3 S/scripts/qa.py gate --run build/<stamp>` prints `GATE GREEN`; the three sheets
-(`storyboards/<tone>/sheet.png`), `vote.md`, `critic/timed.json` and the cut scores in `critic/` exist in the run;
+(`storyboards/<style>/sheet.png`), `out/boards.png`, `winner.json`, `critic/timed.json` and the cut scores in `critic/` exist in the run;
 and
 
 ```
 ffprobe -v error -show_entries stream=width,height,codec_name,profile,r_frame_rate,duration -of csv build/<stamp>/out/film.mp4
 ```
 
-shows h264 High 1080x1920 at 30/1 for 15 to 30 s and an aac track. The run's `frames/` holds the hook, the densest
-beat and the closer of every format for the eye.
+shows h264 High 1080x1920 at 30/1 for the asked length within 1 s (30 s when none was asked) and an aac track. The run's `frames/` holds the hook, the densest
+beat and the closer of the reel for the eye.
 
 ## Judging
 
 Every film, with and without the kit, is judged on the seven criteria in `S/critic/critic.md` by eye: the frames,
-the sheets, the film.
+the sheets, the film, against the bar (a mean of 4.5 or more, no criterion under 4).

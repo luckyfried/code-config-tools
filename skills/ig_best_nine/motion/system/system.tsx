@@ -1,5 +1,6 @@
 import React, {createContext, useContext, useEffect, useState} from 'react';
 import {continueRender, delayRender, staticFile} from 'remotion';
+import {setFaces} from './three/type';
 import type {Beat, Board, System} from './types';
 
 type Ctx = {system: System};
@@ -17,21 +18,29 @@ export const useSys = (): Ctx => {
 
 const loaded = new Set<string>();
 
-/** Loads both faces of the system before anything measures or draws text. */
+/** The files a system's faces load from: each face upright, and its italic when the card names one. */
+const filesOf = (system: System) =>
+  [system.display, system.text].flatMap((f) => [
+    {family: f.family, file: f.file, style: 'normal'},
+    ...(f.italic ? [{family: f.family, file: f.italic, style: 'italic'}] : []),
+  ]);
+
+/** Loads the faces of the system's card before anything measures or draws text, and names them to `fileOf`. */
 export const FontGate: React.FC<{system: System; children: React.ReactNode}> = ({system, children}) => {
-  const faces = [system.display, system.text];
-  const key = faces.map((f) => f.family).join('|');
-  const [ready, setReady] = useState(faces.every((f) => loaded.has(f.family)));
+  setFaces(system);
+  const files = filesOf(system);
+  const key = files.map((f) => f.file).join('|');
+  const [ready, setReady] = useState(files.every((f) => loaded.has(f.file)));
   const [handle] = useState(() => (ready ? null : delayRender(`fonts ${key}`)));
   useEffect(() => {
     if (ready) return;
     Promise.all(
-      faces.map(async (f) => {
-        if (loaded.has(f.family)) return;
-        const face = new FontFace(f.family, `url(${staticFile(f.file)})`, {weight: '100 900'});
+      files.map(async (f) => {
+        if (loaded.has(f.file)) return;
+        const face = new FontFace(f.family, `url(${staticFile(f.file)})`, {weight: '100 900', style: f.style});
         await face.load();
         document.fonts.add(face);
-        loaded.add(f.family);
+        loaded.add(f.file);
       }),
     )
       .then(() => {

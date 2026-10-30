@@ -6,7 +6,9 @@ taste.md), all in the run.
 USAGE (from the workspace root):
     python3 S/scripts/research.py --run R
 
-It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's palette), then reads:
+It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's palette), then reads the rest. A year
+with fewer than nine posts and reels makes nothing: it prints `not delivered: <n> posts, nine needed` and exits 4.
+It reads:
   palette   the year's colors versus the colors of what they like and save (from the liked media when the
             library has it, else from the color words in the names and captions of the accounts they like,
             save and follow)
@@ -15,18 +17,22 @@ It runs stats.py, picks.py and palette.py first (counts, photo picks, the year's
   cadence   posts per month and weekday, streaks and gaps
   reels     how long their reels run and how fast they cut (ffmpeg scene changes)
   people    who they talk to most; places from captions, albums and check-ins
-  moments   the busiest and quietest month, the top post, the post that changed their numbers, the trip, the eras
-  nine      why each of the nine worked: how many times their usual likes it got, its subject (from the caption,
-            the places and the themes), its two strongest colors by name, what its caption says; and what the nine
-            share that the rest of the year does not
-  rhythm    the nine's light and color in rank order, which neighbors read as one
-taste.json carries what the storyboards read: their register (lowercase or not), the words each tone sets on screen
-(`words.drive`, drafted in the first person, which the agent rewrites in their voice),
-the palette, why each of the nine worked, and what to avoid. The agent edits it before storyboards are drafted.
+  moments   the nine as the moments they were, in the film's order (the ninth first, the first last): the day, their
+            caption line, the people tagged and the place named; and the eras, the runs of months one place leads their captions
+  nine      what each of the nine shows: its subject (from the caption, the places and the themes), its two strongest
+            colors by name, what its caption says; and what the nine share that the rest of the year does not
+taste.json carries what the storyboards read: their register (lowercase or not), the words the film sets on screen
+(`words`: the title, the promise and the ask, drafted in the first person, which the agent rewrites in their voice),
+`order` (the nine by their `ts`, the strongest first: the countdown ends on the first, and the agent reorders it by
+what their words and photographs make strongest), `style` (a style the person named, else null: the three looks are
+then the trio), `ask` (true where the agent may ask the person which look; false where nothing may be asked, and the
+agent picks by taste), `seconds` (the length they asked for, else null), the palette, why each of the nine worked,
+what to avoid, and music, the brief the film's bed is made from (its tempo, genre and instrument words that name a
+recipe when they want another than the look's, and what to avoid; never an artist, band or song). The agent edits it
+before storyboards are drafted.
 """
 import collections
 import datetime as dt
-import itertools
 import re
 import statistics
 import subprocess
@@ -35,6 +41,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import story  # noqa: E402
+from stats import short_of_nine  # noqa: E402
 
 S = Path(__file__).resolve().parent
 
@@ -70,7 +78,7 @@ PLACES = ["lisbon", "porto", "oaxaca", "sicily", "palermo", "marrakech", "paris"
           "new york", "berlin", "barcelona", "madrid", "naples", "athens", "istanbul", "kyoto", "seoul", "bali", "cdmx",
           "los angeles", "san francisco", "chicago", "amsterdam", "copenhagen", "vienna", "prague", "budapest", "home"]
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
-FILM = {"film photography"}
+QUIET = {"slow living", "food", "coffee", "light"}  # pillars a calm bed carries, when their reels do not cut fast
 
 
 def run(script, where):
@@ -214,41 +222,30 @@ def cadence(rows):
     }
 
 
-def moments(posts, stats, place_by_month):
+def moments(stats):
+    """The nine as the moments they were, in the film's order, the ninth first and the first last: the rank, the day,
+    their own caption line (no hashtags), the people they tagged, the place the caption names, and whether it was a
+    post or a reel."""
     out = []
-    b, q = stats.get("busiest") or {}, stats.get("quietest") or {}
-    if b:
-        out.append({"kind": "busiest month", "month": b.get("name"), "posts": b.get("posts"), "total": b.get("total")})
-    if q:
-        out.append({"kind": "quietest month", "month": q.get("name"), "posts": q.get("posts")})
-    tops = stats.get("top_nine") or []
-    if tops:
-        t = tops[0]
-        out.append({"kind": "top post", "date": t.get("date"), "likes": t.get("likes"), "caption": t.get("caption")})
-    liked = [p for p in posts if p.get("likes") is not None]
-    jump = None
-    for i in range(6, len(liked)):
-        base = statistics.mean(p["likes"] for p in liked[i - 6:i]) or 1
-        ratio = liked[i]["likes"] / base
-        if not jump or ratio > jump[0]:
-            jump = (ratio, liked[i])
-    if jump and jump[0] >= 1.6:
-        p = jump[1]
-        out.append({"kind": "the post that changed the numbers", "date": dt.datetime.fromtimestamp(p["ts"], dt.timezone.utc).date().isoformat(),
-                    "likes": p["likes"], "times_usual": round(jump[0], 1), "caption": p.get("caption")})
-    trips = [(m, c.most_common(1)[0]) for m, c in sorted(place_by_month.items()) if c and c.most_common(1)[0][0] != "home"]
-    if trips:
-        m, (place, n) = max(trips, key=lambda x: x[1][1])
-        out.append({"kind": "the trip", "month": MONTHS[m - 1], "place": place, "posts": n})
-    eras, cur = [], None
+    for t in sorted(stats.get("top_nine") or [], key=lambda t: -t["rank"]):
+        cap = t.get("caption") or ""
+        line = re.sub(r"\s+", " ", re.sub(r"#\w+", "", cap)).strip()
+        place = next((pl for pl in PLACES if pl != "home" and re.search(rf"\b{re.escape(pl)}\b", line.lower())), None)
+        out.append({"rank": t["rank"], "ts": t["ts"], "date": t["date"], "kind": t.get("kind"), "line": line, "people": re.findall(r"@([\w.]*\w)", cap), "place": place})
+    return out
+
+
+def eras(place_by_month):
+    """The runs of months the same place leads their captions."""
+    out, cur = [], None
     for m in sorted(place_by_month):
         top = place_by_month[m].most_common(1)[0][0]
         if cur and cur["place"] == top:
             cur["to"] = MONTHS[m - 1]
         else:
             cur = {"place": top, "from": MONTHS[m - 1], "to": MONTHS[m - 1]}
-            eras.append(cur)
-    return out, eras
+            out.append(cur)
+    return out
 
 
 def color_name(rgb):
@@ -261,8 +258,7 @@ def color_name(rgb):
 
 
 def nine_read(stats, picks):
-    """Why each of the nine worked, from their own numbers, the photo and the caption."""
-    usual = stats.get("median_likes") or 0
+    """What each of the nine shows, from the photo and the caption."""
     info = {n["rank"]: n for n in picks.get("nine", [])}
     out = []
     for t in stats.get("top_nine", []):
@@ -276,10 +272,7 @@ def nine_read(stats, picks):
             nm = color_name(c["rgb"])
             if nm not in colors:
                 colors.append(nm)
-        times = round(t["likes"] / usual, 1) if usual and t.get("likes") is not None else None
         why = []
-        if times:
-            why.append(f"{times}x your usual likes")
         if t.get("kind") == "reel":
             why.append("a reel")
         if subject or place:
@@ -287,7 +280,7 @@ def nine_read(stats, picks):
         if colors:
             why.append(" and ".join(colors[:2]))
         out.append({"rank": t["rank"], "kind": t["kind"], "date": t["date"], "month": t["month"], "likes": t.get("likes"),
-                    "comments": t.get("comments"), "times_usual": times, "subject": subject, "place": place,
+                    "comments": t.get("comments"), "subject": subject, "place": place,
                     "colors": colors[:3], "bright": n.get("bright"), "caption": cap, "why": "; ".join(why)})
     return out
 
@@ -312,57 +305,6 @@ def shared(nine, posts):
     return lines
 
 
-PAIRS = [(a, a + 1) for a in range(9) if a % 3 < 2] + [(a, a + 3) for a in range(6)]
-
-
-def wall_score(order, tone):
-    """How much neighbors differ: brightness steps and color steps across the twelve neighbor pairs."""
-    return sum(abs(tone[order[a]][0] - tone[order[b]][0]) + 0.004 * tone_dist(tone[order[a]][1], tone[order[b]][1]) for a, b in PAIRS)
-
-
-def tone_dist(x, y):
-    return sum((p - q) ** 2 for p, q in zip(x, y)) ** 0.5
-
-
-def rhythm(picks):
-    """The wall's rhythm in rank order and the arrangement (number one kept top left) whose neighbors differ most."""
-    nine = sorted(picks.get("nine", []), key=lambda n: n["rank"])
-    if len(nine) != 9:
-        return {"order": [n["rank"] for n in nine], "why": "fewer than nine tiles; rank order"}
-    tone = {n["rank"]: (n["bright"], (n.get("colors") or [{"rgb": [128, 128, 128]}])[0]["rgb"]) for n in nine}
-    ranks = [n["rank"] for n in nine]
-    base = wall_score(ranks, tone)
-    best = max(([ranks[0], *rest] for rest in itertools.permutations(ranks[1:])), key=lambda o: wall_score(o, tone))
-    top = wall_score(best, tone)
-    med = sorted(t[0] for t in tone.values())[4]
-    def pattern(order):
-        return ["".join("L" if tone[order[r * 3 + c]][0] >= med else "d" for c in range(3)) for r in range(3)]
-    def contrasting(order):
-        return sum(1 for a, b in PAIRS if abs(tone[order[a]][0] - tone[order[b]][0]) >= 0.06)
-    take = top >= base * 1.15
-    return {"rank_order": ranks, "rank_pattern": pattern(ranks), "rank_contrasting_pairs": contrasting(ranks),
-            "suggested": best, "suggested_pattern": pattern(best), "suggested_contrasting_pairs": contrasting(best),
-            "gain": round(top / base, 2) if base else None,
-            "order": best if take else ranks,
-            "why": (f"in rank order the neighbors are close in light and color; this arrangement, with number one kept top left, "
-                    f"sets lighter beside darker and one color beside another so each tile stands apart ({top / base:.2f}x the difference "
-                    f"between neighbors)") if take else
-                   f"rank order already sets each tile apart from its neighbors, so the wall keeps it"}
-
-
-def type_direction(themes, register, pacing):
-    film = themes.get("film photography", 0)
-    loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
-    if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
-    if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
-
-
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -371,9 +313,15 @@ def main():
     lib = _env.read_json("library.json")
     if not lib:
         sys.exit("library.json is missing: run gather.py first")
-    for s in ("stats.py", "picks.py", "palette.py"):
-        print(run(s, where).strip().splitlines()[-1])
+    print(run("stats.py", where).strip().splitlines()[-1])
     stats = _env.read_json("stats.json")
+    # a best nine is nine: a year with fewer makes nothing, and says so
+    short = short_of_nine(stats)
+    if short:
+        print(short)
+        return 4
+    for s in ("picks.py", "palette.py"):
+        print(run(s, where).strip().splitlines()[-1])
     pal = _env.read_json("palette.json") or {}
     posts = lib["posts"]
     captioned = posts + lib["reels"] + lib.get("facebook", [])
@@ -392,12 +340,10 @@ def main():
     top10 = sum(n for _, n in like_accounts.most_common(10))
     pacing = reel_pacing(lib["reels"])
     places, place_by_month = places_in(posts + lib["reels"], lib.get("facebook", []))
-    mom, eras = moments(posts, stats, place_by_month)
+    mom, runs = moments(stats), eras(place_by_month)
     picks = _env.read_json("picks.json") or {}
     nine = nine_read(stats, picks)
     nine_shared = shared(nine, posts + lib["reels"])
-    wall = rhythm(picks)
-    td = type_direction(own_themes + liked_themes, caps, pacing)
     year_palette = [{"hex": s["hex"], "name": s.get("name"), "share": s.get("share"), "photo": s.get("photo")}
                     for s in (pal.get("year") or [])]
     film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
@@ -416,13 +362,16 @@ def main():
         "reels": pacing,
         "people": stats.get("people", [])[:8],
         "places": [{"place": p, "posts": n} for p, n in places.most_common(8)],
-        "moments": mom, "eras": eras,
+        "moments": mom, "eras": runs,
         "nine": nine, "nine_shared": nine_shared, "tenth": stats.get("tenth"), "median_likes": stats.get("median_likes"),
-        "ranked_by": stats.get("top_ranked_by"), "rhythm": wall,
-        "type": td,
+        "ranked_by": stats.get("top_ranked_by"),
     }
     _env.write_json("research.json", research)
     shot = pacing.get("avg_shot_seconds")
+    pillars = [t for t, _ in (own_themes + liked_themes).most_common(4)]
+    # quiet pillars and slow reels take the bed under the look's tempo, fast reels and emoji over it
+    lively = bool(shot and shot < 1.5) or caps.get("emoji_per_caption", 0) >= 1
+    tempo = story.BPM + 10 if lively else story.BPM - 10 if QUIET & set(pillars) else None
     import storyboard  # noqa: E402
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
@@ -432,26 +381,32 @@ def main():
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
                      "samples": caps.get("samples", [])[:4]},
-        "pillars": [t for t, _ in (own_themes + liked_themes).most_common(4)],
+        "pillars": pillars,
         "people": [p["account"] for p in stats.get("people", [])[:5]],
         "places": [p for p, _ in places.most_common(5) if p != "home"],
         "moments": mom,
+        "order": [x["ts"] for x in sorted(stats.get("top_nine") or [], key=lambda t: t["rank"])],
+        "style": None,
+        "ask": True,
+        "seconds": None,
         "nine": [{"rank": x["rank"], "why": x["why"]} for x in nine],
         "avoid": ["cold blue grading", "neon", "stock-photo gloss"] if film else ["muddy grading"],
+        "music": {"tempo": tempo, "styles": [], "avoid": ["vocals", "spoken word", "harsh distortion"]},
     }
     if not Path("taste.json").exists() or "research.py draft" in (_env.read_json("taste.json") or {}).get("written_by", ""):
         _env.write_json("taste.json", taste)
-    lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
+    lines = [f"# taste draft for {'@' + lib['handle'] if lib['handle'] else 'them'} ({lib['year']})", "",
              "The agent writes taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
              f"- places: {', '.join(f'{p} ({n})' for p, n in places.most_common(6))}",
-             f"- eras: {'; '.join(e['place'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') for e in eras)}",
-             f"- moments: {'; '.join(m['kind'] + ': ' + ', '.join(str(v) for k, v in m.items() if k != 'kind') for m in mom)}",
-             "- the nine (rank, kind, likes, why it worked; caption):"]
-    lines += [f"  {x['rank']}. {x['kind']} {x['date']}, {x['likes']} likes, {x['comments']} comments: {x['why']}; \"{x['caption']}\"" for x in nine]
+             f"- eras: {'; '.join(e['place'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') for e in runs)}",
+             "- the nine as the moments they were, in the film's order, the ninth first (rank, day, what happened in their words, with whom, where):"]
+    lines += [f"  {m['rank']}. {m['date']} {m['kind']}: \"{m['line']}\"" + (f", with {', '.join('@' + p for p in m['people'])}" if m["people"] else "")
+              + (f", in {m['place']}" if m["place"] else "") for m in mom]
+    lines += ["- what each of the nine shows (rank, kind, what it shows):"]
+    lines += [f"  {x['rank']}. {x['kind']} {x['date']}: {x['why']}" for x in nine]
     lines += [f"- what the nine share: {'; '.join(nine_shared)}",
              f"- the tenth: {(stats.get('tenth') or {}).get('likes')} likes, {(stats.get('tenth') or {}).get('gap')} below the ninth; ranked by {stats.get('top_ranked_by')}",
-             f"- the wall: rank order {wall.get('rank_pattern')}, suggested {wall.get('suggested_pattern')} (L light, d dark); {wall['why']}",
              "", "## you like",
              f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
              f"- most liked: {', '.join(a for a, _ in like_accounts.most_common(6))}",
@@ -460,7 +415,9 @@ def main():
              f"- palette of their likes ({likes_palette_from}): {', '.join(s['name'] + ' ' + s['hex'] for s in likes_palette)}",
              "", "## your style is",
              f"- reels: {pacing.get('avg_seconds')} s on average, a cut every {shot} s" if shot else "- no reels to measure",
-             f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+             f"- texture: {'film grain and warm light' if film else 'clean'}",
+             f"- the look: {taste['style'] or 'none named, so the three looks are the trio'}",
+             f"- music: the look's own recipe" + (f" at {tempo} bpm" if tempo else "") + f"; no {', no '.join(taste['music']['avoid'])}",
              "", "## your voice is",
              f"- {caps.get('avg_words')} words a caption, {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
              f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
@@ -468,15 +425,14 @@ def main():
              f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
              f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("taste.draft.md").write_text("\n".join(lines))
+    _env.write_text("taste.draft.md", "\n".join(lines))
     print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
     print(f"year palette: {[s['hex'] for s in year_palette]}; likes palette: {[s['hex'] + ' ' + s['name'] for s in likes_palette]}")
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
-    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; type lead {td['lead']}")
-    print(f"moments: {[m['kind'] for m in mom]}; eras: {len(eras)}")
+    print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s")
+    print(f"moments: {len(mom)} in the film's order, the ninth first; eras: {len(runs)}")
     for x in nine:
-        print(f"  {x['rank']}. {x['kind']:<5} {x['likes']} likes: {x['why']}")
-    print(f"wall: order {wall['order']} ({wall['why']})")
+        print(f"  {x['rank']}. {x['kind']:<5} {x['date']}: {x['why']}")
     print(f"wrote research.json, taste.json (draft) and taste.draft.md in {where}; now write taste.md there")
     return 0
 

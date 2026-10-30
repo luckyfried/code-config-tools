@@ -1,62 +1,92 @@
-// Type as geometry: a line set from a static font file through opentype.js, each glyph a flat shape or an extruded
-// solid at one em, cached by font and glyph, so a count can stand on an edge in the camera's space with its sides lit.
+// Type as geometry: a line set from a font file through opentype.js at the weight it names (a variable file set at that
+// instance), each glyph a flat shape or an extruded solid at one em, cached by font and glyph, so a count can stand on
+// an edge in the camera's space with its sides lit.
 import opentype from 'opentype.js';
 import {useEffect, useState} from 'react';
 import {continueRender, delayRender, staticFile} from 'remotion';
 import * as THREE from 'three';
+import {instanceOf} from './variation';
 
 export type Font = {
   file: string;
   unitsPerEm: number;
   stringToGlyphs: (s: string) => Glyph[];
   getKerningValue: (a: Glyph, b: Glyph) => number;
+  charToGlyph: (c: string) => Glyph;
+  tables?: {os2?: {sCapHeight?: number}};
 };
 type Glyph = {index: number; advanceWidth: number; getPath: (x: number, y: number, size: number) => {commands: Cmd[]}};
 type Cmd = {type: string; x?: number; y?: number; x1?: number; y1?: number; x2?: number; y2?: number};
 
-/** One face of a line as the boards name it: `display` is the condensed numeral face, `text` the text face at a weight. */
+/** One face of a line as the boards name it: `display` the titles, names and lines of the film, `text` the text face;
+ * `weight` the line's own weight, else its face's. */
 export type FaceKey = {face?: string; weight?: number};
 
-const TEXT: Record<number, string> = {500: 'Medium', 600: 'SemiBold', 700: 'Bold', 800: 'ExtraBold'};
+const faces = {display: {file: '', weight: 400}, text: {file: '', weight: 400}};
 
-/** The static font file a line is set in: Archivo condensed extra bold for display, Archivo at the line's weight for text. */
-export const fileOf = ({face, weight}: FaceKey) =>
-  face === 'display' ? 'fonts/Archivo/Archivo-Condensed-ExtraBold.ttf' : `fonts/Archivo/Archivo-${TEXT[nearest(weight ?? 600)]}.ttf`;
+/** Names the board's two faces, from its style card (the system's `display` and `text`, each a file and a weight);
+ * every fileOf after it reads them. */
+export const setFaces = (system: {display: {file: string; weight: number}; text: {file: string; weight: number}}) => {
+  faces.display = {file: system.display.file, weight: system.display.weight};
+  faces.text = {file: system.text.file, weight: system.text.weight};
+};
 
-const nearest = (w: number) => Number(Object.keys(TEXT).reduce((a, b) => (Math.abs(Number(b) - w) < Math.abs(Number(a) - w) ? b : a)));
+/** The font a line is set in, as one key `<file>@<weight>`: the board's display face for display, its text face for
+ * everything else, at the line's weight or else its face's. A variable file is drawn at that weight's instance, a
+ * static file as it is. */
+export const fileOf = ({face, weight}: FaceKey) => {
+  const f = face === 'display' ? faces.display : faces.text;
+  if (!f.file) throw new Error('FONT_ERROR no faces named: setFaces runs before fileOf');
+  return `${f.file}@${weight ?? f.weight}`;
+};
 
+const sources = new Map<string, Promise<{font: any; buf: ArrayBuffer}>>();
 const loading = new Map<string, Promise<Font>>();
 const loaded = new Map<string, Font>();
 
-const load = (file: string) => {
-  if (!loading.has(file)) {
-    loading.set(
+/** A font file fetched and parsed once, whatever weights its lines take. */
+const parse = (file: string) => {
+  if (!sources.has(file)) {
+    sources.set(
       file,
       fetch(staticFile(file))
         .then((r) => {
           if (!r.ok) throw new Error(`FONT_ERROR ${file} answered ${r.status}`);
           return r.arrayBuffer();
         })
-        .then((buf) => {
-          const f = opentype.parse(buf) as Font;
-          f.file = file;
-          loaded.set(file, f);
-          return f;
-        }),
+        .then((buf) => ({font: opentype.parse(buf), buf})),
     );
   }
-  return loading.get(file)!;
+  return sources.get(file)!;
 };
 
-/** The fonts for `files`, holding the frame until every one is parsed and the render that uses them has committed; null until then. */
+/** The font a key from fileOf names: its file at its weight. */
+const load = (key: string) => {
+  if (!loading.has(key)) {
+    const at = key.lastIndexOf('@');
+    loading.set(
+      key,
+      parse(key.slice(0, at)).then(({font, buf}) => {
+        const f = instanceOf(font, buf, {wght: Number(key.slice(at + 1))}, key) as Font;
+        loaded.set(key, f);
+        return f;
+      }),
+    );
+  }
+  return loading.get(key)!;
+};
+
+/** The fonts for `files`, holding the frame until every one is parsed and the render that uses them has committed; null
+ * until then. No files to load holds nothing: the map is ready at once. */
 export const useFonts = (files: string[]): Map<string, Font> | null => {
-  const key = [...new Set(files)].sort().join('|');
-  const ready = key.split('|').every((f) => loaded.has(f));
+  const keys = [...new Set(files)].sort();
+  const key = keys.join('|');
+  const ready = keys.every((f) => loaded.has(f));
   const [handle] = useState(() => (ready ? null : delayRender(`type: ${key}`)));
   const [, bump] = useState(0);
   useEffect(() => {
     if (!ready) {
-      Promise.all(key.split('|').map(load)).then(() => bump((n) => n + 1));
+      Promise.all(keys.map(load)).then(() => bump((n) => n + 1));
     } else if (handle !== null) {
       continueRender(handle);
     }
@@ -97,7 +127,7 @@ const shapesOf = (font: Font, g: Glyph) => {
       else if (c.type === 'Q') p.quadraticCurveTo(c.x1!, -c.y1!, c.x!, -c.y!);
       else if (c.type === 'C') p.bezierCurveTo(c.x1!, -c.y1!, c.x2!, -c.y2!, c.x!, -c.y!);
     }
-    shapes.set(key, p.toShapes(false));
+    shapes.set(key, p.toShapes());
   }
   return shapes.get(key)!;
 };

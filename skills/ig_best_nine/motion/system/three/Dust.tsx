@@ -1,8 +1,16 @@
 // Flour in the air: a field of fine points drifting in front of the wall, lit by the colour of the field the camera
 // is on and pushed aside by the blade as it passes; and a burst thrown off an edge as the blade crosses it. Every
-// point's position is a function of the frame, worked out on the card.
+// point's position is a function of the frame, worked out on the card. Both draw last, over everything the canvas holds,
+// type included, so a mote is always in the air in front of the picture and never between a word and its card.
 import {useMemo} from 'react';
+import {useCurrentFrame, useVideoConfig} from 'remotion';
 import * as THREE from 'three';
+import {useSys} from '../system';
+import {finishOf} from './Stage';
+
+/** The draw order of the flour: after everything a kit draws, with no depth test, so it lies over every card and every
+ * word. The burst draws one above it. */
+const ORDER = 100000;
 
 const DISC = /* glsl */ `
 varying float vAlpha;
@@ -86,14 +94,15 @@ const pointsOf = (n: number, k: number, vertex: string, uniforms: Record<string,
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
   geo.setAttribute('seed', new THREE.BufferAttribute(seeds(n, k), 4));
-  const mat = new THREE.ShaderMaterial({vertexShader: vertex, fragmentShader: DISC, uniforms, transparent: true, depthWrite: false});
+  const mat = new THREE.ShaderMaterial({vertexShader: vertex, fragmentShader: DISC, uniforms, transparent: true, depthWrite: false, depthTest: false});
   const pts = new THREE.Points(geo, mat);
   pts.frustumCulled = false;
   return {pts, mat};
 };
 
 export type DustProps = {
-  /** frames since the film began */
+  /** frames since the film began, held where the film holds still: from that frame the flour fades out over half a
+   * second and is gone from the still */
   time: number;
   box: [[number, number, number], [number, number, number]];
   color: string;
@@ -103,14 +112,23 @@ export type DustProps = {
   sweepAmt: number;
   height: number;
   count?: number;
+  /** the flour's strength while the film moves: the style card's `dust` unless the kit names one; zero draws none. A
+   * board without a card draws it at 0.85. */
+  opacity?: number;
 };
 
-export const Dust: React.FC<DustProps> = ({time, box, color, sweep, sweepDir, sweepAmt, height, count = 5000}) => {
+export const Dust: React.FC<DustProps> = ({time, box, color, sweep, sweepDir, sweepAmt, height, count = 5000, opacity}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const strength = opacity ?? finishOf(useSys().system)?.dust ?? 0.85;
   const d = useMemo(() => pointsOf(count, 1, FIELD, {
     time: {value: 0}, boxMin: {value: new THREE.Vector3()}, boxSize: {value: new THREE.Vector3()}, size: {value: 1.6}, height: {value: 1920},
-    sweep: {value: new THREE.Vector3()}, sweepDir: {value: new THREE.Vector2()}, sweepAmt: {value: 0}, color: {value: new THREE.Color()}, opacity: {value: 0.85},
+    sweep: {value: new THREE.Vector3()}, sweepDir: {value: new THREE.Vector2()}, sweepAmt: {value: 0}, color: {value: new THREE.Color()}, opacity: {value: 0},
   }), [count]);
+  const fade = Math.min(1, Math.max(0, 1 - (frame - time) / (fps / 2)));
+  if (fade <= 0 || strength <= 0) return null;
   const u = d.mat.uniforms;
+  u.opacity.value = strength * fade * fade * (3 - 2 * fade);
   u.time.value = time;
   u.boxMin.value.set(...box[0]);
   u.boxSize.value.set(box[1][0] - box[0][0], box[1][1] - box[0][1], box[1][2] - box[0][2]);
@@ -119,7 +137,7 @@ export const Dust: React.FC<DustProps> = ({time, box, color, sweep, sweepDir, sw
   u.sweepDir.value.set(...sweepDir);
   u.sweepAmt.value = sweepAmt;
   (u.color.value as THREE.Color).set(color);
-  d.pts.renderOrder = 3000;
+  d.pts.renderOrder = ORDER;
   return <primitive object={d.pts} />;
 };
 
@@ -155,6 +173,6 @@ export const Burst: React.FC<BurstProps> = ({seed, p0, p1, up, age, sweepLen, re
   u.size.value = size;
   u.height.value = height;
   (u.color.value as THREE.Color).set(color);
-  b.pts.renderOrder = 3001;
+  b.pts.renderOrder = ORDER + 1;
   return <primitive object={b.pts} />;
 };

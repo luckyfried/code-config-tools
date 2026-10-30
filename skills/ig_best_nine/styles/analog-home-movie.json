@@ -1,0 +1,235 @@
+{
+  "id": "analog-home-movie",
+  "name": "Analog home movie",
+  "faces": {
+    "display": {
+      "family": "Young Serif",
+      "file": "fonts/styles/analog-home-movie/YoungSerif-Regular.ttf",
+      "weight": 400,
+      "tracking": 0,
+      "case": "none",
+      "lineHeight": 1.05
+    },
+    "text": {
+      "family": "VT323",
+      "file": "fonts/styles/analog-home-movie/VT323-Regular.ttf",
+      "weight": 400,
+      "tracking": 0.06,
+      "case": "uppercase",
+      "lineHeight": 1.0
+    }
+  },
+  "palette": {
+    "rule": "fixed",
+    "by": "warmth",
+    "warm": {
+      "bg": "#140d07",
+      "ink": "#140d07",
+      "paper": "#f6e7c8",
+      "accent": "#ff8a1f",
+      "accent2": "#e8c15a",
+      "muted": "#a8906a"
+    },
+    "cool": {
+      "bg": "#071311",
+      "ink": "#071311",
+      "paper": "#e3f1e6",
+      "accent": "#5fd3c0",
+      "accent2": "#c6e07a",
+      "muted": "#7f9c94"
+    }
+  },
+  "moves": [
+    {
+      "id": "gate-weave",
+      "fits": [
+        "title",
+        "wordless",
+        "clip"
+      ]
+    },
+    {
+      "id": "date-stamp",
+      "fits": [
+        "clip"
+      ]
+    },
+    {
+      "id": "zoom-rocker",
+      "fits": [
+        "photo",
+        "people",
+        "portrait"
+      ]
+    },
+    {
+      "id": "light-leak",
+      "fits": [
+        "photo",
+        "peak",
+        "landscape"
+      ]
+    },
+    {
+      "id": "roll-burn",
+      "fits": [
+        "wall",
+        "screen"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "roll-burn",
+      "fits": [
+        "peak",
+        "wall",
+        "closer"
+      ]
+    },
+    {
+      "id": "hard-cut",
+      "fits": [
+        "photo"
+      ]
+    },
+    {
+      "id": "flash-frame",
+      "fits": [
+        "people",
+        "portrait"
+      ]
+    }
+  ],
+  "ease": {
+    "curve": "noise",
+    "enter": [
+      0.25,
+      0.1,
+      0.25,
+      1
+    ],
+    "exit": [
+      0.42,
+      0,
+      1,
+      1
+    ],
+    "move": [
+      0,
+      0,
+      1,
+      1
+    ],
+    "spring": {
+      "damping": 20,
+      "stiffness": 100,
+      "mass": 1
+    },
+    "hit": {
+      "damping": 18,
+      "stiffness": 140,
+      "mass": 1
+    },
+    "stagger": 0.1,
+    "lean": 0.015
+  },
+  "finish": {
+    "grain": 0.32,
+    "vignette": 0.5,
+    "bloom": 0.7,
+    "dust": 0.5,
+    "blur": 0.7,
+    "halation": 0.72,
+    "cadence": 18,
+    "bars": 0,
+    "burn": "#ff6a1f",
+    "grade": {
+      "lift": [
+        0.05,
+        0.025,
+        0
+      ],
+      "gamma": 1,
+      "gain": [
+        1.05,
+        0.96,
+        0.82
+      ],
+      "saturation": 1.12
+    },
+    "dip": "accent",
+    "matte": "bg",
+    "light": "#ffe9c4",
+    "words": "finished"
+  },
+  "music": "analog-home-movie",
+  "closer": "closing-flicker",
+  "photo": {
+    "picture": {
+      "show": true,
+      "box": [
+        0,
+        0,
+        1,
+        0.54
+      ],
+      "rim": 0,
+      "rimColor": "paper",
+      "tilt": 0,
+      "tape": 0,
+      "tapeColor": "accent2",
+      "penColor": "paper"
+    },
+    "ground": "bg",
+    "line": {
+      "box": [
+        0.08,
+        0.82,
+        0.84,
+        0.18
+      ],
+      "face": "text",
+      "size": 72,
+      "align": "start",
+      "color": "paper",
+      "enter": "type",
+      "rotate": 0,
+      "scrim": 0.75
+    },
+    "label": {
+      "face": "text",
+      "size": 40,
+      "color": "accent"
+    },
+    "rule": false,
+    "grid": {
+      "cols": 1,
+      "rows": 3,
+      "margin": 0.03,
+      "rules": "none"
+    },
+    "landscape": {
+      "box": [
+        0,
+        0,
+        1,
+        0.54
+      ],
+      "line": [
+        0.08,
+        0.82,
+        0.84,
+        0.18
+      ]
+    }
+  },
+  "axes": {
+    "family": "home-movie",
+    "palette": "kodachrome",
+    "camera": "handheld",
+    "transition": "burn",
+    "finish": "grain",
+    "music": "chillwave"
+  }
+}

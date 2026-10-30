@@ -1,29 +1,172 @@
-"""The parts every tone's storyboard is built from: the formats and their safe areas, the type system, the timed cut
-as board beats, the camera's framing at any frame, and type measured the way the browser sets it.
+"""The parts every storyboard is built from: the formats and their safe areas, the style cards a board's look is read
+from, the design system the composition reads, and type measured from the font files the film sets it in.
 
 A storyboard's times are musical beats from the film's start; its positions are px of the format's frame. The studio
-composition (motion/studio) renders a board as it is written here."""
+composition (motion/studio) renders a board as it is written here.
+
+A style is a card, styles/<id>.json (its schema is styles/schema.json): two faces, a palette rule, the moves and
+transitions a board may use, the easing, the finish, the music recipe, the closer shape, and six axis words. A board
+names its style; everything about its look is read from that card and from nothing else."""
 import functools
 import json
 import math
+import re
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[1]
+STYLES = SKILL / "styles"
 FPS = 30
+# the three styles a run's boards take when the person names none, one per board: A, B and C
+TRIO = ("swiss-grid", "scrapbook", "cinematic-letterbox")
+AXES = ("family", "palette", "camera", "transition", "finish", "music")
 
 
 def load(name):
     return json.loads((SKILL / "design" / f"{name}.json").read_text())
 
 
+# ------------------------------------------------------------------ style cards
+def _check(value, schema, where, out):
+    """The subset of JSON Schema the card schema uses: type, required, additionalProperties false, properties, items,
+    enum, pattern, minimum, maximum, minItems, maxItems."""
+    t = schema.get("type")
+    kinds = {"object": dict, "array": list, "string": str, "boolean": bool}
+    if t == "integer":
+        ok = isinstance(value, int) and not isinstance(value, bool)
+    elif t == "number":
+        ok = isinstance(value, (int, float)) and not isinstance(value, bool)
+    elif t:
+        ok = isinstance(value, kinds[t])
+    else:
+        ok = True
+    if not ok:
+        out.append(f"{where} is {value!r}, which is not a {t}")
+        return
+    if "enum" in schema and value not in schema["enum"]:
+        out.append(f"{where} is {value!r}, which is none of {', '.join(map(str, schema['enum']))}")
+    if "pattern" in schema and isinstance(value, str) and not re.search(schema["pattern"], value):
+        out.append(f"{where} is {value!r}, which does not match {schema['pattern']}")
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if "minimum" in schema and value < schema["minimum"]:
+            out.append(f"{where} is {value}, under its minimum {schema['minimum']}")
+        if "maximum" in schema and value > schema["maximum"]:
+            out.append(f"{where} is {value}, over its maximum {schema['maximum']}")
+    if isinstance(value, list):
+        if len(value) < schema.get("minItems", 0) or len(value) > schema.get("maxItems", len(value)):
+            out.append(f"{where} has {len(value)} items, outside {schema.get('minItems', 0)} to {schema.get('maxItems', 'any')}")
+        for i, v in enumerate(value):
+            _check(v, schema.get("items") or {}, f"{where}[{i}]", out)
+    if isinstance(value, dict):
+        for k in schema.get("required") or []:
+            if k not in value:
+                out.append(f"{where} has no {k}")
+        props = schema.get("properties") or {}
+        for k, v in value.items():
+            if k in props:
+                _check(v, props[k], f"{where}.{k}", out)
+            elif schema.get("additionalProperties") is False:
+                out.append(f"{where} has {k}, which the schema does not name")
+
+
+def validate(card):
+    """Every way the card breaks styles/schema.json, and the rules the schema cannot state: a fixed palette names both
+    its warm and its cool roles, every face file is on disk, and the music recipe is the style's own id."""
+    out = []
+    _check(card, json.loads((STYLES / "schema.json").read_text()), card.get("id", "card") if isinstance(card, dict) else "card", out)
+    if out:
+        return out
+    pal = card["palette"]
+    if pal["rule"] == "fixed" and not (pal.get("warm") and pal.get("cool") and pal.get("by") == "warmth"):
+        out.append(f"{card['id']}: a fixed palette names its warm and cool roles and is chosen by warmth")
+    for k, f in card["faces"].items():
+        for path in [f["file"]] + ([f["italic"]] if f.get("italic") else []):
+            if not (SKILL / path).is_file():
+                out.append(f"{card['id']}: the {k} face's file {path} is not on disk")
+    if card["music"] != card["id"]:
+        out.append(f"{card['id']}: its music recipe is {card['music']!r}; a style's recipe is named for the style")
+    return out
+
+
+_CARDS = {}
+
+
+def card(style):
+    """The style card `style`, validated, or SystemExit naming the styles there are and what the card breaks."""
+    if style not in _CARDS:
+        f = STYLES / f"{style}.json"
+        if not f.is_file():
+            raise SystemExit(f"no style named {style!r} (there are: {', '.join(styles())}); styles/catalog.md says what each looks like")
+        c = json.loads(f.read_text())
+        bad = validate(c)
+        if bad:
+            raise SystemExit(f"styles/{style}.json is not a style card: " + "; ".join(bad))
+        _CARDS[style] = c
+    return _CARDS[style]
+
+
+def styles():
+    """Every style id there is a card for."""
+    return sorted(f.stem for f in STYLES.glob("*.json") if f.stem != "schema")
+
+
+def shared_axes(a, b):
+    """The axes on which two styles' cards name the same word."""
+    ca, cb = card(a), card(b)
+    return [k for k in AXES if ca["axes"][k] == cb["axes"][k]]
+
+
+def ids(c, kind):
+    """The move or transition ids a card allows (`kind` is "moves" or "transitions")."""
+    return [m["id"] for m in c[kind]]
+
+
+def three(named=None):
+    """The three styles a run's boards are drawn in: the trio, or the style the person named and the two trio styles
+    that share the fewest axes with it (and with each other, between equals), in trio order."""
+    if not named:
+        return list(TRIO)
+    card(named)
+    rest = [s for s in TRIO if s != named]
+    pairs = [(a, b) for i, a in enumerate(rest) for b in rest[i + 1:]]
+    a, b = min(pairs, key=lambda p: (len(shared_axes(named, p[0])) + len(shared_axes(named, p[1])), len(shared_axes(*p))))
+    return [named, a, b]
+
+
+_STYLE = [TRIO[0]]
+
+
+def use(style):
+    """Measure type in `style`'s faces from now on."""
+    card(style)
+    _STYLE[0] = style
+
+
+def in_use():
+    return card(_STYLE[0])
+
+
+def system(c, colors):
+    """The design system the composition reads, from the style card `c`: the faces, the colors the card's palette rule
+    made, the easing, the finish, the closer shape, the photo beat's layout, and the safe areas."""
+    safe = {k: {x: v[x] for x in ("top", "bottom", "left", "right")} for k, v in load("safe-areas").items() if k != "about"}
+    return {"style": c["id"], "display": dict(c["faces"]["display"]), "text": dict(c["faces"]["text"]),
+            "colors": dict(colors), "ease": dict(c["ease"]), "finish": dict(c["finish"]), "closer": c["closer"],
+            "photo": json.loads(json.dumps(c["photo"])), "safe": safe}
+
+
+# ------------------------------------------------------------------ formats
 class Frame:
     """One output format: `name`, `W` x `H` px, and the safe area text stays inside (`top`, `bottom`, `left`, `right`
-    px from each edge)."""
+    px from each edge). With `bars` (a share of the height, the card's letterbox) type also stays clear of the bars."""
 
-    def __init__(self, name):
+    def __init__(self, name, bars=0.0):
         s = load("safe-areas")[name]
         self.name, self.W, self.H = name, s["width"], s["height"]
         self.top, self.bottom, self.left, self.right = s["top"], s["bottom"], s["left"], s["right"]
+        self.bars = bars
+        if bars:
+            clear = math.ceil(bars * self.H) + 24
+            self.top, self.bottom = max(self.top, clear), max(self.bottom, clear)
 
     @property
     def safe(self):
@@ -37,32 +180,6 @@ class Frame:
 # the films a run renders: the reel is the post, the square and the wide are the same storyboard laid out for a feed
 # post and a landscape screen
 FORMATS = ("reel", "square", "wide")
-
-
-def system(direction, colors, display=None, text=None, texture=None, hit=None):
-    t = load("type")[direction]
-    e = load("easing")[direction]
-    safe = {k: {s: v[s] for s in ("top", "bottom", "left", "right")} for k, v in load("safe-areas").items() if k != "about"}
-    return {
-        "direction": direction,
-        "display": {**t["display"], **(display or {})},
-        "text": {**t["text"], **(text or {})},
-        "scale": t["scale"],
-        "colors": {"swatches": [], **colors},
-        "texture": {"grain": 0.05, "vignette": 0.0, "leaks": False, **(texture or {})},
-        "ease": {**{k: e[k] for k in ("enter", "exit", "move", "spring", "stagger")}, "hit": hit or {"damping": 12, "stiffness": 200, "mass": 0.7}},
-        "safe": safe,
-    }
-
-
-def photo(p, wall=False, zoom=None):
-    """A post's photograph for a layer: placed by its focus point, or by its square crop on a wall."""
-    d = {"file": p["file"], "aspect": p["aspect"], "focus": list(p["focus"])}
-    if wall:
-        d["crop"] = list(p["crop"])
-    if zoom:
-        d["zoom"] = zoom
-    return d
 
 
 @functools.lru_cache(maxsize=64)
@@ -109,36 +226,48 @@ def face_of(system_, line):
     return system_["display"] if line.get("face") == "display" else system_["text"]
 
 
+def cased(system_, face, text):
+    """Words in the case the face sets them in, as the film shows them."""
+    case = system_["display" if face == "display" else "text"].get("case")
+    return text.upper() if case == "uppercase" else text.lower() if case == "lowercase" else text
+
+
 def font_for(system_, line):
     f = face_of(system_, line)
-    axes = dict(line.get("axes") or f.get("axes") or {})
-    axes.setdefault("wght", line.get("weight") or f.get("weight") or 400)
+    axes = dict(f.get("axes") or {})
+    axes.setdefault("wght", f.get("weight") or 400)
     return _font(f["file"], line["size"], tuple(sorted(axes.items())))
 
 
 def text_width(system_, line, text=None):
     f = face_of(system_, line)
     s = line["text"] if text is None else text
-    tr = line.get("tracking", f.get("tracking", 0)) or 0
-    return font_for(system_, line).getlength(s, features=["kern", "liga", "tnum", "lnum"]) + tr * line["size"] * len(s)
+    tr = f.get("tracking", 0) or 0
+    return font_for(system_, line).getlength(s, features=["kern", "liga"]) + tr * line["size"] * len(s)
 
 
 def text_box(system_, line, ink=False):
-    """The px box a line of type takes in its own coordinates: its advance across, and vertically the font's ascent to
-    descent as the browser boxes it, or with `ink` the glyphs' own extent."""
+    """The px box a line of type takes: its advance across, and vertically the font's ascent to descent as the browser
+    boxes it, or with `ink` the glyphs' own extent."""
     font = font_for(system_, line)
     w = text_width(system_, line)
     x = line["x"] - {"middle": w / 2, "end": w}.get(line.get("anchor"), 0)
     if ink:
-        b = font.getbbox(line["text"], anchor="ls", features=["kern", "liga", "tnum", "lnum"])
+        b = font.getbbox(line["text"], anchor="ls", features=["kern", "liga"])
         return (x, line["y"] + b[1], x + w, line["y"] + b[3])
     asc, desc = font.getmetrics()
     return (x, line["y"] - asc, x + w, line["y"] + desc)
 
 
+def ink(system_, line):
+    """A line's ink over and under its baseline, px."""
+    b = text_box(system_, line, ink=True)
+    return line["y"] - b[1], b[3] - line["y"]
+
+
 def turned(box, line):
-    """The four corners of a px box (x0, y0, x1, y1) of `line` as drawn: turned `rotate` degrees (clockwise on screen,
-    as SVG turns) about its `pivot`, or about its own origin when it has none."""
+    """The four corners of a px box (x0, y0, x1, y1) of `line` as drawn: turned `rotate` degrees (clockwise on screen)
+    about its `pivot`, or about its own origin when it has none."""
     x0, y0, x1, y1 = box
     pts = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
     a = line.get("rotate") or 0
@@ -163,25 +292,6 @@ def fit_size(system_, line, width, lo=12):
     return size
 
 
-def wrap(text, width, size, k=0.5):
-    """The fewest lines of `text` that fit `width` px at `size` px (by an average glyph width of `k` em), as even in
-    length as the words allow."""
-    words = text.split()
-    n = max(1, int(width / (size * k)))
-    for lines in range(1, len(words) + 1):
-        def split(ws, m):
-            if m == 1:
-                yield [" ".join(ws)]
-                return
-            for i in range(1, len(ws) - m + 2):
-                for rest in split(ws[i:], m - 1):
-                    yield [" ".join(ws[:i])] + rest
-        fits = [c for c in split(words, lines) if max(len(x) for x in c) <= n]
-        if fits:
-            return min(fits, key=lambda c: max(len(x) for x in c))
-    return words
-
-
 def wrap_measured(system_, line, width, max_lines=3):
     """`line`'s text broken into the fewest lines whose measured advance fits `width` px, as even as the words allow."""
     words = line["text"].split()
@@ -199,92 +309,5 @@ def wrap_measured(system_, line, width, max_lines=3):
     return None
 
 
-# ------------------------------------------------------------------ the timed cut
-def shift(layer, t):
-    """The layer with its time made relative to a shot starting at musical beat `t`."""
-    l = dict(layer)
-    if "at" in l:
-        l["at"] = round(l["at"] - t, 4)
-    return l
-
-
 def pulse_of(bpm):
     return FPS * 60 / bpm
-
-
-def shots(scenes, end, bpm, drift=0.0):
-    """A timed cut as board beats. `scenes` are the shots in order, {id, t, layers, view?, viewTo?, viewMove?, same?,
-    drift?}, every time in musical beats from the film's start; each runs from its `t` to the next shot's (the last to
-    `end`), with its layers' times made relative to its start. A shot marked `same` continues the framing before it,
-    so its start is not a cut. Every shot pushes in by `drift` (or its own) over its length, and a `same` shot goes on
-    from the scale the shot before it reached."""
-    pulse = pulse_of(bpm)
-    out = []
-    reached = 0.0
-    for i, sc in enumerate(scenes):
-        t = sc["t"]
-        tn = scenes[i + 1]["t"] if i + 1 < len(scenes) else end
-        frames = round(tn * pulse) - round(t * pulse)
-        b = {"id": sc["id"], "frames": frames, "bars": round(frames / (4 * pulse), 4), "layers": [shift(l, t) for l in sc["layers"]]}
-        for k in ("view", "viewTo"):
-            if k in sc:
-                b[k] = sc[k]
-        if "viewMove" in sc:
-            b["viewMove"] = [round(sc["viewMove"][0] - t, 4), sc["viewMove"][1]]
-        b["driftFrom"] = round(reached, 4) if sc.get("same") else 0.0
-        b["drift"] = sc.get("drift", drift)
-        reached = b["driftFrom"] + b["drift"]
-        out.append(b)
-    return out
-
-
-def cuts_of(scenes, beats):
-    """The planned cuts, in seconds: every shot start but the first and those marked `same`."""
-    out, f = [], 0
-    for i, b in enumerate(beats):
-        if i and not scenes[i].get("same"):
-            out.append(round(f / FPS, 3))
-        f += b["frames"]
-    return out
-
-
-def board(story, frame, beats):
-    """The board the studio composition renders: the storyboard's identity, the format and the beats."""
-    return {"id": f"nine-{story['tone']}-{frame.name}", "name": f"best nine {story['tone']} {frame.name}", "handle": story["handle"],
-            "year": story["year"], "bpm": story["bpm"], "tone": story["tone"],
-            "format": {"width": frame.W, "height": frame.H, "fps": FPS, "name": frame.name}, "system": story["system"], "beats": beats}
-
-
-# ------------------------------------------------------------------ the camera
-def centre_of(v, mid):
-    return (v["at"][0] + (mid[0] - v["to"][0]) / v["scale"], v["at"][1] + (mid[1] - v["to"][1]) / v["scale"])
-
-
-def framing(beat, f, frame, bpm):
-    """The camera at frame `f` of a beat, as (s, cx, cy): the scene is scaled by `s` and its point (cx, cy) sits at
-    the middle of the frame; a beat with no view frames the whole scene about the middle."""
-    pulse = pulse_of(bpm)
-    dur = max(1, beat["frames"])
-    k = 1 + beat.get("driftFrom", 0) + beat.get("drift", 0) * min(1, f / dur)
-    mid = frame.mid
-    v = beat.get("view")
-    if not v:
-        return (k, mid[0], mid[1])
-    s = v["scale"] * k
-    cx, cy = centre_of(v, mid)
-    if beat.get("viewTo"):
-        m0, mb = beat.get("viewMove") or [0, 1]
-        t = max(0.0, min(1.0, (f - m0 * pulse) / max(1, mb * pulse)))
-        e = 4 * t ** 3 if t < 0.5 else 1 - (-2 * t + 2) ** 3 / 2
-        dx, dy = centre_of(beat["viewTo"], mid)
-        s = s * ((beat["viewTo"]["scale"] * k) / s) ** e
-        cx += (dx - cx) * e
-        cy += (dy - cy) * e
-    return (s, cx, cy)
-
-
-def to_screen(cam, frame, box):
-    s, cx, cy = cam
-    mx, my = frame.mid
-    x0, y0, x1, y1 = box
-    return (mx + (x0 - cx) * s, my + (y0 - cy) * s, mx + (x1 - cx) * s, my + (y1 - cy) * s)

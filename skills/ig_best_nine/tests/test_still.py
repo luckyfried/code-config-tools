@@ -17,9 +17,9 @@ import studio  # noqa: E402
 
 
 def clip(path, drift):
-    """Three seconds of the reel's frame, kept lossless: bars and a pale square on the bars, under temporal grain as
-    strong as the drive tone's (it reads about 2 on the full-size frame and about 0.12 at LUMA_WIDTH, as the drive
-    film's locked closer does); with `drift` the square moves 20 px a second, slower than any move in the tones."""
+    """Three seconds of the reel's frame, kept lossless: bars and a pale square on the bars, under temporal grain
+    as strong as a grained style's (it reads about 2 on the full-size frame and about 0.12 at LUMA_WIDTH, as a grained
+    film's locked closer does); with `drift` the square moves 20 px a second, slower than any move a style card makes."""
     x = "200+20*t" if drift else "200"
     subprocess.run([_env.ffmpeg(), "-hide_banner", "-loglevel", "error", "-y",
                     "-f", "lavfi", "-i", "smptehdbars=s=1080x1920:r=30:d=3",

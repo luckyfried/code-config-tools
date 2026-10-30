@@ -1,45 +1,50 @@
 #!/usr/bin/env python3
-"""The film's music: find it, or make a bed, then read its beat grid and master it to -14 LUFS.
+"""The film's music: the person's track, or a bed composed from the chosen look's style and their music brief, with its
+beat grid and its sound effects, mastered to -14 LUFS.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/music.py find --run R [--origin "..."]  # music.json: the track to use and where it came from
     python3 S/scripts/music.py make --run R [--bpm N] [--seconds S]
-                                                             # a bed made here (keys, bass, drums) when no music was found
-    python3 S/scripts/music.py analyze --run R               # onsets, tempo, beat grid and downbeats into music.json
-    python3 S/scripts/music.py master --run R [--seconds S]  # from the first downbeat, the board's sound cues mixed over the bed ducked
-                                                             # under its hits, -14 LUFS (true peak -1.5 dB), trimmed, the last bar faded
+                                                             # a bed composed here on real instruments (music_engine.py)
+    python3 S/scripts/music.py analyze --run R               # a track they brought: onsets, tempo, beat grid and downbeats
+    python3 S/scripts/music.py master --run R [--seconds S]  # from the first downbeat, the board's sound cues mixed under the bed,
+                                                             # -14 LUFS (true peak -1.5 dB), trimmed, the last bar faded
 
-The music comes from whatever the person or the agent has: a track the agent fetched or generated saved as
-music/source.<ext> in the run (any audio ffmpeg reads), else the longest audio file under the workspace that is
-30 s or longer (their own library), else `make`, which writes a drive bed at the drive tempo.
-brief.md names the origin either way. analyze reads the energy envelope (ffmpeg decodes to mono PCM),
-picks onsets as peaks of its rise, takes the tempo by autocorrelation and lays a beat grid on the strongest
-phase; storyboard.py snap cuts the film on that grid.
+find takes the track the person chose, placed as music/source.<ext> in the run (any audio ffmpeg reads); else `make`
+composes music/bed.wav with music_engine.py: the recipe is the chosen look's style card's (`music` in
+styles/<id>.json, else the style id itself), unless the brief's `styles` words (taste.json `music`) name another; its
+`avoid` words take out an instrument, the drums or a groove; the key comes from the palette's leading color, the tempo
+from the brief's or the story's, the sections from the board's impacts, and the seed is the run's folder name. make
+writes the bed's own beat grid (bpm, beats, downbeats, sections, key) into music.json, so analyze leaves it as it is;
+analyze is for a track they brought: it reads the energy envelope (ffmpeg decodes to mono PCM), picks onsets as peaks
+of its rise, takes the tempo by autocorrelation and lays a beat grid on the strongest phase. storyboard.py snap cuts the
+film on the grid.
 
-The sound design is synthesised here too, from the cut board's `sound` cues, each placed by the storyboard at a named
-beat: `hit` (a body thump with a click, and a metallic ring for the blade), `whoosh` (a swept band of air, panned the
-way the camera travels), `riser` (a build that cuts off into the moment it leads to), `ticks` (a tick-up under a
-rolling count), `impact` (the landing), `stop` (where the bed cuts and the last hit rings out into silence) and `sidechain` (the key
-that ducks the bed under every hit). master mixes
-them over the ducked bed (music/fx.wav, music/key.wav, music/mix.wav) before it brings the whole to -14 LUFS.
+The sound effects are the engine's too, played in the recipe's own instruments: music/fx/riser.wav (a build that cuts
+off into the moment it leads to), hit.wav, bright.wav (the ring a `bright` hit adds) and impact.wav (the landing); a
+track they brought gets its set rendered at master. The board's `sound` cues place them where a beat lands; `stop` is
+where the bed cuts and the last hit rings out into silence. master writes the trimmed bed (music/bed-cut.wav) and the
+effects (music/fx.wav) scaled by loudness to FX_UNDER_BED_LU under the bed, sums them (music/mix.wav) and brings the
+whole to -14 LUFS; music.json and storyboard.md carry both loudness numbers.
 """
 import argparse
 import array
-import json
 import math
-import random
 import re
 import subprocess
 import sys
-import wave
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import music_engine  # noqa: E402
 
 AUDIO = (".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus")
 MUSIC = Path("music")
-SKIP = {"build", "out", ".claude", ".git", "node_modules", ".venv", ".cache"}
+FX_UNDER_BED_LU = 8  # the effects stem's integrated loudness sits this far under the bed's
+RISER_GAIN = 0.8  # the riser under a hit's full weight: it builds toward the moment, and the impact lands it
+TARGET_LUFS = -14.0
 
 
 def duration(f):
@@ -59,103 +64,81 @@ def has_audio(f):
 
 def cmd_find(a):
     MUSIC.mkdir(parents=True, exist_ok=True)
-    placed = sorted(p for p in MUSIC.glob("source.*") if p.suffix.lower() in AUDIO + (".mp4", ".mov"))
-    if placed and has_audio(placed[0]):
-        origin = a.origin or (_env.read_json("music.json") or {}).get("origin") or "placed by the agent in music/"
-        info = {"file": str(placed[0]), "origin": origin, "seconds": round(duration(placed[0]), 2)}
-    else:
-        found = []
-        root = Path((_env.read_json("library.json") or {}).get("root") or _env.WORKSPACE)
-        for p in root.rglob("*"):
-            if any(part in SKIP for part in p.relative_to(root).parts) or not p.is_file() or p.suffix.lower() not in AUDIO:
-                continue
-            d = duration(p)
-            if d >= 30:
-                found.append((d, p))
-        if not found:
-            print(f"no music in the workspace. Put a track at {MUSIC.resolve()}/source.<ext> (one you have, or one your "
-                  "music tool makes), or run: python3 " + str(_env.SKILL / "scripts" / "music.py") + " make")
-            _env.write_json("music.json", {"file": None, "origin": None})
-            return 3
-        d, p = max(found)
-        info = {"file": str(p), "origin": f"their own library: {p}", "seconds": round(d, 2)}
+    # only the name a person places a track under, any file ffprobe finds audio in: a bed make wrote (source.TAG.wav)
+    # is reached through music.json
+    placed = sorted(p for p in MUSIC.glob("source.*") if p.stem == "source" and p.suffix.lower() in AUDIO + (".mp4", ".mov"))
+    if not (placed and has_audio(placed[0])):
+        return cmd_make(a)
+    origin = a.origin or (_env.read_json("music.json") or {}).get("origin") or "placed by the agent in music/"
+    info = {"file": str(placed[0]), "origin": origin, "seconds": round(duration(placed[0]), 2)}
     _env.write_json("music.json", info)
     print(f"music: {info['file']} ({info['seconds']} s), {info['origin']}")
     return 0
 
 
+def brief():
+    """The person's music brief from taste.json (`tempo`, `styles`, `avoid`)."""
+    return (_env.read_json("taste.json") or {}).get("music") or {}
+
+
 # ------------------------------------------------------------------ make
-# the drive bed: four chords, kick on every beat, snare on two and four, sixteenth hats, the stabs in beats
-BED = {"chords": [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 60], [55, 59, 62, 67]],
-       "kick": [0, 1, 2, 3], "snare": [1, 3], "hat": 0.25, "stab": [0, 0.75, 1.5, 2.5, 3.25], "bright": 0.6}
+def card():
+    """The chosen look's style id and its music recipe id (None and None before a look is chosen)."""
+    style = (_env.read_json("winner.json") or {}).get("board")
+    if not style:
+        return None, None
+    return style, (_env.read_json(_env.SKILL / "styles" / f"{style}.json") or {}).get("music") or style
 
 
-def midi_hz(n):
-    return 440.0 * 2 ** ((n - 69) / 12)
+def hue():
+    """The palette's leading color's hue, degrees (None with no palette)."""
+    year = (_env.read_json("palette.json") or {}).get("year") or []
+    return music_engine.hue_of(year[0]["hex"]) if year else None
 
 
-def synth(bpm, sr=22050):
-    """Eight bars (two passes of four chords) of keys, bass and drums, as mono floats."""
-    m = BED
-    beat = 60.0 / bpm
-    bars = 8
-    n = int(sr * beat * 4 * bars)
-    out = [0.0] * n
-    rnd = random.Random(7)
+def reel_of(style):
+    """The chosen look's reel board (None before a draft)."""
+    return _env.read_json(f"storyboards/{style}/board-reel.json") if style else None
 
-    def add(start, dur, fn, gain):
-        i0 = int(start * sr)
-        for i in range(max(0, i0), min(n, i0 + int(dur * sr))):
-            out[i] += gain * fn((i - i0) / sr)
 
-    for bar in range(bars):
-        chord = m["chords"][bar % 4]
-        t0 = bar * 4 * beat
-        for at in m["stab"]:
-            for note in chord:
-                f = midi_hz(note)
-                add(t0 + at * beat, beat * 1.6,
-                    lambda t, f=f: math.exp(-5.0 * t) * (math.sin(2 * math.pi * f * t) + m["bright"] * math.sin(4 * math.pi * f * t))
-                    * (1 + 0.15 * math.sin(2 * math.pi * 5 * t)), 0.09 / len(chord) * 4 / (1 + 0.3 * len(chord)))
-        root = midi_hz(chord[0] - 12)
-        for at in (0, 0.5, 1.5, 2, 2.5, 3.5):
-            add(t0 + at * beat, beat * 0.9, lambda t, f=root: math.exp(-3 * t) * math.sin(2 * math.pi * f * t) * min(1, t * 200), 0.22)
-        for at in m["kick"]:
-            add(t0 + at * beat, 0.35, lambda t: math.exp(-9 * t) * math.sin(2 * math.pi * (45 * t + 60 * (1 - math.exp(-30 * t)) / 30 * 2)), 0.55)
-        for at in m["snare"]:
-            add(t0 + at * beat, 0.25, lambda t: math.exp(-18 * t) * (rnd.uniform(-1, 1) * 0.8 + 0.3 * math.sin(2 * math.pi * 190 * t)), 0.18)
-        k = 0.0
-        while k < 4:
-            add(t0 + k * beat, 0.05, lambda t: math.exp(-60 * t) * rnd.uniform(-1, 1), 0.05)
-            k += m["hat"]
-    peak = max(abs(x) for x in out) or 1
-    return [x / peak * 0.8 for x in out], sr
+def edges(style, bpm):
+    """The board's impacts, in seconds at the bed's tempo (the half, whole or double nearest the board's): where the
+    film lands, so where the bed's sections turn."""
+    board = reel_of(style)
+    if not (board and board.get("bpm")):
+        return []
+    k = min((0.5, 1, 2), key=lambda k: abs(bpm * k - board["bpm"]))
+    return [q["at"] * 60 / (bpm * k) for q in board.get("sound") or [] if q["kind"] == "impact"]
 
 
 def cmd_make(a):
     MUSIC.mkdir(parents=True, exist_ok=True)
-    from tones.drive import BPM
-    plan = (_env.read_json("storyboards/drive/plan.json") or {}).get("reel")
-    bpm = a.bpm or BPM
-    seconds = a.seconds or ((plan or {}).get("seconds") or 60) + 4
-    samples, sr = synth(bpm)
-    loop = MUSIC / "loop.wav"
-    with wave.open(str(loop), "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(sr)
-        w.writeframes(array.array("h", (int(x * 32767) for x in samples)).tobytes())
-    src = MUSIC / "source.wav"
-    flt = ("lowpass=f=7000,aecho=0.8:0.6:60|120:0.25|0.15,highpass=f=35,"
-           "pan=stereo|c0=c0|c1=c0,aformat=sample_rates=48000,afade=t=in:d=0.6")
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-i", str(loop), "-t", f"{seconds:.2f}",
-                    "-af", flt, str(src)], check=True)
-    for f in MUSIC.glob("source.*"):
-        if f != src:
+    from story import BPM
+    style, recipe_id = card()
+    if not style:
+        sys.exit("no look chosen: show out/boards.png and run vote.py pick --board <style> first")
+    plan = (_env.read_json(f"storyboards/{style}/plan.json") or {}).get("reel") or {}
+    m = brief()
+    target = m.get("tempo") or BPM
+    # the snap fits the nine to the asked length at the music's tempo, so the bed runs past the cut, with four seconds
+    # for the start the cut takes on a downbeat
+    seconds = a.seconds or (plan.get("seconds") or (_env.read_json("taste.json") or {}).get("seconds") or 30) + 4
+    seed = Path.cwd().name
+    book = music_engine.recipes()
+    rid, recipe, _ = music_engine.resolve(book, recipe_id, m.get("styles") or [], m.get("avoid") or [])
+    bpm = music_engine.tempo(recipe, a.bpm, target, seed)
+    info = music_engine.compose(recipe_id, m.get("styles") or [], m.get("avoid") or [], seconds, edges(style, bpm), hue(),
+                                seed, bpm=bpm, out=MUSIC)
+    default = recipe_id if recipe_id in book["recipes"] else book["default"]
+    chose = "their brief" if rid != default else "the look" if default == recipe_id else "the default"
+    origin = (f"made by music.py from the {rid} recipe ({book['recipes'][rid]['name']}, chosen by {chose}) in {info['key']} "
+              f"at {info['bpm']:g} bpm" + (f", without {', '.join(info['removed'])}" if info["removed"] else ""))
+    _env.write_json("music.json", dict(info, file=str(MUSIC / "bed.wav"), origin=origin))
+    # a bed an older make wrote under its own name goes once music.json names this one; a placed source.<ext> stays
+    for f in MUSIC.glob("source.*.wav"):
+        if f.stem != "source":
             f.unlink()
-    origin = f"made by music.py: a drive bed at {bpm} bpm (keys, bass, drums) because no music was found"
-    _env.write_json("music.json", {"file": str(src), "origin": origin, "seconds": round(seconds, 2), "bpm": bpm})
-    print(f"music: {src} ({seconds:.1f} s), {origin}")
+    print(f"music: {MUSIC / 'bed.wav'} ({seconds:.1f} s), {origin}; chords {' '.join(info['chords'])}")
     return 0
 
 
@@ -164,6 +147,9 @@ def cmd_analyze(a):
     info = _env.read_json("music.json") or {}
     if not info.get("file"):
         sys.exit("no music: run music.py find (or make) first")
+    if info.get("recipe") and info.get("beats"):
+        print(f"music: {info['file']} is a bed make composed; its own grid stands ({info['bpm']:g} bpm, {len(info['beats'])} beats)")
+        return 0
     sr, hop = 11025, 256
     raw = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", info["file"], "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"],
                          capture_output=True, check=True).stdout
@@ -220,177 +206,52 @@ def cmd_analyze(a):
 
 
 # ------------------------------------------------------------------ sound design
-# The storyboard places the film's sound at named beats (a board's `sound` cues); each cue is synthesised here, like
-# the bed, and mixed under it. Nothing is laid automatically per move: a cue sounds only where the board puts one.
-SR = 48000
+def effects(info, bpm):
+    """The four effect files music.json names, or, for a track they brought, the winning card's set rendered now."""
+    fx = info.get("fx") or {}
+    if all(Path(fx.get(c) or "").is_file() for c in music_engine.CUES):
+        return fx
+    book = music_engine.recipes()
+    rid, recipe, _ = music_engine.resolve(book, card()[1])
+    h = hue()
+    tonic = music_engine.tonic_of(h) if h is not None else music_engine.pick(music_engine.rng(Path.cwd().name, "key"), range(12))
+    music_engine.place(music_engine.render_fx(book, recipe, tonic, bpm, MUSIC))
+    info.update(fx={c: str(MUSIC / "fx" / f"{c}.wav") for c in music_engine.CUES}, fx_recipe=rid)
+    return info["fx"]
 
 
-class Stereo:
-    """A stereo buffer of `seconds` that sounds are added into, each panned from -1 (left) to 1 (right)."""
-
-    def __init__(self, seconds):
-        self.n = int(seconds * SR) + 1
-        self.L = array.array("f", bytes(4 * self.n))
-        self.R = array.array("f", bytes(4 * self.n))
-
-    def add(self, at, samples, pan=0.0, gain=1.0):
-        i0 = int(at * SR)
-        m = len(samples)
-        for k in range(max(0, -i0), min(m, self.n - i0)):
-            p = pan(k / m) if callable(pan) else pan
-            a = (p + 1) * math.pi / 4
-            v = samples[k] * gain
-            self.L[i0 + k] += v * math.cos(a)
-            self.R[i0 + k] += v * math.sin(a)
-
-    def peak(self):
-        return max(max(map(abs, self.L)), max(map(abs, self.R))) or 1.0
-
-    def write(self, path, scale=1.0):
-        pcm = array.array("h", bytes(4 * self.n))
-        for i in range(self.n):
-            pcm[2 * i] = max(-32767, min(32767, int(self.L[i] * scale * 32767)))
-            pcm[2 * i + 1] = max(-32767, min(32767, int(self.R[i] * scale * 32767)))
-        with wave.open(str(path), "wb") as w:
-            w.setnchannels(2)
-            w.setsampwidth(2)
-            w.setframerate(SR)
-            w.writeframes(pcm.tobytes())
-
-
-def _noise(seed):
-    rnd = random.Random(seed)
-    return lambda: rnd.uniform(-1, 1)
-
-
-def _band(samples, centre, q):
-    """`samples` through a state-variable band-pass whose centre (Hz) is `centre(u)` over the sound's progress u."""
-    low = band = 0.0
-    out = []
-    m = len(samples)
-    for k, x in enumerate(samples):
-        f = 2 * math.sin(math.pi * min(0.45 * SR, centre(k / m)) / SR)
-        high = x - low - band / q
-        band += f * high
-        low += f * band
-        out.append(band)
-    return out
-
-
-def hit(weight=0.6, bright=0.0, seed=1):
-    """A hit: a pitched-down body thump, a click on the attack and, when `bright`, a short metallic ring (the blade).
-    `weight` 0 to 1 sets its depth and length."""
-    n = int((0.35 + 0.6 * weight) * SR)
-    noise = _noise(seed)
-    out = []
-    phase = 0.0
-    hp = prev = 0.0
-    for k in range(n):
-        t = k / SR
-        phase += 2 * math.pi * (42 + 120 * math.exp(-t * 32)) / SR
-        body = math.sin(phase) * math.exp(-t * (9 - 4 * weight)) * min(1.0, t * 2000)
-        x = noise()
-        hp = 0.85 * (hp + x - prev)
-        prev = x
-        click = hp * math.exp(-t * 260)
-        ring = sum(math.sin(2 * math.pi * 2300 * r * t) * math.exp(-t * (16 + 7 * r)) for r in (1.0, 1.51, 2.37, 3.13)) / 4 if bright else 0.0
-        out.append(weight * body + 0.35 * click + 0.5 * bright * ring)
-    return out
-
-
-def whoosh(seconds, seed=2):
-    """Air moving past the lens for `seconds`: noise through a band-pass that opens and closes as the move peaks just
-    past its middle."""
-    n = max(1, int(seconds * SR))
-    noise = _noise(seed)
-    raw = [noise() for _ in range(n)]
-    swept = _band(raw, lambda u: 260 + 2600 * math.sin(math.pi * u ** 0.8) ** 1.6, 1.4)
-    return [x * math.sin(math.pi * (k / n) ** 0.8) ** 2 * 1.6 for k, x in enumerate(swept)]
-
-
-def riser(seconds, seed=3):
-    """A build over `seconds` that cuts off at its end: noise opening upward and a rising tone two octaves high,
-    swelling to the cut."""
-    n = max(1, int(seconds * SR))
-    noise = _noise(seed)
-    air = _band([noise() for _ in range(n)], lambda u: 220 * (5200 / 220) ** u, 2.0)
-    out = []
-    phase = 0.0
-    for k in range(n):
-        u = k / n
-        phase += 2 * math.pi * 110 * 4 ** (u ** 1.4) / SR
-        tone = sum(math.sin(phase * h) / h for h in range(1, 7)) * 0.35
-        swell = u ** 2.2 * min(1.0, (n - k) / (0.012 * SR))
-        out.append(swell * (0.9 * air[k] + 0.55 * tone))
-    return out
-
-
-def ticks(seconds, count, seed=4):
-    """A tick-up under a count rolling for `seconds`: `count` ticks, close together while the figures spin and spreading
-    as the roll settles (the drum's ease, 1 - (1 - x) cubed)."""
-    n = max(1, int(seconds * SR))
-    out = [0.0] * n
-    noise = _noise(seed)
-    for j in range(1, count + 1):
-        i0 = int((1 - (1 - j / (count + 1)) ** (1 / 3)) * n)
-        f = 3000 + 260 * (j % 3)
-        for k in range(int(0.02 * SR)):
-            if i0 + k >= n:
-                break
-            t = k / SR
-            out[i0 + k] += (math.sin(2 * math.pi * f * t) * math.exp(-t * 420) + 0.4 * noise() * math.exp(-t * 900)) * (0.6 + 0.4 * j / count)
-    return out
-
-
-def impact(seed=5):
-    """The landing: a deep body falling in pitch with a long tail, a dark burst of noise, a faint high shimmer."""
-    n = int(2.6 * SR)
-    noise = _noise(seed)
-    out = []
-    phase = 0.0
-    lp = 0.0
-    shimmer = _band([noise() for _ in range(n)], lambda u: 3200, 3.0)
-    for k in range(n):
-        t = k / SR
-        phase += 2 * math.pi * (31 + 70 * math.exp(-t * 9)) / SR
-        lp += 0.06 * (noise() - lp)
-        out.append(math.sin(phase) * math.exp(-t * 2.1) * min(1.0, t * 1500) + 1.4 * lp * math.exp(-t * 11) + 0.25 * shimmer[k] * math.exp(-t * 2.8))
-    return out
-
-
-def sidechain(cues, seconds, sec):
-    """The key that ducks the bed: a short full-scale pulse at every hit of weight 0.5 or more and at the impact, for
-    ffmpeg's sidechaincompress to pull the bed down under the kick and let it back over about a fifth of a second."""
-    key = Stereo(seconds)
-    pulse = [math.sin(2 * math.pi * 60 * k / SR) for k in range(int(0.06 * SR))]
+def cue_legs(cues, bpm, fps, fx):
+    """Each cue as [(file, from, at, gain)]: the file from `from` seconds, placed at `at` in the film. `at` and `beats`
+    are read at `bpm`; with the board's `fps`, a cue starts on its own `frame`. A riser is the end of riser.wav, as long
+    as the cue's beats, ending on the moment it leads to."""
+    sec, legs = 60 / bpm, []
     for c in cues:
-        if c["kind"] == "impact" or (c["kind"] == "hit" and c.get("weight", 0) >= 0.5):
-            key.add(c["at"] * sec, pulse)
-    return key, "sidechaincompress=threshold=0.08:ratio=6:attack=3:release=220:makeup=1"
-
-
-def score(cues, seconds, bpm):
-    """The board's cues synthesised into one stereo buffer, `at` and `beats` read at `bpm`."""
-    sec = 60 / bpm
-    fx = Stereo(seconds)
-    for i, c in enumerate(cues):
-        at = c["at"] * sec
+        at = c["frame"] / fps if fps and "frame" in c else c["at"] * sec
         if c["kind"] == "hit":
-            fx.add(at, hit(c.get("weight", 0.6), c.get("bright", 0.0), seed=i), gain=0.9)
-        elif c["kind"] == "whoosh":
-            p0, p1 = c.get("pan", [0, 0])
-            fx.add(at, whoosh(c["beats"] * sec, seed=i), pan=lambda u, p0=p0, p1=p1: p0 + (p1 - p0) * u, gain=0.45)
+            legs.append((fx["hit"], 0.0, at, c.get("weight", 0.6)))
+            if c.get("bright"):
+                legs.append((fx["bright"], 0.0, at, c["bright"]))
         elif c["kind"] == "riser":
-            fx.add(at, riser(c["beats"] * sec, seed=i), gain=0.5)
-        elif c["kind"] == "ticks":
-            fx.add(at, ticks(c["beats"] * sec, c.get("n", 8), seed=i), gain=0.35)
+            want, have = c["beats"] * sec, duration(fx["riser"])
+            use = min(want, have)
+            legs.append((fx["riser"], have - use, at + want - use, RISER_GAIN))
         elif c["kind"] == "impact":
-            fx.add(at, impact(seed=i), gain=1.0)
-    return fx
+            legs.append((fx["impact"], 0.0, at, 1.0))
+    return legs
 
 
-# ------------------------------------------------------------------ master
-TARGET_LUFS = -14.0
+def fx_stem(legs, seconds, scale, dst):
+    """The legs summed over `seconds` of silence and scaled by `scale`, as a float stereo stem."""
+    inputs = ["-f", "lavfi", "-t", f"{seconds:.3f}", "-i", "anullsrc=r=48000:cl=stereo"]
+    graph = []
+    for i, (f, f0, at, gain) in enumerate(legs, 1):
+        inputs += ["-i", str(f)]
+        graph.append(f"[{i}:a]atrim=start={f0:.4f},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,"
+                     f"volume={gain:.4f},adelay={round(at * 1000)}:all=1[c{i}]")
+    mixed = "[0:a]" + "".join(f"[c{i}]" for i in range(1, len(legs) + 1))
+    graph.append(f"{mixed}amix=inputs={len(legs) + 1}:normalize=0:duration=first,volume={scale:.6f}[out]")
+    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *inputs, "-filter_complex", ";".join(graph), "-map", "[out]",
+                    "-ar", "48000", "-c:a", "pcm_f32le", str(dst)], check=True)
 
 
 def integrated_file(path):
@@ -400,6 +261,7 @@ def integrated_file(path):
     return float(found[-1]) if found else float("nan")
 
 
+# ------------------------------------------------------------------ master
 def cmd_master(a):
     info = _env.read_json("music.json") or {}
     if not info.get("file"):
@@ -415,19 +277,29 @@ def cmd_master(a):
     cues = (reel or {}).get("sound") or []
     # the board's stop: the bed cuts there, the last hit rings out over the held picture, then the film is silent
     stop = next((c["at"] * 60 / reel["bpm"] for c in cues if c["kind"] == "stop"), None)
+    mixed = {}
     if cues:
-        # the board's sound cues over the bed, the bed ducked under the hits by the sidechain key
-        fx = score(cues, seconds, reel["bpm"])
-        key, duck = sidechain(cues, seconds, 60 / reel["bpm"])
-        fx.write(MUSIC / "fx.wav", 0.9 / fx.peak())
-        key.write(MUSIC / "key.wav")
-        mix = MUSIC / "mix.wav"
+        # the board's sound cues under the bed: the effects stem scaled so its integrated loudness is FX_UNDER_BED_LU
+        # under the trimmed bed's, then the two summed as they are, in float so a sum past full scale reaches the limiter
+        bed, fxw, mix = MUSIC / "bed-cut.wav", MUSIC / "fx.wav", MUSIC / "mix.wav"
         cut = f",afade=t=out:st={stop:.3f}:d=0.04" if stop else ""
-        graph = (f"[0:a]atrim={start:.3f}:{start + seconds:.3f},asetpts=PTS-STARTPTS{cut},aformat=sample_rates=48000:channel_layouts=stereo[bed];"
-                 f"[2:a]aformat=sample_rates=48000:channel_layouts=stereo[key];[bed][key]{duck}[duck];"
-                 f"[duck][1:a]amix=inputs=2:normalize=0:weights=1 0.8[out]")
-        subprocess.run([ff, "-y", "-v", "error", "-i", source, "-i", str(MUSIC / "fx.wav"), "-i", str(MUSIC / "key.wav"),
-                        "-filter_complex", graph, "-map", "[out]", "-ar", "48000", str(mix)], check=True)
+        subprocess.run([ff, "-y", "-v", "error", "-i", source, "-af", f"atrim={start:.3f}:{start + seconds:.3f},asetpts=PTS-STARTPTS{cut},"
+                        "aformat=sample_rates=48000:channel_layouts=stereo", "-ar", "48000", str(bed)], check=True)
+        bed_lufs = integrated_file(bed)
+        legs = cue_legs(cues, reel["bpm"], reel.get("fps"), effects(info, reel["bpm"]))
+        # measured and scaled twice: the meter is not linear in the gain (its gates drop the quiet tails as the stem
+        # turns down), so one scaling lands it up to a few tenths louder than asked
+        scale = 1.0
+        for _ in range(2 if legs else 0):
+            fx_stem(legs, seconds, scale, fxw)
+            scale *= 10 ** ((bed_lufs - FX_UNDER_BED_LU - integrated_file(fxw)) / 20)
+        fx_stem(legs, seconds, scale, fxw)
+        mixed = {"bed_lufs": round(bed_lufs, 2), "fx_lufs": round(integrated_file(fxw), 2)}
+        stems = [bed, fxw]
+        ins = [x for st in stems for x in ("-i", str(st))]
+        subprocess.run([ff, "-y", "-v", "error", *ins, "-filter_complex",
+                        "".join(f"[{i}:a]" for i in range(len(stems))) + f"amix=inputs={len(stems)}:normalize=0[out]",
+                        "-map", "[out]", "-ar", "48000", "-c:a", "pcm_f32le", str(mix)], check=True)
         source, start = str(mix), 0.0
     # With a stop, the last hit's ring fades out over the held picture and the rest is silence. Without one, the music
     # tails out over the film's last bar: the fade starts on the last downbeat at least a second before the end, so the
@@ -450,15 +322,25 @@ def cmd_master(a):
     limited = f"{pre},volume={gain:.2f}dB,alimiter=limit=0.79:attack=1:release=60:level=false"
     trim = TARGET_LUFS - integrated(limited)
     flt = f"{limited},volume={trim:.2f}dB,aformat=sample_rates=48000:channel_layouts=stereo"
-    out = MUSIC / "master.wav"
+    # a name of this master's own: the film's mux reads the master music.json names, which stays the last one until
+    # this one is written and measured
+    out = MUSIC / f"master.{time.time_ns():x}.wav"
     subprocess.run([ff, "-y", "-v", "error", "-i", source, "-af", flt, "-ar", "48000", str(out)], check=True)
-    info["master"] = str(out)
-    info["master_seconds"] = round(seconds, 3)
-    info["sound_cues"] = len(cues)
+    info.update(master=str(out), master_seconds=round(seconds, 3), sound_cues=len(cues), master_lufs=round(integrated_file(out), 2), **mixed)
     _env.write_json("music.json", info)
-    info["master_lufs"] = round(integrated_file(out), 2)
-    _env.write_json("music.json", info)
-    print(f"mastered {seconds:.1f} s to {info['master_lufs']} LUFS" + (f" with {len(cues)} sound cues over the ducked bed" if cues else "") + f" -> {out}")
+    if mixed:
+        said = (f"bed {mixed['bed_lufs']} LUFS, effects {mixed['fx_lufs']} LUFS, "
+                f"{mixed['bed_lufs'] - mixed['fx_lufs']:.1f} LU under; {len(cues)} sound cues over {len(reel['beats'])} beats")
+        md = Path(film["boards"]["reel"]).with_name("storyboard.md")
+        if md.exists():
+            _env.write_text(md, re.sub(r"(?m)^Mixed: .*$", lambda _: f"Mixed: {said}.", md.read_text()))
+    for f in MUSIC.glob("master.*"):
+        if f != out:
+            f.unlink()
+    if mixed:
+        print(f"mixed: bed {mixed['bed_lufs']} LUFS, effects {mixed['fx_lufs']} LUFS, {mixed['bed_lufs'] - mixed['fx_lufs']:.1f} LU under; "
+              f"{len(cues)} sound cues over {len(reel['beats'])} beats")
+    print(f"mastered {seconds:.1f} s to {info['master_lufs']} LUFS -> {out}")
     return 0
 
 

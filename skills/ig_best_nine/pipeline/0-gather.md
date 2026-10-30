@@ -18,11 +18,13 @@ posts without their likes is worth less than one that gives them.
 3. **A file of theirs that lists their posts with their numbers**: a `posts.json` in any shape, a `likes.csv`, a
    sheet, notes of how their posts did. The numbers are theirs, so they rank the nine: write every post it lists into
    `items.json` in the shape `gather.py --help` prints (`ts` from its date, `likes` and `comments` as the file gives
-   them, its caption, `media` the path of its photograph relative to `items.json`, and `source` naming the file,
-   which gather.py records as the door) in a folder of your own, for example `pulled/`, and pass `--pulled pulled`.
+   them, its caption, `media` the path of its photograph relative to `items.json`, `handle` when the file names their
+   account, and `source` naming the file, which gather.py records as the door) in a folder of your own, for example
+   `pulled/`, and pass `--pulled pulled`.
    Copy nothing: point `media` at their photographs where they are. A number the file does not give stays out; never
    fill one in.
-4. **A "Download your information" export** anywhere under the workspace (a folder or a `.zip`): gather.py finds it.
+4. **A "Download your information" export** anywhere under the workspace (a folder, a `.zip`, or a folder holding
+   its `posts_1.json` and media): gather.py finds it, with the counts its insights or its posts carry.
 5. **Their photo folder**: the setting `BEST_NINE_PHOTOS`, or a folder they named in the request passed as
    `--photos DIR` (which wins). The nine's photographs are read from it by file name first, so a full-size copy of
    each post wins over the download's compressed one.
@@ -41,11 +43,11 @@ lists them. It prints `run: build/<stamp>`: every later command takes that folde
 
 ## When every door is closed
 
-gather.py exits 3 and writes the run's `out/brief.md` with one sentence on how to open a door. Tell the person exactly that
+gather.py exits 3 and writes the run's `brief.md` with one sentence on how to open a door. Tell the person exactly that
 sentence and stop. Do not make a best nine from nothing.
 
 ## Done when
 
-gather.py printed `run: build/<stamp>`, the run's `library.json` exists, and the summary names a year, a handle and counts. Read its `assumptions`; they
+gather.py printed `run: build/<stamp>`, the run's `library.json` exists, and the summary names a year, their handle (or none, and then no handle is set anywhere) and counts. Read its `assumptions`; they
 go into `brief.md` as they are. A year with fewer than nine posts is not an error: the run makes the film of the
 posts there are.

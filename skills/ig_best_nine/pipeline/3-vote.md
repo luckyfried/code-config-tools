@@ -1,20 +1,27 @@
-# 3. Vote: a panel picks, with reasons
+# 3. The look: theirs, or picked by taste
 
-Goal: the run's `vote.md` and `winner.json`.
+Goal: the run's `winner.json`, the look the film is made in.
 
-```
-python3 S/scripts/vote.py ballot --run build/<stamp>
-```
-
-Read `S/critic/critic.md` (the three critics, the seven criteria and the swap test). Then, as each critic in turn,
-open the storyboard's `sheet.png` and `storyboard.md` and fill in the run's `vote/scores.json`: a whole number 1 to 5
-for each criterion on each board, and one paragraph per board (at least 25 words: what works, what fails, what you
-would change). As the motion designer, also fill in `swap`: for each board's hook, densest beat and closer, whether
-the composition passes the swap test and why, in a sentence. Score honestly. The person's critic speaks in the first person from `taste.md`.
+**When you may ask** (`taste.json` `ask` is `true`): show them `out/boards.png` and ask one question, "Which look do you
+want: A, B or C?" Their answer is the look:
 
 ```
-python3 S/scripts/vote.py tally --run build/<stamp>
+python3 S/scripts/vote.py pick --run build/<stamp> --board B
 ```
 
-The board wins when it passes the swap test on all three compositions. A board that fails the swap test anywhere
-cannot win: change the tone builder's layout for those posts and draft again.
+`--board` takes the letter, the number, the look's name or its style id.
+
+**When nothing may be asked** (`ask` is `false`): pick the look by `taste.md` (their colors, their voice, what they
+post, what to avoid), and give the reason in one line:
+
+```
+python3 S/scripts/vote.py pick --run build/<stamp> --board C --why "their year is dusk light and long tables; the letterbox holds it"
+```
+
+**When they ask you to choose for them**, the panel does: `vote.py ballot`, then as each critic in `S/critic/critic.md`
+fill in `vote/scores.json` (a whole number 1 to 5 for each criterion on each look, a paragraph per look, and the swap
+test on each look's hook, middle beat and closer), then `vote.py tally`. The highest total that passes the swap test
+is the look.
+
+A pick takes away everything made for an earlier look in the run (the cut, the music made for it, the preview, the
+reads and the critics' rounds), so the steps from the music on run again for the look picked. A track they gave stays.

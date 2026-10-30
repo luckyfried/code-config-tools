@@ -5,10 +5,8 @@ USAGE (from the workspace root):
     python3 S/scripts/stats.py --run build/<stamp>
 
 Counts (posts, reels, stories, likes given, comments written, new followers; each null when the data lacks
-it), the best nine: the nine most-liked posts and reels of the year, ranked by likes, ties broken by comments,
-then by the more recent (by comments alone, or spread across the year, when the data has no likes per post; with
-fewer than nine posts and reels the best nine is the ones there are, and the storyboard lays out that many), the likes of the tenth and the gap
-to it, the median post's likes, every month's activity with the busiest and the quietest, the people (accounts
+it), the best nine: the posts and reels of the year ranked by the account's own numbers (rank), the likes of the
+tenth and the gap to it, the median post's likes, every month's activity with the busiest and the quietest, the people (accounts
 commented on and @mentioned most), the accounts liked most, and the person's caption register (lowercase,
 emoji, length, hashtags, sample captions) for writing copy in their voice. Every number a card shows comes
 from this file.
@@ -33,6 +31,25 @@ def when(ts):
 def label(ts):
     d = when(ts)
     return f"{calendar.month_name[d.month]} {d.day}"
+
+
+NUMBERS = ("likes", "comments", "saves")
+RECENT = "The data carries no likes, comments or saves per post, so the nine are the most recent posts."
+
+
+def rank(rows):
+    """The rows ranked by the numbers the file carries, the most first: likes, then comments, then saves, each one
+    a post lacks counting as none, the newer first on a tie; and the words naming what ranked them. With none of the
+    three on any row the newest come first, ranked by "recent"."""
+    carried = [k for k in NUMBERS if any(r.get(k) is not None for r in rows)]
+    ranked = sorted(rows, key=lambda r: (*(-(r.get(k) or 0) for k in carried), -r["ts"]))
+    return ranked, ", then ".join(carried) or "recent"
+
+
+def short_of_nine(stats):
+    """The refusal when the year has fewer than nine posts and reels with a photograph, else None."""
+    n = len(stats.get("top_nine") or [])
+    return f"not delivered: {n} posts, nine needed" if n < 9 else None
 
 
 def main():
@@ -65,20 +82,10 @@ def main():
         numbers = [("posts", counts["posts"], "photos")] + ([("reels", counts["reels"], "videos")] if counts["reels"] else [])
 
     ranked_rows = [dict(p, kind="post") for p in posts if p["media"]] + [dict(r, kind="reel") for r in reels if r["media"]]
-    if any(p.get("likes") is not None for p in ranked_rows):
-        ranked = sorted(ranked_rows, key=lambda p: (-(p.get("likes") or 0), -(p.get("comments") or 0), -p["ts"]))
-        by = "likes"
-    elif any(p.get("comments") for p in ranked_rows):
-        ranked = sorted(ranked_rows, key=lambda p: (-(p.get("comments") or 0), -p["ts"]))
-        by = "comments"
-    else:
-        rows = sorted(ranked_rows, key=lambda p: p["ts"])
-        step = max(1, len(rows) / 9)
-        ranked = [rows[int(i * step)] for i in range(min(9, len(rows)))]
-        by = "spread"
+    ranked, by = rank(ranked_rows)
     nine = ranked[:9]
     top = [{"rank": i + 1, "kind": p["kind"], "ts": p["ts"], "date": when(p["ts"]).date().isoformat(), "date_label": label(p["ts"]),
-            "month": when(p["ts"]).month, "likes": p.get("likes"), "comments": p.get("comments"), "caption": p.get("caption") or "",
+            "month": when(p["ts"]).month, "likes": p.get("likes"), "comments": p.get("comments"), "saves": p.get("saves"), "caption": p.get("caption") or "",
             "media": p["media"][0], "video": p["media"][0] if Path(p["media"][0]).suffix.lower() in (".mp4", ".mov", ".m4v") else None}
            for i, p in enumerate(nine)]
     tenth = ranked[9] if len(ranked) > 9 else None
@@ -133,7 +140,9 @@ def main():
            "people": people[:5], "loved": loved, "register": register}
     _env.write_json("stats.json", out)
     print(f"@{d['handle']} {year}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
-    print("best nine (by %s): " % by + "; ".join(f"{t['rank']}. {t['date_label']} {t['kind']} {t['likes'] if t['likes'] is not None else ''}" for t in top))
+    print(f"best nine (ranked by {by}): " + "; ".join(f"{t['rank']}. {t['date_label']} {t['kind']}" for t in top))
+    if by == "recent":
+        print(RECENT)
     if tenth_info:
         print(f"tenth: {tenth_info['likes']} likes, {tenth_info['gap']} below the ninth")
     if busiest:
