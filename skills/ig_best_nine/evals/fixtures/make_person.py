@@ -25,7 +25,7 @@ espresso). About 120 posts (some carousels), 27 reels, 60 stories, 900 likes acr
 that taste, 70 saves, 200 comments, 412 followers (96 new this year), 180 following. July (two weeks in Sicily) is
 clearly the busiest month and February the quietest.
 
-Her nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
+Their nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
 to October, between 291 and 486 likes, while nothing else reaches 225 (the tenth sits at least 66 below the
 ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table). Strings are written the way
 Meta writes them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic
@@ -85,7 +85,7 @@ ACCOUNTS = FRIENDS + [
 assert len(ACCOUNTS) == 40, len(ACCOUNTS)
 
 
-NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked, planted clear of everything else
+NINE = [  # (month, kind, scene, likes, comments, caption): their nine most-liked, planted clear of everything else
     (7, "post", "sunset", 486, 41, "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"),
     (5, "reel", "market", 451, 52, "forty seconds of the oaxaca market at opening time. you asked for the sound of it \U0001F33F"),
     (1, "post", "coffee", 418, 33, "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"),
@@ -451,7 +451,7 @@ def main():
     for i in range(14):
         m = rng.choice(months)
         ts = ts_for(rng, year, m, end)
-        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated her status.")}
+        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated their status.")}
         if rng.random() < 0.6:
             uri = f"your_facebook_activity/posts/media/timeline/{10161000000000000 + i}.jpg"
             jobs.append((str(fb / uri), 1080, 1080, rng.choice(SEASON[m][1]), pal(m), rng.random()))

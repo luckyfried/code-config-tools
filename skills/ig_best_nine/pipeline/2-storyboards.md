@@ -1,7 +1,7 @@
-# 2. Storyboards: the film of their nine, computed from their numbers
+# 2. Storyboards: the nine in three looks
 
-Goal: the run's `storyboards/drive/`, with `board-reel.json`,
-`board-square.json`, `board-wide.json`, `storyboard.md` and `sheet.png`.
+Goal: three storyboards of the same film, one per look, each in `storyboards/<style>/` (`board-reel.json`,
+`board-square.json`, `board-wide.json`, `storyboard.md`, `sheet.png`), and `out/boards.png`, the three side by side.
 
 ## Draft
 
@@ -9,26 +9,25 @@ Goal: the run's `storyboards/drive/`, with `board-reel.json`,
 python3 S/scripts/storyboard.py draft --run build/<stamp>
 ```
 
-`draft` builds the tone from their numbers, their dates and their photographs:
+The three looks are three style cards in `S/styles/` (`S/styles/catalog.md` says each in a sentence): Swiss grid,
+Scrapbook and Cinematic letterbox, or, when `taste.json` `style` names one, that look and the two that differ most from
+it. Each look takes its faces, colors, easing, finish, moves, cuts, closer and music from its card and from nowhere
+else.
 
-| tone | the idea | how the nine arrive | type |
-|---|---|---|---|
-| drive | the countdown through the wall | one continuous 3D camera: the hook's total rolls up on the top photograph and breaks into the nine counts, which gather into the three by three best-nine grid and hang there before they burst at the lens; the countdown runs from the ninth post to the first, each photograph flying onto the wall along its own line (hinged on it, sliding along it or rising square to it, in turn) and held clean for a beat, then a dot draws its own line across it and the blade cuts behind the dot; the first two and last three counts roll up onto the edge, the middle four slam onto it; the dot travels on to the next photograph with the camera; the nine stand out of the wall as bars as tall as their likes, each with its photograph and count on its face, and fold flat onto their slices into the closer, where the dot runs the countdown across the wall, landing after each count on the half beat, and comes to rest as the full stop of the ask as the handle and the ask rise; the picture and the music stop together on that hit and the wall holds silent | kinetic: extruded condensed numerals |
+The story is the same in all three. It opens on the first of the countdown, full in the frame, with their title over
+it. Then the nine, from the ninth to the first, with no number on screen: each in a layout of its own (nine layouts for
+nine posts), the photograph placed by its focus, their caption line and its day set in the look's faces, moved by one
+of the look's moves and cut into with one of its cuts, no move twice in a row. Then the nine as they post them, a three
+by three grid, the first at its top left, with the year and the ask; and the look's closer with their title and their
+promise, held still as the music stops.
 
-Every board is the storyboard the studio composition (`S/motion/studio`) renders: the rank order, the layout (the
-cuts and their edges), the words, and each photograph by its
-focus point and square crop. One storyboard is solved three times, for the reel (1080x1920), the square
-(1080x1080) and the wide (1920x1080): a tile that fits the reel is placed again for the square, never scaled to fit.
-Each board names its rests, the settled frames the sheet, the critics and the stills read: the hook, the densest
-beat and the closer, and for drive an ordinary count beat. With fewer than nine posts, the board lays out the ones there are.
+Each beat holds as long as its post asks: a captioned post for its words, a wordless one less, a repeat least, and the
+first longest. The film runs the length asked (`taste.json` `seconds`, 20 to 45 s, 30 s when it is `null`); a length
+outside that makes nothing and prints `not made: ...`, the sentence to pass on. A year with fewer than nine posts with
+a photograph prints `not delivered: <n> posts, nine needed`.
 
-The drive board also carries, per scene, what its move reveals and what it carries across the cut; the sound cues
-(`sound`: a riser into the hook, hits where counts land and edges cut, ticks under each roll, a whoosh panned with
-each camera travel, an impact on the closer, a light hit each time the closer's dot lands after a count, and the stop
-where the picture and the music end together), each at its named beat; and the generated clips (`clips`: the wall's
-world under the hook, each photograph brought to life under its count beat, the texture under the bars), each with
-its prompt, length, photograph and the camera or depth move that stands in for it. `storyboard.md` states all three
-as tables.
+One storyboard is solved three times, for the reel (1080x1920), the square (1080x1080) and the wide (1920x1080).
+`storyboard.md` states each board's beats, cuts, sound cues and the generated clips it would use.
 
 ## Check, then look
 
@@ -37,17 +36,16 @@ python3 S/scripts/storyboard.py check --run build/<stamp>
 python3 S/scripts/storyboard.py sheets --run build/<stamp>
 ```
 
-`check` runs the bounds check on every format at every rest and every beat's settled frame. It refuses a board
-where a photograph is cropped by the frame, sits behind another, or loses its gutter from the frame edge or the
-type band; where type leaves its safe area, a tag hides a count, a count is set under the tone's floor, or a strand
-leaves its square runs; and a cut outside the length band (15 to 30 s for nine posts) or a hook event after frame
-30. Each `storyboard.md` states the board's cuts and cuts per minute, a figure for the critics. `sheets` renders each
-tone's three rests in the three formats into `sheet.png` with the real composition.
+`check` refuses a board where a photograph is cropped by the frame or sits behind another, type leaves its safe area
+or overruns its box, the cut is more than 1 s off the asked length or the hook lands after frame 30, and any template
+tell: a layout used twice, one move on two beats in a row, every shot one length, the words in one place, or anything
+the card did not give. `sheets` renders each look's hook, a middle beat and its closer into its `sheet.png`, and the
+three into `out/boards.png` with each look's name and one sentence.
 
-Open each `sheet.png` with the Read tool, then any frame under `storyboards/<tone>/frames/` that looks wrong at full
-size. A line that does not sound like `taste.md` is fixed in `taste.json` `words.<tone>`; then `draft`, `check` and
-`sheets` again. The layout is computed: do not edit a board by hand.
+Open `out/boards.png` and each `sheet.png` with the Read tool, then any frame under `storyboards/<style>/frames/` that
+looks wrong at full size. A line that does not sound like `taste.md` is fixed in `taste.json` `words` or `moments`;
+then `draft`, `check` and `sheets` again. The layout is computed: never edit a board by hand.
 
 ## Done when
 
-`check` reports zero findings and the sheet looks clearly theirs.
+`check` reports zero findings for the three looks and `out/boards.png` shows three looks that are clearly theirs.

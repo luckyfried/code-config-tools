@@ -10,7 +10,7 @@ PHOTOS by its file name and no media is copied, so the run finds the photographs
 gather.py --photos) pointing at PHOTOS: the case of a person whose posts and photographs live in different places.
 
 The nine most-liked are the bakery's nine in S/tests/cornerloaf.json, with their captions, days and likes; the two at
-188 likes are told apart by comments (peach tart 12, spring menu 9). Every other photograph in PHOTOS is one more post
+188 likes are told apart by comments (nata day 12, spring menu 9). Every other photograph in PHOTOS is one more post
 of the year, under 150 likes, so the nine are unambiguous. Only the file names of PHOTOS are read.
 """
 import datetime as dt
@@ -49,7 +49,7 @@ def main():
     rows = []
     others = [n for n in names if n not in nine]
     for name, p in nine.items():
-        rows.append((stamp(year, p["doy"]), name, p["caption"], p["likes"], COMMENTS.get(p["rank"], round(p["likes"] / 30))))
+        rows.append((p["ts"], name, p["caption"], p["likes"], COMMENTS.get(p["rank"], round(p["likes"] / 30))))
     for i, name in enumerate(others):
         doy = 12 + i * 280 // max(1, len(others))
         rows.append((stamp(year, doy, 9), name, FILLER[i % len(FILLER)], 48 + (i * 37) % 95, 1 + i % 5))

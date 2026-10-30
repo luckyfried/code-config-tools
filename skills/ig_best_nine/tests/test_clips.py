@@ -43,7 +43,7 @@ class Clips(unittest.TestCase):
             self.assertEqual(got["00"]["stand_in"], "the hook's push")
             self.assertEqual(got["01"]["status"], "generated")
             self.assertEqual((got["01"]["from_frame"], got["01"]["frames"]), (60, 45))
-            frames = sorted((run / "public/clips/01").glob("*.jpg"))
+            frames = sorted((run / "public" / got["01"]["dir"]).glob("*.jpg"))
             self.assertEqual(len(frames), 45)
             size = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "stream=width,height", "-of", "csv=p=0",
                                    str(frames[0])], capture_output=True, text=True).stdout.strip()

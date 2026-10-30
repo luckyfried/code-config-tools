@@ -13,18 +13,22 @@ where the storyboard looks:
   focus  the subject, as [u, v] fractions of the photograph: each cell of a small copy is weighted by its detail
          (edge strength), by how far its color stands from the photograph's mean color, by skin tones, and by a
          soft center prior; the focus is the weighted center of the strongest tenth of the cells, kept 0.2-0.8.
-  crop   the wall's square, [x, y, w] fractions (w of the width): the largest square inside the photograph,
+  crop   the grid's square, [x, y, w] fractions (w of the width): the largest square inside the photograph,
          centered on the focus as far as the edges allow.
   line   the photograph's own strongest straight line, [u0, v0, u1, v1] fractions (a rail, a board's edge, a hem):
-         written by the person reading the photographs, never guessed here. drive lays its cut along it; a
-         photograph without one is cut level. Running picks.py again keeps each photograph's line.
+         written by the person reading the photographs, never guessed here, and carried on the board's
+         photograph. Running picks.py again keeps each photograph's line.
+
+  look   the photograph's difference hash; the film holds a photograph that repeats an earlier one in the film for
+         the shortest time (story.py).
 
 picks.json carries the nine in rank order (file relative to public/, aspect as height over width, focus, crop,
-score, brightness, colors, source). The storyboard records the same focus and crop on every layer that draws the
+score, brightness, colors, look, source). The storyboard records the same focus and crop on every layer that draws the
 photograph, so a person can move a focus in picks.json and draft again.
 """
 import datetime as dt
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -72,15 +76,21 @@ def place(rank, src, video=None):
     """The photograph the film draws, in public/photos/. Returns its path, or None when it cannot be opened."""
     PHOTOS.mkdir(parents=True, exist_ok=True)
     dest = PHOTOS / f"r{rank}-{Path(src).stem}.jpg"
+    # written beside it and moved in whole, so the film never draws a half-written photograph
+    part = dest.with_name(f".{dest.stem}.part.jpg")
     if video:
-        return dest if poster(src, dest) else None
-    try:
-        im = open_image(src)
-    except Exception as e:
-        print(f"skip {Path(src).name}: cannot open ({e})", file=sys.stderr)
-        return None
-    im.thumbnail((LONG, LONG), Image.LANCZOS)
-    matched(im.convert("RGB")).save(dest, "JPEG", quality=90)
+        if not poster(src, part):
+            part.unlink(missing_ok=True)
+            return None
+    else:
+        try:
+            im = open_image(src)
+        except Exception as e:
+            print(f"skip {Path(src).name}: cannot open ({e})", file=sys.stderr)
+            return None
+        im.thumbnail((LONG, LONG), Image.LANCZOS)
+        matched(im.convert("RGB")).save(part, "JPEG", quality=90)
+    os.replace(part, dest)
     return dest
 
 
@@ -154,7 +164,16 @@ def analyse(path):
     cols = sorted(q.getcolors(), reverse=True)
     dom = [{"rgb": pal[3 * i:3 * i + 3], "share": round(n / (small.size[0] * small.size[1]), 3)} for n, i in cols]
     score = round(0.45 * sat + 0.35 * min(1, contrast) + 0.2 * expo, 3)
-    return {"w": w, "h": h, "score": score, "bright": round(bright, 3), "colors": dom}
+    return {"w": w, "h": h, "score": score, "bright": round(bright, 3), "colors": dom, "look": look(im)}
+
+
+def look(im):
+    """The photograph's difference hash, 16 hex digits: each of 64 bits says whether a cell of a 9 by 8 grey copy is
+    lighter than its right neighbour. Two photographs of the same scene differ in a few bits."""
+    g = im.convert("L").resize((9, 8))
+    px = list(g.getdata())
+    bits = "".join("1" if px[r * 9 + c] > px[r * 9 + c + 1] else "0" for r in range(8) for c in range(8))
+    return f"{int(bits, 2):016x}"
 
 
 def main():
