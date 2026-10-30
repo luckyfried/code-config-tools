@@ -1,0 +1,279 @@
+{
+  "about": "One recipe per style card id. music_engine.py plays a recipe and has no style of its own: everything a style sounds like is here. Programs are General MIDI numbers counted from 0 (bank 0 unless `bank` is given); a drum kit is a bank-128 preset. A pattern is 16 steps of one bar (or 32 of two): X loud, x normal, o soft, - holds the note before, . is silence. Progressions are scale degrees of the recipe's mode; `voicing` stacks scale steps on each degree.",
+  "default": "kinetic-type",
+  "soundfont": {
+    "source": "MuseScore_General.sf3 0.2.0 (MIT)",
+    "swap": {"Piano FF-low": "Piano MF-low", "Piano FF-high": "Piano MF-high"},
+    "mono": ["Piano MF-low", "Piano MF-high"]
+  },
+  "drum_map": {
+    "kick": 36, "kick2": 35, "rim": 37, "snare": 38, "clap": 39, "snare2": 40, "hat": 42, "pedal": 44, "open": 46,
+    "tom_lo": 45, "tom_mid": 47, "tom_hi": 50, "crash": 49, "ride": 51, "bell": 53, "tamb": 54, "cowbell": 56,
+    "crash2": 57, "conga_hi": 63, "conga_lo": 64, "cabasa": 69, "shaker": 70, "clave": 75, "wood_hi": 76, "wood_lo": 77,
+    "triangle": 81, "boom": 36, "timp": 41, "timp_hi": 48, "cymbal": 57
+  },
+  "styles": {
+    "editorial-quiet": ["editorial", "quiet", "calm", "gentle", "soft", "piano", "felt piano", "ambient", "neoclassical", "minimal piano", "intimate", "tender", "warm"],
+    "kinetic-type": ["kinetic", "typography", "upbeat", "energetic", "garage", "big beat", "punchy", "hype", "dance", "electronic", "funk", "hip hop", "drive", "driving", "bold"],
+    "scrapbook": ["scrapbook", "ukulele", "acoustic", "playful", "whimsical", "folk", "indie folk", "happy", "cute", "glockenspiel", "handmade", "sunny", "cheerful"],
+    "analog-home-movie": ["analog", "home movie", "chillwave", "lo-fi", "lofi", "nostalgic", "vintage", "retro", "dreamy", "tape", "vhs", "film grain", "hazy", "summer"],
+    "swiss-grid": ["swiss", "grid", "marimba", "minimal", "minimalist", "pulse", "clean", "modern", "precise", "techno", "house", "architectural", "geometric"],
+    "cinematic-letterbox": ["cinematic", "letterbox", "epic", "trailer", "orchestral", "strings", "dramatic", "film score", "taiko", "emotional", "documentary", "grand", "sweeping"]
+  },
+  "avoid": {
+    "drums": ["drums"], "drum": ["drums"], "beat": ["drums"], "beats": ["drums"], "percussion": ["drums", "percussion"],
+    "taiko": ["taiko"], "piano": ["piano"], "keys": ["keys", "piano"], "strings": ["strings"], "violin": ["strings"],
+    "cello": ["strings"], "orchestra": ["strings", "brass"], "synth": ["synth"], "synths": ["synth"], "bass": ["bass"],
+    "brass": ["brass"], "horns": ["brass"], "guitar": ["guitar"], "ukulele": ["guitar"], "bells": ["bells"],
+    "glockenspiel": ["bells"], "chimes": ["bells"], "marimba": ["mallets"], "mallets": ["mallets"],
+    "vibraphone": ["mallets"], "whistle": ["whistle"], "whistling": ["whistle"], "lead": ["lead"], "melody": ["lead"],
+    "busy": ["busy"], "frantic": ["busy"], "lo-fi": ["lofi"], "lofi": ["lofi"], "tape": ["lofi"], "wobble": ["lofi"],
+    "reverb": ["room"], "echo": ["room"], "saturation": ["distortion"], "pad": ["pad"],
+    "pads": ["pad"], "harp": ["harp"]
+  },
+  "recipes": {
+    "editorial-quiet": {
+      "name": "felt piano and ambient pads",
+      "tempo": [64, 84], "mode": "ionian", "voicing": [0, 2, 4, 6], "bars_per_chord": 2, "swing": 0.0,
+      "arc": [0, 1, 2, 1],
+      "progressions": [[1, 5, 6, 4], [4, 1, 5, 6], [1, 6, 4, 5], [6, 4, 1, 5], [1, 3, 6, 4], [4, 5, 3, 6]],
+      "roles": {
+        "piano": {"program": 0, "play": "arp", "order": "updown", "octave": 4, "velocity": 0.5, "enter": 0, "pan": -0.15,
+                  "pattern": "x.o.x.o.x.o.x.o.", "tags": ["piano", "keys"]},
+        "pad": {"program": 89, "play": "chord", "octave": 3, "velocity": 0.34, "enter": 1, "pan": 0.0,
+                "pattern": "x-------------------------------", "tags": ["pad", "synth"]},
+        "cello": {"program": 42, "play": "bass", "octave": 2, "velocity": 0.46, "enter": 2, "pan": 0.2,
+                  "pattern": "x---------------x---------------", "tags": ["strings", "bass"]},
+        "harp": {"program": 46, "play": "melody", "octave": 5, "velocity": 0.42, "enter": 2, "pan": 0.35,
+                 "pattern": "....x.......x.x.", "tags": ["harp", "lead"]}
+      },
+      "drums": null,
+      "grooves": [
+        {"name": "still", "energy": 0, "tags": [], "roles": {"piano": "x-------o-------"}},
+        {"name": "flow", "energy": 1, "tags": [], "roles": {}},
+        {"name": "open", "energy": 2, "tags": ["busy"], "roles": {"piano": "x.ooxo.ox.ooxo.o", "harp": "..x...x...x.x..."}}
+      ],
+      "chain": [
+        {"filter": "highpass=f=60", "tags": []},
+        {"filter": "lowpass=f=8500", "tags": []},
+        {"filter": "aecho=0.8:0.85:120|240|480:0.35|0.25|0.15", "tags": ["room"]}
+      ],
+      "fx": {
+        "riser": [{"program": 119, "play": "swell", "notes": [0], "octave": 5, "velocity": 0.9},
+                  {"program": 89, "play": "swell", "notes": [0, 7, 14], "octave": 3, "velocity": 0.8}],
+        "hit": [{"program": 0, "play": "hit", "notes": [0, 7, 12], "octave": 2, "velocity": 0.9},
+                {"program": 46, "play": "hit", "notes": [12, 19], "octave": 4, "velocity": 0.7}],
+        "bright": [{"program": 46, "play": "hit", "notes": [24, 31], "octave": 4, "velocity": 0.8},
+                   {"program": 0, "play": "hit", "notes": [24], "octave": 4, "velocity": 0.6}],
+        "impact": [{"program": 0, "play": "hit", "notes": [0, 12], "octave": 1, "velocity": 1.0},
+                   {"program": 42, "play": "hit", "notes": [0, 7], "octave": 2, "velocity": 0.9}]
+      }
+    },
+    "kinetic-type": {
+      "name": "garage and big beat",
+      "tempo": [118, 132], "mode": "mixolydian", "voicing": [0, 2, 4, 6], "bars_per_chord": 1, "swing": 0.08,
+      "arc": [1, 2, 3, 2],
+      "progressions": [[1, 7, 4, 1], [1, 4, 7, 4], [1, 1, 7, 4], [4, 1, 7, 7], [1, 7, 6, 7]],
+      "roles": {
+        "keys": {"program": 5, "play": "chord", "octave": 4, "velocity": 0.58, "enter": 0, "pan": -0.2,
+                 "pattern": "..x...x...x..x..", "tags": ["keys", "synth"]},
+        "bass": {"program": 36, "play": "bass", "octave": 2, "velocity": 0.78, "enter": 1, "pan": 0.0,
+                 "pattern": "x..x..x...x.x...", "tags": ["bass"]},
+        "lead": {"program": 81, "play": "melody", "octave": 5, "velocity": 0.42, "enter": 2, "pan": 0.25,
+                 "pattern": "x.x...x.x.x.....", "tags": ["synth", "lead"]},
+        "brass": {"program": 61, "play": "chord", "octave": 4, "velocity": 0.62, "enter": 3, "pan": 0.1,
+                  "pattern": "x-.........x-...", "tags": ["brass"]}
+      },
+      "drums": {"kit": 25, "velocity": 0.9, "enter": 0, "tags": ["drums", "percussion"], "crash": "crash",
+                "fill": {"kick": "X...............", "snare": "....x.x.xxxxXXXX"}},
+      "grooves": [
+        {"name": "break", "energy": 1, "tags": [], "roles": {},
+         "drums": {"kick": "X.........X.....", "snare": "....X.......X...", "hat": "x.x.x.x.x.x.x.x."}},
+        {"name": "drive", "energy": 2, "tags": [], "roles": {},
+         "drums": {"kick": "X..x..X...X..x..", "snare": "....X.......X...", "clap": "............x...", "hat": "xxxxxxxxxxxxxxxx"}},
+        {"name": "peak", "energy": 3, "tags": ["busy"], "roles": {"keys": "x.x...x.x.x..x.x"},
+         "drums": {"kick": "X.x.X..xX.x.X...", "snare": "....X.......X.xx", "clap": "....X.......X...", "hat": "xXxxxXxxxXxxxXxx", "open": "..x...x...x...x."}}
+      ],
+      "chain": [
+        {"filter": "highpass=f=35", "tags": []},
+        {"filter": "acompressor=threshold=0.125:ratio=4:attack=5:release=80:makeup=2", "tags": []},
+        {"filter": "asoftclip=type=tanh", "tags": ["distortion"]},
+        {"filter": "aecho=0.8:0.4:28:0.2", "tags": ["room"]}
+      ],
+      "fx": {
+        "riser": [{"program": 119, "play": "swell", "notes": [0], "octave": 5, "velocity": 0.9},
+                  {"program": 81, "play": "run", "notes": [0, 7, 12, 19, 24], "octave": 4, "velocity": 0.7}],
+        "hit": [{"program": 55, "play": "hit", "notes": [0], "octave": 4, "velocity": 1.0},
+                {"kit": 25, "play": "hit", "notes": ["kick"], "velocity": 1.0}],
+        "bright": [{"program": 55, "play": "hit", "notes": [12], "octave": 5, "velocity": 0.8},
+                   {"kit": 25, "play": "hit", "notes": ["clap"], "velocity": 0.9}],
+        "impact": [{"kit": 25, "play": "hit", "notes": ["kick", "crash"], "velocity": 1.0},
+                   {"program": 55, "play": "hit", "notes": [0, -12], "octave": 3, "velocity": 1.0}]
+      }
+    },
+    "scrapbook": {
+      "name": "ukulele and glockenspiel",
+      "tempo": [96, 116], "mode": "ionian", "voicing": [0, 2, 4], "bars_per_chord": 1, "swing": 0.14,
+      "arc": [0, 1, 2, 3],
+      "progressions": [[1, 4, 5, 1], [1, 5, 6, 4], [4, 1, 5, 5], [1, 6, 2, 5], [1, 4, 1, 5]],
+      "roles": {
+        "uke": {"program": 24, "bank": 8, "play": "chord", "octave": 4, "velocity": 0.6, "enter": 0, "pan": -0.25,
+                "pattern": "x.x.xx.xx.x.xx.x", "tags": ["guitar"]},
+        "glock": {"program": 9, "play": "melody", "octave": 5, "velocity": 0.48, "enter": 1, "pan": 0.3,
+                  "pattern": "x...x.x.....x...", "tags": ["bells", "lead"]},
+        "bass": {"program": 32, "play": "bass", "octave": 2, "velocity": 0.7, "enter": 1, "pan": 0.0,
+                 "pattern": "x.......x...x...", "tags": ["bass"]},
+        "whistle": {"program": 78, "play": "melody", "octave": 5, "velocity": 0.42, "enter": 3, "pan": 0.1,
+                    "pattern": "x-..x-x-x---....", "tags": ["whistle", "lead"]}
+      },
+      "drums": {"kit": 8, "velocity": 0.7, "enter": 1, "tags": ["drums", "percussion"], "crash": "tamb",
+                "fill": {"snare": "........x.x.xxxx"}},
+      "grooves": [
+        {"name": "tiptoe", "energy": 0, "tags": [], "roles": {"uke": "x...x...x...x..."}, "drums": {}},
+        {"name": "skip", "energy": 1, "tags": [], "roles": {},
+         "drums": {"kick": "x.......x.......", "clap": "....x.......x...", "shaker": "x.xxx.xxx.xxx.xx"}},
+        {"name": "bounce", "energy": 2, "tags": [], "roles": {},
+         "drums": {"kick": "x.....x.x.......", "snare": "....x.......x...", "shaker": "xxxxxxxxxxxxxxxx", "tamb": "..x...x...x...x."}},
+        {"name": "party", "energy": 3, "tags": ["busy"], "roles": {"glock": "x.x.x.x...x.x..."},
+         "drums": {"kick": "x...x...x...x...", "clap": "....x.......x...", "tamb": "x.x.x.x.x.x.x.x.", "wood_hi": "...x.....x...x.."}}
+      ],
+      "chain": [
+        {"filter": "highpass=f=80", "tags": []},
+        {"filter": "equalizer=f=3200:t=q:w=1:g=3", "tags": []},
+        {"filter": "aecho=0.8:0.5:22|37:0.25|0.18", "tags": ["room"]}
+      ],
+      "fx": {
+        "riser": [{"program": 9, "play": "run", "notes": [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24], "octave": 5, "velocity": 0.8}],
+        "hit": [{"program": 115, "play": "hit", "notes": [0], "octave": 5, "velocity": 1.0},
+                {"program": 9, "play": "hit", "notes": [12], "octave": 5, "velocity": 0.7}],
+        "bright": [{"program": 9, "play": "hit", "notes": [12, 16, 19], "octave": 5, "velocity": 0.8}],
+        "impact": [{"kit": 8, "play": "hit", "notes": ["kick", "crash"], "velocity": 0.9},
+                   {"program": 9, "play": "hit", "notes": [0, 7, 12], "octave": 5, "velocity": 0.8},
+                   {"program": 24, "bank": 8, "play": "hit", "notes": [0, 4, 7, 12], "octave": 4, "velocity": 0.9}]
+      }
+    },
+    "analog-home-movie": {
+      "name": "chillwave on wobbling tape",
+      "tempo": [70, 96], "mode": "dorian", "voicing": [0, 2, 4, 6], "bars_per_chord": 2, "swing": 0.18,
+      "arc": [0, 1, 2, 1],
+      "progressions": [[1, 4, 1, 4], [1, 3, 4, 7], [1, 5, 4, 4], [2, 1, 4, 7], [1, 7, 4, 3]],
+      "roles": {
+        "keys": {"program": 4, "play": "chord", "octave": 4, "velocity": 0.5, "enter": 0, "pan": -0.1,
+                 "pattern": "x-----x-------x-", "tags": ["keys"]},
+        "pad": {"program": 94, "play": "chord", "octave": 3, "velocity": 0.34, "enter": 0, "pan": 0.15,
+                "pattern": "x-------------------------------", "tags": ["pad", "synth"]},
+        "bass": {"program": 35, "play": "bass", "octave": 2, "velocity": 0.6, "enter": 1, "pan": 0.0,
+                 "pattern": "x-....x-..x-....", "tags": ["bass"]}
+      },
+      "drums": {"kit": 0, "velocity": 0.55, "enter": 1, "tags": ["drums", "percussion"], "crash": "crash",
+                "fill": {"snare": "............xxXX"}},
+      "grooves": [
+        {"name": "haze", "energy": 0, "tags": [], "roles": {}, "drums": {"hat": "..x...x...x...x."}},
+        {"name": "cruise", "energy": 1, "tags": [], "roles": {},
+         "drums": {"kick": "x.........x.....", "snare": "....x.......x...", "hat": "x.x.x.x.x.x.x.x."}},
+        {"name": "glow", "energy": 2, "tags": ["busy"], "roles": {"keys": "x---x-----x---x-"},
+         "drums": {"kick": "x......x..x.....", "snare": "....x.......x..o", "hat": "xxx.xxx.xxx.xxx.", "shaker": "..x...x...x...x."}}
+      ],
+      "chain": [
+        {"filter": "highpass=f=45", "tags": []},
+        {"filter": "vibrato=f=0.6:d=0.15", "tags": ["lofi"]},
+        {"filter": "lowpass=f=6200", "tags": ["lofi"]},
+        {"filter": "acrusher=bits=10:mix=0.18:mode=log", "tags": ["lofi", "distortion"]},
+        {"filter": "aecho=0.8:0.6:70|140:0.3|0.2", "tags": ["room"]}
+      ],
+      "fx": {
+        "riser": [{"program": 119, "play": "swell", "notes": [0], "octave": 5, "velocity": 0.9},
+                  {"program": 94, "play": "swell", "notes": [0, 7, 10], "octave": 3, "velocity": 0.8}],
+        "hit": [{"program": 4, "play": "hit", "notes": [0, 3, 7, 10], "octave": 4, "velocity": 0.9}],
+        "bright": [{"program": 4, "play": "hit", "notes": [12, 19], "octave": 5, "velocity": 0.8}],
+        "impact": [{"kit": 0, "play": "hit", "notes": ["kick", "crash"], "velocity": 0.9},
+                   {"program": 94, "play": "hit", "notes": [0, 7], "octave": 2, "velocity": 0.9}]
+      }
+    },
+    "swiss-grid": {
+      "name": "marimba pulse, minimal",
+      "tempo": [120, 126], "mode": "aeolian", "voicing": [0, 3, 6], "bars_per_chord": 2, "swing": 0.0,
+      "arc": [0, 1, 2, 3, 2],
+      "progressions": [[1, 6, 7, 1], [1, 4, 6, 5], [1, 7, 6, 7], [6, 7, 1, 1], [1, 3, 7, 4]],
+      "roles": {
+        "marimba": {"program": 12, "play": "arp", "order": "up", "octave": 4, "velocity": 0.55, "enter": 0, "pan": -0.2,
+                    "pattern": "xoxoxoxoxoxoxoxo", "tags": ["mallets"]},
+        "pizz": {"program": 45, "play": "chord", "octave": 4, "velocity": 0.45, "enter": 1, "pan": 0.3,
+                 "pattern": "x..x..x..x..x...", "tags": ["strings"]},
+        "bass": {"program": 39, "play": "bass", "octave": 2, "velocity": 0.7, "enter": 2, "pan": 0.0,
+                 "pattern": "x...x...x...x...", "tags": ["bass", "synth"]},
+        "vibes": {"program": 11, "play": "melody", "octave": 5, "velocity": 0.42, "enter": 3, "pan": 0.15,
+                  "pattern": "x.......x...x...", "tags": ["mallets", "lead"]}
+      },
+      "drums": {"kit": 24, "velocity": 0.75, "enter": 1, "tags": ["drums", "percussion"], "crash": "open",
+                "fill": {"rim": "........x.x.x.xx"}},
+      "grooves": [
+        {"name": "grid", "energy": 0, "tags": [], "roles": {}, "drums": {"hat": "..x...x...x...x."}},
+        {"name": "four", "energy": 1, "tags": [], "roles": {}, "drums": {"kick": "x...x...x...x...", "hat": "..x...x...x...x."}},
+        {"name": "lock", "energy": 2, "tags": [], "roles": {},
+         "drums": {"kick": "x...x...x...x...", "clap": "....x.......x...", "hat": "..x...x...x...x.", "rim": "x..x..x..x..x..."}},
+        {"name": "lattice", "energy": 3, "tags": ["busy"], "roles": {},
+         "drums": {"kick": "x...x...x...x...", "clap": "....x.......x...", "hat": "xxxxxxxxxxxxxxxx", "rim": "..x..x..x..x..x."}}
+      ],
+      "chain": [
+        {"filter": "highpass=f=50", "tags": []},
+        {"filter": "equalizer=f=250:t=q:w=1:g=-3", "tags": []},
+        {"filter": "aecho=0.8:0.3:15:0.15", "tags": ["room"]},
+        {"filter": "extrastereo=m=1.4", "tags": []}
+      ],
+      "fx": {
+        "riser": [{"program": 12, "play": "run", "notes": [0, 3, 7, 10, 12, 15, 19, 22, 24], "octave": 4, "velocity": 0.8}],
+        "hit": [{"program": 115, "play": "hit", "notes": [0], "octave": 5, "velocity": 1.0},
+                {"program": 12, "play": "hit", "notes": [0, 12], "octave": 4, "velocity": 0.8}],
+        "bright": [{"program": 11, "play": "hit", "notes": [12, 19], "octave": 5, "velocity": 0.8}],
+        "impact": [{"kit": 24, "play": "hit", "notes": ["kick"], "velocity": 1.0},
+                   {"program": 39, "play": "hit", "notes": [0], "octave": 1, "velocity": 1.0},
+                   {"program": 12, "play": "hit", "notes": [0, 7, 12], "octave": 3, "velocity": 0.9}]
+      }
+    },
+    "cinematic-letterbox": {
+      "name": "strings and taiko trailer build",
+      "tempo": [70, 90], "mode": "aeolian", "voicing": [0, 2, 4], "bars_per_chord": 2, "swing": 0.0,
+      "arc": [0, 1, 2, 3],
+      "progressions": [[1, 6, 3, 7], [1, 6, 7, 1], [6, 4, 1, 5], [1, 7, 6, 7], [1, 4, 6, 7], [6, 7, 1, 1]],
+      "roles": {
+        "strings": {"program": 49, "play": "chord", "octave": 3, "velocity": 0.55, "enter": 0, "pan": -0.1,
+                    "pattern": "x-------------------------------", "tags": ["strings"]},
+        "piano": {"program": 0, "play": "melody", "octave": 5, "velocity": 0.42, "enter": 0, "pan": 0.2,
+                  "pattern": "x.......x...x...", "tags": ["piano", "lead"]},
+        "low": {"program": 42, "play": "bass", "octave": 2, "velocity": 0.6, "enter": 1, "pan": 0.0,
+                "pattern": "x-------x---x---", "tags": ["strings", "bass"]},
+        "tremolo": {"program": 44, "play": "chord", "octave": 4, "velocity": 0.5, "enter": 2, "pan": 0.25,
+                    "pattern": "x---------------", "tags": ["strings"]},
+        "taiko": {"program": 116, "play": "bass", "octave": 2, "velocity": 0.85, "enter": 1, "pan": 0.0,
+                  "pattern": "x.......x.......", "tags": ["drums", "percussion", "taiko"]}
+      },
+      "drums": {"kit": 48, "velocity": 0.8, "enter": 3, "tags": ["drums", "percussion"], "crash": "cymbal",
+                "fill": {"snare": "x.x.x.x.xxxxXXXX", "timp": "............x.xX"}},
+      "grooves": [
+        {"name": "hold", "energy": 0, "tags": [], "roles": {"taiko": "................"}, "drums": {}},
+        {"name": "pulse", "energy": 1, "tags": [], "roles": {}, "drums": {}},
+        {"name": "march", "energy": 2, "tags": [], "roles": {"taiko": "x.....x.x.......", "tremolo": "x-------x-------"},
+         "drums": {"timp": "x.......x......."}},
+        {"name": "war", "energy": 3, "tags": ["busy"], "roles": {"taiko": "x..x..x.x.x.xxxx"},
+         "drums": {"boom": "x.......x.......", "snare": "....x.......x...", "timp": "x..x..x.x......."}}
+      ],
+      "chain": [
+        {"filter": "highpass=f=30", "tags": []},
+        {"filter": "acompressor=threshold=0.2:ratio=3:attack=20:release=200", "tags": []},
+        {"filter": "aecho=0.8:0.8:90|180|300:0.35|0.25|0.18", "tags": ["room"]}
+      ],
+      "fx": {
+        "riser": [{"program": 44, "play": "swell", "notes": [0, 7, 12], "octave": 3, "velocity": 0.9},
+                  {"program": 119, "play": "swell", "notes": [0], "octave": 5, "velocity": 0.9}],
+        "hit": [{"program": 116, "play": "hit", "notes": [0], "octave": 2, "velocity": 1.0},
+                {"kit": 48, "play": "hit", "notes": ["timp"], "velocity": 0.9}],
+        "bright": [{"program": 0, "play": "hit", "notes": [12, 19, 24], "octave": 5, "velocity": 0.7}],
+        "impact": [{"program": 116, "play": "hit", "notes": [0, -5], "octave": 2, "velocity": 1.0},
+                   {"kit": 48, "play": "hit", "notes": ["boom", "timp", "cymbal"], "velocity": 1.0},
+                   {"program": 55, "play": "hit", "notes": [0], "octave": 3, "velocity": 0.9},
+                   {"program": 49, "play": "hit", "notes": [0, 7], "octave": 2, "velocity": 0.9}]
+      }
+    }
+  }
+}

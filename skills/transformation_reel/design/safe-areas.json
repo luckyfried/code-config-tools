@@ -1,5 +1,27 @@
 {
-  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); portrait is the then/now card (1080x1350, the feed's tallest post): the two photos sit inside the margin with the title band under them, so no word covers a photo.",
-  "reel": {"width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150},
-  "portrait": {"width": 1080, "height": 1350, "top": 56, "bottom": 56, "left": 56, "right": 56}
+  "about": "Where text may sit, per format, in px from each edge. Photographs run inside the frame; type stays inside these lines. reel (9:16) follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); square (1:1) is the feed post and landscape (16:9) the wide player, each with a plain margin.",
+  "reel": {
+    "width": 1080,
+    "height": 1920,
+    "top": 270,
+    "bottom": 670,
+    "left": 72,
+    "right": 150
+  },
+  "square": {
+    "width": 1080,
+    "height": 1080,
+    "top": 64,
+    "bottom": 64,
+    "left": 64,
+    "right": 64
+  },
+  "landscape": {
+    "width": 1920,
+    "height": 1080,
+    "top": 64,
+    "bottom": 64,
+    "left": 96,
+    "right": 96
+  }
 }

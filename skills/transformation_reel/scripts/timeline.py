@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the subject and its timeline. Reads build/library.json, writes build/subject.json and
-build/photo_index.json, and prepares the subject's photos in build/photos/.
+"""Movement 1, research: the subject and its timeline. Reads RUN/library.json, writes RUN/subject.json and
+RUN/photo_index.json, and prepares the subject's photos in RUN/photos/.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/timeline.py [--subject "my pottery"] [--terms clay,kiln]
 
 The subject: the one the person named (--subject, matched on their captions and hashtags through the word groups
-below, plus --terms), otherwise the subject with the longest dated run of posts: for each word group, the posts
+below, plus --terms; a named subject outside every group matches the posts that name each of its words, so "my lisbon
+walks" is never every post that says lisbon, and an @mention is never a caption word), otherwise the subject with the longest dated run of posts: for each word group, the posts
 that name it, split into runs wherever two posts sit more than 62 days apart; the longest run in days wins, ties
-to the run with more posts. A named subject with no posts exits 2 and prints the candidates; so does a feed where
-nothing runs for at least two months.
+to the run with more posts. From a folder of photos (library.json `source` photos) the folder is the subject's: every
+dated photo in it is the subject, whatever its caption says. A named subject with no posts
+exits 2 and prints the candidates; so does a feed where nothing runs for at least two months.
 
 The timeline is every post and reel of the subject, oldest first, each with its date, caption, photo (a reel
 stands in by its poster frame and stays available as footage) and how far it has moved from the first photo
@@ -17,7 +19,8 @@ stands in by its poster frame and stays available as footage) and how far it has
   first, latest   the subject's earliest and latest dated posts: the film runs from one to the other
   milestones      the posts whose captions say so (milestone, first, finally, sold, proud, 100th); their own words
                   win, and only when they name fewer than two does the largest visible step join as a milestone
-  span            the months (or weeks, or years) between first and latest, the number every card and the caption say
+  span            the months (or weeks, or years) between first and latest; the film's closer sets it only in their own
+                  words for it, and otherwise carries their first and latest dates
   voice           how the captions about the subject sound early (the oldest third) against recent (the newest third)
   changed         their own lines about what changed ("taller", "a year ago", "now"), newest first
 """
@@ -70,11 +73,17 @@ def tokens(text):
     return [t for t in re.split(r"[^a-z0-9]+", (text or "").lower()) if t]
 
 
-def matches(row, terms):
-    cap = (row.get("caption") or "").lower()
+def matches(row, terms, every=()):
+    """Whether a post is about the subject: any of `terms` in its caption words or hashtags, or, when `every` is given
+    (a named subject that is no word group), each of its named words. A word in a hashtag counts (#lisbonwalks
+    names lisbon and walks); an @mention is someone's handle, never a caption word."""
+    cap = re.sub(r"@[\w.]+", " ", (row.get("caption") or "").lower())
     toks = set(tokens(re.sub(r"#\w+", " ", cap)))
-    tags = [t.lower() for t in re.findall(r"#(\w+)", cap)]
-    return bool(toks & (terms - HASHTAG_ONLY)) or any(t in tags or any(len(x) >= 4 and x in tag for tag in tags) for t in terms for x in [t])
+    tags = re.findall(r"#(\w+)", cap)
+
+    def hit(t):
+        return (t in toks and t not in HASHTAG_ONLY) or t in tags or (len(t) >= 4 and any(t in tag for tag in tags))
+    return any(hit(t) for t in terms) or (bool(every) and all(any(hit(t) for t in alts) for alts in every))
 
 
 def date_of(ts):
@@ -121,13 +130,17 @@ def rows_of(lib):
 
 
 def terms_for(named, extra):
-    words = [w for w in tokens(named or "") if w not in STOP]
-    words = words + [w[:-1] for w in words if w.endswith("s") and len(w) > 3]
-    group = next((g for g, ws in SUBJECTS.items() if g in words or set(words) & set(ws)), None)
-    terms = set(words) | set(extra)
+    """The subject's name, its terms (any one names it) and its every-list (each named word, with its singular, must
+    appear). A named word in a word group brings the group's words as terms; otherwise the named words are all the
+    evidence there is, so a post names every one of them ("my lisbon walks" is a walk in lisbon, never any post
+    that says lisbon)."""
+    named_words = [w for w in tokens(named or "") if w not in STOP]
+    alts = [{w, w[:-1]} if w.endswith("s") and len(w) > 3 else {w} for w in named_words]
+    words = set().union(*alts) if alts else set()
+    group = next((g for g, ws in SUBJECTS.items() if g in words or words & set(ws)), None)
     if group:
-        terms |= set(SUBJECTS[group])
-    return (group or (words[0] if words else named)), terms
+        return group, words | set(extra) | set(SUBJECTS[group]), []
+    return (" ".join(named_words) or named), set(extra), alts
 
 
 def candidates(rows):
@@ -147,8 +160,8 @@ def candidates(rows):
 
 def signature(path):
     """A small picture of the photo: 16x20 gray levels and the mean color, for measuring visible change."""
-    import picks
-    im = picks.open_image(path, draft=(160, 200)).resize((16, 20))
+    import photos
+    im = photos.open_image(path, draft=(160, 200)).resize((16, 20))
     gray = [v / 255 for v in im.convert("L").tobytes()]
     rgb = im.convert("RGB").tobytes()
     n = len(rgb) // 3
@@ -198,12 +211,31 @@ def voice(posts):
         if v["unsure"] > v["sure"]:
             return "unsure of themselves, laughing at the misses"
         if v["sure"] > v["unsure"]:
-            return "sure of the craft, naming what they made"
-        return "plain, saying what is on the shelf"
+            return "sure of themselves, naming what they did"
+        return "plain, saying what the photograph shows"
     summary = (f"early ({early['from'][:7]} to {early['to'][:7]}): {early['avg_words']} words a caption, {tone(early)} "
                f"(\"{early['lines'][0]}\"); recent ({recent['from'][:7]} to {recent['to'][:7]}): {recent['avg_words']} words, "
                f"{tone(recent)} (\"{recent['lines'][-1]}\")")
     return {"early": early, "recent": recent, "summary": summary}
+
+
+def milestones(posts):
+    """The milestones of a dated run, oldest first: every post between the first and the latest whose caption says
+    milestone, first, finally, sold, proud or an ordinal (100th). Only when fewer than two say so do the posts with the
+    largest visible step from the post before (`step`) join, up to three in all. Sets each post's `milestone` flag."""
+    said = [p for p in posts[1:-1] if MILESTONE.search(p["caption"] or "")]
+    miles = [{"id": p["id"], "date": p["date"], "caption": p["caption"], "label": clean(p["caption"]), "why": "their words"} for p in said]
+    if len(miles) < 2:
+        for p in sorted(posts[1:-1], key=lambda p: -(p.get("step") or 0)):
+            if len(miles) >= 3:
+                break
+            if p["id"] not in {m["id"] for m in miles}:
+                miles.append({"id": p["id"], "date": p["date"], "caption": p["caption"], "label": clean(p["caption"]) or p["date"],
+                              "why": f"visible change: the largest step between two posts ({p.get('step') or 0:.2f} of the whole change)"})
+        miles.sort(key=lambda m: m["date"])
+    for p in posts:
+        p["milestone"] = p["id"] in {m["id"] for m in miles}
+    return miles
 
 
 def main():
@@ -211,17 +243,19 @@ def main():
     ap.add_argument("--subject", help="the subject the person named, in their words")
     ap.add_argument("--terms", default="", help="more words or hashtags that name the subject, comma separated")
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.open_run()
+    lib = _env.read_json(_env.b("library.json"))
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("RUN/library.json is missing: run gather.py first")
     _env.need("PIL")
-    import picks
+    import photos
     rows = rows_of(lib)
     cands = candidates(rows)
     extra = [t.strip().lower().lstrip("#") for t in a.terms.split(",") if t.strip()]
     if a.subject:
-        name, terms = terms_for(a.subject, extra)
-        hit = [r for r in rows if matches(r, terms)]
+        name, terms, every = terms_for(a.subject, extra)
+        hit = [r for r in rows if matches(r, terms, every)]
+        terms = terms | set().union(*every) if every else terms
         chosen_by = f"named by the person (\"{a.subject}\")"
     else:
         top = next((c for c in cands if c["run_days"] >= 60 and c["run_posts"] >= 4), None)
@@ -229,8 +263,10 @@ def main():
         hit = [r for r in rows if matches(r, terms)] if top else []
         if top:
             hit = [r for r in hit if top["run_first"] <= date_of(r["ts"]).isoformat() <= top["run_latest"]]
-        chosen_by = (f"the longest dated run of posts ({top['run_posts']} posts over {top['run_days']} days, "
-                     f"{top['run_first']} to {top['run_latest']})") if top else ""
+        chosen_by = f"the longest dated run in their feed ({top['run_first']} to {top['run_latest']})" if top else ""
+    if lib.get("source") == "photos":
+        name, hit = name or a.subject or "the photos", rows
+        chosen_by = f"every photo in the folder they named ({(lib.get('found') or {}).get('photos', 'their photos')})"
     if len(hit) < 2:
         print("candidates: " + "; ".join(f"{c['subject']} {c['posts']} posts, run {c['run_days']} days" for c in cands[:6]))
         sys.exit(f"no subject with at least two dated posts{' for ' + repr(a.subject) if a.subject else ' runs two months'}: "
@@ -239,7 +275,7 @@ def main():
     for r in hit:
         media = r["media"][0]
         video = media if Path(media).suffix.lower() in VIDEO else None
-        photo = picks.poster(media) if video else next((picks.prepare(m) for m in r["media"] if Path(m).suffix.lower() not in VIDEO), None)
+        photo = photos.poster(media) if video else next((photos.prepare(m) for m in r["media"] if Path(m).suffix.lower() not in VIDEO), None)
         if not photo:
             continue
         posts.append({"date": date_of(r["ts"]).isoformat(), "ts": r["ts"], "kind": r["kind"], "caption": r.get("caption") or "",
@@ -250,22 +286,11 @@ def main():
     far = [dist(s, sigs[0]) for s in sigs]
     top = max(far) or 1
     for i, p in enumerate(posts):
-        an = picks.analyse(p["photo"])
+        an = photos.analyse(p["photo"])
         p.update(change=round(far[i] / top, 3), step=round(dist(sigs[i], sigs[i - 1]) / top, 3) if i else 0.0,
                  score=an["score"], bright=an["bright"], focal=an["focal"], calm=an["calm"], colors=an["colors"])
     first, latest = posts[0], posts[-1]
-    said = [p for p in posts[1:-1] if MILESTONE.search(p["caption"])]
-    miles = [{"id": p["id"], "date": p["date"], "caption": p["caption"], "label": clean(p["caption"]), "why": "their words"} for p in said]
-    if len(miles) < 2:
-        for p in sorted(posts[1:-1], key=lambda p: -p["step"]):
-            if len(miles) >= 3:
-                break
-            if p["id"] not in {m["id"] for m in miles}:
-                miles.append({"id": p["id"], "date": p["date"], "caption": p["caption"], "label": clean(p["caption"]) or p["date"],
-                              "why": f"visible change: the largest step between two posts ({p['step']:.2f} of the whole change)"})
-        miles.sort(key=lambda m: m["date"])
-    for p in posts:
-        p["milestone"] = p["id"] in {m["id"] for m in miles}
+    miles = milestones(posts)
     span = span_of(dt.date.fromisoformat(first["date"]), dt.date.fromisoformat(latest["date"]))
     changed = [{"id": p["id"], "date": p["date"], "line": clean(p["caption"])} for p in reversed(posts) if CHANGED.search(p["caption"])][:6]
     v = voice(posts)
@@ -275,10 +300,10 @@ def main():
            "latest": {k: latest[k] for k in ("id", "date", "caption", "photo")}, "milestones": miles, "span": span,
            "voice": v, "changed": changed, "steadiness": steady,
            "steadiness_means": "how steadily the photos move away from the first one as the dates go on (1 is every post further than the last)"}
-    _env.write_json("build/subject.json", out)
+    _env.write_json(_env.b("subject.json"), out)
     index = [{"src": p["src"], "photo": p["photo"], "kind": p["kind"], "ts": p["ts"], "date": p["date"], "id": p["id"],
               "score": p["score"], "bright": p["bright"], "focal": p["focal"], "calm": p["calm"], "colors": p["colors"]} for p in posts]
-    _env.write_json("build/photo_index.json", index)
+    _env.write_json(_env.b("photo_index.json"), index)
     print(f"subject: {name}, {chosen_by}")
     print("candidates: " + "; ".join(f"{c['subject']} {c['posts']} posts, longest run {c['run_days']} days ({c['run_posts']} posts)" for c in cands[:5]))
     print(f"timeline: {len(posts)} posts, {span['first']} to {span['latest']} ({span['label']}); visible change steadiness {steady}")
@@ -288,7 +313,7 @@ def main():
     print(f"  latest {latest['date']} {latest['id']}: {clean(latest['caption'])}")
     if v.get("summary"):
         print(f"voice: {v['summary']}")
-    print("wrote build/subject.json and build/photo_index.json")
+    print("wrote RUN/subject.json and RUN/photo_index.json")
     return 0
 
 
