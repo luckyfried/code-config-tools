@@ -3,7 +3,9 @@
 // between the stops, the hook's title, and the closer. All times are musical beats from the film's start; all places
 // are px of the closer's frame (the wall), y down.
 import {staticFile} from 'remotion';
-import type {Look} from '../../system/moves/types';
+import {cutOf} from '../../system/moves';
+import type {BeatOn, Look} from '../../system/moves/types';
+import {windowOf, type Timeline} from '../../system/moves/layer';
 import {bezier, span, type Pt} from '../../system/three/motion';
 import type {Board, Finish, PhotoLayout} from '../../system/types';
 
@@ -115,6 +117,8 @@ export type Plan = {
   finish: Finish;
   closerShape: string;
   faces: {display: string; text: string; italic: boolean};
+  /** the profile's safe area for the board's format, px in from each edge */
+  safe?: {top: number; bottom: number; left: number; right: number};
   handle: string;
   fps: number;
   /** the map's paper grain, the card's finish grain: a card with none draws flat color */
@@ -215,6 +219,7 @@ export const planOf = (board: Board): Plan => {
     ease: {enter: sys.ease.enter, exit: sys.ease.exit, move: sys.ease.move},
     layout: sys.photo, grain: sys.finish.grain, finish: sys.finish, closerShape: sys.closer,
     faces: {display: sys.display.family, text: sys.text.family, italic: Boolean(sys.display.italic)}, handle: board.handle ?? '', fps,
+    safe: sys.safe?.[board.format.name ?? 'reel'],
     land: route.land, cards, legs, hook: route.hook,
     closer: {at: C, window: route.closer.window, title: route.closer.title, signoff: route.closer.signoff,
       route: route.closer.route, paper: route.closer.paper, still: board.sound?.find((c) => c.kind === 'stop')?.at ?? end},
@@ -240,8 +245,8 @@ const toneOf = (plan: Plan, v: string) => {
   return hex;
 };
 
-/** The film around every move, cut, and closer: the frame, the card's colors, tones, grid, print and faces, the
- * hook's photograph, and the board's own words. */
+/** The film around every move, cut, and closer: the frame and its safe area, the card's colors, tones, grid, print and
+ * faces, the hook's photograph, and the board's own words. */
 export const lookOf = (plan: Plan): Look => {
   const g = plan.layout.grid;
   const pic = plan.layout.picture;
@@ -249,7 +254,7 @@ export const lookOf = (plan: Plan): Look => {
   return {
     W: plan.W, H: plan.H, fps: plan.fps, pulse: plan.pulse, colors: plan.colors,
     display: plan.faces.display, text: plan.faces.text, italic: plan.faces.italic,
-    title: plan.closer.title, handle: plan.handle, signoff: plan.closer.signoff,
+    title: plan.closer.title, handle: plan.handle, signoff: plan.closer.signoff, safe: plan.safe,
     tone: {
       ground: toneOf(plan, plan.layout.ground), dip: plan.finish.dip === 'none' ? null : toneOf(plan, plan.finish.dip),
       matte: toneOf(plan, plan.finish.matte), light: toneOf(plan, plan.finish.light), pen: toneOf(plan, pic.penColor),
@@ -262,6 +267,7 @@ export const lookOf = (plan: Plan): Look => {
     },
     finished: plan.finish.words !== 'clean',
     photo: plan.cards[0] ? staticFile(plan.cards[0].file) : undefined,
+    photos: [...new Set(plan.cards.map((c) => c.file))].map((f) => staticFile(f)),
     print: {
       box: [Math.max(0, pic.box[0]) * plan.W, Math.max(0, pic.box[1]) * plan.H,
         (Math.min(1, pic.box[0] + pic.box[2]) - Math.max(0, pic.box[0])) * plan.W, (Math.min(1, pic.box[1] + pic.box[3]) - Math.max(0, pic.box[1])) * plan.H],
@@ -269,3 +275,70 @@ export const lookOf = (plan: Plan): Look => {
     },
   };
 };
+
+/** Where a stop's label and line stand on its frame, [x0, y0, x1, y1] px: the bounds of its lines, each as wide as its
+ * letters run at an average advance. */
+const typeOf = (lines: Line[]): Box | undefined => {
+  if (!lines.length) return undefined;
+  const xs: number[] = [], ys: number[] = [];
+  for (const ln of lines) {
+    const w = ln.text.length * ln.size * 0.55;
+    const x0 = ln.anchor === 'middle' ? ln.x - w / 2 : ln.anchor === 'end' ? ln.x - w : ln.x;
+    xs.push(x0, x0 + w);
+    ys.push(ln.y - ln.size, ln.y + 0.25 * ln.size);
+  }
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+};
+
+/** Beats before the camera leaves a stop that its marks begin to go: a mark drawn on the photograph is gone before the
+ * card folds onto the map. */
+const MARKS_GO = 0.35;
+
+/** The film's beats as the moves see them: each stop from its arrival to the next, the closer to the film's end. A
+ * photo beat carries its photograph, where it and its words stand on the frame, and the beats the camera holds on it,
+ * so a spectacle lands the photograph exactly where the camera holds it; its words and label are the card layout's, so
+ * a move sets none of its own. A beat the board gives `early` seconds starts its frame-taking move that long before its
+ * arrival, as the camera leaves the stop before, so the flight is the travel; the shared move layer draws it. */
+export const timelineOf = (board: Board, plan: Plan): Timeline => {
+  const at = [...plan.cards.map((c) => c.arrive), plan.closer.at];
+  const beats: BeatOn[] = board.beats.map((b, i) => {
+    const c = plan.cards[i];
+    const photo = b.form === 'photo' && c;
+    return {
+      id: b.id, form: b.form ?? 'photo', at: at[i] ?? plan.closer.at, end: at[i + 1] ?? plan.end, move: b.move, transition: b.transition ?? null,
+      words: photo ? '' : b.words ?? '', label: b.label ?? '', peak: Boolean(b.peak), ...(b.early ? {early: b.early} : {}),
+      ...(photo ? {box: c.box, type: typeOf(c.lines), held: [c.arrive, c.goAt - MARKS_GO] as [number, number],
+        photo: staticFile(c.file), place: c.photo, focus: [(c.focus[0] - c.photo[0]) / c.photo[2], (c.focus[1] - c.photo[1]) / c.photo[3]] as [number, number]} : {}),
+    };
+  });
+  return {beats, cuts: beats.map((b) => b.at)};
+};
+
+/** The timeline the shared move layer plays: every beat as the board gives it, but a flown beat (one the board gives
+ * `early` seconds) without its cut, which flightCutAt plays instead. */
+export const sharedOf = (line: Timeline): Timeline => ({...line, beats: line.beats.map((b) => (b.early ? {...b, transition: null} : b))});
+
+/** Every cut into a flown beat: the beat's index, the beat, the cut, its window and the switch it is centred on. The
+ * flight takes the whole frame at once `early` seconds before the beat's arrival, so its cut plays over its window
+ * centred on that switch, where the picture changes, never on the arrival, which the flight covers. */
+export const flightsOf = (line: Timeline, look: Look) =>
+  line.beats.flatMap((b, i) => {
+    const c = i > 0 && b.early ? cutOf(b.transition) : undefined;
+    const w = c && c.beats > 0 ? windowOf(line, i, c.beats) : 0;
+    return c && w > 0 ? [{i, into: b, cut: c, w, go: line.cuts[i] - ((b.early ?? 0) * look.fps) / look.pulse}] : [];
+  });
+
+/** The cut into a flown beat playing at `t`, if any: its beat, the cut, its progress through its window, and the switch. */
+export const flightCutAt = (line: Timeline, look: Look, t: number) => {
+  for (const f of flightsOf(line, look)) {
+    const u = (t - f.go + f.w / 2) / f.w;
+    if (u >= 0 && u <= 1) return {into: f.into, cut: f.cut, u, go: f.go};
+  }
+  return null;
+};
+
+/** For each card, the time its words have to be gone by when the cut into the flight after it closes over its hold: a
+ * quarter of the way through that cut's window, while the closing bars still stand clear of the band a stop's line is
+ * set in, so the line leaves before a bar can cross it. */
+export const wordsGoneBy = (line: Timeline, look: Look): Record<number, number> =>
+  Object.fromEntries(flightsOf(line, look).map((f) => [f.i - 1, f.go - f.w / 4]));

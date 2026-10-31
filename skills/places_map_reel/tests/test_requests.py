@@ -50,6 +50,15 @@ class Requests(unittest.TestCase):
         for a, b in zip(moves, moves[1:]):
             self.assertNotEqual(kind(a), kind(b), moves)
 
+    def test_no_camera_is_asked_of_more_than_two_stops_of_seven(self):
+        # seven photographs that each call for a push, first on beats with no camera words, then on beats that all carry
+        # the card's creep in: no move's words reach a third request
+        stops = [card(k) for k in range(7)]
+        for own in ({}, {"move": "anamorphic-push"}):
+            got = board_drive.clips({"route": {"W": W, "cards": stops}, "beats": [{"bars": 1, **own} for _ in stops]}, {})
+            words = [r["move"] for r in got]
+            self.assertLessEqual(max(words.count(w) for w in words), 2, words)
+
     def test_a_texture_between_chapters_asks_for_the_places_material_never_the_photographs_subject(self):
         cards = [card(0), card(1, move="leap", place="faro"), card(2, move="lift", place="oaxaca"), card(3, place="madrid")]
         photos = {"photos/faro-1.jpg": {"about": "a whitewashed lane through a stone arch in bright sun", "camera": "a 28 mm lens",

@@ -51,8 +51,8 @@ This kit draws its film in the board's style: the style cards, their fonts and t
 | 1 | research | `S/pipeline/1-research.md` | `research.py [--set DIR]`, check `places.json`, look at `cast.png` and correct `cast.json`, write `taste.md`, fix `taste.json` | taste.md with its five headings |
 | 2 | storyboards | `S/pipeline/2-storyboards.md` | `storyboard.py draft`, `storyboard.py check`, `storyboard.py sheets`, look | three sheets, `out/boards.png`, a clean check |
 | 3 | vote and pick | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores, `vote.py tally`, show `out/boards.png` and ask which look, `vote.py pick --board N [--why "..."]` | `winner.json` |
-| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `music.py analyze`, `storyboard.py snap`, `storyboard.py sheets`, `clips.py list`, `clips.py normalize`, `film.py preview` (again if it fails, three tries in all), `vote.py timed` and the timed read, `qa.py timed`, `music.py master`, `film.py render` | `CHECKS GREEN`: the three films, `post.png` and `story.png` in `out/` |
-| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `vote.py cut`, score from its frames, `vote.py verdict` (the one lever if told), write `caption.md`, `deliver.py` | green gate |
+| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `music.py analyze`, `storyboard.py snap`, `storyboard.py sheets`, `clips.py list`, `clips.py normalize`, `film.py preview` (again if it fails, three tries in all), `vote.py timed` and the timed read, `qa.py timed`, `music.py master`, `film.py render --proof` | `CHECKS GREEN`: the three proof films, `post.png` and `story.png` in `out/` |
+| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `vote.py cut`, score from its frames, `vote.py verdict` (the one lever if told) on the proof; the full-size `film.py render`, `vote.py cut` and R3 read again at full size; write `caption.md`, `deliver.py` | green gate |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
 
@@ -81,8 +81,9 @@ looks are then theirs and the two of the kit's three that differ most from it.
 After delivery, the review page shows the two looks not picked under "Prefer another look? Say 'make the second one'".
 When they say it, run `vote.py pick --board N --why "what they said"` for that look, then in the same run folder:
 `music.py make`, `storyboard.py snap`, `storyboard.py sheets`, `clips.py list` and `normalize`, `film.py preview`,
-`vote.py timed` and the read, `qa.py timed`, `music.py master`, `film.py render`, `vote.py cut`, the scores,
-`vote.py verdict`, `deliver.py`. Nothing of the first look's cut or music is kept.
+`vote.py timed` and the read, `qa.py timed`, `music.py master`, `film.py render --proof`, `vote.py cut`, the scores,
+`vote.py verdict`, the full-size `film.py render`, `vote.py cut` and R3 at full size, `deliver.py`. Nothing of the first
+look's cut or music is kept.
 
 ## How long the film is
 
@@ -120,6 +121,8 @@ than 42 s to read, the longest are shortened to their first clause, and `storybo
   visit's `place` in `cast.json`), never by rewording the caption alone.
 - Look at what you make: `cast.png`, the sheets, `out/boards.png`, the frames and the strips (the 12 fps strips show
   every frame a move spends), with the Read tool, before any score.
+- Every round before deliver renders the half-size proof (`film.py render --proof`); the render deliver takes is full
+  size (`film.py render`), and the critics read the type on it once more before `deliver.py`.
 - Make the whole set every time: `film.py render` makes the vertical film, the 16:9 and square films, the image to post
   and the story card, and `deliver.py` the caption and the review page. `out/` holds those, `boards.png` and nothing
   else.

@@ -33,6 +33,12 @@ the session can read is null with a sentence in `unread`. A score under 4 names 
 4. The verdict never blocks the film: it ships at the bar, asks once for the fix its lever names, or delivers the best
 cut under the bar with every score in brief.md (verdict.json carries the verdict to deliver.py); scores never reach the
 review page.
+
+Every round before deliver scores the half-size proof (film.py render --proof, out/proof.mp4): `cut` reads the newest
+render, cuts the round's frames from it, and its first line says when that is the proof. Once the full-size film of
+the same cut is rendered, `cut` moves the latest round to it, cuts its frames again from the full-size films and
+empties each critic's R3 score: the critics read the type again on the full-size frames, at the size a phone shows it,
+and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -42,6 +48,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
 RESTS = ("hook", "stop", "closer")
 
@@ -50,10 +57,12 @@ CRITERIA = {
     "R2": "image treatment: layers that move at their own rates in every hold, shadows, grain, one grade over every photograph and the paper",
     "R3": "type in motion as a system: two faces, a scale, words entering on the kit's curve with tracking that resolves, settled within a second",
     "R4": "motion and rhythm: one camera with anticipation and overshoot, no two consecutive moves alike, the peak longest, the closer still",
-    "R5": "sound to picture: cues only where beats land, effects 8 LU under the music, the music stopping with the picture",
+    "R5": "sound to picture: effects only where the picture lands (a cut, a photograph, the title, the closer), on the music's grid and in its key, the music stopping with the picture",
     "R6": "generated shots: every clip request a shot a cinematographer would write, for the hook's world, texture or a still brought to life",
     "R7": "the deliverable: out/ holds the three films, the post, the story card, the caption and the review page as the film's cover",
 }
+# the rule the critics read again on the full-size film: the type, at the size a phone shows it
+TYPE = "R3"
 # the frames at equal spacing a cut round is read from, how long before a landing the beat before it is read as the
 # camera leaves it, the lowest score a rule may take, and the mean the scores reach at the bar
 CUT_FRAMES, LEAVING, BAR, MEAN = 16, 0.5, 4, 4.5
@@ -218,7 +227,8 @@ def cmd_tally(a):
 
 # the steps a pick runs again from, in the run's folder
 AFTER_PICK = ("music.py make (or find)", "storyboard.py snap", "storyboard.py sheets", "film.py preview", "vote.py timed",
-              "qa.py timed", "music.py master", "film.py render", "vote.py cut", "vote.py verdict", "deliver.py")
+              "qa.py timed", "music.py master", "film.py render --proof", "vote.py cut", "vote.py verdict",
+              "film.py render (full size)", "vote.py cut (the type read at full size)", "deliver.py")
 
 
 def cmd_pick(a):
@@ -283,52 +293,74 @@ def unseen(read):
 def cmd_cut(a):
     d = Path("critic")
     d.mkdir(parents=True, exist_ok=True)
-    film = Path("out/film.mp4")
+    scale = proof.scale()
+    film = proof.newest()
+    if scale != 1:
+        print(proof.reading(film))
     # render/film-report.json is the index of out/: it comes back only once every film is in place
     if not Path("render/film-report.json").exists() or not film.exists():
-        sys.exit("render/film-report.json or out/film.mp4 is missing: run film.py render first")
+        sys.exit("render/film-report.json or out/film.mp4 is missing: run film.py render --proof first")
     digest = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
+    cut = (_env.read_json("film.json") or {}).get("hash")
     # an unscored round is kept for the same film; a scored round under the bar with a lever opens round 2 once the
     # lever's change has reached a new film; there are two rounds at most
     rs = rounds()
     last = (_env.read_json(rs[-1]) or {}) if rs else {}
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == cut:
+        # the full-size film of the cut the round scored on its proof: the same round, its frames cut again from the
+        # full-size films, with the type read there
+        n = len(rs)
+        last.update(film=digest, scale=1, proof_film=last["film"], frames=cut_frames(film, d / f"cut-{n}"), seen=[])
+        for c in CUT_PANEL:
+            e = last["critics"][c]["boards"]["film"]
+            e["scores"][TYPE] = None
+            (e.get("unread") or {}).pop(TYPE, None)
+        _env.write_json(rs[-1], last)
+        print(f"round {n} moves to the full-size {film}: as each critic, view every frame in {(d / f'cut-{n}').resolve()}/, "
+              f"read the type on them at the size a phone shows it, and score {TYPE} in {rs[-1].resolve()}; the other scores stand")
+        return 0
     scored = bool(rs) and not problems(last, CUT_PANEL, ["film"])
     if rs and not scored and last.get("film") == digest:
-        print(f"round {len(rs)}: {rs[-1].resolve()} is the round of this out/film.mp4; view every frame in {Path('critic') / f'cut-{len(rs)}'}/ and fill it in")
+        print(f"round {len(rs)}: {rs[-1].resolve()} is the round of this {film}; view every frame in {Path('critic') / f'cut-{len(rs)}'}/ and fill it in")
         return 0
     if scored and (len(rs) >= 2 or ending(last)):
         print(f"round {len(rs)} is scored and no further round opens: run vote.py verdict")
         return 0
     if scored and last.get("film") == digest:
         lv = last.get("lever") or {}
-        sys.exit(f"out/film.mp4 is the film round {len(rs)} scored: the lever ({lv.get('name')}: {lv.get('change')}) has not "
-                 "reached the film; make its change and run the steps after it through film.py render, then vote.py cut")
+        sys.exit(f"{film} is the film round {len(rs)} scored: the lever ({lv.get('name')}: {lv.get('change')}) has not "
+                 "reached the film; make its change and run the steps after it through film.py render --proof, then vote.py cut")
     n = len(rs) + 1
     frames = cut_frames(film, d / f"cut-{n}")
     f = d / f"cut-{n}.json"
     data = blank(CUT_PANEL, ["film"])
     for c in CUT_PANEL:
         data["critics"][c]["boards"]["film"]["unread"] = {}
-    data.update(round=n, film=digest, frames=frames, seen=[], lever=None, fixed="" if n > 1 else None)
+    data.update(round=n, film=digest, scale=scale, cut=cut, frames=frames, seen=[], lever=None, fixed="" if n > 1 else None)
     _env.write_json(f, data)
-    print(f"round {n}: view every frame in {(d / f'cut-{n}').resolve()}/ ({len(frames)}), watch out/film.mp4, then fill in {f.resolve()}"
+    print(f"round {n}: view every frame in {(d / f'cut-{n}').resolve()}/ ({len(frames)}), watch {film}, then fill in {f.resolve()}"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 
 
 def cut_frames(film, into):
     """The frames a round is read from, as JPEGs in `into`: the film's first frame; CUT_FRAMES at equal spacing, each in
-    the middle of its share of the film; each beat as the camera leaves it, LEAVING seconds before the next landing
-    (film.json's cuts); and each shape's closer at rest, at full size (film.json's rests)."""
+    the middle of its share of the film; each beat as the camera leaves it, LEAVING seconds before the next beat's move
+    starts (film.json's cuts, less that beat's `early` in the reel's board, where its flight starts ahead of the cut);
+    and each shape's closer at rest, the whole frame (film.json's rests), from that shape's newest render: its proof
+    while the proof is beside it, so a round on the proof reads the proof's frames and one on the film the film's."""
     r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(film)],
                        capture_output=True, text=True)
     secs = float(r.stdout.strip() or 0)
     timing = _env.read_json(Path("film.json")) or {}
     fps = timing["frames"] / timing["seconds"] if timing.get("frames") and timing.get("seconds") else 30
     shots = [("first", film, 0.0)] + [(f"f{i + 1:02d}", film, (i + 0.5) * secs / CUT_FRAMES) for i in range(CUT_FRAMES)]
-    shots += [(f"leave{k + 1:02d}", film, c - LEAVING) for k, c in enumerate(timing.get("cuts") or []) if c > LEAVING]
-    shots += [(f"closer-{shape}", Path("out") / SHAPES[shape], rest["closer"] / fps)
-              for shape, rest in (timing.get("rests") or {}).items() if shape in SHAPES and (Path("out") / SHAPES[shape]).exists()]
+    beats = (_env.read_json(Path((timing.get("boards") or {}).get("reel") or "board-reel.json")) or {}).get("beats") or []
+    early = [b.get("early", 0) for b in beats[1:]]
+    leave = [c - LEAVING - (early[k] if k < len(early) else 0) for k, c in enumerate(timing.get("cuts") or [])]
+    shots += [(f"leave{k + 1:02d}", film, t) for k, t in enumerate(leave) if t > 0]
+    shots += [(f"closer-{shape}", proof.newest(Path("out") / SHAPES[shape]), rest["closer"] / fps)
+              for shape, rest in (timing.get("rests") or {}).items() if shape in SHAPES and proof.newest(Path("out") / SHAPES[shape]).exists()]
     into.mkdir(parents=True, exist_ok=True)
     for old in into.glob("*.jpg"):
         old.unlink()
@@ -389,19 +421,22 @@ def cmd_verdict(a):
     mean = mean_of(data)
     lever = data.get("lever") or {}
     record = {"round": data.get("round"), "mean": None if mean is None else round(mean, 2), "worst": worst[0], "scores": scores}
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    full = (f" Next, render the full-size film (film.py render, which ends with qa.py check), then vote.py cut: the "
+            f"critics read {TYPE}, the type, again on its frames at full size" if data.get("scale") == proof.SCALE else "")
     if at_bar(data):
         _env.write_json("verdict.json", {**record, "verdict": "ship"})
-        print(f"SHIP: round {data.get('round')} is at the bar (mean {mean:.2f}, no rule under {BAR}): {scores}")
+        print(f"SHIP: round {data.get('round')} is at the bar (mean {mean:.2f}, no rule under {BAR}): {scores}." + full)
         return 0
     if len(rs) < 2 and lever.get("name") not in (None, "none"):
         _env.write_json("verdict.json", {**record, "verdict": "fix"})
         print(f"FIX ONCE: the worst rule is {worst[1]} ({CRITERIA[worst[1]]}), {worst[2]} gave {worst[0]}. The lever: "
-              f"{lever.get('name')}, {lever.get('change')}. Make that change, run the steps after it through film.py render, "
-              f"then vote.py cut for round 2. Scores: {scores}")
+              f"{lever.get('name')}, {lever.get('change')}. Make that change, run the steps after it through the proof "
+              f"(film.py render --proof), then vote.py cut for round 2. Scores: {scores}")
         return 2
     _env.write_json("verdict.json", {**record, "verdict": "under"})
     print(f"UNDER THE BAR: round {data.get('round')}, mean {'unread' if mean is None else f'{mean:.2f}'}, worst {worst[1]} at "
-          f"{worst[0]}; the cut is delivered as the best the run made, and brief.md carries every score: {scores}")
+          f"{worst[0]}; the cut is delivered as the best the run made, and brief.md carries every score: {scores}." + full)
     return 0
 
 

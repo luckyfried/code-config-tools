@@ -44,7 +44,9 @@ with no room left stays a dot. The closer's title is their year, its line the pl
 words), and only on their first or last stop; nothing asks where they go next.
 
 Each beat's move and the cut into it are picked from what the beat holds (a portrait, a landscape, the peak, a place
-with words) among the moves and cuts the look allows, never the same move twice running. The builder computes every
+with words) among the moves and cuts the look allows, never the same move twice running; a stop the person wrote
+nothing about takes the look's move made for a wordless beat (the cinematic look's match cut) unless the stop before
+took it. The builder computes every
 projection, position and the count of places from the source and takes every word from it; nothing on a board is
 typed by hand.
 
@@ -57,12 +59,18 @@ shorter than its words take to come up and be read (0.3 s and 0.12 s a word), an
 stop. `draft` names the length made when it differs from the one asked. The closer is set in seconds: about two to
 resolve, then the still. A stop the camera leaves across a leap over the water adds two beats for the travel, never to
 its hold. The tempo is 90 bpm unless the track's own tempo is found; each beat states what its move reveals and what
-it carries across the cut. The board places a sound cue where each beat lands (a hit as each place's words land, a
-build into the peak and an impact on it, an impact as the map lands, and the stop where the picture and the music end
-together; the camera's moves and the folding prints have no sound of their own) and names its rests: the hook, the
-stop (the peak, else the middle stop) and the closer. `storyboard.md` carries all of it as tables: the beats, each
-stop's photograph and their line, the move and the cut, what each reveals and carries, the music brief, the `Mixed:`
-line `music.py master` fills, the sound cues, the cuts and cuts per minute, the hook's frame.
+it carries across the cut. The board marks where the bed's sections turn (the peak's landing and the closer's) and the
+stop, where the picture and the music end together, and names its rests: the hook, the stop (the peak, else the middle
+stop) and the closer. The film's sound effects are the shared layer's (`sfx.py`): a whoosh on every cut and on the
+camera's dive, a shutter as every photograph lands (a pop where the style's mark sets it down), an impact as the title
+lands and as the closer arrives, the riser into it, each on the music's quarter-beat grid and in its key. A move that
+flies the photograph in (a tunnel of the person's photographs, a wall of prints swinging flat, a photograph exploding
+into its layers) takes the stop's arrival, and the stop's words come up only once it has landed and handed the frame
+back. A film's flights take the look's flying moves in turn, so two flights are never one move. A flight takes the
+whole frame as the camera leaves the stop before, so its cut plays there: a look with letterbox bars closes them over
+that switch and opens them on the flight, and keeps that cut for its flights and its closer. `storyboard.md` carries all of it as tables: the beats, each stop's photograph and their line, the move and the
+cut, what each reveals and carries, the music brief, the turns and the stop, every effect at its moment, the cuts and
+cuts per minute, the hook's frame.
 
 ## Check
 

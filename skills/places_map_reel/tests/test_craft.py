@@ -242,6 +242,16 @@ class TheGateReports(InADir):
                      "closer-square-t01.933.jpg"):
             self.assertIn(name, got)
 
+    def test_a_beat_the_next_flight_starts_early_on_is_read_before_the_flight(self):
+        subprocess.run([_env.ffmpeg(), "-v", "error", "-f", "lavfi", "-i", "testsrc2=s=64x64:r=30:d=2", "-pix_fmt", "yuv420p",
+                        "film.mp4"], check=True)
+        Path("board-reel.json").write_text(json.dumps({"beats": [{"id": "hook"}, {"id": "stop-1", "early": 0.3}, {"id": "stop-2"}]}))
+        Path("film.json").write_text(json.dumps({"frames": 60, "seconds": 2.0, "cuts": [1.0, 1.6],
+                                                 "boards": {"reel": "board-reel.json"}}))
+        got = vote.cut_frames(Path("film.mp4"), Path("cut"))
+        self.assertIn("leave01-t00.200.jpg", got)
+        self.assertIn("leave02-t01.100.jpg", got)
+
 
 class TheDeliverable(InADir):
     def test_out_holds_the_three_films_the_post_the_story_card_the_caption_the_cover_and_the_three_looks(self):

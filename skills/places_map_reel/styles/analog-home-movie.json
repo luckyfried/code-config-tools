@@ -76,6 +76,14 @@
         "wall",
         "screen"
       ]
+    },
+    {
+      "id": "tilted-wall",
+      "fits": [
+        "photo",
+        "peak"
+      ],
+      "once": true
     }
   ],
   "transitions": [
@@ -172,7 +180,7 @@
         0,
         0,
         1,
-        0.54
+        1
       ],
       "rim": 0,
       "rimColor": "paper",
@@ -214,7 +222,7 @@
         0,
         0,
         1,
-        0.54
+        1
       ],
       "line": [
         0.08,

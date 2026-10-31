@@ -29,9 +29,9 @@ never scaled to fit.
 
 Each board names its rests, the settled frames the sheets and the stills are taken from: the hook, the stop (the
 peak, else the middle stop) and the closer. storyboard.md states, per beat, its move and the cut into it, what it
-reveals and what it carries across the cut, where the music came from, the person's music brief, the mix's loudness
-(music.py master writes it), the sound cues where each beat lands, the cuts and cuts per minute and the hook's frame,
-as figures for the critics.
+reveals and what it carries across the cut, where the music came from, the person's music brief, where the bed's
+sections turn and where it stops, every sound effect the shared layer lays at render (sfx.py, at its moment on the
+board's grid), the cuts and cuts per minute and the hook's frame, as figures for the critics.
 
 check refuses a board on any of these, in any format:
   bounds     bounds.py: a photograph enlarged past its pixels, type outside the safe area or under its floor, the
@@ -39,8 +39,8 @@ check refuses a board on any of these, in any format:
   binding    a photograph shown at a place it was not taken in
   formats    a format whose beats differ from the reel's in their ids or bars (every format is cut on one grid)
   story      a beat without what it reveals or what it carries
-  sound      no stop cue, a cue after the stop, or a stop less than a second before the end (the film holds still and
-             silent after it)
+  sound      a mark music.py does not know, no stop mark, a mark after the stop, or a stop less than a second before
+             the end (the closer rests, silent, after it)
   length     the film outside its board's band (board_drive.timing()): 20 to 42 s, or from the longest film its stops'
              holds reach when that is under 20 s, to 42 s
   hook       the hook's first event after frame 30
@@ -59,6 +59,7 @@ import _env  # noqa: E402
 import board_drive  # noqa: E402
 import bounds  # noqa: E402
 import look  # noqa: E402
+import sfx  # noqa: E402
 
 BOARDS = Path("storyboards")
 PUBLIC = Path("public")
@@ -69,9 +70,14 @@ HOOK_FRAMES = 30
 # beats before the camera leaves a place that its words start to leave (motion/studio/route/words.tsx LEAVE); a rest is
 # taken before them, so the sheet and the stills show the words whole
 WORDS_SINK = 0.35
+# beats the cut into a flight takes (board_drive.FLIGHT_CUT, motion/system/moves/cut/bars-close.tsx); the words of the
+# stop before it are gone a quarter of the way through its window and fade for WORDS_FADE beats before that
+# (motion/studio/route/plan.ts wordsGoneBy), so that stop rests before the cut's window opens and before its words fade
+FLIGHT_CUT_BEATS, WORDS_FADE = 2, 0.3
 # the files the source is built from, each recorded in source.json `inputs` by its digest
 INPUTS = ("taste.json", "cast.json", "places.json")
-CUES = {"hit", "riser", "impact", "stop"}
+# the board's sound marks: where the bed's sections turn, and where the picture and the music stop together
+CUES = {"turn", "stop"}
 
 
 # ------------------------------------------------------------------ the source
@@ -83,7 +89,7 @@ def digest(name):
 
 def moments_of(taste, own):
     """Each visit's words and the peak, as taste.json's moments keep them: the person's line only where its moment has its own
-    photograph (`own`, from grade.own_prints), so a reel's moment is wordless on the place's own print."""
+    photograph (`own`, from grade.own_prints), so a reel's moment is wordless, on the reel itself."""
     rows = []
     for m in taste.get("moments") or []:
         if m.get("place"):
@@ -150,7 +156,7 @@ def plan(source, fmt, bpm=None, style=look.TRIO[0]):
     board_drive.frames(b)
     pulse = FPS * 60 / b["bpm"]
     first, total = starts_of(b)
-    beat_at, _ = board_drive.starts(b)
+    beat_at, last = board_drive.starts(b)
     cards = b["route"]["cards"]
     ids = [x["id"] for x in b["beats"]]
 
@@ -159,7 +165,14 @@ def plan(source, fmt, bpm=None, style=look.TRIO[0]):
         if i == len(ids) - 1:
             return total - 2
         leave = beat_at[ids[i + 1]]
-        return round((leave - cards[i]["go"] - WORDS_SINK - 0.1) * pulse)
+        at = leave - cards[i]["go"] - WORDS_SINK - 0.1
+        nxt = b["beats"][i + 1]
+        if nxt.get("early") and nxt.get("transition") == board_drive.FLIGHT_CUT:
+            end = beat_at[ids[i + 2]] if i + 2 < len(ids) else last
+            w = min(FLIGHT_CUT_BEATS, (leave - beat_at[ids[i]]) / 2, (end - leave) / 2)
+            switch = leave - nxt["early"] * b["bpm"] / 60
+            at = min(at, switch - w / 2 - 0.1, switch - w / 4 - WORDS_FADE - 0.1)
+        return round(at * pulse)
     stop = stop_index(b)
     rests = {"hook": rest(0), "stop": rest(stop), "closer": rest(len(ids) - 1)}
     return {"board": b, "cuts": [round(f / FPS, 3) for f in first[1:]], "hook_frame": round(b["route"]["hook"]["dive"] * pulse),
@@ -180,15 +193,15 @@ def binding(board, rows):
 
 def sound_findings(board, seconds):
     cues = board.get("sound") or []
-    out = [f"sound: a cue of kind {c['kind']}, which music.py does not know" for c in cues if c["kind"] not in CUES]
+    out = [f"sound: a mark of kind {c['kind']}, which music.py does not know" for c in cues if c["kind"] not in CUES]
     stop = [c["at"] for c in cues if c["kind"] == "stop"]
     if len(stop) != 1:
-        return out + [f"sound: {len(stop)} stop cues; the film has one, where the picture and the music stop together"]
+        return out + [f"sound: {len(stop)} stop marks; the film has one, where the picture and the music stop together"]
     sec = 60 / board["bpm"]
     late = [c for c in cues if c["at"] > stop[0]]
     out += [f"sound: {c['kind']} at {c['at'] * sec:.2f} s comes after the stop" for c in late]
     if seconds - stop[0] * sec < 1.0:
-        out.append(f"sound: the stop lands {seconds - stop[0] * sec:.2f} s before the end; the film holds still and silent a second or more")
+        out.append(f"sound: the stop lands {seconds - stop[0] * sec:.2f} s before the end; the closer rests, silent, a second or more")
     return out
 
 
@@ -268,17 +281,21 @@ def write_board(source, style, bpm=None):
               "| beat | move | cut | reveals | carries |", "|---|---|---|---|---|"]
     lines += [f"| {x['id']} | {x.get('move')} | {x.get('transition') or '(the first)'} | {x.get('reveals', '')} | {x.get('carries', '')} |" for x in b["beats"]]
     cues = b.get("sound") or []
+    fx, _ = sfx.events(board_drive.fx_board(b))
     lines += ["", "Music: " + ((_env.read_json("music.json") or {}).get("origin") or "none yet (music.py find)") + ".",
               "The music brief (taste.json `music`): " + json.dumps((_env.read_json("taste.json") or {}).get("music"), ensure_ascii=False) + ".",
-              "Mixed: not yet; music.py master writes the bed's and the effects' loudness here.",
-              "", f"Sound, where each beat lands (music.py synthesises each and mixes it under the bed; {len(cues)} cues):", "",
-              "| at | beat | cue | what |", "|---|---|---|---|"]
+              "", "Where the bed's sections turn and where it stops:", "", "| at | beat | mark | what |", "|---|---|---|---|"]
     lines += [f"| {c['at'] * sec:.2f} s | {c['beat']} | {c['kind']} | {c['what']} |" for c in cues]
+    lines += ["", f"Sound effects (the shared layer's, sfx.py; film.py lays them over the music at render, each on the music's "
+              f"quarter-beat grid and in its key; {len(fx)} effects, at the board's tempo):", "",
+              " ".join(f"{t:.2f} s {k};" for t, k in fx).rstrip(";")]
     if b.get("clips"):
-        lines += ["", "Generated clips, one shot per stop (clips.py list writes them to clips/requests.json; clips.py normalize places "
+        lines += ["", "Clips, one shot per stop (clips.py list writes the generated ones to clips/requests.json; clips.py normalize places "
                   "what arrives):", "", "| clip | beat | use | seconds | subject and light | move | lens and height | in its place until it arrives |",
                   "|---|---|---|---|---|---|---|---|"]
-        lines += [f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | {c['subject']} | {c['move']} | {c['camera']} | {c['stand_in']} |"
+        lines += [f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | their recording from {c['from']:g} s | as they filmed it | "
+                  f"their own camera | (nothing to generate) |" if c.get("source") else
+                  f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | {c['subject']} | {c['move']} | {c['camera']} | {c['stand_in']} |"
                   for c in b["clips"]]
     lines += ["", "Rests (the sheet and the stills): " + ", ".join(f"{k} {reel['rest_beats'][k]} at frame {v}" for k, v in reel["rests"].items()), "",
               "| stop | place | photograph | the line | the way the dot leaves |", "|---|---|---|---|---|"]

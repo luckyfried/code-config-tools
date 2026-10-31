@@ -60,7 +60,7 @@ The run ends with a green gate: `python3 S/scripts/qa.py gate` prints `GATE GREE
 `out/post.png`, `out/story.png`, `out/caption.md`, `out/boards.png` and `out/review.html` and nothing else in `out/`; `brief.md` beside
 `out/`; the three looks' sheets (`storyboards/<style>/sheet.png`), `vote.md` and the cut scores in `critic/`. The places in
 `brief.md`'s table are the fixture's `intended_places`, eleven, and the caption says 11. The film at 2 fps for the eye
-is `qa/film-strip2.png`, which `film.py render` writes through its last step, `qa.py check`.
+is `qa/film-strip2.png`, which the full-size `film.py render` writes through its last step, `qa.py check`.
 
 ## Judging
 

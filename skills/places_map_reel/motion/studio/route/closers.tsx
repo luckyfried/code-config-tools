@@ -6,7 +6,7 @@
 // title, line and handle. Every color is a tone or a role of the card and every face the card's.
 import React, {createContext, useContext} from 'react';
 import {register, type CloserProps} from '../../system/moves';
-import {alpha, balance, fill, fitTo, inkOn, land, OUT, SINE, SNAP, span, Words} from '../../system/moves/kit';
+import {alpha, balance, fill, fitTo, inkOn, land, OUT, safeOf, SINE, SNAP, span, Words} from '../../system/moves/kit';
 import type {Box} from './plan';
 
 /** The window the closer leaves open on the map, [x, y, w, h] frame px, and the top and bottom of the type-safe area
@@ -17,14 +17,19 @@ export const CloserFrame = createContext<{window: Box; top: number; bottom: numb
  * sets them at the size a vertical one does. */
 const short = (look: {W: number; H: number}) => (v: number) => (v * Math.min(look.W, look.H)) / 1080;
 
+/** The rows with every separator dot that a break left at a row's start carried to the end of the row before, so a
+ * row always opens on a place's name. */
+export const carry = (rows: string[]) =>
+  rows.map((r, i) => `${i > 0 ? r.replace(/^·\s+/, '') : r}${i < rows.length - 1 && /^·\s/.test(rows[i + 1]) ? ' ·' : ''}`);
+
 /** The closing line, the places in the order they were reached, in as few balanced rows as hold it at `size` and
- * `weight` across `width` px, three at most. */
+ * `weight` across `width` px, three at most, each row opening on a place's name. */
 const rowsOf = (text: string, family: string, width: number, size: number, weight = 400) => {
   for (let n = 1; n < 3; n++) {
-    const rows = balance(text, n);
+    const rows = carry(balance(text, n));
     if (fitTo(rows, family, width, {weight}) >= size) return rows;
   }
-  return balance(text, 3);
+  return carry(balance(text, 3));
 };
 
 /** swiss-grid: the card's ground closes in around the map from above and below on the grid's snap, a heavy rule in the
@@ -77,17 +82,24 @@ const Poster: React.FC<CloserProps> = ({look, local}) => {
 // and the handle in the text face's medium (the card's own text weight is a light that thins out at phone size)
 const TITLE_WEIGHT = 600;
 const TEXT_WEIGHT = 500;
+/** The title card's slow push on its words over the closer, a share of their size. */
+const PUSH = 0.03;
 
 /** cinematic-letterbox: the frame dims to the card's matte around the map's band until only the band shows, the
  * title comes up out of the dark above it in the display face's capitals, widely spaced, the places under it in the
  * text face's italic, and the handle as the film's credit centered under the band, or under the places where the frame
- * leaves no room below the band; every word in the tone that reads on the matte. */
+ * leaves no room below the band; every word in the tone that reads on the matte, inside the profile's safe width to the
+ * end of the push. */
 const TitleCard: React.FC<CloserProps> = ({look, local}) => {
   const {window: [x, y, w, h], top, bottom} = useContext(CloserFrame);
   const dark = span(local, 0, 1.1, SINE);
   const title = (look.title || look.signoff).toUpperCase();
   const u = short(look);
-  const side = u(100), room = look.W - 2 * side;
+  // the measure: the safe width kept a margin from the frame's edges, narrowed by the push about its middle so its ends
+  // stay inside it
+  const [sl, , sr] = safeOf(look);
+  const l0 = Math.max(u(100), sl), r0 = Math.min(look.W - u(100), sr);
+  const mid = (l0 + r0) / 2, room = (r0 - l0) / (1 + PUSH), side = mid - room / 2, right = look.W - side - room;
   const ink = inkOn(look.tone.matte, [look.colors.paper, look.tone.light, look.colors.ink]);
   const lines = balance(title, title.length > 16 ? 2 : 1);
   const said = look.title ? rowsOf(look.signoff, look.text, room * 0.9, u(36), TEXT_WEIGHT) : [];
@@ -105,20 +117,20 @@ const TitleCard: React.FC<CloserProps> = ({look, local}) => {
   const t1 = t0 + lines.length * size * 1.05 + gaps[0] * k;
   const t2 = (said.length ? t1 + said.length * saidSize * 1.2 : t0 + lines.length * size * 1.05) + gaps[1] * k;
   const field = look.tone.matte;
-  const push = 1 + 0.03 * span(local, 0.5, 2, OUT);
+  const push = 1 + PUSH * span(local, 0.5, 2, OUT);
   return (
     <div style={fill}>
       <div style={{position: 'absolute', left: x, top: y, width: w, height: h, boxShadow: `0 0 0 6000px ${field}`, opacity: dark}} />
       <div style={{position: 'absolute', left: x, top: y, width: w, height: h, boxShadow: `inset 0 0 ${u(90)}px ${u(30)}px ${alpha(field, 0.9)}`, opacity: dark}} />
-      <div style={{position: 'absolute', left: 0, right: 0, top: 0, height: y, transform: `scale(${push})`, transformOrigin: '50% 60%'}}>
+      <div style={{position: 'absolute', left: 0, right: 0, top: 0, height: y, transform: `scale(${push})`, transformOrigin: `${mid}px 60%`}}>
         <Words text={lines.join('\n')} family={look.display} size={size} color={ink}
-          style={{position: 'absolute', left: side - size * 0.07, right: side - size * 0.07, top: t0, lineHeight: 1.05, textAlign: 'center', letterSpacing: '0.14em',
+          style={{position: 'absolute', left: side - size * 0.07, right: right - size * 0.07, top: t0, lineHeight: 1.05, textAlign: 'center', letterSpacing: '0.14em',
             fontWeight: TITLE_WEIGHT, whiteSpace: 'pre', opacity: span(local, 0.5, 0.9, SINE)}} />
         {said.length ? <Words text={said.join('\n')} family={look.text} size={saidSize} color={ink}
-          style={{position: 'absolute', left: side, right: side, top: t1, lineHeight: 1.2, textAlign: 'center', whiteSpace: 'pre', fontWeight: TEXT_WEIGHT,
+          style={{position: 'absolute', left: side, right, top: t1, lineHeight: 1.2, textAlign: 'center', whiteSpace: 'pre', fontWeight: TEXT_WEIGHT,
             fontStyle: look.italic ? 'italic' : 'normal', opacity: 0.88 * span(local, 0.9, 0.8, SINE)}} /> : null}
         {look.handle && !credit ? <Words text={look.handle} family={look.text} size={hand} color={ink}
-          style={{position: 'absolute', left: 0, right: 0, top: t2, textAlign: 'center', letterSpacing: '0.2em', fontWeight: TEXT_WEIGHT, opacity: 0.85 * span(local, 1.2, 0.8, SINE)}} /> : null}
+          style={{position: 'absolute', left: side, right, top: t2, textAlign: 'center', letterSpacing: '0.2em', fontWeight: TEXT_WEIGHT, opacity: 0.85 * span(local, 1.2, 0.8, SINE)}} /> : null}
       </div>
       {credit ? <Words text={look.handle} family={look.text} size={want.handle} color={ink}
         style={{position: 'absolute', left: 0, right: 0, top: y + h + Math.min(u(110), (bottom - y - h - want.handle) / 2), textAlign: 'center',

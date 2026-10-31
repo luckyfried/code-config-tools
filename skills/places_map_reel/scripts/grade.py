@@ -37,18 +37,23 @@ slope; `about` (what the photograph shows and its light), `camera` (its lens fee
 `texture` (the place's material close up, with no subject and no landmark) as that person wrote them for the shot, else
 null, which the stop's clip request is written from; `look` the photograph in a grid of LOOK cells, rows top to bottom: `light`, each cell's mean lightness 0-1, and
 `busy`, its mean edge strength 0-1, from which the drive film holds a busier photograph and a bigger change from the
-stop before longer. The source files are read, never changed.
+stop before longer. A shot that is a clip they recorded (a video file) is graded from its frame at its strongest second
+and its row carries `clip` (the file), `clip_from` (that second) and `clip_seconds` (its length), from which the
+storyboard plays it on the stop's card (clips.py). The source files are read, never changed.
 """
 import argparse
+import collections
 import colorsys
 import math
 import os
 import random
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import clips  # noqa: E402
 
 PUBLIC = Path("public")
 LONG = 2560
@@ -355,6 +360,30 @@ def own_first(shots, own):
     return [lead] + [s for s in shots if key(s) != key(lead)]
 
 
+def cast_shots(cast, own):
+    """Each visit's shots through own_first, its moment's own print set first unless an earlier visit of the place
+    showed that picture (picks.picture), so a photograph posted on two visits is shown once."""
+    import picks
+    shown, out = collections.defaultdict(set), []
+    for v in cast["visits"]:
+        o = own.get((v["place"], v["n"]))
+        o = o if o and picks.picture(_env.home_path(o)) not in shown[v["place"]] else None
+        visit = own_first(v.get("shots") or [], o)
+        shown[v["place"]].update(picks.picture(_env.home_path(s["file"])) for s in visit)
+        out.append(visit)
+    return out
+
+
+def read_shot(src):
+    """A shot as the cast names it: what clips.recorded() says of it ({} for a photograph), and its picture through toned()
+    (a recorded clip's frame at its strongest second)."""
+    rec = clips.recorded(src)
+    if not rec:
+        return (rec, *toned(src))
+    with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
+        return (rec, *toned(clips.frame_at(src, rec["clip_from"], Path(d) / "still.jpg")))
+
+
 def grade_cast(own=None):
     """Grade every photograph cast.json names into public/photos/, each visit's moment's own print (`own`, from
     own_prints) first, and write public/photos.json; returns its rows."""
@@ -367,12 +396,12 @@ def grade_cast(own=None):
     # photos.json names the graded set, so it goes before the first photograph changes and comes back after the last
     (PUBLIC / "photos.json").unlink(missing_ok=True)
     # the levels first, for every photograph, so the middles they are all moved toward are the cast's own
-    shots = [(v, k, shot, *toned(_env.home_path(shot["file"])))
-             for v in cast["visits"] for k, shot in enumerate(own_first(v.get("shots") or [], own.get((v["place"], v["n"]))), 1)]
+    shots = [(v, k, shot, *read_shot(_env.home_path(shot["file"])))
+             for v, visit in zip(cast["visits"], cast_shots(cast, own)) for k, shot in enumerate(visit, 1)]
     target = target_of([(img, gray) for *_, img, gray in shots])
     wash = wash_of(_env.read_json("taste.json"))
     rows = []
-    for v, k, shot, img, gray in shots:
+    for v, k, shot, rec, img, gray in shots:
         name = f"{v['place']}-{v['n']}-{k}.jpg"
         img = finish(img, gray, target, wash)
         img.save(PUBLIC / "photos" / f".{name}.part", "JPEG", quality=92)
@@ -382,7 +411,7 @@ def grade_cast(own=None):
                      "aspect": round(img.height / img.width, 4), "color": color_of(img), "focus": focus_of(subject),
                      "subject": subject, "line": shot.get("line"), "about": shot.get("about"), "camera": shot.get("camera"),
                      "texture": shot.get("texture"), "look": look_of(img), "gray": gray,
-                     "home": v["place"] == home, "source": str(shot["file"])})
+                     "home": v["place"] == home, "source": str(shot["file"]), **rec})
     _env.write_json(PUBLIC / "photos.json", {"photos": rows})
     fx = PUBLIC / "fx" / "grain.png"
     if not fx.exists():

@@ -23,6 +23,7 @@ from unittest import mock
 KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
 import _env  # noqa: E402
+import board_drive  # noqa: E402
 import chunks  # noqa: E402
 import film  # noqa: E402
 import qa  # noqa: E402
@@ -30,8 +31,8 @@ import studio  # noqa: E402
 import storyboard  # noqa: E402
 import vote  # noqa: E402
 
-# a render takes no options: it always makes the whole set
-ASKED = types.SimpleNamespace()
+# the full-size render: it always makes the whole set
+ASKED = types.SimpleNamespace(proof=False)
 
 
 def frames(mp4):
@@ -47,6 +48,10 @@ class Outputs(unittest.TestCase):
         os.chdir(run)
         self.addCleanup(os.chdir, here)
         Path("board.json").write_text(json.dumps({"id": "board"}))
+        # these boards stand for the films' renames, not their sound: their effects are a board of no beats
+        fx = mock.patch.object(board_drive, "fx_board", lambda b: {"id": "board", "bpm": 120, "beats": []})
+        fx.start()
+        self.addCleanup(fx.stop)
         Path("film.json").write_text(json.dumps({
             "hash": "h", "frames": 3, "seconds": 0.1, "boards": {fmt: "board.json" for fmt in film.NAMES},
             "rests": {fmt: {"closer": 2} for fmt in film.NAMES}}))
@@ -84,7 +89,7 @@ class Outputs(unittest.TestCase):
     def test_a_finished_render_replaces_every_deliverable_and_checks_what_it_made(self):
         checked = []
 
-        def check(run=None):
+        def check(run=None, scale=1):
             checked.append(sorted(p.name for p in Path("out").iterdir()))
             return qa.Checks(), {"hash": "h"}, None
         with mock.patch.object(studio, "render", self.finished), mock.patch.object(qa, "film_checks", check):
@@ -189,7 +194,8 @@ class UnderTheLock(unittest.TestCase):
         self.addCleanup(refuse.stop)
 
     def test_the_mux_and_the_measure_start_through_run_spawn(self):
-        self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1))
+        board = {"id": "t", "bpm": 120, "beats": [{"id": "a", "form": "photo", "start": 0.0, "layers": [{"kind": "Photo", "at": {"arrive": 0.5}}]}]}
+        self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1, board))
         m = studio.measure(Path("film.mp4"), [], run=self.run_)
         self.assertEqual(m["frames"], 30)
         self.assertGreaterEqual(len(self.started), 8)
@@ -364,6 +370,43 @@ class CriticRow(unittest.TestCase):
     def test_a_round_of_fours_with_full_paragraphs_is_green(self):
         _, ok, detail = self.row(25)
         self.assertTrue(ok, detail)
+
+
+class FrozenEnding(unittest.TestCase):
+    """From the board's stop the closer keeps the shared layer's slow push to the last frame, so the frozen row reads the
+    whole film: a freeze after the stop is a freeze."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR"))
+        self.addCleanup(tmp.cleanup)
+        here = Path.cwd()
+        os.chdir(tmp.name)
+        self.addCleanup(os.chdir, here)
+        Path("out").mkdir()
+        Path("out/film.mp4").write_bytes(b"the film")
+        # the stop at 60 beats of 120 bpm: 30 s, the film 32 s
+        Path("film.json").write_text(json.dumps({"bpm": 120, "length": [20, 40], "cuts": [], "hook_frame": 7,
+                                                 "sound": [{"kind": "stop", "at": 60.0, "beat": "closer", "what": "the stop"}]}))
+
+    def frozen(self, freezes):
+        probed = {"streams": [{"codec_type": "video", "codec_name": "h264", "profile": "High", "width": 1080, "height": 1920,
+                               "pix_fmt": "yuv420p", "r_frame_rate": "30/1"}], "format": {"duration": "32"}}
+
+        def detect(film, flt, key, run=None):
+            return freezes if key == "freeze_start" else []
+        measured = {"cuts": 0, "cuts_per_minute": 0, "planned_cuts": 0, "extra_scene_cuts": 0, "luma": [],
+                    "seconds_under_half": [], "longest_run_under_half": 0}
+        with mock.patch.object(qa, "FILMS", {"reel": qa.FILMS["reel"]}), mock.patch.object(qa, "probe", return_value=probed), \
+                mock.patch.object(qa, "detect", detect), mock.patch.object(qa.studio, "measure", return_value=measured), \
+                mock.patch.object(qa, "cards_check", return_value=(True, "")):
+            res, _, _ = qa.film_checks()
+        return [r[1] for r in res if r[0] == "frozen"]
+
+    def test_a_freeze_after_the_stop_fails_the_frozen_row(self):
+        self.assertEqual(self.frozen(["[freezedetect @ 0x1] lavfi.freezedetect.freeze_start: 30.4"]), [False])
+
+    def test_a_film_with_no_freeze_passes_it(self):
+        self.assertEqual(self.frozen([]), [True])
 
 
 if __name__ == "__main__":

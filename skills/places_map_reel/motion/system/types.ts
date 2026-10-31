@@ -121,6 +121,9 @@ export type Beat = {
   /** the beat's move and the cut into it, from its card's allowlists, chosen by the board from the beat's content */
   move?: string;
   transition?: string | null;
+  /** the seconds before the beat's cut that its frame-taking move begins, over the tail of the beat before: a flight
+   * starts as the camera leaves the stop before (absent: at the cut) */
+  early?: number;
   /** the words and the label a move may set itself, as the person gave them; empty when the card's layout sets them */
   words?: string;
   label?: string;

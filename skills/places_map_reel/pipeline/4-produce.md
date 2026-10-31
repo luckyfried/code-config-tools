@@ -36,15 +36,13 @@ python3 S/scripts/music.py master
 
 - `snap` sets the storyboard's tempo from the track (its tempo, half or double it: the one nearest 90 bpm that keeps the film inside its band), starts every
   beat on the frame nearest its musical beat, checks the three formats' boards again and writes `film.json`: the tempo, the
-  length, where the music starts, the hook's frame, the cuts, the rests, the story beats, the sound cues and the three
+  length, where the music starts, the hook's frame, the cuts, the rests, the story beats, the sound marks and the three
   boards. The boards are solved again at that tempo, so the sheet rendered from the old ones goes, and `sheets` renders
   it again.
-- `master` lays the board's sound cues (`hit`, `riser`, `impact`, each where its beat lands, played in the recipe's
-  own instruments) under the bed, the effects scaled by loudness to `FX_UNDER_BED_LU` (8) LU under it, cuts the bed at the `stop` so
-  the last hit rings out into silence, and brings the mix to −14 LUFS with the true peak under −1.5 dBTP. It prints
-  both loudness numbers and writes them to `music.json` and to `storyboard.md`'s `Mixed:` line; the gate's audio row
-  is red when the effects sit less than 7 LU under. `music/bed.wav` is the music trimmed to the film, `music/fx.wav`
-  the cues alone.
+- `master` brings the music to −14 LUFS by one gain, lets it go at the board's `stop` so the closer rests
+  silent, and writes `music/energy.json`, the master's loudness a frame. It is written in 32-bit float with no limiter.
+  The sound effects are laid by `film.py render` over the master as it muxes each film (the shared `sfx.py`), which
+  masters music and effects together to −14 LUFS under −1.5 dBTP, once, so nothing plays twice.
 
 ## The clips
 
@@ -60,7 +58,7 @@ python3 S/scripts/clips.py normalize [--why "..."]
   snap, a page drifting), the beat's seconds and a seamless loop. Read the requests: a request that names only the place means that shot has no `about`,
   `texture` or `camera`; write them (movement 1) and run `storyboard.py draft` and the steps after it.
 - With an image-to-video model in this session, make each clip from the photograph `list` names and save it where
-  `list` says (`clips/NN.mp4`). Without one, make none.
+  `list` says (`clips/NN.mp4`). A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests <run>/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks. Without one, make none.
 - `normalize` conforms every clip that arrived to its photograph and its beat, and records each one that did not
   as a stand-in (`--why` says why, for example "no video model in this session"): the film makes the layered move the
   request names on the still photograph in its place.
@@ -81,7 +79,7 @@ python3 S/scripts/qa.py timed
   under another program's load) writes no `preview.json`. Run `film.py preview` again, up to three tries in all, and
   go on once it passes; that is this step, not a new run. After a third failure, stop and tell the person what it printed.
 - Before the critic, look at the strips yourself and read them for the four things the film is held to, one by one:
-  one element (the dot) carried across every move; a sound where each beat lands and nowhere else, under the music;
+  one element (the dot) carried across every move; a sound where each beat lands and nowhere else, over the music;
   motion that belongs to the photograph (every hold moves: the photograph drifts toward its focus along its own line
   while the camera turns across it, each at its own rate); one held thing per beat. Fix what fails before the critic reads it.
 - Open the strips with the Read tool beside `storyboard.md`, and as the editor (`S/critic/critic.md`, "The timed cut")
@@ -94,14 +92,21 @@ python3 S/scripts/qa.py timed
 ## Render
 
 ```
-python3 S/scripts/film.py render
+python3 S/scripts/film.py render --proof
 ```
+
+Every round before deliver renders the proof. `render --proof` renders the three films at half size, `out/proof.mp4`,
+`out/proof-16x9.mp4` and `out/proof-square.mp4`, beside the films and never over `out/film.mp4`, with `post.png`,
+`story.png` and `frames/` as the full render makes them. `qa.py check` and `vote.py cut` read the proof while it is the
+newest render, and every size they report is in board units, the same numbers the full-size film gives. Without
+`--proof`, `render` is the full-size render that goes to deliver (movement 5, after the critics' verdict on the proof),
+and it takes the proof's films out of `out/`.
 
 `render` refuses until `qa.py timed` has passed this cut. It renders the three films of the chosen look,
 `post.png` (the square film's closer at rest), `story.png` (the reel's closer at rest) and `frames/<format>-<rest>.png`
 (the hook, the stop and the closer of every format at rest), and lays the mastered music under each film. Its last
 step is `qa.py check` on what it made, which prints `CHECKS GREEN` or the checks that failed, so `qa/check.json` always
-describes the films in `out/`; a render that ends red has a cause to fix in its source before the critics watch. The
+describes the newest films in `out/`; a render that ends red has a cause to fix in its source before the critics watch. The
 film is drawn frame by frame in a Chromium with no window, on an NVIDIA graphics card when there is one and on the
 processor otherwise, and encoded with ffmpeg; the pictures are the same either way. A frame that is not ready in 30 s
 stops the render and names the frame; a browser that stops answering, a lost graphics context or a flat render costs
@@ -117,4 +122,4 @@ exits and names the running one's log.
 
 To change the film, change its source (`places.py`, `cast.json`, `taste.json`) and run `storyboard.py draft`, the
 vote and the pick, `snap`, `clips.py list` and `normalize`, `music.py master`, `film.py preview`, the timed read and
-`film.py render` again; never edit `film.json` by hand.
+`film.py render --proof` again; never edit `film.json` by hand.

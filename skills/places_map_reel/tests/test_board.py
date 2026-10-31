@@ -72,10 +72,10 @@ class DriveBoard(unittest.TestCase):
         seconds = self.plans["reel"]["seconds"]
         late = copy.deepcopy(b)
         stop = next(c for c in late["sound"] if c["kind"] == "stop")
-        late["sound"].append({**stop, "kind": "hit", "at": stop["at"] + 0.5})
+        late["sound"].append({**stop, "kind": "turn", "at": stop["at"] + 0.5})
         self.assertTrue(any("after the stop" in x for x in storyboard.sound_findings(late, seconds)))
         b["sound"] = [c for c in b["sound"] if c["kind"] != "stop"]
-        self.assertTrue(any("stop cues" in x for x in storyboard.sound_findings(b, seconds)))
+        self.assertTrue(any("stop marks" in x for x in storyboard.sound_findings(b, seconds)))
 
     def test_every_place_has_its_name_on_its_card(self):
         # the name leads the label over their line ("Seville · May", or its first row where the label breaks), or, on a
@@ -295,6 +295,13 @@ class HerMoments(unittest.TestCase):
             words = sum(len([w for w in ln["text"].split() if w != "·"]) for ln in c["lines"])
             shown = (4 * b["bars"] - c["cut"] - c["go"]) * sec
             self.assertGreaterEqual(shown, board_drive.reading(words) - 1e-6, (c["place"], c["n"]))
+
+    def test_a_quick_stops_name_and_month_come_up_a_quarter_beat_after_it_lands(self):
+        # a quick stop holds two beats at the least, so its two words take the frame almost at once
+        quick = [c for c in self.board["route"]["cards"] if c["kind"] == "quick"]
+        self.assertTrue(quick)
+        for c in quick:
+            self.assertLessEqual(c["cut"], 0.25, c["id"])
 
     def test_her_line_is_on_its_places_card_and_nothing_counts(self):
         for c in self.board["route"]["cards"]:

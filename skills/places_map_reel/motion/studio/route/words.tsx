@@ -14,6 +14,8 @@ import {colorOf, liftOf, placeOnWall, type Card, type Line, type Placed, type Pl
 /** Beats before the camera leaves a place that its words begin to leave: they are gone before the card moves, so no
  * word rides a card through a move or stands over the map. */
 const LEAVE = 0.35;
+/** How long a line takes to fade out as it leaves. */
+const OUT_FADE = 0.3;
 /** Beats the label leads the line by, and how long each entrance takes. */
 const LEAD = 0.15;
 const ENTER: Record<string, number> = {cut: 0, fade: 0.6, type: 0.9, rise: 0.5, slam: 0.4};
@@ -40,7 +42,7 @@ const entrance = (plan: Plan, enter: string, age: number, left: number, chars: n
   const full = enter === 'type' ? Math.min(1.4, Math.max(0.5, chars * 0.035)) : ENTER[enter] ?? 0.5;
   const len = Math.min(full, Math.max(0, room) * ENTER_SHARE);
   const u = len > 0 ? Math.min(1, Math.max(0, age / len)) : age >= 0 ? 1 : 0;
-  const out = enter === 'cut' ? step(left) : outE(Math.min(1, Math.max(0, left / 0.3)));
+  const out = enter === 'cut' ? step(left) : outE(Math.min(1, Math.max(0, left / OUT_FADE)));
   if (enter === 'fade') return {rise: age >= 0 ? 1 : 0, opacity: inE(u) * (1 - out), scale: 1, stagger: 0, ease: inE};
   if (enter === 'type') return {rise: Math.min(u, 1 - out), opacity: 1, scale: 1, stagger: 0.97, ease: step};
   if (enter === 'slam') {
@@ -72,9 +74,10 @@ const HALO = {title: 0.07, other: 0.16};
 const ON_PHOTO_SHADOW = 0.85;
 
 /** One stop's words on its card. */
-export const CardWords: React.FC<{plan: Plan; card: Card; fonts: Fonts; t: number; index: number}> = ({plan, card: c, fonts, t, index}) => {
+export const CardWords: React.FC<{plan: Plan; card: Card; fonts: Fonts; t: number; index: number; gone?: number}> = ({plan, card: c, fonts, t, index, gone}) => {
   const from = c.kind === 'hook' ? plan.hook.name : c.cutAt;
-  const until = c.goAt - LEAVE;
+  // a card's words leave LEAVE before the camera does, and are gone by `gone` when a cut closes over the hold first
+  const until = Math.min(c.goAt - LEAVE, gone === undefined ? Infinity : gone - OUT_FADE);
   if (t < from || t > until + 0.35) return null;
   const k = cardSpace(plan, c, index, t);
   if (k.whole < 0.5) return null;

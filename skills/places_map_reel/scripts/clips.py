@@ -19,6 +19,12 @@ public/clips/<normalize>/NN/0001.jpg onward, in a folder of that normalize's own
 photograph's card while the clip's beat plays. A clip that did not arrive stands in: the film makes the camera or depth
 move the storyboard names for it on the still photograph. clips.json records every clip as generated or stand-in, and
 brief.md lists them.
+
+A stop whose photograph in the cast is a clip they recorded (a video file in cast.json or in their set) needs nothing
+generated: grade.py makes its photograph from the clip's strongest second (strongest()), the storyboard names the clip
+as `their own clip` with its `source` and the second it plays `from`, list asks for nothing, and normalize conforms it
+from that second for its beat's length, without its sound, as status `recorded`. It plays on the photograph's card,
+so it arrives and moves as the photograph would have.
 """
 import argparse
 import shutil
@@ -34,6 +40,8 @@ CLIPS = Path("clips")
 PUBLIC = Path("public")
 FPS = 30
 EXTS = (".mp4", ".mov", ".webm", ".m4v")
+# the strongest second is read from the clip's frames at this rate and size, gray
+READ_FPS, READ_W, READ_H = 10, 32, 32
 
 
 def board():
@@ -60,6 +68,45 @@ def arrived(cid):
     return None
 
 
+def duration(src):
+    """A clip's length in seconds (0.0 when it cannot be read)."""
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def strongest(src):
+    """The second of a clip that moves most: the start of the whole second whose frames differ most from the frame before."""
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(src), "-an", "-vf",
+                        f"fps={READ_FPS},scale={READ_W}:{READ_H},format=gray", "-f", "rawvideo", "-"], capture_output=True)
+    n = READ_W * READ_H
+    frames = [r.stdout[i:i + n] for i in range(0, len(r.stdout) - n + 1, n)]
+    per = {}
+    for k in range(1, len(frames)):
+        moved = sum(abs(a - b) for a, b in zip(frames[k], frames[k - 1]))
+        per[k // READ_FPS] = per.get(k // READ_FPS, 0) + moved
+    return float(max(per, key=lambda s: (per[s], -s))) if per else 0.0
+
+
+def recorded(src):
+    """What grade.py records for a shot that is a clip they recorded: the clip, its strongest second and its length;
+    {} for a photograph."""
+    src = Path(src)
+    if src.suffix.lower() not in EXTS:
+        return {}
+    return {"clip": str(src.resolve()), "clip_from": strongest(src), "clip_seconds": round(duration(src), 3)}
+
+
+def frame_at(src, sec, dst):
+    """The clip's frame at `sec` as a JPEG at `dst`."""
+    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{sec:.3f}", "-i", str(src), "-frames:v", "1", "-q:v", "2",
+                    str(dst)], check=True, capture_output=True)
+    return dst
+
+
 def size_of(image):
     r = subprocess.run([_env.ffprobe(), "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
                         "-of", "csv=p=0", str(PUBLIC / image)], capture_output=True, text=True)
@@ -72,7 +119,12 @@ def cmd_list(a):
     win = windows(b)
     CLIPS.mkdir(exist_ok=True)
     reqs = []
+    own = [c for c in b.get("clips") or [] if c.get("source")]
+    for c in own:
+        print(f"clip {c['id']} for {c['beat']}: their own recording, {c['seconds']} s from {c['from']:g} s of {c['source']}; nothing to generate")
     for c in b.get("clips") or []:
+        if c.get("source"):
+            continue
         w, h = size_of(c["image"])
         secs = round(max(c.get("seconds") or 0, win[c["beat"]][1] / FPS), 1)
         reqs.append({"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "size": f"{w}x{h}",
@@ -83,7 +135,7 @@ def cmd_list(a):
         print(f"clip {r['id']} for {r['beat']} ({r['role']}), {r['seconds']} s at {r['size']} -> {r['save_as']}")
         print(f"  image-to-video from: {r['image']}")
         print(f"  prompt: {r['prompt']}")
-    unread = [c["id"] for c in b.get("clips") or [] if not c.get("read")]
+    unread = [c["id"] for c in b.get("clips") or [] if not c.get("read") and not c.get("source")]
     if unread:
         print(f"clips {', '.join(unread)} have no `about` (`texture` for the texture between chapters) or `camera` in cast.json: their "
               "prompts name the place and the photograph's own light and lens; write them on the stop's first shot and run "
@@ -100,13 +152,19 @@ def prompt_of(c, secs):
             f"{secs:g} second{'' if secs == 1 else 's'}, a seamless loop that ends on its first frame, no text on screen.")
 
 
-def conform(src, image, frames, dst):
-    """The clip at the photograph's size, 30 fps, `frames` long, as one JPEG per frame in `dst`."""
+def conform(src, image, frames, dst, start=None):
+    """The clip at the photograph's size, 30 fps, `frames` long, as one JPEG per frame in `dst`: a generated clip looped
+    from its first frame; with `start`, a recorded one played once from that second, holding its last frame if it ends
+    first."""
     w, h = size_of(image)
     shutil.rmtree(dst, ignore_errors=True)
     dst.mkdir(parents=True)
     vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS}"
-    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-i", str(src), "-frames:v", str(frames),
+    if start is None:
+        head = ["-stream_loop", "-1", "-i", str(src)]
+    else:
+        head, vf = ["-ss", f"{start:.3f}", "-i", str(src)], vf + ",tpad=stop_mode=clone:stop=-1"
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *head, "-an", "-frames:v", str(frames),
                         "-vf", vf, "-q:v", "2", str(dst / "%04d.jpg")], capture_output=True, text=True)
     n = len(list(dst.glob("*.jpg")))
     return (n, "") if r.returncode == 0 and n else (0, r.stderr[-300:])
@@ -122,29 +180,34 @@ def cmd_normalize(a):
     for c in b.get("clips") or []:
         at, n = win[c["beat"]]
         rec = {"beat": c["beat"], "role": c["role"], "image": c["image"], "from_frame": at}
-        src = arrived(c["id"])
-        got, err = conform(src, c["image"], n, PUBLIC / "clips" / tag / c["id"]) if src else (0, "")
+        own = c.get("source")
+        src = Path(own) if own and Path(own).is_file() else None if own else arrived(c["id"])
+        got, err = conform(src, c["image"], n, PUBLIC / "clips" / tag / c["id"], c.get("from") if own else None) if src else (0, "")
         if got:
-            rec.update(status="generated", source=str(src), dir=f"clips/{tag}/{c['id']}", frames=got)
+            rec.update(status="recorded" if own else "generated", source=str(src), dir=f"clips/{tag}/{c['id']}", frames=got)
+        elif own:
+            rec.update(status="stand-in", stand_in="the photograph made from the clip holds its place",
+                       why=f"could not read {Path(own).name}: {err}" if src else f"{own} is not there")
         else:
             rec.update(status="stand-in", stand_in=c["stand_in"],
                        why=f"could not read {src.name}: {err}" if src else (a.why or "the video model did not produce it"))
         out[c["id"]] = rec
-        print(f"clip {c['id']} ({c['beat']}): " + (f"generated, {got} frames -> public/clips/{tag}/{c['id']}/" if got
+        print(f"clip {c['id']} ({c['beat']}): " + (f"{rec['status']}, {got} frames -> public/clips/{tag}/{c['id']}/" if got
                                                     else f"stand-in ({rec['why']}): {c['stand_in']}"))
     _env.write_json("clips.json", {"clips": out})
     for old in (PUBLIC / "clips").glob("*"):
         if old.name != tag:
             shutil.rmtree(old) if old.is_dir() else old.unlink()
     g = sum(1 for r in out.values() if r["status"] == "generated")
-    print(f"clips: {g} generated, {len(out) - g} stand-in -> clips.json")
+    o = sum(1 for r in out.values() if r["status"] == "recorded")
+    print(f"clips: {g} generated, {o} their own, {len(out) - g - o} stand-in -> clips.json")
     return 0
 
 
 def placed():
-    """The generated clips the film shows, for the composition's props: where each starts and its frames."""
+    """The clips the film shows, generated and their own, for the composition's props: where each starts and its frames."""
     return [{"id": k, "image": r["image"], "from": r["from_frame"], "frames": r["frames"], "dir": r["dir"]}
-            for k, r in ((_env.read_json("clips.json") or {}).get("clips") or {}).items() if r.get("status") == "generated"]
+            for k, r in ((_env.read_json("clips.json") or {}).get("clips") or {}).items() if r.get("status") in ("generated", "recorded")]
 
 
 def main():

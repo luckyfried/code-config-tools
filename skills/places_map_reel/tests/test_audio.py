@@ -1,11 +1,14 @@
-"""The film's sound: one cue where each beat lands and the few the story's shape asks for; the effects stem 8 LU under
-the person's music, read back by the gate; and the bed music.py makes through the music engine from the picked look's
-recipe, or the one their music brief's words name, with the effects played on its own instruments.
+"""The film's sound: the shared layer's effects where the picture lands (a whoosh on every cut and on the dive, a shutter
+as every photograph lands, an impact as the title lands and as the closer arrives, the riser into it), on the board's
+grid, and nothing else playing; the board's marks where the bed turns and stops; the master music.py makes with its
+energy a frame; and the bed music.py makes through the music engine from the picked look's recipe, or the one their
+music brief's words name.
 
     python3 -I -m unittest discover -s S/tests -p test_audio.py
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -17,10 +20,11 @@ from unittest import mock
 KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
 import _env  # noqa: E402
+import board_drive  # noqa: E402
 import look  # noqa: E402
 import music  # noqa: E402
 import music_engine  # noqa: E402
-import qa  # noqa: E402
+import sfx  # noqa: E402
 import storyboard  # noqa: E402
 
 SOURCE = json.loads((KIT / "tests" / "data" / "trip.json").read_text())
@@ -40,51 +44,100 @@ class InARun(unittest.TestCase):
         Path(path).write_text(obj if isinstance(obj, str) else json.dumps(obj))
 
 
-class Cues(unittest.TestCase):
-    def test_a_cue_where_each_beat_lands_and_only_the_shapes_few_besides(self):
+class Marks(unittest.TestCase):
+    def test_the_bed_lifts_into_the_peak_beat_at_its_own_tempo(self):
+        board = {"bpm": 90, "beats": [{"bars": 1}, {"bars": 2, "peak": True}, {"bars": 1}]}
+        for bed in (90, 180, 45):
+            land, end = music.peak(board, bed)
+            self.assertAlmostEqual(land, 4 * 60 / 90, places=6)
+            self.assertAlmostEqual(end, 12 * 60 / 90, places=6)
+        self.assertIsNone(music.peak({"bpm": 90, "beats": [{"bars": 1}, {"bars": 2}]}, 90))
+        self.assertIsNone(music.peak(None, 90))
+
+    def test_the_board_marks_where_the_bed_turns_and_where_it_stops_and_plays_nothing(self):
         b = storyboard.plan(SOURCE, "reel", None)["board"]
         kinds = [c["kind"] for c in b["sound"]]
-        self.assertLessEqual(len(kinds), len(b["beats"]) + 4, kinds)
-        self.assertLessEqual(set(kinds), {"hit", "riser", "impact", "stop"})
-        self.assertEqual((kinds.count("riser"), kinds.count("stop")), (1, 1))
-        for x in b["beats"]:
-            self.assertTrue(any(c["beat"] == x["id"] for c in b["sound"]), x["id"])
+        self.assertEqual(sorted(kinds), ["stop", "turn", "turn"])
+        stop = next(c["at"] for c in b["sound"] if c["kind"] == "stop")
+        self.assertTrue(all(c["at"] <= stop for c in b["sound"]))
+        self.assertEqual(music.edges(b, b["bpm"]), [c["at"] * 60 / b["bpm"] for c in b["sound"] if c["kind"] == "turn"])
 
 
-class Mix(InARun):
-    def test_master_sets_the_effects_eight_lu_under_the_bed_and_says_so(self):
-        # a quiet bed: the effects peak-normalized over it would sit above it
+class Effects(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.b = storyboard.plan(SOURCE, "reel", None)["board"]
+        cls.fx = board_drive.fx_board(cls.b)
+        cls.ev, _ = sfx.events(cls.fx)
+
+    def test_a_whoosh_on_every_cut_a_shutter_as_every_photograph_lands_and_the_title_and_closer_hit(self):
+        kinds = [k for _, k in self.ev]
+        stops = len(self.b["route"]["cards"])
+        marks = sum(1 for x in self.b["beats"] if x.get("move") in sfx.MARKS)
+        # a whoosh on the dive onto the first place and on every cut into a stop; the closer's way in is its riser
+        self.assertEqual(sum(kinds.count(k) for k in ("air", "sweep", "bright")), stops)
+        self.assertEqual(kinds.count("bright"), 1)
+        self.assertEqual(kinds.count("shutter") + kinds.count("pop"), stops)
+        self.assertEqual(kinds.count("pop"), marks)
+        self.assertEqual((kinds.count("impact"), kinds.count("riser")), (2, 1))
+
+    def test_every_effect_is_on_the_quarter_beat_grid_before_the_stop(self):
+        step = 60 / self.b["bpm"] / sfx.GRID
+        stop = next(c["at"] for c in self.b["sound"] if c["kind"] == "stop") * 60 / self.b["bpm"]
+        for t, k in self.ev:
+            self.assertAlmostEqual(t / step, round(t / step), places=4, msg=(t, k))
+            self.assertLess(t, stop, (t, k))
+
+    def test_the_title_hits_as_it_lands_and_the_closer_as_the_map_resolves_into_it(self):
+        sec = 60 / self.b["bpm"]
+        hits = [t for t, k in self.ev if k == "impact"]
+        st, _ = board_drive.starts(self.b)
+        self.assertAlmostEqual(hits[0], round(board_drive.TITLE_IN * 4) / 4 * sec, places=4)
+        self.assertAlmostEqual(hits[1], round((st["closer"] + board_drive.CLOSER_LAND) * 4) / 4 * sec, places=4)
+
+    def test_a_spectacles_photograph_lands_when_its_flight_does(self):
+        b = json.loads(json.dumps(self.b))
+        beat = next(x for x in b["beats"][1:-1])
+        beat["move"] = "picture-tunnel"
+        got = next(x for x in board_drive.fx_board(b)["beats"] if x["id"] == beat["id"])
+        self.assertAlmostEqual(got["layers"][0]["at"]["arrive"] - got["start"], board_drive.FLIGHT["picture-tunnel"] / (60 / b["bpm"]), places=3)
+
+
+class Master(InARun):
+    def test_master_carries_the_music_alone_and_writes_its_energy_a_frame(self):
         os.makedirs("music")
         subprocess.run([_env.ffmpeg(), "-v", "error", "-y", "-f", "lavfi", "-i", "sine=f=220:d=4", "-af", "volume=-24dB",
                         "music/quiet.wav"], check=True)
-        beats = [{"id": "hook"}, {"id": "s01"}, {"id": "closer"}]
-        self.put("storyboards/drive/board-reel.json", {"bpm": 120, "beats": beats})
-        self.put("storyboards/drive/storyboard.md", "# drive\n\nMixed: not yet.\n")
-        cues = [{"kind": "hit", "at": 0.5, "beat": "hook", "what": "a", "weight": 0.9},
-                {"kind": "impact", "at": 2.0, "beat": "s01", "what": "b"},
-                {"kind": "hit", "at": 5.0, "beat": "closer", "what": "c", "weight": 0.8},
-                {"kind": "stop", "at": 5.0, "beat": "closer", "what": "d"}]
-        self.put("film.json", {"seconds": 3.5, "bpm": 120, "sound": cues, "boards": {"reel": "storyboards/drive/board-reel.json"}})
-        self.put("music.json", {"file": "music/quiet.wav"})
+        cues = [{"kind": "turn", "at": 2.0, "beat": "s01", "what": "b"}, {"kind": "stop", "at": 5.0, "beat": "closer", "what": "d"}]
+        self.put("film.json", {"seconds": 3.5, "bpm": 120, "sound": cues})
+        self.put("music.json", {"file": "music/quiet.wav", "fx": {"hit": "music/fx/hit.wav"}, "bed_lufs": -20, "fx_lufs": -28})
         self.assertEqual(music.cmd_master(types.SimpleNamespace(seconds=None)), 0)
         info = json.loads(Path("music.json").read_text())
-        bed, fx = music.integrated_file("music/bed.wav"), music.integrated_file("music/fx.wav")
-        self.assertAlmostEqual(bed - fx, music.FX_UNDER_BED_LU, delta=0.5)
-        self.assertAlmostEqual(info["bed_lufs"] - info["fx_lufs"], music.FX_UNDER_BED_LU, delta=0.3)
-        self.assertFalse(Path("music/key.wav").exists())
-        md = Path("storyboards/drive/storyboard.md").read_text()
-        self.assertIn(f"Mixed: bed {info['bed_lufs']} LUFS, effects {info['fx_lufs']} LUFS", md)
-        self.assertIn("4 sound cues over 3 beats.", md)
+        self.assertAlmostEqual(info["master_lufs"], -14, delta=1)
+        self.assertFalse({"fx", "bed_lufs", "fx_lufs"} & set(info))
+        self.assertFalse(Path("music/fx.wav").exists() or Path("music/mix.wav").exists())
+        energy = json.loads(Path("music/energy.json").read_text())
+        self.assertEqual(energy["fps"], board_drive.FPS)
+        self.assertAlmostEqual(len(energy["rms"]), 3.5 * board_drive.FPS, delta=2)
+        self.assertTrue(0 < max(energy["rms"]) <= 1)
 
-    def test_the_gate_refuses_effects_louder_than_the_bed_and_never_counts_cues(self):
-        ok, said = qa.mix({"bed_lufs": -21.4, "fx_lufs": -16.3}, 19, 16)
-        self.assertFalse(ok)
-        self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS", said)
-        ok, said = qa.mix({"bed_lufs": -21.4, "fx_lufs": -29.4}, 200, 16)
-        self.assertTrue(ok)
-        self.assertIn("8.0 LU under", said)
-        self.assertIn("200 sound cues over 16 beats", said)
-        self.assertFalse(qa.mix({}, 19, 16)[0])
+    def test_a_peaky_bed_reaches_the_target_by_one_gain_and_keeps_its_peaks_whole(self):
+        """Sharp clicks over a quiet bed need peaks past full scale to reach -14 LUFS: the master is written in float and
+        keeps them, so the film's one limiter (sfx.py) is the only thing that touches them."""
+        ff = _env.ffmpeg()
+        os.makedirs("music")
+        subprocess.run([ff, "-v", "error", "-f", "lavfi", "-i", "anoisesrc=d=6:c=pink:a=0.01", "-f", "lavfi", "-i",
+                        "aevalsrc='if(lt(mod(t,0.25),0.004),0.9,0)':d=6:s=48000", "-filter_complex",
+                        "[0:a][1:a]amix=inputs=2:normalize=0", "-ar", "48000", "music/source.wav"], check=True)
+        self.put("music.json", {"file": "music/source.wav", "bpm": 120, "downbeats": [0, 2, 4]})
+        self.put("film.json", {"seconds": 6.0, "bpm": 120, "music_start": 0.0, "sound": []})
+        self.assertEqual(music.cmd_master(types.SimpleNamespace(seconds=None)), 0)
+        info = json.loads(Path("music.json").read_text())
+        self.assertAlmostEqual(info["master_lufs"], music.TARGET_LUFS, delta=0.2)
+        said = subprocess.run([ff, "-hide_banner", "-nostats", "-i", info["master"], "-af", "astats=measure_perchannel=none",
+                               "-f", "null", "-"], capture_output=True, text=True).stderr
+        peak = float(re.findall(r"Peak level dB: (-?[\d.]+)", said)[-1])
+        self.assertGreater(peak, 0.0, "the clicks stand past full scale in the float master, unclipped")
 
 
 class Brief(unittest.TestCase):
@@ -105,7 +158,7 @@ class Make(InARun):
         self.assertEqual(music.cmd_make(types.SimpleNamespace(bpm=None, seconds=3)), 0)
         return json.loads(Path("music.json").read_text())
 
-    def test_the_picked_looks_recipe_makes_the_bed_through_the_engine_with_its_effects(self):
+    def test_the_picked_looks_recipe_makes_the_bed_through_the_engine(self):
         calls = []
         real = music_engine.compose
 
@@ -121,8 +174,8 @@ class Make(InARun):
         bed = Path(info["file"])
         self.assertTrue(bed.is_file() and bed.parent.name.startswith("bed-"), info["file"])
         self.assertAlmostEqual(music.duration(bed), 3, delta=0.2)
-        self.assertEqual(sorted(Path(f).name for f in info["fx"].values()), ["bright.wav", "hit.wav", "impact.wav", "riser.wav"])
-        self.assertTrue(all(Path(f).is_file() for f in info["fx"].values()))
+        # the film's effects are the shared layer's, so music.json names the bed alone
+        self.assertNotIn("fx", info)
 
     def test_the_briefs_words_choose_another_recipe_and_take_an_instrument_out(self):
         book = music_engine.recipes()

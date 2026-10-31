@@ -3,14 +3,15 @@
 // by place the dot runs the real route, each place opening out of its pin into its card, laid out by the style card,
 // with its name and the person's line about it, and folding back onto the map as a small print while the camera follows
 // the dot on; each beat's move and the cut into it play over the picture; the closer is the map resolving into the
-// style's last frame, the map showing through its window with every place named on its pin, where the film holds
-// still and silent.
+// style's last frame, the map showing through its window with every place named on its pin, where the picture comes to
+// rest and the music stops, and the closer keeps the shared layer's slow push to the last frame. The cut into a flown
+// stop plays where its flight takes the frame (plan.ts flightCutAt); the shared layer plays every other cut.
 import {useLoader, useThree} from '@react-three/fiber';
 import {useLayoutEffect, useMemo} from 'react';
 import {AbsoluteFill, continueRender, delayRender, staticFile, useCurrentFrame} from 'remotion';
 import * as THREE from 'three';
 import {fxAt, MoveLayer, nudgeAt, type Timeline} from '../../system/moves/layer';
-import type {BeatOn, Look} from '../../system/moves';
+import type {Look} from '../../system/moves';
 import {Stage, type Pose} from '../../system/three/Stage';
 import {fileOf, useFonts} from '../../system/three/type';
 import type {Board, Clip} from '../../system/types';
@@ -19,7 +20,7 @@ import {CardView} from './card';
 import {CloserFrame, KIT, registerClosers} from './closers';
 import {Dot, legDrawn} from './dot';
 import {MapView} from './map';
-import {lookOf, planOf, type Box, type Line, type Plan} from './plan';
+import {flightCutAt, lookOf, planOf, sharedOf, timelineOf, wordsGoneBy, type Line, type Plan} from './plan';
 import {CardWords, HookTitle, type Fonts} from './words';
 
 registerClosers();
@@ -65,42 +66,7 @@ const useClipFrame = (src: string | null) => {
   return tex;
 };
 
-/** Where a stop's label and line stand on its frame, [x0, y0, x1, y1] px: the bounds of its lines, each as wide as its
- * letters run at an average advance. */
-const typeOf = (lines: Line[]): Box | undefined => {
-  if (!lines.length) return undefined;
-  const xs: number[] = [], ys: number[] = [];
-  for (const ln of lines) {
-    const w = ln.text.length * ln.size * 0.55;
-    const x0 = ln.anchor === 'middle' ? ln.x - w / 2 : ln.anchor === 'end' ? ln.x - w : ln.x;
-    xs.push(x0, x0 + w);
-    ys.push(ln.y - ln.size, ln.y + 0.25 * ln.size);
-  }
-  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-};
-
-/** Beats before the camera leaves a stop that its marks begin to go: a mark drawn on the photograph is gone before the
- * card folds onto the map. */
-const MARKS_GO = 0.35;
-
-/** The film's beats as the moves see them: each stop from its arrival to the next, the closer to the film's end. A
- * photo beat carries where its photograph and its words stand on the frame and the beats the camera holds on it; its
- * words and label are the card layout's, so a move sets none of its own. */
-const timelineOf = (board: Board, plan: Plan): Timeline => {
-  const at = [...plan.cards.map((c) => c.arrive), plan.closer.at];
-  const beats: BeatOn[] = board.beats.map((b, i) => {
-    const c = plan.cards[i];
-    const photo = b.form === 'photo' && c;
-    return {
-      id: b.id, form: b.form ?? 'photo', at: at[i] ?? plan.closer.at, end: at[i + 1] ?? plan.end, move: b.move, transition: b.transition ?? null,
-      words: photo ? '' : b.words ?? '', label: b.label ?? '', peak: Boolean(b.peak),
-      ...(photo ? {box: c.box, type: typeOf(c.lines), held: [c.arrive, c.goAt - MARKS_GO] as [number, number]} : {}),
-    };
-  });
-  return {beats, cuts: beats.map((b) => b.at)};
-};
-
-const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Fonts; clips: Clip[]; pose: Pose; line: Timeline; look: Look}> = ({plan, t, frame, fonts, clips, pose, line, look}) => {
+const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Fonts; clips: Clip[]; pose: Pose; line: Timeline; look: Look; gone: Record<number, number>}> = ({plan, t, frame, fonts, clips, pose, line, look, gone}) => {
   const files = useMemo(() => [...new Set(plan.cards.map((c) => c.file))], [plan]);
   const textures = useLoader(THREE.TextureLoader, files.map((f) => staticFile(f))) as THREE.Texture[];
   useMemo(() => textures.forEach((tx) => {
@@ -139,7 +105,7 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Fonts; clips
       <primitive object={light.target} />
       <MapView plan={plan} t={t} drawn={(i, tt) => legDrawn(plan, i, tt)} h={viewH} />
       {plan.cards.map((c, i) => <CardView key={c.id} plan={plan} card={c} index={i} t={t} texture={texOf(c.file)} pulse={1} nudge={nudge} />)}
-      {plan.cards.map((c, i) => <CardWords key={c.id} plan={plan} card={c} fonts={fonts} t={t} index={i} />)}
+      {plan.cards.map((c, i) => <CardWords key={c.id} plan={plan} card={c} fonts={fonts} t={t} index={i} gone={gone[i]} />)}
       <Dot plan={plan} t={t} h={h} still={plan.closer.still} />
     </group>
   );
@@ -152,16 +118,20 @@ export const RouteFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
   const fonts = useFonts(files);
   const sys = board.system;
   const look: Look = useMemo(() => lookOf(plan), [plan]);
-  const line = useMemo(() => timelineOf(board, plan), [board, plan]);
+  const full = useMemo(() => timelineOf(board, plan), [board, plan]);
+  const line = useMemo(() => sharedOf(full), [full]);
+  const gone = useMemo(() => wordsGoneBy(full, look), [full, look]);
   const safe = sys.safe[board.format.name ?? 'reel'] ?? {top: 0, bottom: 0};
   const still = Math.round(plan.closer.still * plan.pulse);
   const t = Math.min(frame, still) / plan.pulse;
   const shot = shotAt(plan, t);
+  const flight = flightCutAt(full, look, t);
   const bg = plan.colors.sea;
   const over = (
     <CloserFrame.Provider value={{window: plan.closer.window, top: Math.max(safe.top, sys.finish.bars * plan.H),
       bottom: plan.H - Math.max(safe.bottom, sys.finish.bars * plan.H)}}>
-      <MoveLayer line={line} look={look} t={t} closer={{name: KIT + sys.closer, at: plan.closer.at, still: plan.closer.still}} bars={sys.finish.bars}>
+      <MoveLayer line={line} look={look} t={t} now={frame / plan.pulse} closer={{name: KIT + sys.closer, at: plan.closer.at, still: plan.closer.still}} bars={sys.finish.bars}>
+        {flight?.cut.Overlay ? <flight.cut.Overlay into={flight.into} look={look} u={flight.u} t={t} /> : null}
         <HookTitle plan={plan} system={sys} t={t} />
       </MoveLayer>
     </CloserFrame.Provider>
@@ -169,9 +139,9 @@ export const RouteFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
   return (
     <AbsoluteFill style={{background: bg}}>
       {fonts ? (
-        <Stage pose={shot.pose} travel={{...shot.travel, ...fxAt(line, look, t)}} background={bg}
+        <Stage pose={shot.pose} travel={{...shot.travel, ...fxAt(line, look, t), ...(flight?.cut.fx ? flight.cut.fx({into: flight.into, look, u: flight.u, t}) : {})}} background={bg}
           near={Math.max(5, shot.distance * 0.02)} far={Math.max(40000, shot.distance * 6)} over={over}>
-          <Scene plan={plan} t={t} frame={frame} fonts={fonts} clips={clips} pose={shot.pose} line={line} look={look} />
+          <Scene plan={plan} t={t} frame={frame} fonts={fonts} clips={clips} pose={shot.pose} line={line} look={look} gone={gone} />
         </Stage>
       ) : null}
     </AbsoluteFill>

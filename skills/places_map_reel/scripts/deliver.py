@@ -20,6 +20,8 @@ carries a banner saying the gate has not passed until the gate passes, so a deli
 looks ready, and every file reaches out/ by a rename. On a passing gate its last line is the reel's path from the
 project's root (build/<run>/out/film.mp4), the path the reply names first; on a
 failed gate it is "not ready: the gate failed on" and the failing checks, and no path.
+deliver.py delivers only the full-size films: it refuses a run whose newest render is the half-size proof
+(out/proof.mp4), writes nothing, and names the full-size render to run first.
 """
 import html
 import os
@@ -29,6 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import look  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import storyboard  # noqa: E402
 import studio  # noqa: E402
@@ -159,8 +162,10 @@ def looks_html(st):
 def made_html(pl, photos, music, cut, st, taste):
     """How the film was made, in plain words."""
     n = len(pl.get("places") or [])
+    # the photographs the film shows, one a stop, never the whole library the draft chose them from
+    shown = {c["file"] for c in (board_of(st).get("route") or {}).get("cards") or []} or {p["file"] for p in photos}
     said = [f"The {n} places come from your own posts and their geotags, in the order you went.",
-            f"Every photograph is one of yours, one for each stop ({len({p['file'] for p in photos})} in all).",
+            f"Every photograph is one of yours, one for each stop ({len(shown)} in all).",
             f"The look: {esc(look.sentence(st))}"]
     said.append(f"The music is {esc(music['origin'])}, and every cut lands on its beat." if music.get("file")
                 else "There is no music on it; add a sound when you post.")
@@ -208,6 +213,8 @@ def main():
     # the lock holds while deliver writes out/, so no render changes the films under its page, and the gate runs in
     # this process, every check's process started through run.spawn
     with studio.lock("deliver") as run:
+        if proof.scale(OUT / "film.mp4") != 1:
+            sys.exit(proof.refusal(OUT / "film.mp4"))
         return deliver(run)
 
 

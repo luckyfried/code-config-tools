@@ -12,12 +12,12 @@ set, the cast comes from it; without one, from each place's best photos in picks
 
 A visit's moment is drafted as the first of their posts, reels and stories from that place within the visit's dates:
 its caption (hashtags and emoji set aside) as their line, with the people it tags, and its photograph. Caption and
-photograph come from the one post, so a moment whose post has no photograph (a reel) is wordless on the place's own
-print. Every caption of the visit follows it in time order as a candidate; the line kept in taste.json wins.
+photograph come from the one post, so a moment whose post has no photograph (a reel) is wordless, on the reel itself,
+which plays on its stop (clips.py). Every caption of the visit follows it in time order as a candidate; the line kept in taste.json wins.
 
 cast.json lists the visits in route order ({place, n, from, shots}), each with the photographs it shows, the first
-the visit's own print: the moment's photograph, set or no set, then the best the place has that an earlier visit
-has not shown, two in all for a visit in the home region, three for a far place. cast.png shows every visit's shots beside the place's other photographs. Look at it
+the visit's own print: the moment's photograph, set or no set, unless an earlier visit of the place showed that
+picture, then the best the place has that an earlier visit has not shown (one picture under two names is one photograph), two in all for a visit in the home region, three for a far place. cast.png shows every visit's shots beside the place's other photographs. Look at it
 and correct cast.json by eye before storyboards: a cast whose visits still match the route is kept as you set it on
 every later run.
 
@@ -91,14 +91,19 @@ def visit_moments(lib, pl):
 
 
 def own_print(lib, m):
-    """A moment's own photograph: the one the curation pairs with it (`photo`), else its post's photograph as photos/
-    holds it; None for a post with none (a reel), whose moment is wordless."""
+    """A moment's own photograph: the one the curation pairs with it (`photo`, a photograph or a clip they recorded),
+    else its post's photograph as photos/ holds it; for a post with none (a reel) its own clip, which plays on the stop
+    with the moment wordless (clips.py); None when there is neither."""
     if m.get("photo"):
         return m["photo"]
     kind, _, i = (m.get("post") or "").partition(":")
     rows = lib.get(kind) or []
-    image = image_of(rows[int(i)]) if i.isdigit() and int(i) < len(rows) else None
-    ph = prepare(image) if image else None
+    row = rows[int(i)] if i.isdigit() and int(i) < len(rows) else {}
+    image = image_of(row)
+    if not image:
+        video = next((v for v in row.get("media") or [] if Path(v).suffix.lower() in VIDEO and Path(v).is_file()), None)
+        return shown(video) if video else None
+    ph = prepare(image)
     return shown(ph) if ph else None
 
 
@@ -283,7 +288,8 @@ def norm(s):
 
 
 def set_photos(root, pl):
-    """{place id: [(file, description)]} best first, from a photo set: a folder per place."""
+    """{place id: [(file, description)]} best first, from a photo set: a folder per place. A clip they recorded (VIDEO)
+    in a place's folder is one of its photographs; the film plays it on the stop that shows it (clips.py)."""
     import json
     if not root.is_dir():
         sys.exit(f"--set {root} is not a folder")
@@ -298,8 +304,8 @@ def set_photos(root, pl):
             items = sorted(json.loads(man.read_text()).get("items") or [], key=lambda it: it.get("rank", 1e9))
             files = [(d / Path(it["file"]).name, it.get("description") or it.get("title") or "") for it in items]
         else:
-            files = [(f, "") for f in sorted(d.iterdir()) if f.suffix.lower() in IMG]
-        out[p["id"]] = [(str(f), why) for f, why in files if f.is_file() and f.suffix.lower() in IMG]
+            files = [(f, "") for f in sorted(d.iterdir()) if f.suffix.lower() in IMG | VIDEO]
+        out[p["id"]] = [(str(f), why) for f, why in files if f.is_file() and f.suffix.lower() in IMG | VIDEO]
     return out
 
 
@@ -311,6 +317,14 @@ def shown(f):
         return str(Path(f).resolve())
 
 
+def picture(f):
+    """A photograph as the picture it holds: two files of one picture (a photograph posted twice) are one photograph."""
+    try:
+        return hashlib.sha1(Path(f).read_bytes()).hexdigest()
+    except OSError:
+        return str(f)
+
+
 def write_cast(pl, options, set_dir, moments=()):
     visits, used, seen = [], collections.defaultdict(set), collections.Counter()
     far = set(pl.get("far") or [])
@@ -320,11 +334,13 @@ def write_cast(pl, options, set_dir, moments=()):
         seen[k] += 1
         opts = [f for f, _ in options.get(k) or []]
         own = print_of.get((k, seen[k]))
+        # a moment whose photograph an earlier visit of the place already showed leads with the place's next best
+        own = own if own and picture(own) not in used[k] else None
         rest = [f for f in opts if f != own]
-        free = [f for f in rest if f not in used[k]] or rest
+        free = [f for f in rest if picture(f) not in used[k]] or rest
         free = [own] + free if own else free
         shots = free[:SHOTS["far" if k in far else "near"]]
-        used[k].update(shots)
+        used[k].update(picture(f) for f in shots)
         visits.append({"place": k, "n": seen[k], "from": v.get("from"), "shots": [shown(f) for f in shots]})
     # a cast.json they corrected is kept while its visits are the route's; one with no visits list is not a cast
     have = _env.read_json("cast.json") or {}
@@ -346,7 +362,7 @@ def contact(cast, options):
         tiles = []
         for f, size in [(s, H) for s in shots] + [(f, h) for f in rest]:
             try:
-                im = open_image(f, (size * 3, size * 3))
+                im = open_image(poster(f) if Path(f).suffix.lower() in VIDEO else f, (size * 3, size * 3))
             except Exception:
                 continue
             im.thumbnail((size * 2, size))

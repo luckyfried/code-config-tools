@@ -150,7 +150,7 @@ class Indexes(InARun):
         self.assertEqual(Path("clips.json").read_text(), index)
         self.assertEqual(Path("public/clips/old/01/0001.jpg").read_text(), "the last frames")
 
-        def conform(src, image, frames, dst):
+        def conform(src, image, frames, dst, start=None):
             self.put(dst / "0001.jpg", "new frames")
             return 1, ""
         with mock.patch.object(clips, "conform", conform):
@@ -213,7 +213,7 @@ def tone(path, seconds=1):
     subprocess.run([_env.ffmpeg(), "-v", "error", "-y", "-f", "lavfi", "-i", f"sine=d={seconds}", str(path)], check=True)
 
 
-def composed(style=None, styles=(), avoid=(), seconds=1, edges=(), hue=None, seed="", bpm=None, out=None):
+def composed(style=None, styles=(), avoid=(), seconds=1, edges=(), hue=None, seed="", bpm=None, out=None, peak=None):
     """A stand-in for music_engine.compose: a second of tone at out/bed.wav, and what music.json carries of it."""
     tone(Path(out) / "bed.wav", seconds)
     return {"recipe": style or "pulse", "key": "A minor", "bpm": bpm, "seconds": seconds, "chords": ["Am"], "removed": []}

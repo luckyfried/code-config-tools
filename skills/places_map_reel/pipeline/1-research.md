@@ -32,9 +32,11 @@ headings), `places.json`, `picks.json` (each place's best photos and reels, and 
 ## Look at the cast and correct it
 
 `cast.json` lists the visits in route order, each with the photographs it shows, the first the visit's own print: the
-photograph of the visit's moment, set or no set, then the best the place has that an earlier visit has not shown, two
-in all for a visit in the home region, three for a far place. `storyboard.py draft` always puts the moment's own
-photograph first (the one its post carries, or the one `taste.json` pairs with it), so correct the other shots here and
+photograph of the visit's moment, set or no set, unless an earlier visit of the place showed that picture, then the best
+the place has that an earlier visit has not shown (one picture under two file names is one photograph), two
+in all for a visit in the home region, three for a far place. `storyboard.py draft` puts the moment's own
+photograph first (the one its post carries, or the one `taste.json` pairs with it) unless an earlier visit of the place
+showed it, so correct the other shots here and
 change the moment's photograph in `taste.json`.
 Open `cast.png` with the Read tool: every visit's shots beside the place's other photographs. Correct `cast.json` by eye
 where a shot is wrong for the film: a photograph that does not say the place (an interior that could be anywhere, a
@@ -129,8 +131,9 @@ caption's key as `post`, or `null` when none of their captions from that visit s
 Never shorten a line to make the film fit: `storyboard.py draft` fits the lines to the film itself, setting the longest
 line to its first clause (with none left, leaving out the longest line away from the hook and the peak) until every
 stop can be read inside 42 s with the peak holding longest, and lists each one it set in `storyboard.md`. The line and its photograph are one post: the beat shows the post's own photograph
-under its words, and a post with no photograph (a reel) leaves the beat wordless on the place's own print. A photograph
-of the set stands for a moment only where you pair them, by writing its path as the row's `photo`. Never write a line
+under its words, and a post with no photograph (a reel) leaves the beat wordless, playing the reel itself. A photograph
+of the set, or a clip they recorded, stands for a moment only where you pair them, by writing its path as the row's
+`photo`; a clip plays on its stop from its strongest second for the beat's length, without its sound. Never write a line
 they did not post.
 
 Mark the story's peak: `"peak": true` on the one visit that is the best moment of their year (the thing they would tell

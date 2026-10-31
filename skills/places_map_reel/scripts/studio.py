@@ -138,21 +138,25 @@ def luma_line(mp4, run=None):
     return [round(y, 2) for y in ya]
 
 
-def strip12(mp4, out, run=None):
+def strip12(mp4, out, run=None, name=None):
     """The film at 12 frames a second, 300 px tall, tiled 12 across and 3 down per image: every frame a move spends,
-    the ones the 1 and 2 fps strips skip. One image per three seconds, named <stem>-strip12-NN.jpg."""
+    the ones the 1 and 2 fps strips skip. One image per three seconds, named <name>-strip12-NN.jpg (`name` is the
+    file's stem when it is None)."""
     mp4, out = Path(mp4), Path(out)
-    for f in out.glob(f"{mp4.stem}-strip12-*.jpg"):
+    name = name or mp4.stem
+    for f in out.glob(f"{name}-strip12-*.jpg"):
         f.unlink()
-    ff(["-y", "-i", str(mp4), "-vf", "fps=12,scale=-2:300,tile=12x3", "-q:v", "3", str(out / f"{mp4.stem}-strip12-%02d.jpg")], run)
-    return sorted(str(p) for p in out.glob(f"{mp4.stem}-strip12-*.jpg"))
+    ff(["-y", "-i", str(mp4), "-vf", "fps=12,scale=-2:300,tile=12x3", "-q:v", "3", str(out / f"{name}-strip12-%02d.jpg")], run)
+    return sorted(str(p) for p in out.glob(f"{name}-strip12-*.jpg"))
 
 
-def measure(mp4, planned, hook_frame=None, strips=None, run=None):
+def measure(mp4, planned, hook_frame=None, strips=None, run=None, name=None):
     """Duration; the cuts, as the planned shot changes joined with the scene-score cuts (scene > 0.12 at 270x480) more
     than 0.2 s from every one of them, and per minute; the luma line (`luma_line`) and its quiet seconds (`under_half`);
-    and the 1, 2 and 12 fps strips in the folder `strips` (beside the file when it is None). All of it is figures:
-    nothing here passes or fails. Under a command's lock (`run`) every process starts through run.spawn."""
+    and the 1, 2 and 12 fps strips in the folder `strips` (beside the file when it is None), named from `name` (the
+    file's stem when it is None). Every figure is read on the picture scaled to a fixed size, so a half-size proof and
+    the full-size film of one cut measure the same. All of it is figures: nothing here passes or fails. Under a
+    command's lock (`run`) every process starts through run.spawn."""
     mp4 = Path(mp4)
     secs = float((run.spawn if run else subprocess.run)([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of",
                                                          "csv=p=0", str(mp4)], capture_output=True, text=True).stdout)
@@ -168,9 +172,10 @@ def measure(mp4, planned, hook_frame=None, strips=None, run=None):
     d = Path(strips) if strips else mp4.parent
     d.mkdir(parents=True, exist_ok=True)
     n = max(1, int(secs))
-    out["strip"] = str(d / (mp4.stem + "-strip.png"))
-    out["strip2"] = str(d / (mp4.stem + "-strip2.png"))
+    name = name or mp4.stem
+    out["strip"] = str(d / (name + "-strip.png"))
+    out["strip2"] = str(d / (name + "-strip2.png"))
     ff(["-y", "-i", str(mp4), "-vf", f"fps=1,scale=216:-2,tile={n}x1:padding=6:color=white", "-frames:v", "1", "-update", "1", out["strip"]], run)
     ff(["-y", "-i", str(mp4), "-vf", f"fps=2,scale=135:-2,tile={2 * n}x1:padding=4:color=white", "-frames:v", "1", "-update", "1", out["strip2"]], run)
-    out["strip12"] = strip12(mp4, d, run)
+    out["strip12"] = strip12(mp4, d, run, name)
     return out

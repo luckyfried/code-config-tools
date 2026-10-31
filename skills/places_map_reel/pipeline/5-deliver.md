@@ -7,15 +7,18 @@ as the best cut the run made, with every score stated in `brief.md` and none on 
 
 ## Measure, then watch
 
-`film.py render` ended with `qa.py check`, which measures the three films and the two images and writes
-`qa/check.json`; run `python3 S/scripts/qa.py check` again whenever you want it read once more:
+Every round before deliver reads the half-size proof. `film.py render --proof` ended with `qa.py check`, which
+measures the three films and the two images and writes `qa/check.json`; run `python3 S/scripts/qa.py check` again
+whenever you want it read once more. While `out/proof.mp4` is the newest render, `check` and `vote.py cut` read the
+proof's films and their first line says "reading the half-size proof". Every size they report is in board units, the
+full-size film's numbers, so the table holds for the proof as it does for the film:
 
 | check | refuses |
 |---|---|
 | format | `out/film.mp4` not 1080×1920 H.264 High, `out/film-16x9.mp4` not 1920×1080 or `out/film-square.mp4` not 1080×1080 H.264; any of them missing, not yuv420p at 30 fps or outside the cut's band (20 to 40 s, or from the longest its stops make when that is under 20 s) |
 | audio | with music, no AAC track near 192 kbps, loudness off −14 LUFS by more than 1 LU, a true peak over −1.5 dBTP |
 | black | a black stretch of 0.4 s or more |
-| frozen | a frozen stretch of 1.0 s or more that starts before the board's stop (the still after the stop is the ending) |
+| frozen | a frozen stretch of 1.0 s or more anywhere in the film (from the board's stop the closer keeps a slow push to the last frame) |
 | safe | a failed render job, a font, a photograph or a shader that failed (`render/film-report.json`) |
 | cards | `out/post.png` not 1080×1080 or `out/story.png` not 1080×1920, either missing or an empty frame |
 
@@ -27,8 +30,8 @@ and as the picture shows them, cuts per minute, the luma line and its quiet seco
 python3 S/scripts/vote.py cut
 ```
 
-`cut` takes the frames a round reads into `critic/cut-N/`: the first frame, sixteen at equal spacing, each beat as
-the camera leaves it, and each shape's closer at rest at full size. Read `S/critic/critic.md` section
+`cut` takes the frames a round reads into `critic/cut-N/` from the newest render: the first frame, sixteen at equal
+spacing, each beat as the camera leaves it, and each shape's closer at rest. Read `S/critic/critic.md` section
 "The cut". As the motion designer, then as the person, view every one of those frames, the strips, `frames/`,
 `out/post.png` and `out/story.png`, and fill in the round file it names (`critic/cut-1.json`): a score 1–5 per rule
 and a paragraph each, every frame you viewed in `seen`, and a rule you cannot read here (R5's cue placement when
@@ -41,10 +44,26 @@ python3 S/scripts/vote.py verdict
 
 - `SHIP`: go on. It prints every rule's score; `brief.md` states them.
 - `FIX ONCE`: it names the worst rule and its lever. Make the lever's change in its source, then run the steps after
-  it (critic.md, "The levers") through `film.py render`, then `vote.py cut`, which opens round 2 on the new film and
+  it (critic.md, "The levers") through `film.py render --proof`, then `vote.py cut`, which opens round 2 on the new film and
   its own frames; say in `fixed`, in at least eight words, what changed, and score again from those frames.
   `vote.py cut` refuses to open round 2 on the film round 1 scored. Round 2 is the last: its verdict is `SHIP`
   whatever the scores, and `brief.md` names what is still under 4.
+
+## Render the full-size film and read the type on it
+
+Once the verdict on the proof is `SHIP` or `UNDER THE BAR`, render the film at full size and read it once more:
+
+```
+python3 S/scripts/film.py render
+python3 S/scripts/vote.py cut
+python3 S/scripts/vote.py verdict
+```
+
+`render` ends with `qa.py check` on the full-size films. `cut` moves the round to them, takes its frames again from
+the full-size films and empties each critic's R3, the type; the other scores stand. As each critic, view every frame
+in `critic/cut-N/` again, read the type at the size a phone shows it, score R3 again and list the frames in `seen`. An
+R3 under 4 here is read like any other score: `verdict` names its lever, and the fix renders the proof again for
+round 2.
 
 ## Caption
 
@@ -74,7 +93,9 @@ rendered, and the critics' scores of the cut against the bar. The gate runs time
 strip, the caption's count equal to the number of places, the research, the storyboard, the vote, a complete critic
 round for the film in `out/` (its scores are stated, never a fail) and `out/` holding the deliverables and nothing
 else. On a red gate it names each failing check: fix the cause, then run deliver.py again. On a green gate its last
-line is the reel's path from the project's root, `build/<run>/out/film.mp4`.
+line is the reel's path from the project's root, `build/<run>/out/film.mp4`. deliver.py delivers only the full-size
+films: while the newest render is the half-size proof it refuses with `not delivered: the newest render is the
+half-size proof` and names what to run first.
 
 ## Tell the person
 
