@@ -95,8 +95,10 @@ is there; the tests that need the photographs skip without it, and the rest need
 - `test_verdict.py`: the bar, the one fix of round 1, the spent budget of round 2, and the pick (the person's, or the
   agent's with its reason when `ask` is false).
 - `test_snap.py`: only the picked look is cut, and a new draft clears the old pick and its scores.
-- `test_music.py`: the music is the person's own track, or a bed composed from the picked look's recipe, laid under the
-  board's cues.
+- `test_music.py`: the music is the person's own track, or a bed composed from the picked look's recipe, the shared
+  effects laid under it 8 LU down, and the music's energy for every frame.
+- `test_clips.py`: a recorded clip from their reels plays on its photo beat as one shot the length of the beat, from
+  its strongest second, with the move and the arrival the photograph would have had; a beat without one is unchanged.
 - `test_material.py`: the story's moments, in their order, and the hook's photograph.
 - `test_qa.py`: the placeholder scan, the closer's still, where the hook puts its photograph's subject, the render
   report, and the audio rows.

@@ -10,7 +10,10 @@ public/studio/photos/ (each photograph graded), public/studio/posted/ (each phot
 whose finish shows it so), studio.json (the facts every board reads), and with a folder of photographs cast.json and
 cast.png.
 
-The story is taste.json `moments` as the agent curated them, in that order, each on its post's own photograph. While
+The story is taste.json `moments` as the agent curated them, in that order, each on its post's own photograph, or
+on a reel's recorded clip (mp4, mov): the clip's still is its strongest second (the second whose frames move most, are
+sharpest and sit nearest a middle light), graded like the photographs, and studio.json names the clip beside it, from
+which storyboard.py cuts the beat's frames (clip_frames). While
 taste.json is still research.py's draft, the story is each pillar's best-liked moment, the pillars in the order of
 their shares, never a post that breaks the feed's habits (research.json `outliers`) and never a line said twice; its
 peak, the best liked, plays last. The film opens on the best-liked moment the story does not play, and never on a
@@ -23,6 +26,8 @@ pillar's first photograph plays it without words. A feed whose photographs carry
 photographs without words. cast.json records the folder's cast: look at cast.png, move a photograph to the pillar it
 shows in cast.json, and run this again; the cast is kept while the folder is the same.
 """
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -37,6 +42,13 @@ import _env  # noqa: E402
 PUB = Path("public")
 OUT = PUB / "studio"
 IMAGES = (".jpg", ".jpeg", ".png", ".webp", ".heic")
+VIDEO = (".mp4", ".mov", ".m4v")
+# the clips' frames, one folder for each stretch of a clip a beat plays
+CLIPS = OUT / "clips"
+# a clip is read for its strongest second at this many frames a second, this small
+READ_FPS, READ_W, READ_H = 4, 48, 48
+# the seconds of the clip a strongest second leaves after it, when the clip has them
+LEAVE = 3
 # the most moments a story plays
 MOST = 6
 # the photographs graded as the film's possible opening, the best liked first; the first that is not plain opens it
@@ -62,6 +74,63 @@ def ffposted(src, dest, width=1600):
     """The photograph as it was posted, `width` px wide."""
     subprocess.run([_env.ffmpeg(), "-y", "-loglevel", "error", "-i", str(src), "-vf", f"scale={width}:-2", "-q:v", "2", str(dest)],
                    check=True)
+
+
+def seconds_of(src):
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def strongest(src):
+    """Where the strongest second of recorded clip `src` starts, in seconds, and the clip's length: of each whole second
+    that leaves LEAVE seconds after it, how much its frames move, how sharp they are, and how near a middle light they
+    sit, each against the clip's most."""
+    dur = seconds_of(src)
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(src), "-an", "-vf",
+                        f"fps={READ_FPS},scale={READ_W}:{READ_H},format=gray", "-f", "rawvideo", "-"], capture_output=True)
+    n = READ_W * READ_H
+    frames = [r.stdout[i:i + n] for i in range(0, len(r.stdout) - n + 1, n)]
+    if dur < 1 or len(frames) < 2:
+        return 0.0, dur
+    move, sharp, light = [0.0], [], []
+    for k, f in enumerate(frames):
+        sharp.append(sum(abs(f[i] - f[i + 1]) for i in range(n - 1) if (i + 1) % READ_W) / n)
+        light.append(1 - 2 * abs(sum(f) / n / 255 - 0.5))
+        if k:
+            move.append(sum(abs(a - b) for a, b in zip(f, frames[k - 1])) / n)
+    top = lambda xs: max(xs) or 1
+    score = [move[k] / top(move) + sharp[k] / top(sharp) + light[k] for k in range(len(frames))]
+    secs = max(1, int(dur))
+    per = [sum(score[k * READ_FPS:(k + 1) * READ_FPS]) / max(1, len(score[k * READ_FPS:(k + 1) * READ_FPS])) for k in range(secs)]
+    # a second that leaves a beat's worth of the clip after it, so the shot moves to its end
+    starts = range(max(1, secs - LEAVE))
+    return float(max(starts, key=lambda k: (per[k], -k))), dur
+
+
+def clip_frames(clip, seconds, fps, posted=False):
+    """The frames a beat of `seconds` plays of `clip` (a photograph's studio.json `clip`), at `fps`: from its strongest
+    second, whose first frame is the clip's still, graded like the still or as it was posted, without its sound, the
+    last frame held when the clip ends before the beat does. Returns {dir, frames, from}; a stretch already cut is
+    kept."""
+    n = max(1, round(seconds * fps))
+    start = round(clip["best"], 3)
+    chain = "" if posted else f"{clip['grade']},"
+    key = hashlib.sha1(json.dumps([clip["source"], start, n, fps, chain]).encode()).hexdigest()[:12]
+    d = CLIPS / key
+    if not (d.is_dir() and len(list(d.glob("*.jpg"))) == n):
+        shutil.rmtree(d, ignore_errors=True)
+        part = _env.part(d)
+        shutil.rmtree(part, ignore_errors=True)
+        part.mkdir(parents=True)
+        subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{start:.3f}", "-i", clip["source"], "-an", "-vf",
+                        f"{chain}fps={fps},scale='min(1080,iw)':-2,tpad=stop_mode=clone:stop_duration={seconds:.3f}",
+                        "-frames:v", str(n), "-q:v", "3", str(part / "%04d.jpg")], check=True)
+        os.replace(part, d)
+    return {"dir": d.relative_to(PUB).as_posix(), "frames": n, "from": start}
 
 
 def tokens(text):
@@ -210,6 +279,7 @@ def build():
             cast.update(cast_folder([n for n in folder_of if n not in cast], pillars, res.get("pillars", [])))
     else:
         folder_of = {Path(e["src"]).name: Path(e["src"]) for e in posts}
+        folder_of.update({Path(m).name: Path(m) for r in lib["reels"] for m in r.get("media") or [] if Path(m).suffix.lower() in VIDEO})
         moments = story(taste.get("moments") or [], lib, res, "research.py draft" in str(taste.get("written_by", "")))
     if not folder_of:
         sys.exit("no photograph to play: the posts have no pictures and BRAND_PHOTOS is not set")
@@ -233,19 +303,32 @@ def build():
 
     def graded(n):
         dest = OUT / "photos" / f"{Path(n).stem}.jpg"
-        ffgrade(folder_of[n], dest, filt)
-        ffposted(folder_of[n], OUT / "posted" / dest.name)
-        return n, dest
+        src, clip = folder_of[n], None
+        if src.suffix.lower() in VIDEO:
+            # a recorded clip stands as its strongest second, graded the way its frames are
+            best, dur = strongest(src)
+            src = OUT / "photos" / f"{Path(n).stem}.still.jpg"
+            subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{best:.3f}", "-i", str(folder_of[n]), "-frames:v", "1",
+                            "-q:v", "2", str(src)], check=True)
+            from PIL import Image
+            import grade as g
+            with Image.open(src) as im:
+                clip = {"source": str(folder_of[n].resolve()), "best": best, "seconds": round(dur, 3), "grade": f"{g.match(im)},{filt}"}
+        ffgrade(src, dest, filt)
+        ffposted(src, OUT / "posted" / dest.name)
+        if clip:
+            src.unlink()
+        return n, (dest, clip)
     with ThreadPoolExecutor(8) as ex:
         done = dict(ex.map(graded, list(dict.fromkeys(shown + opens[:HOOK_TRIES]))))
     import picks  # reads the photographs with Pillow, which setup.py checks before any movement runs
     photos = {}
-    for n, p in done.items():
+    for n, (p, clip) in done.items():
         im = open_rgb(p)
         where, plain = picks.subject(p)
         photos[Path(n).stem] = {"file": f"studio/photos/{Path(n).stem}.jpg", "posted": f"studio/posted/{Path(n).stem}.jpg",
                                 "aspect": round(im.height / im.width, 4),
-                                "subject": where, "plain": plain}
+                                "subject": where, "plain": plain, **({"clip": clip} if clip else {})}
     if folder:
         _env.write_json("cast.json", {
             "about": "Which pillar each photograph plays. Move a photograph to the pillar it shows, then run storyboard.py draft again.",

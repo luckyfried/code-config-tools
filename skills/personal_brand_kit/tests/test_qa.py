@@ -26,10 +26,6 @@ class HeldFrom(unittest.TestCase):
     def test_the_closers_still_is_where_the_picture_may_hold(self):
         self.assertEqual(qa.held_from({"bpm": 120, "closer": {"still": 28}, "sound": [{"kind": "hit", "at": 3}]}), 14.0)
 
-    def test_the_closer_starts_at_its_beat(self):
-        self.assertEqual(qa.closer_from({"bpm": 120, "closer": {"at": 22, "still": 28}}), 11.0)
-        self.assertEqual(qa.closer_from({"bpm": 120, "closer": {}}), float("inf"))
-
     def test_a_board_whose_closer_never_stills_never_holds(self):
         self.assertEqual(qa.held_from({"bpm": 120, "closer": {}, "sound": [{"kind": "stop", "at": 28}]}), float("inf"))
 
@@ -127,6 +123,37 @@ class Safe(unittest.TestCase):
 
 
 
+class Frozen(unittest.TestCase):
+    """The frozen row reads the whole film: the closer keeps its slow push from the stop to the last frame, so a
+    frozen stretch inside the closer, its ending too, is a stall."""
+
+    def row(self, freezes):
+        import json
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as d:
+            film, report = Path(d) / "film.mp4", Path(d) / "film-report.json"
+            film.write_bytes(b"")
+            report.write_text(json.dumps({"jobs": 1, "failed": 0, "findings": []}))
+            lo = qa.storyboard.LENGTH[0]
+            stream = {"codec_type": "video", "width": 1080, "height": 1920, "codec_name": "h264", "pix_fmt": "yuv420p", "r_frame_rate": "30/1"}
+            found = lambda film, flt, key: [f"[freezedetect] {key}: {at}" for at in freezes] if "freeze" in flt else []
+            board = {"bpm": 120, "closer": {"at": 22, "still": 26}}
+            with mock.patch.object(qa, "probe", return_value={"streams": [stream], "format": {"duration": str(lo)}}), \
+                    mock.patch.object(qa, "detect", found), mock.patch.object(qa, "yavg", return_value=[0.4]):
+                res = qa.Checks()
+                qa.picture(res, film, "reel", board, str(report))
+        return next(r for r in res if r[0] == "frozen")
+
+    def test_a_film_that_never_freezes_passes(self):
+        self.assertTrue(self.row([])[1])
+
+    def test_a_frozen_stretch_after_the_stop_fails(self):
+        row = self.row([13.5])
+        self.assertFalse(row[1], row[2])
+        self.assertIn("from 13.50 s", row[2])
+
+
 class AudioRow(unittest.TestCase):
     """The gate's audio row reads the bed's and the effects' loudness music.py master measured, and names them with the
     cue and beat counts."""
@@ -161,7 +188,7 @@ class AudioRow(unittest.TestCase):
         _, ok, detail = self.row(-16.3)
         self.assertFalse(ok, detail)
         self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS", detail)
-        self.assertIn("2 sound cues over 3 beats", detail)
+        self.assertIn("2 sound effects over 3 beats", detail)
 
     def test_effects_eight_lu_under_the_bed_turn_the_audio_row_green(self):
         _, ok, detail = self.row(-29.4)
@@ -174,7 +201,8 @@ class CheckAudioRow(unittest.TestCase):
     names the master's, the bed's and the effects' loudness, the gap under the floor, the cues over the beats, and
     where the sound falls quiet against the stop."""
 
-    def test_the_check_names_every_sound_number_from_the_cut(self):
+    def audio_row(self, quiet):
+        """The check's audio row over a cut whose sound falls quiet for good at `quiet` seconds (None: never)."""
         import json
         import os
         import tempfile
@@ -194,16 +222,24 @@ class CheckAudioRow(unittest.TestCase):
                 probed = {"streams": [{"codec_type": "audio", "codec_name": "aac", "bit_rate": "192000"}]}
                 with mock.patch.object(qa, "picture"), mock.patch.object(qa, "subject_check"), mock.patch.object(qa, "project"), \
                         mock.patch.object(qa, "probe", return_value=probed), mock.patch.object(qa, "loudness", return_value=-14.0), \
-                        mock.patch.object(qa, "quiet_from", return_value=20.9):
+                        mock.patch.object(qa.sfx, "quiet_from", return_value=quiet):
                     res, _ = qa.check_checks()
             finally:
                 os.chdir(here)
-        _, ok, detail = next(r for r in res if r[0] == "audio")
+        return next(r for r in res if r[0] == "audio")
+
+    def test_the_check_names_every_sound_number_from_the_cut(self):
+        _, ok, detail = self.audio_row(20.9)
         self.assertTrue(ok, detail)
         for said in ("cut.mp4: aac 192 kbps, -14.0 LUFS integrated", "master -14.2 LUFS, bed -21.4 LUFS, effects -29.6 LUFS",
-                     "8.2 LU under (at least 8)", "2 sound cues over 3 beats", "quiet under -50 dB from 20.90 s to the end, the picture still from 21.00 s",
+                     "8.2 LU under (at least 8)", "2 sound effects over 3 beats", "quiet under -30 dB from 20.90 s to the end, the picture still from 21.00 s",
                      "the bed: made from their brief"):
             self.assertIn(said, detail)
+
+    def test_a_bed_that_plays_past_the_held_picture_to_the_last_frame_turns_the_row_red(self):
+        _, ok, detail = self.audio_row(None)
+        self.assertFalse(ok, detail)
+        self.assertIn("never quiet under -30 dB before the end, the picture still from 21.00 s", detail)
 
 
 class QuietFrom(unittest.TestCase):
@@ -219,7 +255,18 @@ class QuietFrom(unittest.TestCase):
         import os
         import tempfile
         with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
-            got = qa.quiet_from(self.film(d, "sine=f=220:d=4,volume=enable='gte(t,2.5)':volume=0"))
+            got = qa.sfx.quiet_from(_env.ffmpeg(), self.film(d, "sine=f=220:d=4,volume=enable='gte(t,2.5)':volume=0"))
+        self.assertIsNotNone(got)
+        self.assertAlmostEqual(got, 2.5, delta=0.1)
+
+    def test_the_room_under_the_film_after_its_music_stops_is_quiet(self):
+        import os
+        import tempfile
+        # a tone that stops at 2.5 s over a room as loud as the shared sound layer's to the end: -46 dB, peaks near -34
+        room = ("sine=f=220:d=4:r=48000,volume=enable='gte(t,2.5)':volume=0[s];"
+                "anoisesrc=d=4:c=pink:a=0.03:r=48000,lowpass=f=2000[n];[s][n]amix=inputs=2:normalize=0[out0]")
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
+            got = qa.sfx.quiet_from(_env.ffmpeg(), self.film(d, room))
         self.assertIsNotNone(got)
         self.assertAlmostEqual(got, 2.5, delta=0.1)
 
@@ -227,7 +274,7 @@ class QuietFrom(unittest.TestCase):
         import os
         import tempfile
         with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
-            got = qa.quiet_from(self.film(d, "sine=f=220:d=4,volume=enable='between(t,1,2)':volume=0"))
+            got = qa.sfx.quiet_from(_env.ffmpeg(), self.film(d, "sine=f=220:d=4,volume=enable='between(t,1,2)':volume=0"))
         self.assertIsNone(got)
 
 

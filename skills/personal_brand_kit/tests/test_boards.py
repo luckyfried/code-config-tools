@@ -198,13 +198,61 @@ class Looks(unittest.TestCase):
         self.assertTrue(seen)
 
     def test_every_beat_plays_a_move_made_for_its_form_where_the_card_has_one(self):
-        # the swiss grid's one words move is rule-draw, which its photo moments use too
+        # the swiss grid's one words move is rule-draw, which its photo moments use too; a move the card made for the
+        # peak plays on the peak whatever its form
         for plans in self.looks.values():
             b = plans["reel"]["board"]
             moves = {o["id"]: o["fits"] for o in compose.card(b["style"])["moves"]}
             for x in b["beats"]:
                 if any(x["form"] in fits for fits in moves.values()):
-                    self.assertIn(x["form"], moves[x["move"]], (b["style"], x["id"], x["move"]))
+                    made = moves[x["move"]] + (["photo", "title", "words"] if x["peak"] and "peak" in moves[x["move"]] else [])
+                    self.assertIn(x["form"], made, (b["style"], x["id"], x["move"]))
+
+    def test_the_cuts_quicken_into_the_peak(self):
+        for plans in self.looks.values():
+            b = plans["reel"]["board"]
+            middle = [x["beats"] for x in b["beats"] if x["form"] == "photo" and not x["peak"]]
+            if len(middle) >= 2:
+                # the moments before the peak tick at one length only when one beat more would run the film past its
+                # length, and the first holds at least as long as the last
+                if len(set(middle)) == 1:
+                    total = sum(x["beats"] for x in b["beats"])
+                    self.assertGreater((total + 1) * 60 / b["bpm"], storyboard.MOST_SECONDS, (b["style"], middle))
+                self.assertGreaterEqual(middle[0], middle[-1], (b["style"], middle))
+
+    def test_every_moments_line_is_set_at_one_size(self):
+        for plans in self.looks.values():
+            for shape, plan in plans.items():
+                if compose.card(plan["board"]["style"])["axes"]["family"] == "type":
+                    continue
+                sizes = {x["text"]["size"] for x in plan["board"]["beats"] if x["form"] == "photo" and x.get("text")}
+                self.assertLessEqual(len(sizes), 1, (plan["board"]["style"], shape, sizes))
+
+    def test_no_word_stands_alone_on_a_line(self):
+        for plans in self.looks.values():
+            for shape, plan in plans.items():
+                for x in plan["board"]["beats"]:
+                    lines = [ln["text"] for ln in ((x.get("text") or {}).get("lines") or [])]
+                    if len(lines) > 1:
+                        self.assertTrue(all(len(ln.split()) > 1 for ln in lines), (plan["board"]["style"], shape, x["id"], lines))
+
+    def test_a_move_that_takes_the_frame_plays_on_the_peak_and_the_calm_look_plays_one_once(self):
+        for plans in self.looks.values():
+            b = plans["reel"]["board"]
+            card = compose.card(b["style"])
+            takes = [x for x in b["beats"] if storyboard.frame_taken(x["move"])]
+            peak = next(x for x in b["beats"] if x["peak"])
+            if any(storyboard.frame_taken(o["id"]) and ("photo" in o["fits"] or "peak" in o["fits"]) for o in card["moves"]):
+                self.assertTrue(storyboard.frame_taken(peak["move"]), (b["style"], peak["move"]))
+            if card["axes"]["camera"] not in storyboard.ENERGETIC:
+                self.assertLessEqual(len(takes), 1, (b["style"], [x["move"] for x in takes]))
+            # each move that takes the frame plays once a film
+            self.assertEqual(len({x["move"] for x in takes}), len(takes), (b["style"], [x["move"] for x in takes]))
+            for x in takes:
+                # the beat holds past the hand back long enough to read its line
+                self.assertGreaterEqual(x["beats"] * 60 / b["bpm"], storyboard.frame_taken(x["move"]) + 1.5, (b["style"], x["id"]))
+                if x.get("text"):
+                    self.assertGreaterEqual(x["text"]["at"] * 60 / b["bpm"], storyboard.frame_taken(x["move"]) - 1e-3)
                 if x["form"] == "words":
                     # the question is on screen from its first frame: the kit sets it, or the move is handed it
                     self.assertTrue(x["text"] or x["words"], (b["style"], x["move"]))
@@ -246,14 +294,29 @@ class Looks(unittest.TestCase):
             self.assertTrue(start <= p["rests"]["peak"] < start + peak["frames"])
             self.assertLess(p["rests"]["hook"], b["beats"][0]["frames"])
 
-    def test_every_sound_cue_is_inside_the_film_and_only_a_cut_look_stops(self):
+    def test_the_boards_one_cue_is_the_stop_and_only_a_cut_look_stops(self):
         for plans in self.looks.values():
             p = plans["reel"]
             b = p["board"]
-            self.assertTrue(all(0 <= q["frame"] < p["frames"] for q in b["sound"]))
-            stops = [q for q in b["sound"] if q["kind"] == "stop"]
-            self.assertEqual(bool(stops), compose.card(b["style"])["axes"]["transition"] == "cut")
+            self.assertTrue(all(q["kind"] == "stop" and 0 <= q["frame"] < p["frames"] for q in b["sound"]))
+            self.assertEqual(bool(b["sound"]), compose.card(b["style"])["axes"]["transition"] == "cut")
             self.assertLessEqual(b["closer"]["still"] * b["beats"][0]["pulse"], p["frames"])
+
+    def test_the_shared_effects_land_on_the_grid_inside_the_film_with_one_riser_into_the_closer(self):
+        import sfx
+        for plans in self.looks.values():
+            b = plans["reel"]["board"]
+            fx = storyboard.effects_board(b)
+            ev, _ = sfx.events(fx, b["bpm"])
+            seconds = plans["reel"]["seconds"]
+            step = 60 / b["bpm"] / sfx.GRID
+            self.assertTrue(all(0 <= t < seconds for t, _ in ev), ev)
+            self.assertTrue(all(abs(t / step - round(t / step)) < 1e-4 for t, _ in ev), ev)
+            closer = b["beats"][-1]["start"] * 60 / b["bpm"]
+            self.assertEqual([round(t, 3) for t, k in ev if k == "riser"], [round(closer, 3)])
+            photos = [x for x in b["beats"] if x["form"] == "photo"]
+            self.assertEqual(sum(k == "shutter" for _, k in ev), len(photos))
+            self.assertTrue(any(k == "impact" and t < b["beats"][0]["beats"] * 60 / b["bpm"] for t, k in ev), "the title lands on a hit")
 
 
 @unittest.skipUnless(fixture.HAVE_PIL, "Pillow is not installed")
@@ -299,6 +362,18 @@ class Story(unittest.TestCase):
             self.assertEqual(bad[letter], [])
 
 
+class Lines(unittest.TestCase):
+    def test_a_line_set_in_a_narrow_box_never_leaves_a_word_alone(self):
+        compose.use("swiss-grid")
+        fr = type("Frame", (), {"W": 1080, "H": 1920})()
+        for say in ("tomatoes, lemons, olive oil.", "first coffee: rain outside.", "market morning: plums, cherries, fennel.",
+                    "old town walk: blue doors."):
+            for size in (79, 104):
+                t = storyboard.set_text(fr, say, [72, 270, 604, 622.8], "display", size, "start")
+                lines = [ln["text"] for ln in t["lines"]]
+                self.assertTrue(len(lines) == 1 or all(len(x.split()) > 1 for x in lines), (say, size, lines))
+
+
 class Choices(unittest.TestCase):
     def test_a_move_is_chosen_for_what_the_beat_shows_never_by_turn(self):
         options = [{"id": "first", "fits": ["photo"]}, {"id": "people", "fits": ["photo", "people", "portrait"]}]
@@ -321,6 +396,35 @@ class Choices(unittest.TestCase):
         self.assertLess(len([b for b in beats if b["form"] == "photo"]), 5)
         moves = [b["move"] for b in beats]
         self.assertTrue(all(a != b for a, b in zip(moves, moves[1:])), moves)
+
+    def story_of(self, style, moments=5):
+        """The beats the story gives `moments` photographs in `style`'s look, at a tempo that keeps every one."""
+        from types import SimpleNamespace
+        story = [{"photo": f"m{i}", "line": f"moment {i} at the table", "pillar": "table", "likes": 10 + i} for i in range(moments)]
+        run = SimpleNamespace(d={"photos": {f"m{i}": {"aspect": 1.25} for i in range(moments)}}, story=story, hook="home",
+                              question="who's coming over?", signoff="see you", handle="me")
+        return storyboard.story(run, compose.card(style), 240)
+
+    def test_a_move_the_card_marks_once_plays_at_most_once_on_every_drafted_board(self):
+        for style in compose.styles():
+            once = {o["id"] for o in compose.card(style)["moves"] if o.get("once")}
+            for n in (2, 5, 9):
+                moves = [b["move"] for b in self.story_of(style, n)]
+                for m in once:
+                    self.assertLessEqual(moves.count(m), 1, (style, n, moves))
+
+    def test_an_energetic_look_plays_each_move_that_takes_the_frame_once_where_its_card_does_not_mark_it_once(self):
+        # the cards of the energetic looks leave frame-taking moves unmarked; the kit's own rule keeps each of them to
+        # one beat a film, and keeps the peak's for the peak
+        for style in ("kinetic-type", "swiss-grid"):
+            loose = [o["id"] for o in compose.card(style)["moves"] if storyboard.frame_taken(o["id"]) and not o.get("once")]
+            self.assertTrue(loose, style)
+            for n in (2, 5, 9):
+                beats = self.story_of(style, n)
+                takes = [b["move"] for b in beats if storyboard.frame_taken(b["move"])]
+                self.assertEqual(len(takes), len(set(takes)), (style, n, [b["move"] for b in beats]))
+                peak = next(b for b in beats if b["peak"])
+                self.assertTrue(storyboard.frame_taken(peak["move"]), (style, n, peak["move"]))
 
     def test_the_mask_cuts_the_longest_word_of_the_line(self):
         self.assertEqual(storyboard.mask_word("what's in season where you are?"), "season")

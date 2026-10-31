@@ -63,7 +63,7 @@ class Asked(InRun):
             _env.write_json(_env.part(studio.report_of(name)), rep)
             return rep
 
-        def mux(run, silent, out, seconds):
+        def mux(run, silent, out, seconds, board):
             Path(out).write_text("new")
             return False
         with mock.patch.object(film, "film", return_value=(f, boards)), mock.patch.object(film, "ready", return_value=None), \

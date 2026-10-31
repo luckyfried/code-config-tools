@@ -11,8 +11,8 @@ python3 S/scripts/film.py render
 python3 S/scripts/film.py render --also stories   # only when the person asked for stills
 ```
 
-`render` refuses until `qa/check.json` passes for this cut and the critic's latest verdict ships it or says the one
-fix is spent. Then the reel is the cut itself with the mastered music laid under it, and every run also makes the
+`render` refuses until `qa/check.json` passes for the full-size cut and the critic's latest verdict ships it or says
+the one fix is spent; it refuses while the newest cut is the half-size proof, which is never delivered. Then the reel is the cut itself with the mastered music laid under it, and every run also makes the
 square film (`film-square.mp4`, 1080×1080) and the wide film (`film-wide.mp4`, 1920×1080), each from its own board
 (the same story, the layout solved for the frame) with the same music, the story card (`story.png`, 1080×1920, the
 reel's hook at rest: the film's cover) and the image to post (`post.png`, 1080×1080, the square's last moment at
@@ -58,7 +58,10 @@ under the bed), the story card at 1080×1920 and the image to post at 1080×1080
 research, the three looks with their storyboards and sheets and `out/boards.png`, the pick, a critic verdict that
 ships the cut the reel was made from or spends its fix, and the delivered files. On a red gate it names each failing
 check: fix the cause, then run deliver.py again. On a green gate its last line is the reel's path from the project's
-root, `build/<run>/out/film.mp4`.
+root, `build/<run>/out/film.mp4`. deliver.py delivers only full-size films: while the newest cut is the half-size
+proof it refuses with `not delivered: the newest render is the half-size proof proof-cut.mp4` and names what to run
+first (the full-size `film.py cut`, `qa.py check` and `vote.py cut` with the type read at full size, then `film.py
+render`).
 
 ## Tell the person
 

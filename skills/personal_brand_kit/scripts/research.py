@@ -23,9 +23,10 @@ It runs stats.py, picks.py and palette.py first, then measures:
   outliers      posts that break two or more of their palette, pillars, voice and cadence (at least one of them
                 the palette or the cadence, since a short caption alone misses both pillar and voice), with how
                 they landed
-  moments       every captioned post with a photograph, in date order, as what happened: the caption's own first
-                line, the place it names, the people it tags and its pillar; the agent curates them in taste.json
-                `moments`, and each card of the film is one of them
+  moments       every captioned post with a photograph and every captioned reel with its recorded clip, in date
+                order, as what happened: the caption's own first line, the place it names, the people it tags and its
+                pillar; the agent curates them in taste.json `moments`, and each card of the film is one of them (a
+                reel's plays its clip)
 The draft's `music` is the brief the film's music is made from (music.py): plain words for the feeling and what to
 avoid, never an artist, a band or a song; the look's own recipe carries the tempo and the instruments.
 A feed with photographs and no captions reads its voice and pillars from the bio's sentences instead.
@@ -456,6 +457,11 @@ def main():
     photo_of = {}
     for e in post_photos:
         photo_of.setdefault(e["row"], e["src"])
+    # a reel's moment plays its own recorded clip
+    for k, r in enumerate(reels):
+        clip = next((m for m in r.get("media") or [] if str(m).lower().endswith((".mp4", ".mov", ".m4v"))), None)
+        if clip:
+            photo_of.setdefault(len(posts) + k, clip)
     for p in pls:
         p["examples"] = [rows[k]["caption"] for k in spaced(p["rows"])]
         found = collections.Counter(x.strip() for k in p["rows"] for m in re.findall(LIST3, clean(rows[k]["caption"]))

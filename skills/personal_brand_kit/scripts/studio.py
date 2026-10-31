@@ -37,8 +37,14 @@ def public():
 
 
 def props(board):
-    """The composition's input: the board."""
-    return {"board": board}
+    """The composition's input: the board, and the recorded clips its photo beats play (motion/system/types.ts `Clip`):
+    each clip's frames from its beat's first film frame after the frames its move holds the still, one clip frame to a
+    film frame."""
+    pulse = (board.get("beats") or [{}])[0].get("pulse") or 1
+    clips = [{"id": x["id"], "beat": x["id"], "image": x["picture"]["file"], "from": round(x["start"] * pulse) + x["clip"].get("hold", 0),
+              "frames": x["clip"]["frames"], "step": 1, "dir": x["clip"]["dir"]}
+             for x in board.get("beats") or [] if x.get("clip") and x.get("picture")]
+    return {"board": board, **({"clips": clips} if clips else {})}
 
 
 def still(board, frame, out, scale=1.0):
@@ -139,9 +145,10 @@ def luma_line(mp4, run=None):
     return [round(y, 2) for y in ya]
 
 
-def measure(mp4, planned, hook_frame=None, strips=None, run=None):
+def measure(mp4, planned, hook_frame=None, strips=None, run=None, name=None):
     """Duration; the cuts, as the planned shot changes joined with the scene-score cuts (scene > 0.12 at 270x480) more
-    than 0.2 s from every one of them, and per minute; the luma line (`luma_line`) and its quiet seconds (`under_half`); and the strips in the folder `strips`: one frame a second in a row, and every frame at 12 a second, a row a second, for reading the film frame by frame (beside the file when it is None). All of it is figures: nothing here passes or fails.
+    than 0.2 s from every one of them, and per minute; the luma line (`luma_line`) and its quiet seconds (`under_half`); and the strips in the folder `strips`: one frame a second in a row, and every frame at 12 a second, a row a second, for reading the film frame by frame (beside the file when it is None), named `name`-strip.png and `name`-strip12.jpg
+    (the file's own name when it is None). All of it is figures: nothing here passes or fails.
     Under a command's lock (`run`) every process starts through run.spawn."""
     import re
     mp4 = Path(mp4)
@@ -159,8 +166,8 @@ def measure(mp4, planned, hook_frame=None, strips=None, run=None):
     d = Path(strips) if strips else mp4.parent
     n = max(1, int(secs))
     rows = max(1, math.ceil(secs))
-    out["strip"] = str(d / (mp4.stem + "-strip.png"))
-    out["strip12"] = str(d / (mp4.stem + "-strip12.jpg"))
+    out["strip"] = str(d / ((name or mp4.stem) + "-strip.png"))
+    out["strip12"] = str(d / ((name or mp4.stem) + "-strip12.jpg"))
     ff(["-y", "-i", str(mp4), "-vf", f"fps=1,scale=216:-2,tile={n}x1:padding=6:color=white", "-frames:v", "1", "-update", "1", out["strip"]], run)
     ff(["-y", "-i", str(mp4), "-vf", f"fps=12,scale=-2:300,tile=12x{rows}:padding=2:color=white", "-frames:v", "1", "-update", "1", out["strip12"]], run)
     return out

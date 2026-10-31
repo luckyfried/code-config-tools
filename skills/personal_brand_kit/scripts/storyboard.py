@@ -40,6 +40,7 @@ import json
 import math
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -56,9 +57,11 @@ MOST_SECONDS = 28
 PACE = {"slam": 2.4, "snap": 2.6, "handheld": 3.0, "drift": 3.2, "dolly": 3.6, "slow": 3.8}
 SHOT = 3.0
 HOLD = 2.0
+# the beats the first moment before the peak holds past the card's shot, each next moment one fewer
+QUICKEN = 2
 # the moves that set a hook's or a words beat's own words themselves; on any other move the kit sets them in the card's
 # line box
-SETS_WORDS = {"word-per-beat-slam", "line-by-line-type-rise", "type-mask-reveal", "rule-draw"}
+SETS_WORDS = {"word-per-beat-slam", "line-by-line-type-rise", "type-mask-reveal", "rule-draw", "slam-words", "counter"}
 # the moves that size the words they set by the measure's width alone (motion/system/moves/move/rule-draw.tsx): on a
 # frame wider than it is tall their lines run past its foot, so there the kit sets the words in the card's line box
 WIDTH_SIZED = {"rule-draw"}
@@ -80,6 +83,21 @@ WINDOWS = {"white-space-crop": (0.16, 0.26)}
 HEADS = {"rule-draw": (18, 18)}
 # the most lines a moment's line takes where its card sets it at display size
 BIG_LINES = 5
+# the moves in motion/system/moves/move/: a move that draws through ../arrival takes the whole frame for its spectacle
+# and hands it back to the photograph; it holds the frame for its arrivalOf landing (seconds), or COUNTED for a move
+# that counts or slams its own words first, then HANDBACK while the photograph clears back in
+MOVES = _env.SKILL / "motion" / "system" / "moves" / "move"
+COUNTED = 1.8
+HANDBACK = 0.4
+# the camera axes of the looks that take the frame-taking moves as their grammar, on every other photo beat back from
+# the peak; every other look is calm and takes one, once, on its peak
+ENERGETIC = {"slam", "snap"}
+# the moves that set a photo beat's line themselves, over the photograph, before they hand the frame back to it: the
+# kit sets no line of its own on that beat
+OWN_LINE = {"slam-words", "counter"}
+# a number in a line, in figures or as a word up to twelve: the counter move counts up to it, so it plays only on a
+# line that says one
+NUMBER = re.compile(r"\b(\d[\d,.]*|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b", re.I)
 # the photograph framed a little inside its box, so a move that pulls back never shows its edge
 ZOOM = 1.1
 # the card finishes (axes.finish) that show a photograph as it was posted, under nothing but the card's own finish
@@ -90,8 +108,10 @@ ASK_K = 1.3
 EMOJI = re.compile("[←-⯿☀-➿\U0001f000-\U0001faff️‍]")
 PUNCT = ".,;:!?…\"'‘’“”()"
 # the cut as QA, the critic and film render read it: the render reports vouch for out/ and cut.mp4 as the set of one
-# cut, cut.json certifies cut.mp4; a step that replaces the cut removes them in this order before it changes the cut
-CUT_SET = (Path("render/cut-report.json"), Path("render/film-report.json"), Path("cut.json"), Path("cut.mp4"))
+# cut, cut.json certifies cut.mp4 (or the half-size proof, proof-cut.mp4, with its own report); a step that replaces
+# the cut removes them in this order before it changes the cut
+CUT_SET = (Path("render/cut-report.json"), Path("render/film-report.json"), Path("cut.json"), Path("cut.mp4"),
+           Path("render/proof-report.json"), Path("proof-cut.mp4"))
 
 
 def mask_word(say):
@@ -246,7 +266,11 @@ def set_text(fr, words, box, face, size, align, label=None, lab=None, bottom=Fal
         lines = compose.wrap(words, s, width - 0.03 * s, face)
         cap = compose.measure("H", s, face)[1]
         need = cap + (len(lines) - 1) * lead * s + 0.28 * s
-        if (len(lines) <= most and need <= tall and all(compose.measure(x, s, face)[0] <= width - 0.03 * s for x in lines)) or s <= size // 2:
+        # a word alone on a line of a set of several lines reads as a break in the sentence: the size comes down until
+        # every line holds two words or more
+        alone = len(lines) > 1 and any(len(x.split()) < 2 for x in lines)
+        if (len(lines) <= most and need <= tall and not alone
+                and all(compose.measure(x, s, face)[0] <= width - 0.03 * s for x in lines)) or s <= size // 2:
             break
         s = max(size // 2, int(s * 0.94))
     cap = compose.measure("H", s, face)[1]
@@ -335,13 +359,34 @@ def tags_of(b):
     return tags
 
 
-def pick(options, tags, form, used, avoid):
-    """The option whose `fits` matches the beat best: one that fits the beat's form before any that does not, then the
+def frame_taken(move):
+    """Seconds `move` holds the whole frame before the photograph is back in view, 0 for a move that leaves the
+    photograph in view."""
+    f = MOVES / f"{move}.tsx"
+    text = f.read_text() if move and f.is_file() else ""
+    if "'../arrival'" not in text:
+        return 0.0
+    m = re.search(r"arrivalOf\(p,\s*([0-9.]+)\)", text)
+    return (float(m.group(1)) if m else COUNTED) + HANDBACK
+
+
+def lands_at(move, seconds):
+    """Seconds into a beat of `seconds` its photograph lands: a frame-taking move flies it in and lands it at its
+    arrivalOf time, or within the first part of a short beat (arrival.tsx); any other move cuts to it."""
+    f = MOVES / f"{move}.tsx"
+    m = re.search(r"arrivalOf\(p,\s*([0-9.]+)\)", f.read_text()) if move and f.is_file() else None
+    return min(float(m.group(1)), 0.55 * seconds) if m else 0.0
+
+
+def pick(options, tags, form, used, avoid, prefer=()):
+    """The option whose `fits` matches the beat best: one in `prefer` made for the beat (it fits the beat's form, or
+    the peak and the beat is the peak) first, then one that fits the beat's form before any that does not, then the
     most of its other tags; between equals the one used least so far, then the card's order. The options in `avoid`
     are never picked while another exists."""
     avoid = set(avoid or ())
     pool = [o for o in options if o["id"] not in avoid] or options
-    score = lambda o: (form in o["fits"], len((tags - {form}) & set(o["fits"])))
+    made = lambda o: form in o["fits"] or ("peak" in tags and "peak" in o["fits"])
+    score = lambda o: (o["id"] in prefer and made(o), form in o["fits"], len((tags - {form}) & set(o["fits"])))
     best = max(pool, key=lambda o: (score(o), -used.get(o["id"], 0), -options.index(o)))
     used[best["id"]] = used.get(best["id"], 0) + 1
     return best["id"]
@@ -365,39 +410,84 @@ def story(run, c, bpm):
         beats.append({"id": "ask", "form": "words", "say": run.question, "label": "", "photo": ph[peak["photo"]], "peak": False})
     beats.append({"id": "closer", "form": "closer", "say": run.signoff, "label": run.handle, "photo": None, "peak": False})
 
+    takes = {o["id"] for o in c["moves"] if frame_taken(o["id"])}
+    energetic = c["axes"]["camera"] in ENERGETIC
+
     def give(beats):
         """Each beat's move and its cut in, in order, never the move of the beat before, and never the one move that
-        fits the next beat's form: a move made for another form draws nothing on that beat."""
+        fits the next beat's form: a move made for another form draws nothing on that beat. The peak takes a move that
+        takes the frame when the card has one for it; an energetic look takes one on every other photo beat back from
+        the peak too, and a calm look on no other beat. Each move that takes the frame plays once a film, and the one
+        the peak takes is kept for the peak, so an energetic look whose card has one such move plays it on the peak
+        alone. A move the card marks `once` plays at most once a film and wins the peak: the peak takes the `once`
+        move made for a photograph when the card has one, and no beat before it plays that move. The counter plays only
+        on a line that says a number, and a move that sets the beat's words only on a beat that has some."""
         moves, cuts, prev = {}, {}, None
+        top = next((i for i, b in enumerate(beats) if b["peak"]), len(beats))
+        once = {o["id"] for o in c["moves"] if o.get("once")}
+        held = [o["id"] for o in c["moves"] if o["id"] in once and "photo" in o["fits"]]
+        kept = pick(c["moves"], tags_of(beats[top]), "photo", {}, None, held or takes) if top < len(beats) else None
         for i, b in enumerate(beats):
             tags = tags_of(b)
             nxt = [o["id"] for o in c["moves"] if i + 1 < len(beats) and beats[i + 1]["form"] in o["fits"]]
-            b["move"] = pick(c["moves"], tags, b["form"], moves, {prev, *nxt[:1]} if len(nxt) == 1 else {prev})
+            avoid = {prev, *nxt[:1]} if len(nxt) == 1 else {prev}
+            if not NUMBER.search(b["say"] or ""):
+                avoid.add("counter")
+            if not (b["say"] or "").strip():
+                avoid.add("slam-words")
+            wants = b["form"] == "photo" and (i == top or (energetic and (top - i) % 2 == 0))
+            if not (wants or energetic):
+                avoid |= takes
+            elif i != top:
+                avoid |= {t for t in takes if t == kept or t in moves}
+            avoid |= {o for o in once if o in moves or (o == kept and i != top)}
+            b["move"] = kept if i == top and kept else pick(c["moves"], tags, b["form"], moves, avoid, takes if wants else ())
+            if i == top and kept:
+                moves[kept] = moves.get(kept, 0) + 1
             b["transition"] = None if i == 0 else pick(c["transitions"], tags, b["form"], cuts, None)
             prev = b["move"]
-    give(beats)
 
+    # the cuts quicken into the peak: the first moment before it holds QUICKEN beats longer than the card's shot, the
+    # next one a beat less, down to the shot; the extra beats go before any moment is left out, and come back to the
+    # moments that stay once one is
+    quicken = QUICKEN
     def length(b):
         if b["form"] == "title":
             return max(nb(shot * 1.2), len(b["say"].split()) + 2) if b["move"] in SETS_WORDS else nb(shot * 1.3)
         if b["form"] == "photo":
-            return nb(shot * (1.4 if b["peak"] else 1.0) + (0.3 * max(0, len(b["say"].split()) - 6)))
+            n = len(b["say"].split())
+            own = nb(shot * (1.4 if b["peak"] else 1.0) + (0.3 * max(0, n - 6)))
+            if not b["peak"]:
+                middle = [x for x in beats if x["form"] == "photo" and not x["peak"]]
+                own += max(0, quicken - middle.index(b))
+            # a move that takes the frame holds its beat past the landing, long enough to read the line after it
+            taken = frame_taken(b["move"])
+            return max(own, nb(taken + max(1.6, 0.9 + 0.3 * n))) if taken else own
         if b["form"] == "words":
             # the question holds as long as it takes to read twice, never a fixed count of beats: at a slow tempo a
             # count of beats leaves a short question alone on the ground for seconds after it is read
             return nb(max(2.4, 1.2 + 0.3 * len(b["say"].split())))
-        return nb(shot * 1.2 + HOLD)
-    for b in beats:
-        b["beats"] = length(b)
-    # the moments the story cannot fit go, the least liked first; the peak stays
+        # the closer is their name and handle: a slow card's pace never stretches it past the default shot's hold, so
+        # the time goes to a moment instead
+        return nb(min(shot, SHOT) * 1.2 + HOLD)
+    def fit():
+        give(beats)
+        for b in beats:
+            b["beats"] = length(b)
+    fit()
+    # the moments the story cannot fit go, the least liked first; the peak stays. The moves are given again to the
+    # beats that stay, so the beats either side of a dropped moment never repeat one, and every length follows its move
     while sum(b["beats"] for b in beats) * 60 / bpm > MOST_SECONDS:
+        if quicken:
+            quicken -= 1
+            fit()
+            continue
         middle = [b for b in beats if b["form"] == "photo" and not b["peak"]]
         if not middle:
             break
         beats.remove(min(middle, key=lambda b: (b["likes"], b["id"])))
-    # the moves are given again to the beats that stay, so the beats either side of a dropped moment never repeat one;
-    # only the hook's length reads its move, and the hook comes first, so its move and every length stand
-    give(beats)
+        quicken = QUICKEN
+        fit()
     return beats
 
 
@@ -412,7 +502,8 @@ def shown(c, photo):
 def lay(run, c, colors, fr, b):
     """One beat's picture, ground, scrim and text, as the film draws them."""
     lay = c["photo"]
-    photo = shown(c, b.get("photo"))
+    # the picture is the photograph (a clip's still); the clip itself is the beat's own record (board_for)
+    photo = {k: v for k, v in (shown(c, b.get("photo")) or {}).items() if k != "clip"} or None
     pic, ln, lab = lay["picture"], lay["line"], lay["label"]
     out = {"picture": None, "ground": role(colors, lay["ground"]), "scrim": None, "text": None}
     if b["form"] == "photo":
@@ -434,8 +525,10 @@ def lay(run, c, colors, fr, b):
             ground, line = line, ground
             label = line if contrast(lum(role(colors, label)), lum(role(colors, ground))) < 3 else label
             out["ground"] = role(colors, ground)
-        # a line the card sets at display size keeps its size over more lines: a poster's words, not a caption's
-        t = set_text(fr, b["say"], lb, ln["face"], ln["size"], ln["align"], b["label"] or None, lab, most=BIG_LINES if ln["size"] >= 100 else 3)
+        # a line the card sets at display size keeps its size over more lines: a poster's words, not a caption's; a
+        # moment's line starts from the film's caption size when one is given (board_for)
+        t = set_text(fr, b["say"], lb, ln["face"], b.get("caption") or ln["size"], ln["align"], b["label"] or None, lab,
+                     most=BIG_LINES if ln["size"] >= 100 else 3)
         if pic["show"] and ln["scrim"] > 0 and lum(role(colors, label)) < lum(role(colors, line)):
             # the label sits on the photograph under the scrim, which darkens it: a label darker than the line takes
             # the line's color
@@ -443,6 +536,9 @@ def lay(run, c, colors, fr, b):
         if t["label"]:
             t["label"]["color"] = label
         out["text"] = dict(t, color=line, enter=ln["enter"], at=0.25)
+        if b["move"] in OWN_LINE:
+            out["text"] = None
+            return out
         if pic["show"] and ln["scrim"] > 0 and t["lines"]:
             top = (t["label"] or t["lines"][0])["y"] - fr.H / 6
             out["scrim"] = {"from": round(top, 1), "to": round(min(fr.H, box[3]), 1), "dark": ln["scrim"]}
@@ -524,9 +620,32 @@ def board_for(run, letter, style, fmt, bpm=None):
                "words": b["say"] if (sets_words(b, fr) and b["form"] in ("title", "words")) else "",
                "label": mask_word(b["say"]) if (b["move"] in MASKS and b["form"] == "photo") else "", "say": b["say"], "pillar": b["label"] if b["form"] == "photo" else ""}
         rec.update(lay(run, c, colors, fr, dict(b, turn=sum(1 for x in out if x["form"] == "photo"))))
+        clip = (b.get("photo") or {}).get("clip") if b["form"] == "photo" else None
+        if clip:
+            # a moment from a reel plays its recorded clip as the beat's one shot from its strongest second; the move
+            # and the arrival are the photograph's, and a move that takes the frame flies in the clip's first frame
+            # (the still) and hands the frame back to it, so the clip runs from the hand back to the beat's end
+            import material
+            hold = min(rec["frames"] - 1, round(frame_taken(b["move"]) * FPS))
+            rec["clip"] = dict(material.clip_frames(clip, (rec["frames"] - hold) / FPS, FPS, posted=c["axes"]["finish"] in AS_POSTED),
+                               hold=hold)
+        taken = frame_taken(b["move"]) * bpm / 60
+        if taken and rec["text"] and b["form"] == "photo":
+            # a move that takes the frame hands the photograph back before its line comes on, so the line reads after it
+            rec["text"]["at"] = round(max(rec["text"]["at"], taken), 3)
         rec["layers"] = []
         out.append(rec)
         at += b["beats"]
+    # every moment's line is set at one size, the size the longest line came down to, so the captions read as one set;
+    # a look of the type family keeps each line at its own scale, where the type is the picture
+    k = min(fr.W, fr.H) / 1080
+    sized = [(b, r) for b, r in zip(beats, out) if b["form"] == "photo" and r["text"] and c["axes"]["family"] != "type"]
+    cap = min((r["text"]["size"] for _, r in sized), default=None)
+    for b, r in sized:
+        if r["text"]["size"] != cap:
+            again = lay(run, c, colors, fr, dict(b, turn=sum(1 for x in out[:out.index(r)] if x["form"] == "photo"), caption=cap / k))
+            r["text"] = dict(again["text"], at=r["text"]["at"])
+            r["scrim"] = again["scrim"]
     frames = round(at * pulse)
     closer = out[-1]
     shot = PACE.get(c["axes"]["camera"], SHOT)
@@ -542,15 +661,9 @@ def board_for(run, letter, style, fmt, bpm=None):
         else:
             settle = b["beats"] - 0.4
         b["rest"] = max(0, min(b["frames"] - 1, round(min(settle, clear) * pulse)))
+    # the effects are the shared sound layer's, laid from the beats themselves (effects_board); the board's own cue is
+    # the stop, where a look whose cuts are hard cuts its music
     sound = []
-    for b in out:
-        if b["form"] == "title" and b["move"] in SETS_WORDS:
-            sound += [{"kind": "hit", "at": b["start"] + i, "weight": 0.35, "beat": b["id"], "what": "a word lands"}
-                      for i in range(len(b["say"].split()))]
-        elif b.get("text"):
-            sound.append({"kind": "hit", "at": round(b["start"] + b["text"]["at"], 3), "weight": 0.55 if b["text"]["enter"] in ("slam", "cut") else 0.3,
-                          "beat": b["id"], "what": "the line comes on"})
-    sound.append({"kind": "impact", "at": closer["start"], "beat": "closer", "what": "the sign-off"})
     if c["axes"]["transition"] == "cut":
         sound.append({"kind": "stop", "at": still, "beat": "closer", "what": "the music stops on the sign-off"})
     for q in sound:
@@ -571,6 +684,29 @@ def board_for(run, letter, style, fmt, bpm=None):
         rests["peak"] = starts[top] + out[top]["rest"]
     return {"board": board, "seconds": round(frames / FPS, 2), "frames": frames, "cuts": [round(s / FPS, 2) for s in starts[1:]],
             "hook_frame": round(hook_at * pulse), "rests": rests}
+
+
+def effects_board(board):
+    """`board` as the shared sound effects read it (sfx.py): each beat one layer of its kind (Title, Photo, Words,
+    Closer) with the moments its picture lands, in musical beats from the film's start. The title lands where its words
+    land, a photograph where its move lands it, and the words slammed by a move are the beat's line."""
+    sec = 60 / board["bpm"]
+    beats = []
+    for b in board["beats"]:
+        s, e = b["start"], b["start"] + b["beats"]
+        kind = {"title": "Title", "photo": "Photo", "words": "Words", "closer": "Closer"}.get(b["form"], "Photo")
+        ly = {"kind": kind, "at": {"arrive": round(s + lands_at(b["move"], b["beats"] * sec) / sec, 4), "start": s, "end": e}}
+        if kind == "Title":
+            ly["title"] = {"text": b["say"]}
+            ly["slam"] = [s, 0.25 if b["move"] in SETS_WORDS or not b.get("text") else b["text"]["at"]]
+        elif kind == "Photo":
+            ly["label"] = b["say"]
+        elif kind == "Words":
+            ly["text"] = b["say"]
+        else:
+            ly["signoff"] = {"text": b["say"]}
+        beats.append({"id": b["id"], "form": b["form"], "start": s, "move": b["move"], "transition": b["transition"], "layers": [ly]})
+    return {"id": board["id"], "bpm": board["bpm"], "beats": beats}
 
 
 def cut_beats(name):
@@ -615,10 +751,13 @@ def write_md(d, p):
         said = " / ".join(ln["text"] for ln in (x.get("text") or {}).get("lines", [])) or x["words"]
         L.append(f"| {x['id']} | {x['start'] * sec:.2f} s | {x['beats'] * sec:.2f} | {x['move']} | {x['transition'] or ''} | {said[:80]} |")
     music = _env.read_json("music.json") or {}
+    import sfx
+    fx = sfx.events(effects_board(b), sfx.music_of(b, music)[0])[0]
     L += ["", "Music: " + (music.get("origin") or "not made yet (music.py make)") + ".",
           "Mixed: " + (f"bed {music['bed_lufs']} LUFS, effects {music['fx_lufs']} LUFS, master {music['master_lufs']} LUFS"
                        if music.get("master_lufs") is not None and music.get("bed_lufs") is not None else "not yet") + ".",
-          "", f"Sound ({len(b['sound'])} cues): " + ", ".join(f"{q['kind']} at {q['at'] * sec:.2f} s" for q in b["sound"])]
+          "", f"Sound ({len(fx)} effects on the music's grid): " + ", ".join(f"{k} at {t:.2f} s" for t, k in fx)
+          + "".join(f"; the music {q['what'].split('music ', 1)[-1]} at {q['at'] * sec:.2f} s" for q in b["sound"])]
     _env.write_text(d / "storyboard.md", "\n".join(L) + "\n")
 
 
@@ -810,6 +949,12 @@ def cmd_snap(a, run):
     for old in (*CUT_SET, Path("film.json")):
         old.unlink(missing_ok=True)
     plans = write_board(run, letter, style, bpm)
+    import material
+    # the clips' frames the drafts cut at their own tempo go; the film's are the ones its boards name
+    keep = {x["clip"]["dir"] for p in plans.values() for x in p["board"]["beats"] if x.get("clip")}
+    for d in material.CLIPS.glob("*") if material.CLIPS.is_dir() else ():
+        if d.relative_to(material.PUB).as_posix() not in keep:
+            shutil.rmtree(d, ignore_errors=True)
     bad = findings(run, plans)
     reel = plans["reel"]
     downs = music.get("downbeats") or []

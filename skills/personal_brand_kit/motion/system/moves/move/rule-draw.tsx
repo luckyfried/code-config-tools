@@ -1,10 +1,30 @@
 // rule-draw: a heavy rule of the card's accent drawn across the measure with a snap. On a beat with words the rule
 // sits on a grid row and the words stand under it, flush left, set to fill the measure, the label in the text face over
-// it, on the card's ground from the first frame. On a photo beat the rule draws across the photograph's head, between
-// its words and its box, never through them, and a hairline closes its foot.
+// it, on the card's ground from the first frame. On a photo beat the rule draws across the photograph's head, in the
+// space between its words and its box, and a hairline closes its foot; where that space is too narrow to hold the rule
+// clear of both, or the frame's edge leaves none, the rule draws just inside the photograph's head and the hairline
+// just inside its foot, so neither ever crosses a word or leaves the frame.
 import React from 'react';
 import {balance, fill, fitTo, heldOf, pictureOf, px, span, SNAP, Words} from '../kit';
-import type {Move, MoveProps} from '../types';
+import type {Look, Move, MoveProps} from '../types';
+
+/** The rule's and hairline's bands on a photograph standing in `box`, with the beat's label and line in `type`
+ * ([x0, y0, x1, y1] px): [top, height] of each. */
+export const rulesOf = (look: Look, [, by, , bh]: [number, number, number, number], type?: [number, number, number, number]) => {
+  const heavy = px(look, 18), hair = Math.max(1, px(look, 3)), pad = px(look, 14), least = px(look, 6);
+  const [, t0, , t1] = type ?? [0, -1, 0, -1];
+  // the free space over the box's head and under its foot: to the words where they stand there, and a mark stands in
+  // the middle of it; else to the frame's edge, and a mark stands `pad` off the box
+  const above = !!type && t1 <= by, below = !!type && t0 >= by + bh;
+  const over = above ? by - t1 : by;
+  const under = below ? t0 - by - bh : look.H - by - bh;
+  const rule = Math.min(heavy, above ? (over - 2 * least) / 2 : over - 2 * least);
+  const ruleGap = above ? (over - rule) / 2 : Math.min(pad, (over - rule) / 2);
+  const ruleBand: [number, number] = rule >= least ? [by - ruleGap - rule, rule] : [by + pad, heavy];
+  const hairGap = below ? (under - hair) / 2 : Math.min(pad, (under - hair) / 2);
+  const hairBand: [number, number] = under >= hair + 2 * least ? [by + bh + hairGap, hair] : [by + bh - pad - hair, hair];
+  return {rule: ruleBand, hair: hairBand};
+};
 
 const Overlay: React.FC<MoveProps> = ({look, beat, local, t}) => {
   const g = look.grid;
@@ -13,14 +33,7 @@ const Overlay: React.FC<MoveProps> = ({look, beat, local, t}) => {
   const heavy = px(look, 18);
   if (beat.box) {
     const [bx, by, bw, bh] = pictureOf(look, beat);
-    const hair = Math.max(1, px(look, 3));
-    // with the label and line set above the box, the rule stands in the middle of the space between their foot and the
-    // box's head, and thins to fit it; with them below the box, the hairline does the same under the box
-    const [, t0, , t1] = beat.type ?? [0, -1, 0, -1];
-    const above = beat.type && t1 <= by, below = beat.type && t0 >= by + bh;
-    const rule = above ? Math.min(heavy, (by - t1) * 0.5) : heavy;
-    const ruleTop = above ? (t1 + by - rule) / 2 : by - heavy - px(look, 18);
-    const hairTop = below ? (by + bh + t0 - hair) / 2 : by + bh + px(look, 14);
+    const {rule: [ruleTop, rule], hair: [hairTop, hair]} = rulesOf(look, [bx, by, bw, bh], beat.type);
     return (
       <div style={{...fill, opacity: heldOf(beat, t)}}>
         <div style={{position: 'absolute', left: bx, top: ruleTop, height: rule, width: bw * d, background: look.colors.accent}} />

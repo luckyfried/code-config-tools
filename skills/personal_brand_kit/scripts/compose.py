@@ -248,8 +248,8 @@ def box_of(ln):
 
 
 def wrap(text, size, width, face="display"):
-    """`text` broken into lines no wider than `width` px at `size`, balanced so the last line is never a lone short word
-    when a fairer break exists."""
+    """`text` broken into lines no wider than `width` px at `size`, balanced so the lines run as even as they can
+    while no balancing move leaves a word alone on a line."""
     words = text.split()
     if not words:
         return []
@@ -260,12 +260,12 @@ def wrap(text, size, width, face="display"):
             lines[-1].append(w)
         else:
             lines.append([w])
-    # balance: move words down while the lines get more even and still fit
+    # balance: move words down while the lines get more even and still fit, never leaving a word alone on its line
     for _ in range(len(words)):
         moved = False
         for i in range(len(lines) - 1):
             a, b = lines[i], lines[i + 1]
-            if len(a) > 1 and fits([a[-1]] + b):
+            if len(a) > 2 and fits([a[-1]] + b):
                 wa, wb = measure(" ".join(a), size, face)[0], measure(" ".join(b), size, face)[0]
                 na, nb = measure(" ".join(a[:-1]), size, face)[0], measure(" ".join([a[-1]] + b), size, face)[0]
                 if max(na, nb) < max(wa, wb):

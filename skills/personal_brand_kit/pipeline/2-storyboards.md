@@ -38,16 +38,22 @@ The story is the same in all three, and every word in it is theirs:
 - **the ask**: their question to the viewer (`taste.json` `question`, else the question their best-liked caption
   asks), over the last moment's photograph, held long enough to read twice;
 - **the closer**: their sign-off (`taste.json` `signoff`, else their name) and their handle, in the look's closer,
-  held still at the end.
+  settled at the end, with a slow push to the last frame.
 
 Each beat's move, and the cut into it, is chosen from what the beat shows (a title, a photograph with words or
 without, portrait or landscape, the last moment, people in it, a place named) among the moves and cuts the card
-allows, never the same move twice running. Each beat lasts the card's pace at its tempo, so a slow look plays fewer
-moments: the moments that do not fit in 28 seconds are left out, the least liked first, the last one always kept.
-The layout is solved again for each frame (1080×1920, 1080×1080, 1920×1080), never scaled.
+allows, never the same move twice running. The last moment takes a move that takes the whole frame when the card
+has one; an energetic look (a slam or snap camera) plays one on every other moment back from it too, each such move
+once a film, and a calm look plays it on the last moment alone. Each beat lasts the card's pace at its tempo, so a
+slow look plays fewer moments; the cuts quicken into the last moment, and the moments that do not fit in 28 seconds
+are left out, the least liked first, the last one always kept. The closer holds the default shot's length in every
+look. Every moment's caption is set at one size, the size its longest line needs (a type-family look keeps each line
+at its own scale), and no word stands alone on a line. The layout is solved again for each frame (1080×1920,
+1080×1080, 1920×1080), never scaled.
 
 `storyboard.md` says, per beat, when it starts, how long it holds, its move, the cut into it and its words, then the
-music and the sound cues (where a line lands, the sign-off, and the stop on a look whose cuts are hard).
+music and its effects (a whoosh on each cut, a shutter on each photograph, an impact on each title, a riser into the
+closer, and the stop on a look whose cuts are hard).
 
 ## Check and look
 

@@ -53,8 +53,8 @@ true`; when something is missing it says what, in a plain sentence, and exits 1.
 | 1 | research | `S/pipeline/1-research.md` | `research.py`; write `taste.md`, fix `taste.json`; `brand.py system`; `brand.py plan`, rewrite the captions, `brand.py plan` | `taste.md`, `brand.json`, `out/plan.md` |
 | 2 | storyboards | `S/pipeline/2-storyboards.md` | `storyboard.py draft`; `storyboard.py check`; `storyboard.py sheets`, look at `out/boards.png` | three looks, each in bounds, and `out/boards.png` |
 | 3 | vote and pick | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores, `vote.py tally`; show `out/boards.png` and ask which look; `vote.py pick <letter>` | `winner.json` |
-| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `storyboard.py snap`, `music.py master`, `film.py cut` | `cut.mp4` and its strips |
-| 5 | critic | `S/pipeline/5-critic.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told) | `critic/verdict.json` ships the cut or spends its fix |
+| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `storyboard.py snap`, `music.py master`, `film.py cut --proof` | `proof-cut.mp4`, the half-size proof, and its strips |
+| 5 | critic | `S/pipeline/5-critic.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told) on the proof; then the full-size `film.py cut`, `qa.py check`, `vote.py cut` and the type read at full size, `vote.py verdict` | `critic/verdict.json` ships the full-size `cut.mp4` or spends its fix |
 | 6 | render, deliver | `S/pipeline/6-deliver.md` | `film.py render`, write `caption.md`, `deliver.py` | `GATE GREEN` |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
@@ -65,8 +65,8 @@ If `gather.py` exits 3, every door is closed: tell the person the one sentence i
 
 When the person, after seeing the film, says "make the second one" (or names another look), make it in the same
 run, without asking anything else: `vote.py pick <letter>` (it clears the old look's music, cut and rounds), then
-`music.py find`, `storyboard.py snap`, `music.py master`, `film.py cut`, `qa.py check`, the critic's rounds (movement
-5), `film.py render` and `deliver.py`. The letters are the order of `out/boards.png`: a, b, c.
+`music.py find`, `storyboard.py snap`, `music.py master`, `film.py cut --proof`, `qa.py check`, the critic's rounds
+on the proof and the full-size cut (movement 5), `film.py render` and `deliver.py`. The letters are the order of `out/boards.png`: a, b, c.
 
 ## Rules that win
 
@@ -92,9 +92,10 @@ run, without asking anything else: `vote.py pick <letter>` (it clears the old lo
 - A thin feed makes a shorter film, never a padded one; the scripts decide its length, so draft and check as usual.
 - A film renders in chunks kept in the run (`render/chunks/`). When a render stops part way (the machine
   restarted, the session died), run the same command again: the finished chunks are kept and only the missing ones
-  render. Never start over and never delete `render/chunks/`. Run `film.py cut` and `film.py render` each in the
-  foreground in one tool call with a 40-minute timeout on that call, never in the background, and read its progress
-  in `render/cut.log` or `render/film.log`: once the first chunks land, their time times the chunks still to go is
+  render. Never start over and never delete `render/chunks/`. Every critic round before the full-size cut watches
+  the half-size proof (`film.py cut --proof`); the cut the film is rendered from is full size (`film.py cut`). Run
+  `film.py cut` and `film.py render` each in the foreground in one tool call with a 40-minute timeout on that call,
+  never in the background, and read its progress in `render/proof.log`, `render/cut.log` or `render/film.log`: once the first chunks land, their time times the chunks still to go is
   the estimate to tell the person.
 - Done means `deliver.py` printed `GATE GREEN`. Your reply then names the reel first: its full path from the project's
   root, exactly as deliver.py printed it on its last line, in a sentence ("Your reel is at

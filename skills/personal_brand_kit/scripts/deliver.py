@@ -21,6 +21,8 @@ reaches out/ by rename of a finished file, and the page goes first with a banner
 deliver stopped part way never leaves out/ reading as delivered; only a passing gate writes the page without it. On a
 green gate its last line is the reel's path from the project's root (build/<run>/out/film.mp4), the path the reply
 names first; on a failed gate it is "not ready: the gate failed on" and the failing checks, and no path.
+deliver.py refuses a run whose newest cut is the half-size proof (proof-cut.mp4) and names the full-size cut, the
+critics' type read on it and the render to run first.
 """
 import contextlib
 import html
@@ -33,6 +35,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import compose  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import studio  # noqa: E402
 import storyboard  # noqa: E402
@@ -140,7 +143,7 @@ def brief(lib, taste, brand, win, music, render, film, cut, cuts, board):
     L += ["", "## music", ""]
     if music.get("file"):
         L.append(f"- {music.get('origin')}.")
-        L.append(f"- {music.get('bpm')} bpm; {film.get('tempo')}; a sound where a line lands, mixed under the music and mastered "
+        L.append(f"- {music.get('bpm')} bpm; {film.get('tempo')}; a hit where a title lands, a whoosh on each cut and a riser into the sign-off, under the music mastered "
                  f"to {music.get('master_lufs', -14)} LUFS.")
     else:
         L.append("- No music was found, so the film is silent. Add a sound when you post.")
@@ -283,6 +286,10 @@ def main():
     _env.enter()
     # the run's lock from here to the last write, so no render changes out/ while the page and the gate are made
     with studio.lock("deliver") as run:
+        if proof.scale(qa.CUT) != 1:
+            sys.exit(proof.refusal(qa.CUT, then="film.py cut for the full-size cut, then qa.py check and vote.py cut, "
+                                                "where the critics read the type at full size, then film.py render and "
+                                                "deliver.py again"))
         return deliver(run)
 
 

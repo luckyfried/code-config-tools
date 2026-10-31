@@ -8,7 +8,8 @@ USAGE (from the workspace root; S = this skill's folder; every script works in t
     python3 S/scripts/vote.py pick <a|b|c> [--why "..."]
                                                    # winner.json: the look the film is made in; --why is the one-line
                                                    # reason when the agent picks by taste (taste.json ask: false)
-    python3 S/scripts/vote.py cut                  # critic/cut-N.json to fill in for the timed cut (next round N)
+    python3 S/scripts/vote.py cut                  # critic/cut-N.json to fill in for the newest cut (next round N):
+                                                   # the half-size proof while it is there, else cut.mp4
     python3 S/scripts/vote.py verdict              # SHIP at the bar; under it, round 1 names the one thing to fix and
                                                    # round 2 delivers the cut with its scores in brief.md
 
@@ -23,6 +24,11 @@ The timed cut is scored by the motion designer and the person on every criterion
 qa/check.json, before film.py render makes the three formats from it. The bar: the mean of every score 4.5 or more and
 no score under 4. Under the bar, round 1 names the lowest score for the one fix; round 2 is the spent budget: the cut is
 delivered as it stands, and its scores go in brief.md, never on the review page.
+
+Every round before the full-size cut scores the half-size proof (film.py cut --proof, proof-cut.mp4): `cut` reads the
+newest cut and its first line says when that is the proof. Once the full-size cut of the same film is made, `cut`
+moves the latest round to it and empties its `type` scores: the critics read the type again on the full-size cut, at
+the size a phone shows it, and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -32,14 +38,17 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
+CUT = Path("cut.mp4")
 CRITERIA = {
     "idea": "R1 the hook states one idea from their own words and moments, every move and cut is the look's own, the "
             "closer pays it off",
-    "picture": "R2 one finish, the look's; every color a photograph's own or the look's palette's; the closer holds still",
+    "picture": "R2 one finish, the look's; every color a photograph's own or the look's palette's; the closer settles "
+               "and keeps only its slow push",
     "type": "R3 two faces, a scale, lines that enter and settle, every line reads on its ground, nothing colliding",
     "motion": "R4 every move anticipates and settles, no two beats in a row alike, the peak held longest, cuts on the beat",
-    "sound": "R5 the bed belongs to the look, a cue only where a line lands, effects under the music, quiet from the stop",
+    "sound": "R5 the bed belongs to the look, each effect lands with the picture on the beat (a hit where a title lands, a whoosh on a cut, a riser into the closer), under the music, quiet from the stop",
     "own": "its own film: the hook and the closer read as this look and no other",
 }
 # what a board can show: no sound yet (what out/ holds, R7, is the gate's to check)
@@ -172,9 +181,10 @@ def cmd_pick(a):
     return 0
 
 
-# what the critics look at before they score the cut: the picture from its frames, the sound from the audio row
-LOOK = ("watching cut.mp4 with sound, reading its strips cut-strip.png and cut-strip12.jpg row by row (and any frame "
-        "you cut from cut.mp4), and qa/check.json's audio row")
+def look(film):
+    """What the critics look at before they score the cut: the picture from its frames, the sound from the audio row."""
+    return (f"watching {film} with sound, reading its strips cut-strip.png and cut-strip12.jpg row by row (and any frame "
+            f"you cut from {film}), and qa/check.json's audio row")
 
 
 def rounds():
@@ -184,10 +194,14 @@ def rounds():
 def cmd_cut(a):
     d = Path("critic")
     d.mkdir(parents=True, exist_ok=True)
-    # cut.json certifies the cut and its strips; the round reads it, never cut.mp4 alone
+    film = proof.newest(CUT)
+    if proof.scale(CUT) != 1:
+        print(proof.reading(film))
+    # cut.json certifies the cut and its strips; the round reads it, never the cut alone
     if not Path("cut.json").exists():
         sys.exit("cut.json is missing: run film.py cut first")
-    digest = hashlib.sha256(Path("cut.mp4").read_bytes()).hexdigest()[:16]
+    digest = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
+    scale, made_from = proof.scale(CUT), (_env.read_json("film.json") or {}).get("hash")
     qa = _env.read_json("qa/check.json") or {}
     if qa.get("film") != digest:
         sys.exit("qa/check.json is not for this cut: run qa.py check first")
@@ -196,18 +210,27 @@ def cmd_cut(a):
     done = rounds()
     last = _env.read_json(str(done[-1])) if done else None
     if last is not None and last.get("film") == digest:
-        print(f"round {last['round']} is this cut's: fill in {done[-1]} after {LOOK}")
+        print(f"round {last['round']} is this cut's: fill in {done[-1]} after {look(film)}")
+        return 0
+    if last is not None and scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == made_from:
+        # the full-size cut of the film the round scored on its proof: the same round, with the type read at full size
+        last.update(film=digest, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+        _env.write_json(done[-1], last)
+        print(f"round {last['round']} moves to the full-size {film}: as each critic, read the type again on it and its "
+              f"strips, at the size a phone shows it, and score type in {done[-1]}; the other scores stand")
         return 0
     blank_last = last is not None and any(v is None for c in last["critics"].values() for b in c["boards"].values() for v in b["scores"].values())
     n = len(done) + (0 if blank_last else 1)
     f = d / f"cut-{n}.json"
     data = blank(CUT_PANEL, ["film"], CRITERIA)
-    data.update(round=n, film=digest, fixed="" if n > 1 else None, criteria=CRITERIA, bar={"mean": BAR_MEAN, "min": BAR_MIN})
+    data.update(round=n, film=digest, scale=scale, cut=made_from, fixed="" if n > 1 else None, criteria=CRITERIA, bar={"mean": BAR_MEAN, "min": BAR_MIN})
     _env.write_json(f, data)
     for c in qa.get("checks") or []:
         if c["check"] == "audio":
             print(f"audio: {c['detail']}")
-    print(f"round {n}: fill in {f} after {LOOK}" + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
+    print(f"round {n}: fill in {f} after {look(film)}" + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 
 
@@ -242,18 +265,23 @@ def cmd_verdict(a):
         _env.write_json("critic/verdict.json", {"round": data.get("round"), "film": data.get("film"), "verdict": verdict,
                                                 "mean": round(mean, 2), "lowest": low, "bar": {"mean": BAR_MEAN, "min": BAR_MIN},
                                                 "scores": scores_of(data), "what": None if verdict == "ship" else what})
+    # a round on the proof ends in the full-size cut, where the critics read the type once more before the film renders
+    full = data.get("scale") == proof.SCALE
+    then = ("make the full-size cut (film.py cut, qa.py check), then run vote.py cut, where the critics read the type "
+            "again at full size")
     if mean >= BAR_MEAN and low >= BAR_MIN:
         record("ship")
-        print(f"SHIP: round {data.get('round')}, mean {mean:.2f}, lowest {low}: at the bar")
+        print(f"SHIP: round {data.get('round')}, mean {mean:.2f}, lowest {low}: at the bar" + (f". Next: {then}" if full else ""))
         return 0
     if len(rs) >= 2:
         record("spent")
         print(f"round {data.get('round')}: mean {mean:.2f}, lowest {low}, under the bar on {what}. The one fix is spent; "
-              "render the cut as it stands (film.py render); brief.md carries its scores")
+              + (f"{then}, and render the cut as it stands" if full else "render the cut as it stands (film.py render)")
+              + "; brief.md carries its scores")
         return 0
     record("fix")
-    print(f"FIX ONCE: mean {mean:.2f}, lowest {low}; the lowest is {what}. Fix it (the levers in critic.md), cut again "
-          "(film.py cut, qa.py check), then run vote.py cut for round 2")
+    print(f"FIX ONCE: mean {mean:.2f}, lowest {low}; the lowest is {what}. Fix it (the levers in critic.md), cut the "
+          "proof again (film.py cut --proof, qa.py check), then run vote.py cut for round 2")
     return 2
 
 

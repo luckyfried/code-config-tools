@@ -3,8 +3,12 @@
 and the stills when the person asked for them (movement 6).
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/film.py cut       # the timed cut: the reel with its music -> cut.mp4, measured: cut.json, cut-strip.png,
-                                        # cut-strip12.jpg (1 and 12 frames a second)
+    python3 S/scripts/film.py cut --proof
+                                        # the proof, every critic round before the full-size cut: the timed cut at half
+                                        # size -> proof-cut.mp4, measured: cut.json, cut-strip.png, cut-strip12.jpg
+    python3 S/scripts/film.py cut       # the timed cut at full size, once the critics ship the proof: the reel with its
+                                        # music -> cut.mp4, measured: cut.json, cut-strip.png, cut-strip12.jpg (1 and 12
+                                        # frames a second)
     python3 S/scripts/film.py render    # out/film.mp4 (reel), out/film-square.mp4, out/film-wide.mp4, out/story.png
                                         # and out/post.png
     python3 S/scripts/film.py render --also stories
@@ -12,8 +16,12 @@ USAGE (from the workspace root; S = this skill's folder):
 
 Every job renders the studio composition (S/motion/studio, `studio.py`) from the boards storyboard.py snap named in
 film.json. cut renders the reel at full size and lays the mastered music (music.json's master) under it at AAC
-192 kbps: it is the reel as it is delivered, what qa.py check measures, picture and sound, and the critic watches
-(vote.py cut). render refuses until qa/check.json passes for this cut, the critics' latest verdict ships it at the bar or says
+192 kbps with the shared sound effects over it, laid from the board's beats on the music's grid and in its key: it is the reel as it is delivered, what qa.py check measures, picture and sound, and the critic watches
+(vote.py cut). --proof renders that same cut at half size (proof.py) as proof-cut.mp4 beside cut.mp4, never over it,
+with the same strips and cut.json; every critic round before the full-size cut watches the proof, and a full-size cut
+takes the proof away, so proof-cut.mp4 is there only while the newest cut is the proof, which qa.py check and vote.py
+cut read and render and deliver.py refuse. The cut's report (render/cut-report.json, render/proof-report.json for the
+proof) says its `scale`. render refuses until qa/check.json passes for this cut, the critics' latest verdict ships it at the bar or says
 the one fix is spent, and music.json names the master the cut carries; then the reel is the cut itself, square and
 wide are rendered from their own boards with the same music, the story card (the reel's
 cover) is the hook at rest and the posted image the square's peak moment with its line, and with `--also stories` the stills (the square film's beats at
@@ -34,6 +42,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
+import sfx  # noqa: E402
+import storyboard  # noqa: E402
 import studio  # noqa: E402
 
 CUT = Path("cut.mp4")
@@ -75,34 +86,44 @@ def record(name, rep):
 
 def cmd_cut(a, run):
     f, boards = film()
+    small = getattr(a, "proof", False)
+    scale, name = (proof.SCALE, "proof") if small else (1, "cut")
+    cut = proof.of(CUT) if small else CUT
     # cut.json and the cut's report name the cut and its strips: they go before any of them changes, the report comes
-    # back after the measure and cut.json last
+    # back after the measure and cut.json last; a full-size cut takes the proof away first
     Path("cut.json").unlink(missing_ok=True)
-    studio.report_of("cut").unlink(missing_ok=True)
-    silent = Path("render/silent") / CUT.name
+    studio.report_of(name).unlink(missing_ok=True)
+    if not small:
+        proof.of(CUT).unlink(missing_ok=True)
+    silent = Path("render/silent") / cut.name
     silent.parent.mkdir(parents=True, exist_ok=True)
-    rep = timed([studio.video(boards["reel"], silent)], "cut", run)
+    rep = timed([studio.video(boards["reel"], silent, scale)], name, run)
     if not silent.exists():
-        sys.exit("the cut did not render; see render/cut.log")
-    CUT.unlink(missing_ok=True)
-    mux(run, silent, CUT, f["seconds"])
-    m = studio.measure(CUT, f["cuts"], f["hook_frame"], run=run)
-    studio.publish_report("cut")
+        sys.exit(f"the cut did not render; see render/{name}.log")
+    _env.write_json(_env.part(studio.report_of(name)), dict(rep, scale=scale))
+    cut.unlink(missing_ok=True)
+    mux(run, silent, cut, f["seconds"], boards["reel"])
+    m = studio.measure(cut, f["cuts"], f["hook_frame"], run=run, name="cut")
+    studio.publish_report(name)
     beats, t = [], 0
     for x in boards["reel"]["beats"]:
         beats.append({"id": x["id"], "start": round(t / 30, 2), "seconds": round(x["frames"] / 30, 2), "rest": round((t + x["rest"]) / 30, 2)})
         t += x["frames"]
-    _env.write_json("cut.json", {"file": str(CUT), "sha": sha(CUT), "hash": f["hash"], "look": f["board"], "style": f["style"], "seconds": f["seconds"],
+    _env.write_json("cut.json", {"file": str(cut), "sha": sha(cut), "scale": scale, "hash": f["hash"], "look": f["board"], "style": f["style"], "seconds": f["seconds"],
                                  "bpm": f["bpm"], "master": (_env.read_json("music.json") or {}).get("master"), "shots": beats,
                                  "measured": m})
     print(f"cut: {f['name']}, {m['seconds']} s, {m['cuts']} cuts ({m['cuts_per_minute']} a minute), hook at frame {f['hook_frame']} "
-          f"-> {CUT}, {m['strip']}, {m['strip12']}, cut.json; next: qa.py check, then vote.py cut")
+          f"-> {cut}{' (the half-size proof)' if small else ''}, {m['strip']}, {m['strip12']}, cut.json; "
+          "next: qa.py check, then vote.py cut")
     record("cut", rep)
     return 0
 
 
 def ready():
     """Why the film may not render yet, or None."""
+    if proof.of(CUT).exists():
+        return (f"the newest cut is the half-size proof {proof.of(CUT)}: run film.py cut for the full-size cut, then "
+                "qa.py check and vote.py cut, where the critics read the type at full size")
     if not CUT.exists():
         return "cut.mp4 is missing: run film.py cut"
     qa = _env.read_json("qa/check.json") or {}
@@ -120,16 +141,11 @@ def ready():
     return None
 
 
-def mux(run, silent, out, seconds):
-    """The film with the master music.json names under it, or the silent film when it names none."""
-    master = (_env.read_json("music.json") or {}).get("master")
-    if not master:
-        shutil.copyfile(silent, out)
-        return False
-    run.spawn([_env.ffmpeg(), "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a",
-                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{seconds:.3f}", "-movflags", "+faststart",
-                    str(out)], check=True)
-    return True
+def mux(run, silent, out, seconds, board):
+    """The film at `out`: the silent picture, the shared sound effects laid from the board's beats on the music's grid
+    and in its key (sfx.py, storyboard.effects_board), and the master music.json names under them when there is one,
+    the whole mix mastered by sfx.mux. Returns whether music is in it."""
+    return sfx.mux(run.spawn, silent, out, seconds, storyboard.effects_board(board), _env.read_json("music.json") or {}, _env.ffmpeg())
 
 
 def still_picks(board):
@@ -195,7 +211,7 @@ def cmd_render(a, run):
     shutil.copyfile(CUT, part / NAMES["reel"])
     music = bool((_env.read_json("music.json") or {}).get("master"))
     for fmt in formats:
-        mux(run, silent / NAMES[fmt], part / NAMES[fmt], f["seconds"])
+        mux(run, silent / NAMES[fmt], part / NAMES[fmt], f["seconds"], boards[fmt])
     if picks:
         _env.write_json(part / "stills.json", {"stills": [{"file": f"stills/{n:02d}-{x['id']}.png", "shot": x["id"], "frame": fr}
                                                           for n, (x, fr) in enumerate(picks, 1)]})
@@ -203,7 +219,7 @@ def cmd_render(a, run):
     record("film", rep)
     made = [str(OUT / NAMES[fmt]) for fmt in ["reel"] + formats] + [str(OUT / "story.png"), str(OUT / "post.png")] \
         + ([f"{len(picks)} stills in {STILLS}/"] if picks else [])
-    print(f"film: {f['name']}, {f['seconds']:.2f} s{' with music' if music else ' (music.json names no master: the films are silent)'} -> "
+    print(f"film: {f['name']}, {f['seconds']:.2f} s{' with music' if music else ' (music.json names no master: the films carry the effects alone)'} -> "
           f"{', '.join(made)}; next: qa.py gate")
     return 0
 
@@ -213,11 +229,15 @@ def main():
     ap.add_argument("cmd", choices=["cut", "render"])
     ap.add_argument("--also", nargs="*", choices=ALSO, default=[],
                     help="render: what the person asked for beyond the films and cards (stories: the stills for a carousel)")
+    ap.add_argument("--proof", action="store_true",
+                    help="cut: the timed cut at half size as proof-cut.mp4, for every critic round before the full-size cut")
     ap.add_argument("--force", action="store_true", help="render: render a cut the check or the critic has not passed (the gate still refuses it)")
     a = ap.parse_args()
+    if a.proof and a.cmd != "cut":
+        ap.error("--proof goes with cut: film.py cut --proof")
     _env.enter()
     # the render lock is taken before the command's first write into the run, so a refused second one changes nothing
-    with studio.lock({"cut": "cut", "render": "film"}[a.cmd]) as run:
+    with studio.lock({"cut": "proof" if a.proof else "cut", "render": "film"}[a.cmd]) as run:
         return {"cut": cmd_cut, "render": cmd_render}[a.cmd](a, run)
 
 

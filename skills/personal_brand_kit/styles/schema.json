@@ -271,6 +271,10 @@
                 "place"
               ]
             }
+          },
+          "once": {
+            "type": "boolean",
+            "description": "the move plays at most once a film; its other fits fall to the card's next move"
           }
         }
       }
