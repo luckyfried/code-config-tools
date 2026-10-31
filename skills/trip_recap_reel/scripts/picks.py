@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 """Movement 1, research: the trip's photos, day by day and place by place, and their everyday photos to set them
-against. Writes build/photo_index.json, build/picks.json and build/photos/*.jpg.
+against. Writes photo_index.json, picks.json and photos/*.jpg.
 
-USAGE (from the workspace root; S = this skill's folder):
+USAGE (from the workspace root; S = this skill's folder; the files named below are in the run's folder, build/<run>/):
     python3 S/scripts/picks.py
 
-Reads build/library.json and build/trip.json (trip.py). Scores every photo of the trip (color, contrast,
+Reads library.json and trip.json (trip.py). Scores every photo of the trip (color, contrast,
 exposure), finds each one's focal point (where the detail is, so a cover crop keeps it), converts HEIC and rotates
-by EXIF, and saves a 1600 px JPEG copy in build/photos/. Up to 80 of their everyday photos (posts outside any trip)
+by EXIF, and saves a 1600 px JPEG copy in photos/. Up to 80 of their everyday photos (posts outside any trip)
 are scored too, so palette.py and research.py can say how the trip looked different from every other week.
 Each clip they shot on the trip gets a poster frame (ffmpeg, 40% of the way in).
 picks.json carries "days" (each date with its places and its photos, best first), "places" (each stop with its
 photos, in route order), "opener" (the most striking photo of the first days), "closer" (the last day's best),
 "clips" (their footage with its poster, day and place), and "focal" and "caption_of" for every prepared photo.
 To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json.
+storyboards/N/storyboard.json.
 """
 import datetime as dt
 import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -35,7 +36,7 @@ try:
 except Exception:
     pillow_heif = None
 
-PHOTOS = Path("build/photos")
+PHOTOS = Path("photos")
 VIDEO = {".mp4", ".mov", ".m4v"}
 
 
@@ -48,7 +49,7 @@ def open_image(path, draft=None):
 
 
 def prepare(path):
-    """A 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
+    """A 1600 px JPEG copy in photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
     src = Path(path)
     dest = PHOTOS / (hashlib.sha1(str(src.resolve()).encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -61,12 +62,14 @@ def prepare(path):
         return None
     im.thumbnail((1600, 1600), Image.LANCZOS)
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    im.save(dest, "JPEG", quality=90)
+    # a copy that exists is taken as done, so it is made under a temporary name and moved in whole
+    im.save(_env.part(dest), "JPEG", quality=90)
+    os.replace(_env.part(dest), dest)
     return str(dest.resolve())
 
 
 def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in build/photos/, 40% of the way in. Returns its path or None."""
+    """A reel's poster frame as a 1600 px JPEG in photos/, 40% of the way in. Returns its path or None."""
     src = Path(video)
     dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -78,9 +81,12 @@ def poster(video):
         at = float(r.stdout.strip()) * 0.4
     except ValueError:
         at = 0.5
+    tmp = _env.part(dest)
     subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
-                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
-    return str(dest.resolve()) if dest.exists() and dest.stat().st_size > 0 else None
+                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
+    if tmp.exists() and tmp.stat().st_size > 0:
+        os.replace(tmp, dest)
+    return str(dest.resolve()) if dest.exists() else None
 
 
 def analyse(path):
@@ -124,10 +130,11 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    lib = _env.read_json("build/library.json")
-    trip = _env.read_json("build/trip.json")
+    _env.enter_run()
+    lib = _env.read_json("library.json")
+    trip = _env.read_json("trip.json")
     if not lib or not trip:
-        sys.exit("build/library.json and build/trip.json are needed: run gather.py and trip.py first (research.py runs trip.py)")
+        sys.exit("library.json and trip.json are needed: run gather.py and trip.py first (research.py runs trip.py)")
     lo, hi = trip["from"], trip["to"]
     spans = [(lo, hi)] + [(o["from"], o["to"]) for o in trip.get("others") or []]
     place_of = {}
@@ -170,7 +177,7 @@ def main():
     tripx = [e for e in index if e["set"] == "trip"]
     if not tripx:
         sys.exit("no photo of the trip could be opened; the film needs at least one")
-    _env.write_json("build/photo_index.json", index)
+    _env.write_json("photo_index.json", index)
     out = {"trip": {"name": trip["name"], "from": lo, "to": hi}, "days": [], "places": [], "clips": [], "focal": {},
            "caption_of": {}, "source_of": {}}
 
@@ -205,14 +212,14 @@ def main():
             out["focal"][pst] = "50% 45%"
             out["caption_of"][pst] = c.get("caption") or ""
         out["clips"].append({**c, "poster": pst})
-    _env.write_json("build/picks.json", out)
+    _env.write_json("picks.json", out)
     n_every = sum(1 for e in index if e["set"] == "everyday")
     print(f"indexed {len(tripx)} trip photos and {n_every} everyday photos ({skipped} could not be opened); "
-          f"prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
+          f"prepared {len(list(PHOTOS.glob('[!.]*.jpg')))} in photos/")
     for d in out["days"]:
         print(f"  {d['date']}  {', '.join(d['places']) or '-'}: {len(d['photos'])} photos")
     print(f"clips: {len(out['clips'])}, {sum(1 for c in out['clips'] if c['poster'])} with a poster")
-    print("wrote build/picks.json and build/photo_index.json")
+    print("wrote picks.json and photo_index.json")
     return 0
 
 

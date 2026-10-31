@@ -27,13 +27,13 @@ clearly the busiest month and February the quietest.
 
 Two trips stand apart from the everyday year, and only they carry geotags. The recent one, six days on the Amalfi
 coast (2026-10-03 to 2026-10-08), has posts and stories every day in four places (napoli, capri, positano, amalfi;
-latitude and longitude in each photo's exif_data on most items), her two friends @dani.reyes and @theo.makes
-tagged throughout, four short clips she shot there (reels), captions that name the places, a Facebook album
+latitude and longitude in each photo's exif_data on most items), their two friends @dani.reyes and @theo.makes
+tagged throughout, four short clips they shot there (reels), captions that name the places, a Facebook album
 "Amalfi coast, October 2026", and a cool sea-and-lemon palette (sea blue, cobalt, lemon, whitewash, bougainvillea)
-unlike her warm everyday earth tones. The earlier one, three days in Copenhagen in March, is shorter, so "the most
+unlike their warm everyday earth tones. The earlier one, three days in Copenhagen in March, is shorter, so "the most
 recent trip" has to be chosen.
 
-Her nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
+Their nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
 to October, between 291 and 486 likes, while nothing else reaches 225 (the tenth sits at least 66 below the
 ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table). Strings are written the way
 Meta writes them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic
@@ -93,7 +93,7 @@ ACCOUNTS = FRIENDS + [
 assert len(ACCOUNTS) == 40, len(ACCOUNTS)
 
 
-NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked, planted clear of everything else
+NINE = [  # (month, kind, scene, likes, comments, caption): their nine most-liked, planted clear of everything else
     (7, "post", "sunset", 486, 41, "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"),
     (5, "reel", "market", 451, 52, "forty seconds of the oaxaca market at opening time. you asked for the sound of it \U0001F33F"),
     (1, "post", "coffee", 418, 33, "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"),
@@ -142,7 +142,7 @@ AWAY = {d for d, *_ in TRIP + EARLIER}
 
 
 def film_look(im, rng, cool=False):
-    """Lifted blacks, soft vignette and grain: the person's film look; warm at home, clean and cool when she travels."""
+    """Lifted blacks, soft vignette and grain: the person's film look; warm at home, clean and cool when they travel."""
     from PIL import Image, ImageChops
     w, h = im.size
     r, g, b = im.split()
@@ -587,7 +587,7 @@ def main():
     for i in range(14):
         m = rng.choice(months)
         ts = ts_for(rng, year, m, end)
-        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated her status.")}
+        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated their status.")}
         if rng.random() < 0.6:
             uri = f"your_facebook_activity/posts/media/timeline/{10161000000000000 + i}.jpg"
             jobs.append((str(fb / uri), 1080, 1080, rng.choice(SEASON[m][1]), pal(m), rng.random()))

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Movement 1, research: which trip, its days, its places, its people and its clips. Reads build/library.json,
-writes build/trip.json.
+"""Movement 1, research: which trip, its days, its places, its people and its clips. Reads library.json,
+writes trip.json.
 
-USAGE (from the workspace root; S = this skill's folder):
+USAGE (from the workspace root; S = this skill's folder; the files named below are in the run's folder, build/<run>/):
     python3 S/scripts/trip.py [--place "lisbon"] [--from 2026-10-03 --to 2026-10-08] [--album "Amalfi coast"]
                               [--folder "DIR or folder name"]
 
@@ -14,9 +14,9 @@ of clips). With none of those, the most recent trip is taken. A trip is a run of
      captions share a word they use nowhere else (a place name)
 A trip needs two days or five items. Every post, reel, story and photo dated inside it belongs to it.
 
-Places: the trip's geotags gathered into stops (within 5 km of each other). Each stop is named by the place field
-of its items when the data has one, else by the word its captions use most and the other stops' captions use least
-(captions name places), else by its coordinates. No map service is asked anything: the route is drawn later from
+Places: one stop per place the items name (the place field), with the centre of its geotags when it has any; a
+geotag that names no place joins the stop within 5 km of it, else starts a stop named by the word its captions use
+most and the other stops' captions use least (captions name places), else by its coordinates. No map service is asked anything: the route is drawn later from
 these coordinates alone. Days: every date of the trip with its items, its stops and its captions; a day without a
 geotag stays where the day before ended. People: everyone @mentioned or tagged on the trip at least twice. Clips:
 the videos shot on the trip, with their length. Music: the track names on their travel posts when the data has
@@ -196,18 +196,26 @@ def choose(items, cands, a):
 
 
 def stops_of(trip_items, everyday_words):
-    """Geotags gathered into stops, each named; ordered by first visit."""
+    """The trip's stops, ordered by first visit. Items that name a place are one stop per place name; a geotag that
+    names none joins the nearest stop within 5 km, else starts its own. A stop's centre is the mean of its geotags,
+    and a stop none of whose items carries a geotag has no centre."""
     stops = []
     for x in trip_items:
-        if not x["geo"]:
+        key = re.sub(r"\s+", " ", x["place"].strip().lower())
+        if key:
+            s = next((s for s in stops if s["key"] == key), None)
+        elif x["geo"]:
+            near = [s for s in stops if s["center"] and km(s["center"], x["geo"]) <= STOP_KM]
+            s = min(near, key=lambda s: km(s["center"], x["geo"]), default=None)
+        else:
             continue
-        s = next((s for s in stops if km(s["center"], x["geo"]) <= STOP_KM), None)
         if not s:
-            s = {"center": list(x["geo"]), "items": []}
+            s = {"key": key, "center": None, "items": [], "geos": []}
             stops.append(s)
         s["items"].append(x)
-        n = len(s["items"])
-        s["center"] = [s["center"][0] + (x["geo"][0] - s["center"][0]) / n, s["center"][1] + (x["geo"][1] - s["center"][1]) / n]
+        if x["geo"]:
+            s["geos"].append(x["geo"])
+            s["center"] = [sum(g[0] for g in s["geos"]) / len(s["geos"]), sum(g[1] for g in s["geos"]) / len(s["geos"])]
     counts = [collections.Counter(w for x in s["items"] for w in words(x["caption"]) if w not in everyday_words) for s in stops]
     for i, s in enumerate(stops):
         named = collections.Counter(x["place"] for x in s["items"] if x["place"])
@@ -252,10 +260,16 @@ def trip_name(trip, stops, a):
     if trip.get("folder"):
         return re.sub(r"[_\-]+", " ", trip["folder"]).lower()
     named = [s["name"] for s in sorted(stops, key=lambda s: -len(s["items"])) if s["named_by"] != "its coordinates"]
+    regions = collections.Counter(n.rsplit(",", 1)[1].strip() for n in named if "," in n)
+    if regions and regions.most_common(1)[0][1] * 2 > len(named):
+        return regions.most_common(1)[0][0].lower()
     if trip.get("word") and not named:
         return trip["word"]
     if len(named) >= 2:
-        return f"{named[0]} and {named[1]}" if len(named) == 2 else f"{named[0]} and around"
+        if len(named) == 2:
+            return f"{named[0]} and {named[1]}"
+        route = [s["name"] for s in stops if s["named_by"] != "its coordinates"]
+        return f"{route[0]} to {route[-1]}"
     return named[0] if named else "the trip"
 
 
@@ -272,9 +286,10 @@ def main():
     ap.add_argument("--album", help="an album the person named")
     ap.add_argument("--folder", help="a folder of photos or clips the person named")
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.enter_run()
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     items = items_of(lib)
     if not items:
         sys.exit("the library has no dated posts, stories or photos")
@@ -297,9 +312,9 @@ def main():
     for s in stops:
         for x in s["items"]:
             x["stop"] = s["name"]
-    if not stops:
-        notes.append("No geotags on the trip, so the route is drawn from the order of the places its captions name.")
-    # days, each with its stops in visiting order; a day with no geotag stays where the day before ended
+    if not any(s["center"] for s in stops):
+        notes.append("No geotags on the trip, so the film is made without the map: its places run in the order of the days.")
+    # days, each with its stops in visiting order; a day of posts with no geotag stays where the day before ended, and a day with no posts names no place
     days, where = [], None
     d = trip["from"]
     while d <= trip["to"]:
@@ -308,7 +323,7 @@ def main():
         if not visited and not stops:
             caps = " ".join(x["caption"].lower() for x in xs)
             visited = [w for w in (trip.get("word"),) if w and w in caps]
-        if not visited and where:
+        if not visited and where and xs:
             visited = [where]
         where = visited[-1] if visited else where
         for x in xs:
@@ -363,7 +378,7 @@ def main():
            "everyday_items": len(everyday),
            "others": [{"from": c["from"].isoformat(), "to": c["to"].isoformat(), "why": c["why"], "items": len(c["items"])} for c in others],
            "assumptions": notes}
-    _env.write_json("build/trip.json", out)
+    _env.write_json("trip.json", out)
     print(f"trip: {name}, {out['from']} to {out['to']} ({len(days)} days, {len(trip['items'])} items, {out['geotagged']} geotagged); {how}")
     print("places: " + ", ".join(f"{p['name']} ({p['items']}, by {p['named_by']})" for p in places))
     print("route: " + " -> ".join(r["place"] for r in route))
@@ -371,7 +386,7 @@ def main():
     print(f"clips: {len(clips)}; music seen: {music or 'none'}")
     for n in notes:
         print("assumption:", n)
-    print("wrote build/trip.json")
+    print("wrote trip.json")
     return 0
 
 

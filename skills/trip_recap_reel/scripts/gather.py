@@ -1,22 +1,28 @@
 #!/usr/bin/env python3
-"""Movement 0, gather: every door to the person's own material, merged into build/library.json.
+"""Movement 0, gather: every door to the person's own material, merged into library.json.
 
-USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
+USAGE (from the workspace root; S = this skill's folder; the files named below are in the run's folder, build/<run>/):
+    python3 S/scripts/gather.py [--pulled pulled] [--door instagram_account="open: 120 posts"] \
         [--door browser="closed: no signed-in session"] [--photos DIR] [--root .]
 
-Doors, in order of preference (every one tried is recorded in library.json and in out/brief.md):
+Doors, in order of preference (every one tried is recorded in library.json and in brief.md):
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
-     browser session, saved under --pulled DIR as items.json (shape below) with the media files beside it.
+     browser session, saved under --pulled DIR (a folder of the workspace; pulled/ when the flag is left out) as
+     items.json (shape below) with the media files beside it.
   2. Instagram "Download your information" exports (JSON) anywhere under --root, as folders or .zip files (a zip is
-     unpacked into build/export/): posts, reels, stories (each with its geotag from the media's exif_data and the
+     unpacked into export/): posts, reels, stories (each with its geotag from the media's exif_data and the
      people tagged in it), likes, saves, comments, followers, following, per-post likes and comments, the username.
      Missing files are tolerated.
   3. Facebook "Download your information" exports under --root: posts (with check-in places), photos, albums.
   4. --photos DIR (a folder of photos and clips the person named, the trip's folder), else the largest folder of
      photos under --root: dates and geotags from EXIF, else the file time; the folder's name is kept on every row.
-With every door closed it writes out/brief.md with the one sentence on how to open one and exits 3: tell the
-person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
+  5. Their notes, when there is no photograph at all: the .md or .txt file under --root with the most dated lines
+     that each end in their coordinates ("- Jul 13 Flam railway down to the fjord. (60.8639, 7.1137)", the year from
+     the file's first year). Each line is a stop: its date, its place (the first capitalized name in it), its
+     coordinates, and its words drawn as a card, a page of their notes, which the film carries in place of a
+     photograph; library.json's assumptions say no photograph of theirs is in the film.
+With every door closed it writes brief.md (beside out/) with the one sentence on how to open one and exits 3: tell
+the person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
 
 items.json (every key optional; ts is a unix timestamp; media are paths relative to items.json):
   {"source": "instagram account", "handle": "...", "name": "...",
@@ -28,8 +34,8 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
 Every year is kept: trip.py picks the trip. Every row carries ts, caption, media, and where the data has them geo
-[latitude, longitude], place, tagged, album, folder and music. Links every media file into build/library/<kind>/
-(posts, reels, stories, likes, saved, facebook) under its date, writes build/library.json and prints a summary;
+[latitude, longitude], place, tagged, album, folder and music. Links every media file into library/<kind>/
+(posts, reels, stories, likes, saved, facebook) under its date, writes library.json and prints a summary;
 every choice it made is listed under "assumptions".
 """
 import argparse
@@ -92,7 +98,7 @@ def find_exports(root, test=None):
             continue
         if test is is_export and any("your_instagram_activity/" in n or n.endswith("content/posts_1.json") for n in names) or \
                 test is is_fb_export and any("your_facebook_activity/" in n for n in names):
-            dest = Path("build/export") / z.stem
+            dest = Path("export") / z.stem
             if not dest.exists():
                 zipfile.ZipFile(z).extractall(dest)
             for d, _ in walk(dest, 3):
@@ -123,31 +129,27 @@ def first(root, *rels):
 
 
 class Media:
+    """An export's media files by the path the export names; a path that is not there resolves to nothing."""
+
     def __init__(self, root):
         self.root = root
-        self.by_name = None
 
     def resolve(self, uri):
         if not uri or re.match(r"^https?://", uri):
             return None
         p = self.root / uri
-        if p.exists():
-            return str(p.resolve())
-        if self.by_name is None:
-            self.by_name = {f.name: f for f in (self.root / "media").rglob("*") if f.is_file()} if (self.root / "media").exists() else {}
-        f = self.by_name.get(Path(uri).name)
-        return str(f.resolve()) if f else None
+        return str(p.resolve()) if p.exists() else None
 
 
 def media_items(entry):
-    """Flatten Instagram's media shapes into [(uri, ts, title)]."""
+    """Flatten Instagram's media shapes into [(uri, ts, title)]: an item's own time and title, else its post's."""
     if not isinstance(entry, dict):
         return []
     items = entry.get("media") if isinstance(entry.get("media"), list) else [entry]
     out = []
     for m in items:
         if isinstance(m, dict) and m.get("uri"):
-            out.append((m["uri"], m.get("creation_timestamp") or entry.get("creation_timestamp"), m.get("title") or ""))
+            out.append((m["uri"], m.get("creation_timestamp") or entry.get("creation_timestamp"), m.get("title") or entry.get("title") or ""))
     return out
 
 
@@ -427,10 +429,88 @@ def largest_photo_folder(root):
     return best[1] if best[0] >= 8 else None
 
 
-def write_howto(out):
-    out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Trip recap: no photos found\n\n## Assumptions\n\n- No Instagram account or download and no "
-                                  f"folder of photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
+MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+NOTE = re.compile(r"^\s*[-*]?\s*(?:(\d{4})-(\d\d)-(\d\d)|([A-Za-z]{3})[a-z]*\.?\s+(\d{1,2}))[,:]?\s+(.+?)\s*"
+                  r"\(\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*\)\s*$")
+
+
+def note_rows(text):
+    """The dated lines of a notes file that end in coordinates, as (date, words, [lat, lon])."""
+    year = re.search(r"\b(19|20)\d\d\b", text)
+    out = []
+    for line in text.splitlines():
+        m = NOTE.match(line)
+        if not m:
+            continue
+        y, mo, d, mon, day, words, lat, lon = m.groups()
+        try:
+            date = (dt.date(int(y), int(mo), int(d)) if y else
+                    dt.date(int(year.group(0)), MONTHS.index(mon.lower()) + 1, int(day)) if year and mon.lower() in MONTHS else None)
+        except ValueError:
+            date = None
+        if date:
+            out.append((date, words.strip(), latlon({"latitude": float(lat), "longitude": float(lon)})))
+    return out
+
+
+def find_notes(root):
+    """The notes file under `root` with the most dated lines, and its rows; two lines or more make a trip."""
+    best = (None, [])
+    for d, kids in walk(root, 3):
+        for k in kids:
+            if k.suffix.lower() in (".md", ".txt") and k.is_file() and k.stat().st_size < 65536:
+                rows = note_rows(k.read_text(errors="replace"))
+                if len(rows) > len(best[1]):
+                    best = (k, rows)
+    return best if len(best[1]) >= 2 else (None, [])
+
+
+def note_card(dest, date, words, geo):
+    """A page of their notes as a card in place of a photograph: the date, their words large, the coordinates."""
+    from PIL import Image, ImageDraw
+    W, H, m = 1080, 1350, 96
+    im = Image.new("RGB", (W, H), "#f2eadb")
+    dr = ImageDraw.Draw(im)
+    f = _env.pil_font(76, "text")
+    lines, line = [], ""
+    for w in words.split():
+        if line and dr.textlength(f"{line} {w}", font=f) > W - 2 * m:
+            lines.append(line)
+            line = w
+        else:
+            line = f"{line} {w}".strip()
+    lines = (lines + [line])[:9]
+    # the words in the middle of the page, clear of the name over its top and the line under its foot
+    y = (H - 104 * len(lines)) // 2
+    dr.text((m, y - 90), f"{date.day} {date.strftime('%B')}", fill="#d24f27", font=_env.pil_font(46, "text"))
+    for ln in lines:
+        dr.text((m, y), ln, fill="#1d1b19", font=f)
+        dr.line((m, y + 96, W - m, y + 96), fill="#d9cfbd", width=2)
+        y += 104
+    if geo:
+        dr.text((m, H - m - 40), f"{geo[0]:.4f}, {geo[1]:.4f}", fill="#8d867b", font=_env.pil_font(36, "text"))
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    im.save(_env.part(dest), quality=92)
+    Path(_env.part(dest)).replace(dest)
+
+
+def read_notes(path, rows):
+    """One post per dated line: its date at noon, its place, its coordinates and its card; the words are on the card,
+    so the post carries no caption to set again under it."""
+    posts = []
+    for i, (date, words, geo) in enumerate(rows):
+        name = re.search(r"\b[A-Z][\w'-]*(?:\s+[A-Z][\w'-]*)*", words)
+        card = Path("library/notes") / f"{date.isoformat()}-{i:02d}.jpg"
+        note_card(card, date, words, geo)
+        posts.append({"ts": int(dt.datetime(date.year, date.month, date.day, 12, tzinfo=dt.timezone.utc).timestamp()) + i,
+                      "caption": "", "note": words, "media": [str(card.resolve())], "likes": None, "comments": None,
+                      "geo": geo, "place": name.group(0) if name else " ".join(words.split()[:3]), "folder": path.stem})
+    return posts
+
+
+def write_howto():
+    Path("brief.md").write_text("# Trip recap: no photos found\n\n## Assumptions\n\n- No Instagram account or download, no "
+                                f"folder of photos and no dated notes were found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
 def merge(base, extra):
@@ -445,8 +525,8 @@ def rel(p, root):
 
 
 def shelve(lib):
-    """Every media file, linked into build/library/<kind>/ under its date; the rows point at the links."""
-    base = Path("build/library").resolve()
+    """Every media file, linked into library/<kind>/ under its date; the rows point at the links."""
+    base = Path("library").resolve()
     for kind in ("posts", "reels", "stories", "likes", "saved", "facebook"):
         for n, row in enumerate(lib[kind]):
             media = []
@@ -474,8 +554,9 @@ def main():
     ap.add_argument("--pulled", action="append", default=[], help="a folder holding items.json the agent pulled")
     ap.add_argument("--door", action="append", default=[], help='name="open: ..." or name="closed: why"')
     a = ap.parse_args()
-    root = Path(a.root).resolve()
-    Path("build/library").mkdir(parents=True, exist_ok=True)
+    _env.enter_run(new=True)
+    root = _env.home_path(a.root).resolve()
+    Path("library").mkdir(parents=True, exist_ok=True)
     assumptions, doors = [], {}
     for x in a.door:
         k, _, v = x.partition("=")
@@ -484,7 +565,7 @@ def main():
     d = {k: [] for k in keys}
     d.update(handle=None, name=None, found={}, notes=[])
     sources = []
-    pulled = a.pulled or (["build/library/pulled"] if Path("build/library/pulled/items.json").exists() else [])
+    pulled = [_env.home_path(p) for p in a.pulled] or ([_env.HOME / "pulled"] if (_env.HOME / "pulled/items.json").exists() else [])
     for folder in pulled:
         p = read_pulled(folder)
         if not p:
@@ -527,7 +608,7 @@ def main():
     source = ("accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
     if not d["posts"] and not d["reels"]:
         _env.need("PIL")
-        folder = Path(a.photos) if a.photos else largest_photo_folder(root)
+        folder = _env.home_path(a.photos) if a.photos else largest_photo_folder(root)
         if folder:
             posts, vids = read_photos(folder)
             d["posts"], d["reels"] = posts, vids
@@ -540,8 +621,18 @@ def main():
             source = "facebook"
             d["posts"] = [dict(r, likes=None, comments=None) for r in d["facebook"]]
             assumptions.append("Only a Facebook download was found, so the film is made from its posts and photos.")
+        elif find_notes(root)[0]:
+            notes, rows = find_notes(root)
+            d["posts"] = read_notes(notes, rows)
+            d["found"]["notes"] = str(notes)
+            source = "notes"
+            doors["notes"] = f"open: {len(rows)} dated lines with coordinates in {rel(notes, root)}"
+            assumptions.append(f"No photographs or clips were reachable, so each of the {len(rows)} dated lines of "
+                               f"{rel(notes, root)} is a stop, drawn as a card of their own words with its date and "
+                               "coordinates; no photograph of theirs is in the film and none was generated.")
         else:
-            write_howto(Path("out"))
+            doors.setdefault("notes", "closed: no notes file with dated lines and coordinates")
+            write_howto()
             print(HOWTO)
             return 3
     handle = d["handle"] or "you"
@@ -565,7 +656,7 @@ def main():
     out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
            "range": span, "geotagged": geo, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
-    _env.write_json("build/library.json", out)
+    _env.write_json("library.json", out)
     print(f"source: {source}   handle: @{handle}   range: {span['first']} to {span['last']}   geotagged: {geo}")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
                                                    "following", "facebook")))
@@ -573,7 +664,7 @@ def main():
         print(f"door {k}: {v}")
     for x in out["assumptions"]:
         print("assumption:", x)
-    print("wrote build/library.json")
+    print("wrote library.json")
     return 0
 
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Movement 1: the counting behind the taste profile. Reads build/library.json; writes build/research.json,
-a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
-turns into build/taste.md).
+"""Movement 1: the counting behind the taste profile. Reads library.json; writes research.json,
+a machine draft of taste.json, and taste.draft.md (the numbers under the five headings the agent
+turns into taste.md).
 
-USAGE (from the workspace root; S = this skill's folder):
+USAGE (from the workspace root; S = this skill's folder; the files named below are in the run's folder, build/<run>/):
     python3 S/scripts/research.py [--place "lisbon"] [--from 2026-10-03 --to 2026-10-08] [--album "..."] [--folder DIR]
 
 Pass what the person named; it goes to trip.py unchanged, and their words win over anything inferred. It runs
@@ -15,9 +15,13 @@ everyday palettes), then reads:
   palette   the trip's colors, their everyday colors, and the colors of what they like and save
   captions  length, case, emoji, punctuation, hashtags, how they open and close, sample lines from the trip
   likes     the like-graph: who gets their likes, how concentrated, the themes those accounts share
-  music     the tracks on their travel posts when the data has them, else the pace of their travel reels
-  moments   each day's line (its strongest caption) and the trip's most-liked post
-taste.json also carries the type direction, pacing, register, texture and the grade inputs; the agent edits it
+  music     the music brief for this film, taste.json `music`: a mood word read from the trip's themes and the pace of
+            their reels, and what to avoid; the bed's recipe and tempo are the winning look's, and `styles` stays empty
+            until the person names a sound; never an artist, a band or a song (a track named on a travel post stays in
+            research.json)
+  moments   what happened at each place of each day, from the captions alone: where they were, who is in the line,
+            and the line itself (their strongest caption there); nothing in it is counted
+taste.json also carries the pacing, the register and the palette inputs; the agent edits it
 freely before storyboards are drafted.
 """
 import argparse
@@ -31,6 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+from trip import mentions  # noqa: E402
 
 S = Path(__file__).resolve().parent
 
@@ -62,14 +67,18 @@ THEMES = {
     "fashion": ["outfit", "ootd", "style", "fit", "wear", "thrift"],
     "design": ["design", "type", "studio", "poster", "print"],
 }
+# pillars that ask for the calm bed, when their reels are not quick and their captions carry no emoji
+QUIET = {"slow living", "food", "coffee", "light"}
+# what no track for this film carries
+NO_MUSIC = ["vocals", "spoken word", "harsh distortion"]
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
 def caption_read(rows):
     caps = [r.get("caption") or "" for r in rows if (r.get("caption") or "").strip()]
     if not caps:
         return {"captions": 0}
     words = [len(c.split()) for c in caps]
-    letters = [ch for c in caps for ch in c if ch.isalpha()]
-    lower = sum(1 for ch in letters if ch.islower()) / max(1, len(letters))
+    # a person who writes in lowercase writes whole captions without a capital; sentence case is mostly lowercase letters too
+    lower = sum(1 for c in caps if not any(ch.isupper() for ch in re.sub(r"[#@][\w.]+", "", c))) / len(caps)
     first = collections.Counter(tokens(c)[0] for c in caps if tokens(c))
     def last_word(c):
         t = [w for w in tokens(re.sub(r"#\w+", "", c))]
@@ -184,25 +193,38 @@ def clean(cap):
     return re.sub(r"\s+", " ", EMOJI.sub("", re.sub(r"[#@][\w.]+", "", cap or ""))).strip(" ,.-")
 
 
+def best_of(captions):
+    """A day's strongest caption, as they posted it: four to twelve words first, then the longest."""
+    said = [c for c in captions if clean(c)]
+    return max(said, key=lambda c: (4 <= len(clean(c).split()) <= 12, len(clean(c))), default="")
+
+
+def line_of(captions):
+    """A day's line: its strongest caption with the handles and tags taken out."""
+    return clean(best_of(captions))
+
+
+def moments_of(trip):
+    """The trip's moments, one for each place of each day that has a line: the date, the place, who is in the line (the
+    handles they tagged in it) and the line itself. Built from their captions, places and dates alone; nothing is counted."""
+    out = []
+    for d in trip["days"]:
+        said = {}
+        for it in d.get("items") or []:
+            said.setdefault(it.get("place") or (d["places"] or [""])[0], []).append(it.get("caption") or "")
+        for place, captions in said.items():
+            best = best_of(captions)
+            if best:
+                out.append({"date": d["date"], "place": place, "with": sorted(set(mentions(best))), "line": clean(best)})
+    return out
+
+
 def per_day(rows, lo, hi):
     days = {day_of(r["ts"]) for r in rows if r.get("ts")}
     if not days:
         return 0
     span = (dt.date.fromisoformat(max(days)) - dt.date.fromisoformat(min(days))).days + 1
     return round(len([r for r in rows if r.get("ts")]) / max(1, span), 2)
-
-
-def type_direction(themes, register, pacing):
-    film = themes.get("film photography", 0)
-    loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
-    if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
-    if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
 
 
 def main():
@@ -213,9 +235,10 @@ def main():
     ap.add_argument("--album")
     ap.add_argument("--folder")
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.enter_run()
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     named = []
     for flag, v in (("--place", a.place), ("--from", a.date_from), ("--to", a.date_to), ("--album", a.album), ("--folder", a.folder)):
         if v:
@@ -223,8 +246,8 @@ def main():
     print(run("trip.py", named).strip().splitlines()[0])
     for s in ("picks.py", "palette.py"):
         print(run(s).strip().splitlines()[-1])
-    trip = _env.read_json("build/trip.json")
-    pal = _env.read_json("build/palette.json") or {}
+    trip = _env.read_json("trip.json")
+    pal = _env.read_json("palette.json") or {}
     lo, hi = trip["from"], trip["to"]
     spans = [(lo, hi)] + [(o["from"], o["to"]) for o in trip.get("others") or []]
     def on_trip(r):
@@ -266,20 +289,12 @@ def main():
         "reel_shot_seconds": {"trip": trip_pacing.get("avg_shot_seconds"), "everyday": every_pacing.get("avg_shot_seconds")},
         "themes": {"trip": dict(trip_themes.most_common(4)), "everyday": dict(own_themes.most_common(4))},
     }
-    days = []
-    for d in trip["days"]:
-        lines = [clean(c) for c in d.get("captions") or [] if clean(c)]
-        best = max(lines, key=lambda c: (4 <= len(c.split()) <= 12, len(c)), default="")
-        days.append({"date": d["date"], "label": date_label(d["date"]), "places": d["places"], "items": d["n"], "line": best})
-    liked = [r for r in trip_rows if r.get("likes") is not None]
-    top = max(liked, key=lambda r: r["likes"], default=None)
-    moments = [{"kind": "the day", "date": x["date"], "places": x["places"], "line": x["line"]} for x in days]
-    if top:
-        moments.append({"kind": "the trip's most-liked post", "date": day_of(top["ts"]), "likes": top["likes"], "caption": clean(top.get("caption"))})
-    music = trip.get("music") or {}
-    music_note = ({"seen": music.get("seen"), "direction": "the tracks on their travel posts"} if music.get("seen") else
+    days = [{"date": d["date"], "label": date_label(d["date"]), "places": d["places"], "items": d["n"], "line": line_of(d.get("captions") or [])}
+            for d in trip["days"]]
+    moments = moments_of(trip)
+    heard = trip.get("music") or {}
+    music_note = ({"seen": heard.get("seen"), "direction": "the tracks on their travel posts"} if heard.get("seen") else
                   {"seen": [], "direction": "not in the data: the bed follows the pace of their travel reels"})
-    td = type_direction(own_themes + liked_themes + trip_themes, caps, trip_pacing)
     trip_palette = [{"hex": c["hex"], "name": c.get("name"), "share": c.get("share"), "photo": c.get("photo")} for c in pal.get("trip") or []]
     every_palette = [{"hex": c["hex"], "name": c.get("name"), "share": c.get("share")} for c in pal.get("everyday") or []]
     film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
@@ -298,49 +313,52 @@ def main():
                   "top10_share": round(top10 / max(1, sum(like_accounts.values())), 2),
                   "saved_top": [{"account": x, "saves": n} for x, n in saved_accounts.most_common(5)],
                   "themes": dict(liked_themes.most_common())},
-        "reels_trip": trip_pacing, "reels_everyday": every_pacing, "music": music_note, "moments": moments, "type": td,
+        "reels_trip": trip_pacing, "reels_everyday": every_pacing, "music": music_note, "moments": moments,
         "assumptions": trip.get("assumptions"),
     }
-    _env.write_json("build/research.json", research)
+    _env.write_json("research.json", research)
     shot = trip_pacing.get("avg_shot_seconds") or every_pacing.get("avg_shot_seconds")
+    pillars = [t for t, _ in (trip_themes + own_themes + liked_themes).most_common(4)]
+    # the music brief: a mood word (film texture, a quiet pillar with unhurried reels, else lively); the recipe and the
+    # tempo are the winning look's. A track named on a travel post stays in research.json: a name is not a taste.
+    lively = (shot or 9) < 1.5 or (caps.get("emoji_per_caption") or 0) >= 1
+    mood = "film" if film else "calm" if QUIET & set(pillars) and not lively else "drive"
+    brief = {"mood": mood, "tempo": None, "styles": [], "avoid": NO_MUSIC}
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"],
         "trip": {"name": trip["name"], "from": lo, "to": hi, "days": len(days)},
         "palette": {"trip": trip_palette, "everyday": every_palette, "likes": likes_palette,
                     "direction": "the trip's own colors" + (f", led by {', '.join(style['trip_only_colors'][:2])}" if style["trip_only_colors"] else "")},
-        "type": td,
-        "pacing": {"reel_seconds": trip_pacing.get("avg_seconds"), "shot_seconds": shot,
-                   "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
-                   "energy": "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"},
+        "pacing": {"reel_seconds": trip_pacing.get("avg_seconds"), "shot_seconds": shot},
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": (trip_caps.get("top_hashtags") or caps.get("top_hashtags") or [])[:3],
                      "samples": (trip_caps.get("samples") or caps.get("samples") or [])[:4]},
-        "pillars": [t for t, _ in (trip_themes + own_themes + liked_themes).most_common(4)],
+        "pillars": pillars,
         "people": people[:5],
         "places": places,
         "days": [{"date": x["date"], "label": x["label"], "places": x["places"], "line": x["line"]} for x in days],
         "moments": moments,
-        "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
         "avoid": ["digital sharpness and gloss", "neon", "stock travel footage", "a map that is not their route"] if film else
                  ["muddy grading", "stock travel footage", "a map that is not their route"],
-        "music": music_note,
+        "music": brief,
     }
-    old = _env.read_json("build/taste.json") or {}
+    old = _env.read_json("taste.json") or {}
     stale = (old.get("trip") or {}).get("from") != lo or (old.get("trip") or {}).get("to") != hi
     if not old or stale or "research.py draft" in old.get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
+        _env.write_json("taste.json", taste)
     def pair(k, unit=""):
         v = style[k]
-        return f"{v['trip']}{unit} on the trip, {v['everyday']}{unit} on other days"
+        return f"{v['trip']}{unit} on the trip, " + (f"{v['everyday']}{unit} on other days" if v["everyday"] is not None else "no posts from other days")
     lines = [f"# taste draft for @{lib['handle']}: {trip['name']}, {lo} to {hi}", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
+             "The agent writes taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are",
              f"- the trip: {trip['name']}, {len(days)} days ({trip['chosen_by']}; found by {trip['found_by']})",
              f"- the route: {' -> '.join(r['place'] for r in trip.get('route') or []) or ', '.join(places)}",
              f"- with: {', '.join('@' + h for h in people) or 'nobody tagged'}",
-             "- day by day:"]
-    lines += [f"  {x['label']}: {', '.join(x['places']) or '-'}, {x['items']} posts and stories; \"{x['line']}\"" for x in days]
+             "- what happened, day by day (their line, who is in it):"]
+    lines += [f"  {date_label(m['date'])}: {m['place'] or '-'}; \"{m['line']}\""
+              + (f" with {', '.join('@' + h for h in m['with'])}" if m["with"] else "") for m in moments]
     lines += [f"- their clips from the trip: {len(research['clips'])} ("
               + ", ".join(f"{c['day']} {c['place']} {c['seconds']} s" for c in research["clips"]) + ")",
               f"- other trips in the data: {'; '.join(o['from'] + ' to ' + o['to'] for o in trip.get('others') or []) or 'none'}",
@@ -356,22 +374,23 @@ def main():
               f"- brightness {pair('brightness')}; saturation {pair('saturation')}",
               f"- posts a day: {pair('posts_per_day')}; a reel cut every {pair('reel_shot_seconds', ' s')}",
               f"- themes on the trip: {style['themes']['trip']}; on other days: {style['themes']['everyday']}",
-              f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
-              f"- music: {music_note['direction']}" + (f": {', '.join(music_note['seen'])}" if music_note["seen"] else ""),
+              f"- texture: {'film photography' + (' and warm light' if warm_light else '') if film else 'clean'}",
+              f"- music brief: {mood}; the look's own recipe and tempo; no {', no '.join(NO_MUSIC)}"
+              + (f" (their travel posts carry {', '.join(music_note['seen'])}; a name never enters the brief)" if music_note["seen"] else ""),
               "", "## your voice is",
-              f"- {caps.get('avg_words')} words a caption ({pair('caption_words')}), {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
+              f"- {caps.get('avg_words')} words a caption ({pair('caption_words')}), {int(caps.get('lowercase_share', 0) * 100)}% of captions all lowercase, "
               f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
               f"- opens with: {', '.join(caps.get('opens_with', []))}; closes with: {', '.join(caps.get('closes_with', []))}",
               f"- hashtags on the trip: {', '.join(trip_caps.get('top_hashtags', []))}",
               f"- lines from the trip: {' / '.join(trip_caps.get('samples', [])[:4])}",
               "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
+    _env.write_text("taste.draft.md", "\n".join(lines))
     print(f"trip: {trip['name']} {lo} to {hi}, {len(days)} days; places {places}; people {people}")
     print(f"travel vs everyday: palette {style['palette_trip'][:3]} vs {style['palette_everyday'][:3]}; "
           f"brightness {style['brightness']}; captions {style['caption_words']}; reel cuts {style['reel_shot_seconds']}")
-    print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}; type lead {td['lead']}")
-    print(f"music: {music_note['direction']}")
-    print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
+    print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
+    print(f"music brief: {mood}; the look's own recipe and tempo; no {', no '.join(NO_MUSIC)}")
+    print("wrote research.json, taste.json (draft) and taste.draft.md; now write taste.md")
     return 0
 
 
