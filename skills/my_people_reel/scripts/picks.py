@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 """Movement 1, research: prepare each person's best photo, the group photos for the wall, and the opener. Writes
-build/photo_index.json, build/picks.json and build/photos/*.jpg.
+R/photo_index.json, R/picks.json and R/photos/*.jpg.
 
 USAGE (from the workspace root):
     python3 S/scripts/picks.py
 
 Scores every photo of the year, the person's own and the ones their people posted of them (color, contrast,
 exposure), finds each one's focal point (where the detail is, so a cover crop keeps it), converts HEIC and rotates
-by EXIF, and saves a 1600 px JPEG copy in build/photos/. Reads build/people.json.
-  people   one best photo per person, in rank order: a photo whose caption names them first, then the one with the
-           fewest other people in it, then the best scored, never the same photo for two people
+by EXIF, and saves a 1600 px JPEG copy in R/photos/. Reads R/people.json.
+  people   one best photo per person, in rank order, with the line of theirs it carries: the post their best line
+           was left on first (people.json's line, then their other lines), then a photo whose caption names them, then
+           the one with the fewest other people in it, then the best scored, never the same photo for two people;
+           the line is the one left on that photo, else their best line
   wall     nine photos with the most of the people in them, every person in at least one, in date order (a group
            reel stands in by its poster frame, 40% of the way in, and keeps its footage for the film); when the
            year has fewer group photos, each person's next photos fill the wall
   opener   the photo with the most of them in it, outside the wall when there is one
-To swap a photo, run `grade.py photos FILE` and put "graded/<name>.jpg" in the beat's "photos" in
-build/storyboards/N/storyboard.json, and in the person's card under "cards".
+cast.py draft starts each person's photographs from these picks; a different photograph of a person goes into
+R/cast.json before cast.py match.
 """
 import datetime as dt
 import hashlib
+import os
 import re
 import subprocess
 import sys
@@ -37,7 +40,7 @@ try:
 except Exception:
     pillow_heif = None
 
-PHOTOS = Path("build/photos")
+PHOTOS = Path("photos")
 VIDEO = {".mp4", ".mov", ".m4v"}
 
 
@@ -50,7 +53,7 @@ def open_image(path, draft=None):
 
 
 def prepare(path):
-    """A 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
+    """A 1600 px JPEG copy in R/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
     src = Path(path)
     dest = PHOTOS / (hashlib.sha1(str(src.resolve()).encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -63,12 +66,14 @@ def prepare(path):
         return None
     im.thumbnail((1600, 1600), Image.LANCZOS)
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    im.save(dest, "JPEG", quality=90)
+    # a copy is reused once it exists, so it is made under its part name and moved in whole
+    im.save(_env.part(dest), "JPEG", quality=90)
+    os.replace(_env.part(dest), dest)
     return str(dest.resolve())
 
 
 def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in build/photos/, 40% of the way in. Returns its path or None."""
+    """A reel's poster frame as a 1600 px JPEG in R/photos/, 40% of the way in. Returns its path or None."""
     src = Path(video)
     dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -80,9 +85,14 @@ def poster(video):
         at = float(r.stdout.strip()) * 0.4
     except ValueError:
         at = 0.5
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
-                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
-    return str(dest.resolve()) if dest.exists() and dest.stat().st_size > 0 else None
+    tmp = _env.part(dest)
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
+                        "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
+    if r.returncode or not tmp.exists() or tmp.stat().st_size == 0:
+        tmp.unlink(missing_ok=True)
+        return None
+    os.replace(tmp, dest)
+    return str(dest.resolve())
 
 
 def analyse(path):
@@ -118,8 +128,9 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
-    ppl = _env.read_json("build/people.json")
+    _env.enter_run()
+    d = _env.read_json("library.json")
+    ppl = _env.read_json("people.json")
     if not d or not ppl:
         sys.exit("run gather.py and people.py first")
     index, skipped, seen = [], 0, set()
@@ -139,14 +150,17 @@ def main():
                               "tagged": r.get("tagged") or [], **a})
     if not index:
         sys.exit("no photos could be opened; the film needs at least one photo")
-    _env.write_json("build/photo_index.json", index)
+    _env.write_json("photo_index.json", index)
     score = {e["src"]: e for e in index}
     handles = [p["handle"] for p in ppl["people"]]
     people, used = [], set()
     for p in ppl["people"]:
         cands = [x for x in p["photos"] if x["src"] in score or Path(x["src"]).suffix.lower() in VIDEO]
         named = lambda x: p["handle"] in {m.lower() for m in re.findall(r"@([A-Za-z0-9._]*[A-Za-z0-9_])", x["caption"])}
-        cands.sort(key=lambda x: (not named(x), len([w for w in x["with"] if w in handles]), Path(x["src"]).suffix.lower() in VIDEO,
+        lines = [x for x in [p.get("line")] + (p.get("lines") or []) if x]
+        posts = [x.get("post") for x in lines]
+        cands.sort(key=lambda x: (posts.index(x["src"]) if x["src"] in posts else len(posts), not named(x),
+                                  len([w for w in x["with"] if w in handles]), Path(x["src"]).suffix.lower() in VIDEO,
                                   -(score.get(x["src"]) or {}).get("score", 0)))
         pick = next((x for x in cands if x["src"] not in used), None)
         src, still = None, None
@@ -157,8 +171,9 @@ def main():
             print(f"no photo of @{p['handle']} could be opened; the card uses a group photo", file=sys.stderr)
             continue
         used.add(src)
+        line = next((x for x in lines if x.get("post") == src), p.get("line"))
         people.append({"rank": p["rank"], "handle": p["handle"], "photo": still, "src": src, "with": pick["with"],
-                       "ts": pick["ts"], "caption": pick["caption"], **analyse(still)})
+                       "ts": pick["ts"], "caption": pick["caption"], "line": line, **analyse(still)})
     groups = {}
     for p in ppl["people"]:
         for x in p["photos"]:
@@ -202,10 +217,10 @@ def main():
     for x in people + tiles:
         out["focal"][x["photo"]] = f"{x['focal'][0] * 100:.0f}% {x['focal'][1] * 100:.0f}%"
         out["source_of"][x["photo"]] = x["src"]
-    _env.write_json("build/picks.json", out)
+    _env.write_json("picks.json", out)
     missing = [h for h in handles if h not in {x["handle"] for x in people}]
     off_wall = [h for h in handles if not any(h in t["people"] for t in tiles)]
-    print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('*.jpg')))} in build/photos/")
+    print(f"indexed {len(index)} photos ({skipped} could not be opened); prepared {len(list(PHOTOS.glob('[!.]*.jpg')))} in R/photos/")
     for x in people:
         print(f"  {x['rank']}. @{x['handle']:<16} {Path(x['src']).name}  with {len(x['with'])} others  score {x['score']}")
     print(f"wall: {len(tiles)} photos, " + "; ".join(f"{len(t['people'])} people{' (reel)' if t['video'] else ''}" for t in tiles))
@@ -213,8 +228,8 @@ def main():
         print("no photo for: " + ", ".join(missing))
     if off_wall:
         print("not on the wall: " + ", ".join(off_wall))
-    print("wrote build/picks.json and build/photo_index.json")
-    return 0 if not missing and len(tiles) == 9 else 1
+    print("wrote R/picks.json and R/photo_index.json")
+    return 0 if not missing else 1
 
 
 if __name__ == "__main__":
