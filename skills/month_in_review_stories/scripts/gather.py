@@ -1,19 +1,29 @@
 #!/usr/bin/env python3
-"""Movement 0, gather: every door to the person's own material, merged into build/library.json.
+"""Movement 0, gather: every door to the person's own material, merged into the run's library.json.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
-        [--door browser="closed: no signed-in session"] [--month 2026-09|september] [--photos DIR] [--root .]
+    python3 S/scripts/gather.py [--pulled build/pulled] [--door instagram_account="open: 120 posts"] \
+        [--door browser="closed: no signed-in session"] [--month 2026-03|march] [--photos DIR] [--root .]
 
-Doors, in order of preference (every one tried is recorded in library.json and in out/brief.md):
+Every run of gather starts a new run: a build folder build/<UTC stamp>/ (named in build/latest) that every later
+step reads and writes, so a rerun never overwrites an earlier build.
+
+Doors, in order of preference (every one tried is recorded in library.json and in the run's brief.md):
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
-     browser session, saved under --pulled DIR as items.json (shape below) with the media files beside it.
+     browser session, saved under --pulled DIR as items.json (shape below) with the media files beside it. The
+     account's handle (its Instagram username, and only that) and name come from here first.
   2. Instagram "Download your information" exports (JSON) anywhere under --root, as folders or .zip files (a zip is
-     unpacked into build/export/): posts, reels, stories, likes, saves, comments, followers, following, per-post
-     and per-reel likes and comments (past_instagram_insights), the username. Missing files are tolerated.
-  3. Facebook "Download your information" exports under --root: posts, photos, albums.
-  4. --photos DIR, else the largest folder of photos under --root (dates from EXIF, else the file time).
-With every door closed it writes out/brief.md with the one sentence on how to open one and exits 3: tell the
+     unpacked into the run's export/): posts, reels, stories, likes, saves, comments, followers, following, per-post
+     and per-reel likes and comments (past_instagram_insights, else the counts a post's own entry carries), the
+     username. Missing files are tolerated.
+  3. Tables of their own posts anywhere under --root, as CSV: a posts table (a header with date and caption or
+     likes; also type photo|reel|story, place, photo, the post's photograph as a path relative to the table, and
+     handle, their username).
+  4. Facebook "Download your information" exports under --root: posts, photos, albums.
+  5. --photos DIR, else the largest folder of photos under --root (dates from EXIF, else the file time).
+The handle is kept only when it is a username (letters, digits, '.' and '_', at most 30); an email address, its local
+part or its domain, or a name with spaces is not a handle, is dropped with a note, and the cards then carry no handle
+line. With every door closed it writes the run's brief.md with the one sentence on how to open one and exits 3: tell the
 person that sentence and stop. Meta's text encoding (UTF-8 written as latin-1) is repaired everywhere.
 
 items.json (every key optional; ts is a unix timestamp; media are paths relative to items.json):
@@ -24,21 +34,22 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
    "comments": [{"account": "", "text": "", "ts": 0}], "followers": [{"account": "", "ts": 0}],
    "following": [{"account": "", "ts": 0}], "facebook": [{"ts": 0, "caption": "", "media": [], "album": ""}]}
 
-The month: --month when the person named one ("2026-09", "september", "sept 2026", "last month", "this month"; a month
+The month: --month when the person named one ("2026-03", "march", "mar 2026", "last month", "this month"; a month
 name alone is its latest occurrence that has begun), else the last full calendar month before today; when the data
-holds nothing in that month, the latest full month the data covers. The year it is measured against is the twelve
-months that end with it (only the part the data covers). Links every media file of those twelve months into
-build/library/<kind>/ (posts, reels, stories, likes, saved, facebook) under its date, writes build/library.json
-("month" names the month, "window" the twelve months) and prints a summary; every choice it made is listed under
-"assumptions".
+holds nothing in that month, the latest full month the data covers. Their voice and style are read across the
+twelve months that end with it (only the part the data covers). Links every media file of those twelve months into
+library/<kind>/ (posts, reels, stories, likes, saved, facebook) under its date, writes library.json ("month" names
+the month, "window" the twelve months) and prints a summary; every choice it made is listed under "assumptions".
 """
 import argparse
+import csv
 import datetime as dt
 import json
 import re
 import shutil
 import sys
 import zipfile
+from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -78,7 +89,7 @@ def is_export(d):
     return (d / "your_instagram_activity").is_dir() or (d / "content" / "posts_1.json").is_file()
 
 
-def find_exports(root, test=None):
+def find_exports(root, dest_base, test=None):
     test = test or is_export
     found, zips = [], []
     for d, kids in walk(root):
@@ -92,7 +103,7 @@ def find_exports(root, test=None):
             continue
         if test is is_export and any("your_instagram_activity/" in n or n.endswith("content/posts_1.json") for n in names) or \
                 test is is_fb_export and any("your_facebook_activity/" in n for n in names):
-            dest = Path("build/export") / z.stem
+            dest = Path(dest_base) / z.stem
             if not dest.exists():
                 zipfile.ZipFile(z).extractall(dest)
             for d, _ in walk(dest, 3):
@@ -134,7 +145,10 @@ class Media:
         if p.exists():
             return str(p.resolve())
         if self.by_name is None:
-            self.by_name = {f.name: f for f in (self.root / "media").rglob("*") if f.is_file()} if (self.root / "media").exists() else {}
+            # a file name found in more than one folder could be another post's photograph, so it resolves to nothing
+            files = [f for f in (self.root / "media").rglob("*") if f.is_file()] if (self.root / "media").exists() else []
+            names = Counter(f.name for f in files)
+            self.by_name = {f.name: f for f in files if names[f.name] == 1}
         f = self.by_name.get(Path(uri).name)
         return str(f.resolve()) if f else None
 
@@ -166,7 +180,7 @@ def read_export(root):
             thumb = ((row.get("media_map_data") or {}).get("Media Thumbnail") or {})
             smd = row.get("string_map_data") or {}
 
-            def num(word):
+            def count(word):
                 """The first count whose label names the word (Likes, Instagram media like count, Comments ...)."""
                 for k, v in smd.items():
                     if word in k.lower() and "un" + word not in k.lower():
@@ -175,7 +189,7 @@ def read_export(root):
                         except ValueError:
                             return None
                 return None
-            rec = {"likes": num("like"), "comments": num("comment")}
+            rec = {"likes": count("like"), "comments": count("comment")}
             if thumb.get("uri"):
                 insights.setdefault(Path(thumb["uri"]).name, rec)
             if thumb.get("creation_timestamp"):
@@ -190,7 +204,9 @@ def read_export(root):
             ts = e.get("creation_timestamp") or items[0][1]
             cap = fix(e.get("title") or items[0][2])
             paths = [md.resolve(u) for u, _, _ in items]
-            ins = insights_ts.get(int(ts or 0)) or next((insights[Path(u).name] for u, _, _ in items if Path(u).name in insights), {})
+            # the insights' counts, else the counts the post's own entry carries
+            ins = (insights_ts.get(int(ts or 0)) or next((insights[Path(u).name] for u, _, _ in items if Path(u).name in insights), None)
+                   or {"likes": num(e.get("likes")), "comments": num(e.get("comments"))})
             posts.append({"ts": ts, "caption": cap, "media": [p for p in paths if p],
                           "likes": ins.get("likes"), "comments": ins.get("comments")})
     reels = []
@@ -284,6 +300,56 @@ def read_export(root):
             "found": found, "notes": notes}
 
 
+def num(v):
+    try:
+        return int(float(re.sub(r"[^\d.\-]", "", str(v)) or "x"))
+    except ValueError:
+        return None
+
+
+def read_tables(root):
+    """Posts tables (CSV) under root: [(path, rows)], rows keyed by lowercased header."""
+    posts = []
+    for d, kids in walk(root):
+        for f in kids:
+            if f.suffix.lower() != ".csv" or not f.is_file():
+                continue
+            try:
+                rows = [{(k or "").strip().lower(): (v or "").strip() for k, v in r.items()} for r in csv.DictReader(f.open(newline="", encoding="utf-8-sig"))]
+            except (OSError, UnicodeDecodeError, csv.Error):
+                continue
+            head = set(rows[0]) if rows else set()
+            if "date" in head and ({"caption", "likes"} & head):
+                posts.append((f, rows))
+    return posts
+
+
+def table_handle(rows):
+    """The account a posts table names in a handle or username column: the one most of its rows give."""
+    got = [r.get("handle") or r.get("username") for r in rows]
+    got = [v for v in got if v]
+    return max(set(got), key=got.count) if got else None
+
+
+def table_posts(rows, base):
+    """A posts table as library rows: posts, reels and stories, each with the photograph its photo column names
+    (a path relative to the table's folder), when the file is there."""
+    out = {"posts": [], "reels": [], "stories": []}
+    for r in rows:
+        try:
+            day = dt.date.fromisoformat(r["date"][:10])
+        except ValueError:
+            continue
+        ts = int(dt.datetime(day.year, day.month, day.day, 12, tzinfo=dt.timezone.utc).timestamp())
+        kind = {"reel": "reels", "video": "reels", "story": "stories"}.get(r.get("type", "").lower(), "posts")
+        photo = Path(base) / r["photo"] if r.get("photo") else None
+        media = [str(photo.resolve())] if photo and photo.is_file() else []
+        row = {"ts": ts, "caption": r.get("caption", ""), "media": media, "likes": num(r.get("likes")), "comments": num(r.get("comments")),
+               "place": r.get("place") or r.get("location") or ""}
+        out[kind].append(row if kind != "stories" else {"ts": ts, "media": media})
+    return out
+
+
 def is_fb_export(d):
     return (d / "your_facebook_activity").is_dir()
 
@@ -334,6 +400,20 @@ def read_pulled(folder):
     d.update(handle=data.get("handle"), name=data.get("name"), source=data.get("source") or "connected account",
              found={k: [str(f)] for k in keys if d[k]})
     return d
+
+
+USERNAME = re.compile(r"[A-Za-z0-9._]{1,30}")
+
+
+def username(v):
+    """The handle as their data gives it, when it is an Instagram username, and the note that drops it when it is not:
+    an email address, or a name with spaces, never becomes a handle."""
+    v = (v or "").strip().lstrip("@")
+    if not v:
+        return None, None
+    if USERNAME.fullmatch(v) and not re.search(r"\.(com|co|net|org|io|app|dev)$", v, re.I):
+        return v, None
+    return None, f"The account's handle in the data ({'an email address' if '@' in v else 'not a username'}) is not used; the cards carry no handle line."
 
 
 def photo_date(p):
@@ -411,7 +491,7 @@ def pick_month(rows, asked, today):
     if asked:
         got = parse_month(asked, today)
         if not got:
-            sys.exit(f"--month {asked!r} names no month; pass 2026-09, september or 'last month'")
+            sys.exit(f"--month {asked!r} names no month; pass 2026-03, march or 'last month'")
         partial = got == (today.year, today.month)
         return got, (f"The month is {MONTH_NAMES[got[1] - 1].title()} {got[0]}, as asked"
                      + (" (it is still running, so it covers the days so far)." if partial else ".")), partial
@@ -445,9 +525,9 @@ def rel(p, root):
     return p.relative_to(root) if p.is_relative_to(root) else p
 
 
-def shelve(lib):
-    """Every media file of the twelve months, linked into build/library/<kind>/ under its date; the rows point at the links."""
-    base = Path("build/library").resolve()
+def shelve(lib, base):
+    """Every media file of the twelve months, linked into library/<kind>/ under its date; the rows point at the links."""
+    base = Path(base).resolve()
     for kind in ("posts", "reels", "stories", "likes", "saved", "facebook"):
         for n, row in enumerate(lib[kind]):
             media = []
@@ -471,14 +551,15 @@ def shelve(lib):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--root", default=".")
-    ap.add_argument("--month", help="the month the person named: 2026-09, september, 'sept 2026', 'last month'")
+    ap.add_argument("--month", help="the month the person named: 2026-03, march, 'mar 2026', 'last month'")
     ap.add_argument("--today", help="the date to count back from (YYYY-MM-DD); defaults to today")
     ap.add_argument("--photos", help="a folder of photos the person named")
     ap.add_argument("--pulled", action="append", default=[], help="a folder holding items.json the agent pulled")
     ap.add_argument("--door", action="append", default=[], help='name="open: ..." or name="closed: why"')
     a = ap.parse_args()
     root = Path(a.root).resolve()
-    Path("build/library").mkdir(parents=True, exist_ok=True)
+    run = _env.start_run()
+    (run / "library").mkdir(parents=True, exist_ok=True)
     assumptions, doors = [], {}
     for x in a.door:
         k, _, v = x.partition("=")
@@ -487,7 +568,7 @@ def main():
     d = {k: [] for k in keys}
     d.update(handle=None, name=None, found={}, notes=[])
     sources = []
-    pulled = a.pulled or (["build/library/pulled"] if Path("build/library/pulled/items.json").exists() else [])
+    pulled = a.pulled or (["build/pulled"] if Path("build/pulled/items.json").exists() else [])
     for folder in pulled:
         p = read_pulled(folder)
         if not p:
@@ -498,8 +579,9 @@ def main():
         d["handle"], d["name"] = d["handle"] or p["handle"], d["name"] or p["name"]
         d["found"].update(p["found"])
         sources.append(p["source"])
-        doors.setdefault(p["source"], f"open: {len(p['posts'])} posts, {len(p['likes'])} likes pulled")
-    exports = [] if a.photos else find_exports(root)
+        doors.setdefault(p["source"], f"open: {len(p['posts'])} posts, {len(p['likes'])} likes pulled" if p["posts"] or p["likes"]
+                         else "open: the account's handle and name")
+    exports = [] if a.photos else find_exports(root, run / "export")
     if exports:
         reads = [(e, read_export(e)) for e in exports]
         export, x = max(reads, key=lambda r: max([0] + [int(p["ts"] or 0) for p in r[1]["posts"]]))
@@ -516,7 +598,20 @@ def main():
         doors["instagram_download"] = f"open: {rel(export, root)}"
     else:
         doors.setdefault("instagram_download", "closed: none under the workspace")
-    fbs = [] if a.photos else find_exports(root, is_fb_export)
+    tables = [] if a.photos else read_tables(root)
+    for f, rows in tables:
+        t = table_posts(rows, f.parent)
+        d["handle"] = d["handle"] or table_handle(rows)
+        for k in ("posts", "reels", "stories"):
+            d[k] = merge(d[k], t[k])
+        d["found"].setdefault("posts", []).append(str(f))
+        if t["reels"]:
+            d["found"].setdefault("reels", []).append(str(f))
+        sources.append("table")
+        doors[f"table:{rel(f, root)}"] = f"open: {len(t['posts'])} posts, {len(t['reels'])} reels, {len(t['stories'])} stories"
+    if not tables:
+        doors.setdefault("tables", "closed: no posts table under the workspace")
+    fbs = [] if a.photos else find_exports(root, run / "export", is_fb_export)
     opened = []
     for f in fbs:
         rows = read_facebook(f)
@@ -527,7 +622,8 @@ def main():
         doors["facebook_download"] = "open: " + ", ".join(opened)
     else:
         doors.setdefault("facebook_download", "closed: none under the workspace")
-    source = ("accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
+    source = ("table" if set(sources) <= {"table", "connected account", "instagram account"} and "table" in sources else
+              "accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
     if not d["posts"] and not d["reels"]:
         _env.need("PIL")
         folder = Path(a.photos) if a.photos else largest_photo_folder(root)
@@ -544,14 +640,14 @@ def main():
             d["posts"] = [dict(r, likes=None, comments=None) for r in d["facebook"]]
             assumptions.append("Only a Facebook download was found, so the film is made from its posts and photos.")
         else:
-            write_howto(Path("out"))
+            write_howto(run)
             print(HOWTO)
             return 3
     today = dt.date.fromisoformat(a.today) if a.today else dt.date.today()
     (year, mon), why, partial = pick_month(d["posts"] + d["reels"] + d["stories"], a.month, today)
     assumptions.append(why)
-    handle = d["handle"] or "you"
-    assumptions.append(f"Handle: @{handle}." if d["handle"] else "No username in the data; the cards say 'you'.")
+    handle, why = username(d["handle"])
+    assumptions.append(f"Handle: @{handle}." if handle else why or "No username in the data; the cards carry no handle line.")
     first = shift(year, mon, -11)
     inwin = lambda rows: sorted((r for r in rows if r.get("ts") and first <= ym(r["ts"]) <= (year, mon)), key=lambda r: r["ts"])
     lib = {k: inwin(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
@@ -561,40 +657,34 @@ def main():
     nxt = shift(year, mon, 1)
     last_day = (dt.date(nxt[0], nxt[1], 1) - dt.timedelta(days=1))
     name = MONTH_NAMES[mon - 1].title()
-    month = {"key": f"{year}-{mon:02d}", "year": year, "month": mon, "name": name, "short": name[:3] if mon != 9 else "Sept",
+    month = {"key": f"{year}-{mon:02d}", "year": year, "month": mon, "name": name, "short": name[:3],
              "first": f"{year}-{mon:02d}-01", "last": (min(last_day, today) if partial else last_day).isoformat(), "partial": partial,
              "days": (min(last_day, today) if partial else last_day).day}
     in_month = sum(1 for r in lib["posts"] + lib["reels"] + lib["stories"] if ym(r["ts"]) == (year, mon))
     if not in_month:
-        assumptions.append(f"Nothing was posted in {name} {year}; the cards say so and show the months around it.")
+        assumptions.append(f"Nothing was posted in {name} {year}.")
     window = {"first": f"{first[0]}-{first[1]:02d}-01", "last": month["last"],
               "label": f"the twelve months to {name} {year}", "covered_from": span["first"]}
-    if span["first"] and span["first"] > window["first"]:
-        assumptions.append(f"The data starts on {span['first']}, so {name} is measured against the months from then on, "
-                           f"not a full twelve.")
+    if window["covered_from"] and window["covered_from"] > window["first"]:
+        assumptions.append(f"The data starts on {window['covered_from']}, so their voice is read from then on, not a full twelve months.")
     if source in ("export", "accounts"):
         missing = [k for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers") if not d["found"].get(k)]
         if missing:
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
-        if not any(p.get("likes") is not None for p in lib["posts"] + lib["reels"]):
-            assumptions.append("The data has no likes per post, so the month's best moments are picked by comments, else by photo quality.")
-    shelve(lib)
-    no_media = sum(1 for p in lib["posts"] if not p["media"])
-    if no_media:
-        assumptions.append(f"{no_media} posts point at media files that are not there; they count but show no photo.")
+    shelve(lib, run / "library")
     out = {"source": source, "sources": sources, "doors": doors, "root": str(root), "handle": handle, "name": d["name"],
            "year": year, "month": month, "window": window, "range": span, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
-    _env.write_json("build/library.json", out)
-    print(f"source: {source}   handle: @{handle}   month: {name} {year} ({in_month} posts, reels and stories)   "
-          f"measured against: {window['label']} (data {span['first']} to {span['last']})")
+    _env.write_json(run / "library.json", out)
+    print(f"source: {source}   handle: {'@' + handle if handle else 'none'}   month: {name} {year} ({in_month} posts, reels and stories)   "
+          f"voice read across: {window['label']} (data {span['first']} to {span['last']})")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
                                                    "following", "facebook")))
     for k, v in doors.items():
         print(f"door {k}: {v}")
     for x in out["assumptions"]:
         print("assumption:", x)
-    print("wrote build/library.json")
+    print(f"wrote {run / 'library.json'} (this run's build folder is {run})")
     return 0
 
 

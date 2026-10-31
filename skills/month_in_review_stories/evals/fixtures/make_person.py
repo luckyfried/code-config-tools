@@ -76,6 +76,31 @@ CAPTIONS = [
     "salt hair, sandy everything", "last light over {p}", "street food tour, round two", "home for a bit",
     "one more espresso and then we go", "can't stop taking pictures of doorways", "postcards from {p}",
 ]
+# the picture a caption describes, by the first of its words that names one; a caption that names none shows one of
+# its month's scenes
+SCENE_WORDS = [
+    ("pottery", ("bowl", "pottery", "kiln", "clay", "wheel")),
+    ("market", ("market", "souk", "street food")),
+    ("garden", ("majorelle", "garden")),
+    ("oldtown", ("doorway", "long way", "postcards", "little place", "terracotta")),
+    ("tiles", ("tile", "zellige", "glaze", "cobalt", "wall", "door", "indigo", "blue hour")),
+    ("coffee", ("coffee", "espresso")),
+    ("table", ("lunch", "dinner", "bread", "tomatoes", "eaten", "olive oil")),
+    ("beach", ("sea", "salt hair", "sandy")),
+    ("sunset", ("golden hour", "last light", "light", "orange")),
+    ("hills", ("road", "ridge", "colors")),
+]
+
+
+def scene_of(cap, m, rng):
+    """The scene a post's photograph shows: the one its caption names, else one of its month's."""
+    low = cap.lower()
+    for scene, words in SCENE_WORDS:
+        if any(w in low for w in words):
+            return scene
+    return rng.choice(SEASON[m][1])
+
+
 EMOJI = ["\U0001F305", "\U0001F33F", "☀️", "\U0001F34B", "\U0001F342", "☕", "\U0001F35E", "\U0001F37D️"]
 MONTH = 9  # the month that differs: its own captions, tags and three standout posts
 MONTH_CAPTIONS = [
@@ -382,13 +407,14 @@ def main():
         for _ in range(SEASON[m][0]):
             ts = ts_for(rng, year, m, end)
             cap = caption(m)
+            scene = scene_of(cap, m, rng)
             n_media = 1 if rng.random() < 0.8 else rng.randint(2, 3)
             items = []
             for k in range(n_media):
                 w, h = (1080, 1350) if rng.random() < 0.6 else (1080, 1080)
                 ext = ".heic" if rng.random() < 0.1 else ".jpg"
                 uri = media_path("posts", ts, ext)
-                jobs.append((str(root / uri), w, h, rng.choice(SEASON[m][1]), pal(m), rng.random()))
+                jobs.append((str(root / uri), w, h, scene, pal(m), rng.random()))
                 items.append({"uri": uri, "creation_timestamp": ts, "media_metadata": {"photo_metadata": {"exif_data": []}},
                               "title": ig_text(cap) if n_media == 1 else "", "cross_post_source": {"source_app": "FB"}})
             posts.append({"media": items} if n_media == 1 else {"media": items, "title": ig_text(cap), "creation_timestamp": ts})

@@ -1,21 +1,16 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the numbers of the month and of the year it is measured against. Reads build/library.json,
-writes build/stats.json.
+"""Movement 1, research: what the month's data says about them, beside their photographs and captions. Reads the
+run's library.json, writes the run's stats.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/stats.py
 
 The month: posts, reels, stories, likes given, comments written and new followers (each null when the data lacks
-it), posting days, posts a week, the weekday they posted most, the longest run of days in a row, and the three best
-moments by their own numbers: the month's three most-liked posts and reels, ties broken by comments, then by the more
-recent (by comments alone, or by photo quality later in picks.py, when the data has no likes per post), each with
-how many times their usual likes it got. The year: the same counts for every month of the twelve months that end
-with the month (only the months the data covers), the average month before it, the month's rank among them, the
-year's median post, the year's most-liked post and where the month's best sits against it. Also the people of the
-month (accounts commented on and @mentioned most), the accounts liked most that month, and the caption register of
-the month and of the rest of the year, for writing copy in their voice. Every number a card shows comes from this
-file.
-"""
+it), posting days, posts a week, the weekday they posted most and the longest run of days in a row; the same counts
+for every month of the twelve that end with it (only the months the data covers) and the average month before it.
+Also the people of the month (accounts @mentioned in their captions and commented on most), the accounts liked most
+that month, and the caption register of the month and of the rest of the year, for writing copy in their voice.
+Nothing here picks a moment or reaches the screen: the moments are picked from their photographs and captions."""
 import argparse
 import calendar
 import datetime as dt
@@ -39,11 +34,6 @@ def when(ts):
 def key(ts):
     d = when(ts)
     return f"{d.year}-{d.month:02d}"
-
-
-def label(ts):
-    d = when(ts)
-    return f"{calendar.month_name[d.month]} {d.day}"
 
 
 def register(caps):
@@ -76,9 +66,10 @@ def rhythm(rows):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
+    run = _env.run()
+    d = _env.read_json(run / "library.json")
     if not d or not d.get("month"):
-        sys.exit("build/library.json is missing or names no month: run gather.py first")
+        sys.exit(f"{run / 'library.json'} is missing or names no month: run gather.py first")
     mo, src = d["month"], d["source"]
     exp = src in ("export", "accounts")
     has = lambda k: bool(d["found"].get(k)) if exp else False
@@ -102,55 +93,20 @@ def main():
         numbers = [{"key": "posts", "value": counts["posts"], "label": "photos"}] + \
                   ([{"key": "reels", "value": counts["reels"], "label": "videos"}] if counts["reels"] else [])
 
-    # the year: every month of the window the data covers
+    # every month of the window the data covers
     keys = sorted({key(r["ts"]) for r in d["posts"] + d["reels"] + d["stories"] if r.get("ts")} | {mo["key"]})
     months = []
     for k in keys:
         y, m = map(int, k.split("-"))
         sel = lambda rows: [r for r in rows if r.get("ts") and key(r["ts"]) == k]
         pm, rm, sm = sel(d["posts"]), sel(d["reels"]), sel(d["stories"])
-        likes = [p["likes"] for p in pm + rm if p.get("likes") is not None]
         months.append({"key": k, "month": m, "year": y, "name": calendar.month_name[m], "posts": len(pm), "reels": len(rm),
                        "stories": len(sm), "total": len(pm) + len(rm) + len(sm), "posting_days": rhythm(pm + rm + sm)["posting_days"],
-                       "likes_median": statistics.median(likes) if likes else None, "is_month": k == mo["key"]})
+                       "is_month": k == mo["key"]})
     before = [x for x in months if not x["is_month"]]
     avg = lambda f: round(statistics.mean(f(x) for x in before), 1) if before else None
     usual = {"posts": avg(lambda x: x["posts"]), "reels": avg(lambda x: x["reels"]), "stories": avg(lambda x: x["stories"]),
              "total": avg(lambda x: x["total"]), "posting_days": avg(lambda x: x["posting_days"]), "months": len(before)}
-    cur = next(x for x in months if x["is_month"])
-    by_posts = sorted(months, key=lambda x: (-x["posts"], -x["total"]))
-    rank = by_posts.index(cur) + 1
-    busiest = by_posts[0] if months else None
-    quietest = by_posts[-1] if months else None
-
-    rows = [dict(p, kind="post") for p in posts if p["media"]] + [dict(r, kind="reel") for r in reels if r["media"]]
-    if any(p.get("likes") is not None for p in rows):
-        ranked, by = sorted(rows, key=lambda p: (-(p.get("likes") or 0), -(p.get("comments") or 0), -p["ts"])), "likes"
-    elif any(p.get("comments") for p in rows):
-        ranked, by = sorted(rows, key=lambda p: (-(p.get("comments") or 0), -p["ts"])), "comments"
-    else:
-        ranked, by = sorted(rows, key=lambda p: -p["ts"]), "photo quality (picks.py)"
-    year_rows = [p for p in d["posts"] + d["reels"] if p.get("likes") is not None and key(p["ts"]) != mo["key"]]
-    median = statistics.median(p["likes"] for p in year_rows) if year_rows else None
-    month_likes = [p["likes"] for p in rows if p.get("likes") is not None]
-    top = []
-    for i, p in enumerate(ranked[:3]):
-        media = p["media"][0]
-        top.append({"rank": i + 1, "kind": p["kind"], "ts": p["ts"], "date": when(p["ts"]).date().isoformat(), "date_label": label(p["ts"]),
-                    "likes": p.get("likes"), "comments": p.get("comments"), "caption": p.get("caption") or "", "media": media,
-                    "video": media if Path(media).suffix.lower() in VIDEO else None,
-                    "times_usual": round(p["likes"] / median, 1) if median and p.get("likes") is not None else None})
-    year_best = max(year_rows, key=lambda p: (p["likes"], p.get("comments") or 0), default=None)
-    fourth = ranked[3] if len(ranked) > 3 else None
-    against = {
-        "year_best_likes": year_best["likes"] if year_best else None,
-        "year_best_date": when(year_best["ts"]).date().isoformat() if year_best else None,
-        "beats_year_best": sum(1 for t in top if year_best and t.get("likes") is not None and t["likes"] > year_best["likes"]),
-        "fourth_likes": fourth.get("likes") if fourth else None,
-        "gap_to_fourth": (top[-1]["likes"] - fourth["likes"]) if top and fourth and top[-1].get("likes") is not None and fourth.get("likes") is not None else None,
-        "month_median_likes": statistics.median(month_likes) if month_likes else None,
-        "year_median_likes": median,
-    }
 
     handle = (d.get("handle") or "").lower()
     mentions = Counter(a.lower() for p in posts + reels for a in re.findall(r"@([A-Za-z0-9._]{2,30}[A-Za-z0-9_])", p.get("caption") or ""))
@@ -163,23 +119,18 @@ def main():
     caps = [p["caption"] for p in posts + reels if p.get("caption")]
     rest = [p["caption"] for p in d["posts"] + d["reels"] if p.get("caption") and key(p["ts"]) != mo["key"]]
     weeks = mo["days"] / 7
-    cad = {**rhythm(posts + reels + stories), "posts_per_week": round(len(posts) / weeks, 1),
-           "usual_posts_per_week": round(usual["posts"] / (30.4 / 7), 1) if usual["posts"] is not None else None,
-           "vs_usual": round(len(posts) / usual["posts"], 1) if usual["posts"] else None, "rank_by_posts": rank, "of_months": len(months)}
+    posted = len(posts) + len(reels)
+    cad = {**rhythm(posts + reels + stories), "posts_per_week": round(posted / weeks, 1),
+           "usual_posts_per_week": round(usual["posts"] / (30.4 / 7), 1) if usual["posts"] is not None else None}
     out = {"handle": d["handle"], "name": d.get("name"), "year": mo["year"], "month": mo, "window": d.get("window"), "source": src,
            "range": d["range"], "counts": counts, "numbers": numbers, "cadence": cad, "usual": usual, "months": months,
-           "busiest": busiest, "quietest": quietest, "top_three": top, "top_ranked_by": by, "against": against,
-           "median_likes": median, "people": people[:5], "loved": loved, "register": register(caps), "register_year": register(rest)}
-    _env.write_json("build/stats.json", out)
+           "people": people[:5], "loved": loved, "register": register(caps), "register_year": register(rest)}
+    _env.write_json(run / "stats.json", out)
     print(f"@{d['handle']} {mo['name']} {mo['year']}: " + ", ".join(f"{n['value']} {n['label']}" for n in numbers))
-    print(f"cadence: {cad['posts_per_week']} posts a week (usually {cad['usual_posts_per_week']}), {cad['vs_usual']}x the usual month, "
-          f"#{rank} of {len(months)} months by posts; {cad['posting_days']} posting days, longest run {cad['longest_run_days']}")
-    print("best three (by %s): " % by + "; ".join(f"{t['rank']}. {t['date_label']} {t['kind']} {t['likes'] if t['likes'] is not None else ''}"
-                                                  f"{' (' + str(t['times_usual']) + 'x usual)' if t['times_usual'] else ''}" for t in top))
-    print(f"against the year: best before {against['year_best_likes']} likes; {against['beats_year_best']} of the three beat it; "
-          f"the fourth sits {against['gap_to_fourth']} below the third")
+    print(f"cadence: {cad['posts_per_week']} posts a week (usually {cad['usual_posts_per_week']}); {cad['posting_days']} posting days, "
+          f"longest run {cad['longest_run_days']}")
     print("people: " + ", ".join(f"@{p['account']} {p['total']}" for p in people[:5]))
-    print("wrote build/stats.json")
+    print(f"wrote {run / 'stats.json'}")
     return 0
 
 
