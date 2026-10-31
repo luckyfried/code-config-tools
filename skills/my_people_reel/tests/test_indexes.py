@@ -29,7 +29,7 @@ def bed(level=0.0, stopped=None):
     answers; with `stopped`, it writes half the file and raises it."""
     import wave
 
-    def compose(recipe, styles, avoid, seconds, edges, hue, seed, bpm=120, out=None):
+    def compose(recipe, styles, avoid, seconds, edges, hue, seed, bpm=120, out=None, peak=None):
         f = Path(out) / "bed.wav"
         if stopped:
             f.write_bytes(b"half a file")

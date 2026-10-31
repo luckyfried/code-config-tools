@@ -72,6 +72,8 @@ export type Card = {
   field: string;
   /** the photograph laid whole in the piece frame */
   place: Box;
+  /** the part of the photograph that matters, [u, v] fractions of it (absent: its middle) */
+  focus?: Pt;
   /** a framed photograph: the band of its picture it spans (fractions of the picture's height), and how the style
    * mounts that print on its card: `taped` on the page, `projected` on the dark, `flat` on the ink */
   band: Pt | null;
@@ -164,7 +166,7 @@ const HOOK_BLADE = 0.3;
 const TAG_LEAD = 0.4;
 /** The shared moves whose drawing stands over a card without covering it: the rest are drawn by the cards themselves
  * (DRAWN in board_drive.py) and only nudge the camera or add to its travel. */
-const OVER = new Set(['light-leak', 'gate-weave', 'stack-and-split']);
+const OVER = new Set(['light-leak', 'gate-weave', 'stack-and-split', 'picture-tunnel', 'tilted-wall', 'exploded-layers', 'slam-words', 'counter']);
 
 const kindOf = (layers: Layer[], kind: string) => layers.filter((l) => l.kind === kind);
 
@@ -254,10 +256,11 @@ export const planOf = (board: Board): Plan => {
     const tl = kindOf(beat.layers, 'Tags')[0];
     return {
       key: beatId, n, hook, file: cut.photo.file, line: cut.line as Pt, field: cut.field ?? 'paper', place: cut.place as Box, T,
+      ...(cut.photo.focus ? {focus: cut.photo.focus as Pt} : {}),
       band: (cut.photo.band ?? null) as Pt | null, mount: cut.photo.mount ?? null, entry: cut.entry ?? 'rise', words: cut.words ?? 'rise',
       say: cut.say ?? 'rise', scrim: (cut.scrim ?? null) as [number, number, number, ('x' | 'y')?] | null, crop: (cut.crop ?? null) as Pt | null,
       keepsake: (cut.keepsake ?? null) as Card['keepsake'],
-      slot: (slice?.poly ?? []) as Pt[], arrive, leave: nextStart(beatId), cut: arrive + (hook ? HOOK_BLADE : LIFT),
+      slot: (slice?.poly ?? []) as Pt[], arrive, leave: nextStart(beatId), cut: arrive + (cut.fly ?? 0) + (hook ? HOOK_BLADE : LIFT),
       go: nextStart(beatId) - TAG_LEAD,
       stamp, rest, restAt: arrive + (restLayer?.at ?? LIFT + 0.35),
       slotStamp: stamp?.name ? named[stamp.name] ?? null : null, slotRest: restNamed,
@@ -280,22 +283,31 @@ export const planOf = (board: Board): Plan => {
   const route = kindOf(closer.layers, 'Route')[0];
   const shape = kindOf(closer.layers, 'Shape')[0];
   const sys = board.system;
-  // a photo beat's box, its type's box and the beats the camera holds it, so a move lays its marks on the photograph
-  // and lifts them before the cut; every word of a beat is the card's own to set, so a move is handed none
+  // a photo beat's box, its photograph and where it lies, its type's box and the beats the camera holds it, so a move
+  // lays its marks on the photograph, or flies the photograph in and lands it where the card stands, and lifts them
+  // before the cut; every word of a beat is the card's own to set, so a move is handed only the words its beat names
+  // for it (`say`). The tilt its card hangs its print at, and where a move that takes the frame lands the print as the
+  // camera sees it, come from camera.ts's landed. A beat that plays the person's own clip arrives and moves as its
+  // photograph's beat would, the clip's frames on the card.
   const beats = board.beats.map((b, i) => {
-    const form = b.form ?? (b.id === 'hook' ? 'title' : b.id === 'closer' ? 'wall' : 'photo');
+    const form = b.form === 'clip' ? 'photo' : b.form ?? (b.id === 'hook' ? 'title' : b.id === 'closer' ? 'wall' : 'photo');
     const c = cards.find((x) => x.key === b.id);
     return {
       id: b.id, form, at: starts[b.id],
       end: i + 1 < order.length ? starts[order[i + 1]] : end, move: b.move, transition: i === 0 ? null : b.transition ?? null,
-      words: '', label: '', peak: b.id === order[order.length - 2],
-      ...(c && form === 'photo' ? {box: boxOf(c, W, H), ...(c.keep ? {type: c.keep} : {}), held: [c.arrive, c.go] as Pt} : {}),
+      words: '', label: '', say: b.say ?? '', peak: b.id === order[order.length - 2],
+      ...(c && form === 'photo' ? {
+        box: boxOf(c, W, H), photo: staticFile(c.file), place: c.place, ...(c.focus ? {focus: c.focus} : {}),
+        ...(c.keep ? {type: c.keep} : {}), held: [c.arrive, c.go] as Pt,
+      } : {}),
     };
   });
   const cuts = beats.map((b) => b.at);
-  const look = lookOf(board, W, H, fps, pulse, cards[0]?.file);
+  const safe = (board.format.safe ?? [0, 0, W, H]) as Box;
+  const look = {...lookOf(board, W, H, fps, pulse, cards[0]?.file), photos: cards.map((c) => staticFile(c.file)),
+    safe: {left: safe[0], top: safe[1], right: W - safe[2], bottom: H - safe[3]}};
   return {
-    W, H, safe: (board.format.safe ?? [0, 0, W, H]) as Box, pulse, beat: 60 / board.bpm, colors: board.system.colors as unknown as Record<string, string>,
+    W, H, safe, pulse, beat: 60 / board.bpm, colors: board.system.colors as unknown as Record<string, string>,
     ease: {enter: board.system.ease.enter, move: board.system.ease.move}, finish: sys.finish, photo: sys.photo, look, tagText: (sys.colors as unknown as Record<string, string>)[board.tag_text ?? 'paper'] ?? sys.colors.paper,
     line: {beats, cuts}, over: {beats: beats.map((b) => ({...b, move: b.move && OVER.has(b.move) ? b.move : undefined})), cuts},
     cards, kicker, title, titleAt: titleLayer?.at ?? 1.6, gather: kindOf(hookBeat.layers, 'Tags')[0]?.gather ?? 2.9,

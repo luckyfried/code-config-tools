@@ -41,10 +41,12 @@ When no wall can show every face the cast names whole, `draft` prints a FAIL lin
 A `storyboard.json` is format-free: beats that each name a composition (`comp`), a person, one of their own lines
 where the composition sets one, and a length in pulses (beats of the tempo). `storyboard.md` is the same board as a
 table you can read, then, per beat, what its move reveals and what it carries across the cut, then the music (its
-origin, the person's music brief and the `Mixed:` line `music.py master` fills with the two loudness numbers), then
-every sound cue with its time: one where each beat lands (the camera landing on the hook, the hit as each person's
-stamp lands, the impact as the wall settles whole), the build into the wall, and the tag landing on the last face as
-the stop; tags pop, words rise and the camera travels without a sound of their own.
+origin, the person's music brief and the `Mastered:` line `music.py master` fills with the music's loudness), then
+every effect with its time (sfx.py, from the board's `effects`): a shutter as the hook's photograph lands and an impact
+as 'my people.' lands, a whoosh on each cut into a person and a shutter (or a mark's pop) as their photograph lands,
+an impact on each slammed word, the riser into the wall cut off by its impact as the wall settles whole, a pop as the
+tag lands on the last face, and an impact as the closer settles on the stop; words rise and the camera travels without
+a sound of their own.
 
 ## Make the boards better than the draft
 

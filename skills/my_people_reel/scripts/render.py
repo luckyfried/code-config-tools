@@ -15,10 +15,14 @@ fonts and grain. The Chromium starts headless with a profile and a runtime folde
 (~/.cache/code-config/<kit>/, or under XDG_CACHE_HOME when that is set) and is driven over the DevTools protocol by a
 WebSocket client written here. Each job selects the composition with its props, steps every frame and waits for the
 composition's ready signal before the screenshot (a frame is never taken on a timer), a lossless PNG that Chromium
-compresses at its fastest setting. ffmpeg encodes the frames to yuv420p at the composition's size and frame rate, with
-h264_nvenc on the NVIDIA card, with h264_videotoolbox on a Mac whose ffmpeg has it, and with libx264 otherwise: the
-encoder is tried once per process on one frame, a machine whose card or driver refuses that frame encodes with
-libx264, and a film the card's encoder refuses (one smaller than its smallest frame) is encoded again with libx264.
+compresses at its fastest setting. A frame is set inside a click, so React commits it before that signal can read
+true (PRELUDE). Each frame goes into ffmpeg's input as it arrives, in frame order (a frame that
+arrives ahead of its turn goes in from its file on disk once the frames before it are in), and is kept on disk for the
+frames cache. ffmpeg encodes them to yuv420p at the composition's size and frame rate, with h264_nvenc on the NVIDIA
+card, with h264_videotoolbox on a Mac whose ffmpeg has it, and with libx264 otherwise: the encoder is tried once per
+process on one frame at each film's size, a size the card or driver refuses (one smaller than the card's smallest
+frame) encodes with libx264, and a film the card's encoder fails partway renders again on the next attempt with
+libx264.
 With the NVIDIA device the browser draws on the card through ANGLE on Vulkan, otherwise on the CPU through ANGLE on
 SwiftShader. A browser draws and captures its pages one at a time, so a film runs one page in each of several
 browsers (half the cores, up to 8), all taking the next frame from one queue.
@@ -26,22 +30,38 @@ browsers (half the cores, up to 8), all taking the next frame from one queue.
 A frame that is not ready in 30 s stops the render, naming the frame and what it still waited for. Any other failure
 (a browser that stops answering, a lost graphics context, a render that comes out one flat color) costs one attempt,
 and attempts 2 and 3 run in a fresh browser. A video job whose `frames` differs from the composition's is refused.
+
+The frames cache. A film's frames are kept in the cache's frames/ folder, each under its key: the hash of what decides
+that frame's pixels (frame_keys: the props that reach the frame, the composition's size and length, the scale, the
+frame number, and by content the bundle, the public folder, the browser and this file). A render paints only the
+frames whose keys it does not find there and takes the others from the cache, in frame order, into the same ffmpeg
+input. A frame's key takes every beat before it whole (a wall gathers the photographs before it) and a later beat
+without its words, so a render after an edit to one beat's words paints from the beat before it, or from AHEAD seconds
+before it, to the end of the film, and a render with no edit paints none. A film's painted frames enter the cache once
+it passes its checks with no finding, and the cache keeps its newest frames (by when each was last painted or reused)
+under FRAMES_CAP bytes. Until then they wait in a staging folder the render holds locked; a render removes every
+staging folder no render holds, such as the one a killed render leaves.
+
 An `out` ending in `.part.mp4` is a chunk (scripts/chunks.py): once it passes its checks its findings are written
 beside it as `.part.findings.json`. The jobs file's report lists every job that failed and every FONT_ERROR and
 IMAGE_ERROR line the composition logged.
 
 Chromium is found in this order: CHROME_PATH; Playwright's Chromium (PLAYWRIGHT_BROWSERS_PATH, ~/.cache/ms-playwright,
-~/Library/Caches/ms-playwright; the newest revision first, a full build before a headless shell); chromium,
+~/Library/Caches/ms-playwright; a headless shell before a full build, the newest revision first); chromium,
 chromium-browser, google-chrome, google-chrome-stable on PATH; the macOS applications; a Remotion headless shell
-already on disk under motion/node_modules.
+already on disk under motion/node_modules. The headless shell is first because it composites each frame on the card,
+where a full build in its new headless mode composites in software and takes about twice the time per frame.
 """
 import argparse
 import atexit
 import base64
+import bisect
 import collections
+import contextlib
 import hashlib
 import http.server
 import inspect
+import itertools
 import json
 import os
 import re
@@ -73,6 +93,17 @@ REMOTION_SHELLS = KIT / "motion" / "node_modules" / ".remotion" / "chrome-headle
 # each encoder setting aims at constant quality under one ceiling, 12 Mbit/s over a 24 Mbit buffer: every platform the
 # reel is posted to encodes it again, so bits above that buy nothing a viewer sees
 CEILING = ["-maxrate", "12M", "-bufsize", "24M"]
+# A beat that starts within AHEAD seconds of a frame, or right after the frame's own beat, reaches that frame whole:
+# a photograph slides in, a card's words rise and the camera travels toward the next beat before it starts.
+AHEAD = 2.0
+# The keys whose strings are words a person reads, in every kit's board: a beat later than that reaches a frame
+# without them, and without its lines of text (a dict with a typeface named in `face`), since its words show only near
+# its own time.
+WORDS = frozenset({"text", "words", "label", "say", "said", "caption", "title", "signoff", "handle", "idea", "scene",
+                   "shows", "held", "carries", "reveals", "what"})
+# A 1080 by 1920 frame of photographs is up to about 3.4 MB, so the cache holds at least 3,000 of them: the longest film
+# a kit makes (60 s, 1,800 frames) and the frames its next edit paints.
+FRAMES_CAP = 10 * 2 ** 30
 ENCODERS = {
     # spatial adaptive quantization keeps the grain in a dark dissolve, which the card's encoder flattens into patches
     # without it: under the ceiling a lower cq buys nothing there
@@ -116,8 +147,8 @@ def chromium():
         return forced
     roots = [os.environ.get("PLAYWRIGHT_BROWSERS_PATH"), Path.home() / ".cache" / "ms-playwright",
              Path.home() / "Library" / "Caches" / "ms-playwright"]
-    for kind, names in (("chromium-*", ("*/chrome", "*/chrome.exe", "*/*.app/Contents/MacOS/*")),
-                        ("chromium_headless_shell-*", ("*/chrome-headless-shell", "*/headless_shell", "*/chrome-headless-shell.exe"))):
+    for kind, names in (("chromium_headless_shell-*", ("*/chrome-headless-shell", "*/headless_shell", "*/chrome-headless-shell.exe")),
+                        ("chromium-*", ("*/chrome", "*/chrome.exe", "*/*.app/Contents/MacOS/*"))):
         for root in (Path(r) for r in roots if r):
             hits = [p for n in names for p in root.glob(f"{kind}/{n}") if _executable(p)] if root.is_dir() else []
             if hits:
@@ -132,10 +163,133 @@ def chromium():
     return str(hits[-1]) if hits else None
 
 
+def _sha(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def _canon(x):
+    return json.dumps(x, sort_keys=True, separators=(",", ":"))
+
+
+def _tree(root):
+    """The digest of every file under `root`, by relative path and content."""
+    h = hashlib.sha256()
+    for p in sorted(Path(root).rglob("*")):
+        if p.is_file():
+            h.update(f"{p.relative_to(root).as_posix()}\0".encode() + hashlib.sha256(p.read_bytes()).digest())
+    return h.hexdigest()
+
+
+def frame_inputs(dist, public, exe, gl):
+    """What reaches every frame besides its props: the bundle and the public folder by content, the browser and its
+    graphics, and this file."""
+    try:
+        st = os.stat(exe)
+        browser = [exe, st.st_size, st.st_mtime_ns]
+    except OSError:
+        browser = [exe]
+    own = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return _sha(_canon([_tree(dist), _tree(public), browser, gl, own]))
+
+
+def _line(x):
+    """A line of text: a dict that names the typeface it is set in. A photograph's `face` is the box its face is in, a
+    list, so a photograph is never a line."""
+    return isinstance(x, dict) and isinstance(x.get("face"), str)
+
+
+def _words(k, v):
+    return k in WORDS and (isinstance(v, str) or (isinstance(v, list) and bool(v) and all(isinstance(w, str) for w in v)))
+
+
+def _wordless(x):
+    """`x` without its words: every WORDS string or list of strings, and every line of text."""
+    if isinstance(x, dict):
+        return {k: _wordless(v) for k, v in x.items() if not _line(v) and not _words(k, v)}
+    if isinstance(x, list):
+        return [_wordless(v) for v in x if not _line(v)]
+    return x
+
+
+def frame_keys(job, comp, frames, inputs):
+    """The key of each of `frames` of a film job, the hash of what decides its pixels. A board whose beats' `frames`
+    add up to the composition's length is the film's timeline: frame f takes whole every beat up to the one after its
+    own and every beat that starts within AHEAD seconds of it, and every later beat without its words, since a later
+    beat can show its photograph early (a title that flashes every photograph) but its words only near its own time.
+    The rest of the props, the composition's size, rate and length, the scale, the frame number and `inputs`
+    (frame_inputs) reach every frame. Props with no such timeline reach every frame whole."""
+    props = job["props"]
+    head = _canon([inputs, comp["id"], comp["width"], comp["height"], comp["fps"], comp["durationInFrames"],
+                   job.get("scale") or 1])
+    board = props.get("board") if isinstance(props, dict) else None
+    beats = board.get("beats") if isinstance(board, dict) else None
+    lengths = [b.get("frames") if isinstance(b, dict) else None for b in beats] if isinstance(beats, list) else []
+    if not lengths or not all(type(n) is int and n > 0 for n in lengths) or sum(lengths) != comp["durationInFrames"]:
+        whole = _sha(head + _canon(props))
+        return {f: _sha(f"{whole}\0{f}") for f in frames}
+    common = head + _canon({**props, "board": {**board, "beats": len(beats)}})
+    whole = [_sha(_canon(b)) for b in beats]
+    bare = [_sha(_canon(_wordless(b))) for b in beats]
+    starts = list(itertools.accumulate(lengths, initial=0))
+    slices, keys = {}, {}
+    for f in frames:
+        own = bisect.bisect_right(starts, f) - 1
+        near = bisect.bisect_right(starts, f + AHEAD * comp["fps"], 0, len(beats)) - 1
+        live = min(len(beats) - 1, max(own + 1, near))
+        if live not in slices:
+            slices[live] = _sha(common + "".join(whole[:live + 1]) + "".join(bare[live + 1:]))
+        keys[f] = _sha(f"{slices[live]}\0{f}")
+    return keys
+
+
+def trim(folder, cap):
+    """Removes the frames cache's oldest frames, by when each was last painted or reused, until `folder` holds `cap`
+    bytes of them or fewer. A render's own folder of painted frames is left alone."""
+    found = []
+    try:
+        for e in os.scandir(folder):
+            if e.name.endswith(".png") and e.is_file():
+                with contextlib.suppress(FileNotFoundError):
+                    st = e.stat()
+                    found.append((st.st_mtime_ns, st.st_size, e.path))
+    except FileNotFoundError:
+        return
+    total = sum(size for _, size, _ in found)
+    for _, size, path in sorted(found):
+        if total <= cap:
+            return
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(path)
+        total -= size
+
+
 def private_dir(parent, prefix):
     """A new folder only this user can open, under `parent`."""
     Path(parent).mkdir(parents=True, exist_ok=True)
     return Path(tempfile.mkdtemp(prefix=prefix, dir=parent))
+
+
+def stage(store, stem):
+    """A new private folder under the frames cache for a render's painted frames, and the open file that locks it for
+    the render's life. Every staging folder no render holds is removed first: a lock ends with its process however that
+    process ends, a kill included. A folder made in the last minute is left alone, for the render between making it and
+    locking it."""
+    import fcntl
+    Path(store).mkdir(parents=True, exist_ok=True)
+    for e in os.scandir(store):
+        with contextlib.suppress(OSError):
+            if not e.is_dir(follow_symlinks=False) or time.time() - e.stat().st_mtime < 60:
+                continue
+            fd = os.open(e.path, os.O_RDONLY)
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                shutil.rmtree(e.path, ignore_errors=True)
+            finally:
+                os.close(fd)
+    folder = private_dir(store, f"{stem}-")
+    hold = os.open(folder, os.O_RDONLY)
+    fcntl.flock(hold, fcntl.LOCK_EX)
+    return folder, hold
 
 
 def headless(exe):
@@ -302,6 +456,11 @@ def value(result):
 
 # Set before the bundle's own scripts run in every page, as @remotion/renderer's set-props-and-env.js sets them, and
 # the seek that renderer's seek-to-frame.js runs: wait for ready, set the frame, wait for ready, wait for the fonts.
+# The frame is set inside a click dispatched on a target of the seek's own. React gives an update made during a click
+# its synchronous lane, so the composition renders frame f, commits it and runs its effects in the microtask after the
+# call, and every hold it takes for frame f is open before the animation frame on which remotion_setFrame ends its own
+# hold. An update made outside an event waits for a scheduler task, and on a starved page that animation frame comes
+# first: ready reads true while the page still shows the frame before, and the screenshot is of that frame.
 PRELUDE = r"""
 window.remotion_puppeteerTimeout = %(timeout)d;
 window.remotion_isMainTab = %(main)s;
@@ -334,9 +493,15 @@ window.__vs_ready = (what) => new Promise((resolve, reject) => {
   };
   tick();
 });
+window.__vs_clicks = new EventTarget();
 window.__vs_seek = async (f, comp) => {
   await window.__vs_ready(`frame ${f}`);
-  window.remotion_setFrame(f, comp, 1);
+  let thrown;
+  window.__vs_clicks.addEventListener('click', () => {
+    try { window.remotion_setFrame(f, comp, 1); } catch (e) { thrown = e; }
+  }, {once: true});
+  window.__vs_clicks.dispatchEvent(new Event('click'));
+  if (thrown !== undefined) throw thrown;
   await window.__vs_ready(`frame ${f}`);
   await document.fonts.ready;
   return true;
@@ -560,15 +725,16 @@ def refuse_blank(ffmpeg, out, video):
 CHOSEN = {}
 
 
-def encoder(ffmpeg):
-    """The encoder this process encodes films with through `ffmpeg`: the card's (h264_nvenc with the NVIDIA device, or
-    h264_videotoolbox on a Mac) when that ffmpeg lists it and it encodes one frame, otherwise libx264."""
-    if ffmpeg not in CHOSEN:
-        CHOSEN[ffmpeg] = _probe(ffmpeg)
-    return CHOSEN[ffmpeg]
+def encoder(ffmpeg, size=(256, 256)):
+    """The encoder this process encodes films of `size` (width, height) with through `ffmpeg`: the card's (h264_nvenc
+    with the NVIDIA device, or h264_videotoolbox on a Mac) when that ffmpeg lists it and it encodes one frame of that
+    size, otherwise libx264."""
+    if (ffmpeg, size) not in CHOSEN:
+        CHOSEN[ffmpeg, size] = _probe(ffmpeg, size)
+    return CHOSEN[ffmpeg, size]
 
 
-def _probe(ffmpeg):
+def _probe(ffmpeg, size):
     want = "h264_nvenc" if GPU else "h264_videotoolbox" if sys.platform == "darwin" else None
     if not want:
         return "libx264"
@@ -576,7 +742,7 @@ def _probe(ffmpeg):
         listed = subprocess.run([ffmpeg, "-hide_banner", "-encoders"], capture_output=True, text=True, timeout=30).stdout
         if not re.search(rf"\s{want}\s", listed):
             return "libx264"
-        r = subprocess.run([ffmpeg, "-hide_banner", "-v", "error", "-f", "lavfi", "-i", "color=gray:s=256x256:r=30",
+        r = subprocess.run([ffmpeg, "-hide_banner", "-v", "error", "-f", "lavfi", "-i", f"color=gray:s={size[0]}x{size[1]}:r=30",
                             "-frames:v", "1", "-pix_fmt", "yuv420p", *ENCODERS[want], "-f", "null", "-"],
                            capture_output=True, text=True, timeout=60)
     except (OSError, subprocess.TimeoutExpired):
@@ -584,13 +750,71 @@ def _probe(ffmpeg):
     return want if r.returncode == 0 else "libx264"
 
 
-def encode(ffmpeg, codec, fps, first, total, frames, out):
-    """The PNG frames in `frames` as the film `out`, BT.709 tagged, faststart."""
-    return subprocess.run([ffmpeg, "-hide_banner", "-v", "error", "-y", "-framerate", str(fps), "-start_number", str(first),
-                           "-i", str(frames / "%06d.png"), "-frames:v", str(total),
-                           "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", *ENCODERS[codec],
-                           "-pix_fmt", "yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
-                           "-color_range", "tv", "-movflags", "+faststart", str(out)], capture_output=True, text=True)
+class Encoding:
+    """ffmpeg encoding the film `out` from PNG frames written into its input in frame order from `first`, BT.709
+    tagged, faststart. Every painted frame is kept in `folder`, where the frames cache takes it once the film passes
+    its checks: a frame that arrives ahead of its turn goes in from there once every frame before it is in, and a frame
+    in `kept` (frame to its file in the frames cache) goes in from its file at its turn. `write` is called from every
+    browser's thread."""
+
+    def __init__(self, ffmpeg, codec, fps, first, total, folder, out, kept=None):
+        self.next, self.folder, self.kept, self.early = first, folder, kept or {}, set()
+        self.lock, self.err = threading.Lock(), tempfile.TemporaryFile()
+        self.proc = subprocess.Popen([ffmpeg, "-hide_banner", "-v", "error", "-y", "-f", "image2pipe", "-framerate", str(fps),
+                                      "-c:v", "png", "-i", "-", "-frames:v", str(total),
+                                      "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", *ENCODERS[codec],
+                                      "-pix_fmt", "yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709",
+                                      "-color_trc", "bt709", "-color_range", "tv", "-movflags", "+faststart", str(out)],
+                                     stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=self.err)
+
+    def write(self, f, png):
+        (self.folder / f"{f:06d}.png").write_bytes(png)
+        with self.lock:
+            if f == self.next:
+                self._put(png)
+            else:
+                self.early.add(f)
+            self._drain()
+
+    def flush(self):
+        """Puts in the kept frames that are next in line."""
+        with self.lock:
+            self._drain()
+
+    def _put(self, png):
+        try:
+            self.proc.stdin.write(png)
+        except BrokenPipeError:
+            raise Failed(f"ffmpeg stopped taking frames at frame {self.next}: {self.close()[1][-600:]}") from None
+        self.next += 1
+
+    def _drain(self):
+        while True:
+            if self.next in self.early:
+                self.early.discard(self.next)
+                self._put((self.folder / f"{self.next:06d}.png").read_bytes())
+            elif self.next in self.kept:
+                try:
+                    png = self.kept[self.next].read_bytes()
+                except OSError:
+                    raise Failed(f"frame {self.next} left the frames cache before it went in") from None
+                self._put(png)
+            else:
+                return
+
+    def close(self):
+        """ffmpeg's return code and its error output once every frame is in."""
+        try:
+            self.proc.stdin.close()
+        except BrokenPipeError:
+            pass
+        rc = self.proc.wait()
+        self.err.seek(0)
+        return rc, self.err.read().decode(errors="replace").strip()
+
+    def kill(self):
+        self.proc.kill()
+        self.close()
 
 
 # ------------------------------------------------------------------------------------------------------------ render
@@ -603,6 +827,7 @@ class Renderer:
     def __init__(self, url, chromium_exe, ffmpeg, gl, tabs, browsers=1):
         self.url, self.exe, self.ffmpeg, self.gl, self.tabs, self.browsers = url, chromium_exe, ffmpeg, gl, tabs, browsers
         self.browser, self.pool, self.chosen, self.crew, self.encoder = None, None, {}, [], "libx264"
+        self.inputs = ""
 
     def fresh(self):
         self.close()
@@ -718,15 +943,15 @@ class Renderer:
                 progress()
                 start(page)
 
-    def film(self, job, comp, a, z, write, progress):
-        """Frames a..z of a film job across this browser and its crew, each member a thread taking the next frame from
-        one queue. The first failure empties the queue, so every member stops at its next frame, and is raised once
-        all of them have; a frame that never got ready is raised before any other failure."""
-        total = z - a + 1
+    def film(self, job, comp, todo, write, progress):
+        """The frames `todo` of a film job across this browser and its crew, each member a thread taking the next frame
+        from one queue. The first failure empties the queue, so every member stops at its next frame, and is raised
+        once all of them have; a frame that never got ready is raised before any other failure."""
+        total = len(todo)
         while len(self.crew) < min(self.browsers, total) - 1:
             self.crew.append(Renderer(self.url, self.exe, self.ffmpeg, self.gl, self.tabs))
         members = [self] + self.crew[:max(0, min(self.browsers, total) - 1)]
-        queue, errors = collections.deque(range(a, z + 1)), []
+        queue, errors = collections.deque(todo), []
 
         def work(m, k):
             try:
@@ -737,7 +962,7 @@ class Renderer:
                 mine = comp if m is self else m.select(job)
                 if mine["durationInFrames"] != comp["durationInFrames"]:
                     raise Failed("two browsers calculated the composition differently")
-                m.frames(job, comp, m.pages(job, comp, min(m.tabs, total), a + k * m.tabs, False), queue, write, progress)
+                m.frames(job, comp, m.pages(job, comp, min(m.tabs, total), todo[min(k * m.tabs, total - 1)], False), queue, write, progress)
             except BaseException as e:
                 errors.append(e)
                 queue.clear()
@@ -755,69 +980,97 @@ class Renderer:
         return members
 
     def run(self, job, t0):
-        """One attempt at a job; returns its findings and the frames it rendered."""
+        """One attempt at a job; returns its findings, the frames it rendered and the frames it painted."""
         b = self.browser
         b.findings.pop(job["out"], None)
         b.lost.pop(job["out"], None)
         b.errors.pop(job["out"], None)
         comp = self.select(job)
-        members = [self]
+        members, folder, hold = [self], None, None
         out = Path(job["out"])
         out.parent.mkdir(parents=True, exist_ok=True)
-        if job["type"] == "video":
-            n = comp["durationInFrames"]
-            if job.get("frames") is not None and job["frames"] != n:
-                raise Refused(f"the job plans {job['frames']} frames and the composition has {n}")
-            a, z = job.get("frameRange") or (0, n - 1)
-            if not (0 <= a <= z < n):
-                raise Refused(f"frameRange [{a}, {z}] is outside the composition's {n} frames")
-            total = z - a + 1
-            folder = private_dir(cache() / "frames", f"{out.stem}-")
-            try:
+        try:
+            if job["type"] == "video":
+                n = comp["durationInFrames"]
+                if job.get("frames") is not None and job["frames"] != n:
+                    raise Refused(f"the job plans {job['frames']} frames and the composition has {n}")
+                a, z = job.get("frameRange") or (0, n - 1)
+                if not (0 <= a <= z < n):
+                    raise Refused(f"frameRange [{a}, {z}] is outside the composition's {n} frames")
+                total = z - a + 1
+                store = cache() / "frames"
+                keys, kept = frame_keys(job, comp, range(a, z + 1), self.inputs), {}
+                for f, k in keys.items():
+                    # a reused frame is marked as just used, so the cap removes it last
+                    with contextlib.suppress(OSError):
+                        os.utime(store / f"{k}.png")
+                        kept[f] = store / f"{k}.png"
+                todo = [f for f in range(a, z + 1) if f not in kept]
+                painted = len(todo)
+                folder, hold = stage(store, out.stem)
+                scale = job.get("scale") or 1
+                codec = self.encoder if self.encoder == "libx264" else encoder(self.ffmpeg, (round(comp["width"] * scale),
+                                                                                             round(comp["height"] * scale)))
+                if kept:
+                    print(f"render {out.name}: {len(kept)} of {total} frames from the frames cache, {painted} to paint",
+                          file=sys.stderr, flush=True)
+                pipe = Encoding(self.ffmpeg, codec, comp["fps"], a, total, folder, out, kept)
                 done, last, counting = [0], [-1], threading.Lock()
-
-                def write(f, png):
-                    (folder / f"{f:06d}.png").write_bytes(png)
 
                 def progress():
                     with counting:
                         done[0] += 1
-                        p = done[0] * 10 // total
+                        p = done[0] * 10 // painted
                         if p == last[0]:
                             return
                         last[0] = p
                     print(f"render {out.name} {p * 10}% ({time.monotonic() - t0:.0f} s)", file=sys.stderr, flush=True)
 
-                members = self.film(job, comp, a, z, write, progress)
-                r = encode(self.ffmpeg, self.encoder, comp["fps"], a, total, folder, out)
-                if r.returncode != 0 and self.encoder != "libx264":
-                    why = (r.stderr.strip().splitlines() or ["no output"])[-1][:200]
-                    print(f"encoding {out.name} with libx264: {self.encoder} refused it ({why})", file=sys.stderr, flush=True)
-                    r = encode(self.ffmpeg, "libx264", comp["fps"], a, total, folder, out)
-                if r.returncode != 0:
-                    raise Failed(f"ffmpeg could not encode {out.name}: {r.stderr.strip()[-600:]}")
-            finally:
+                try:
+                    pipe.flush()
+                    if todo:
+                        members = self.film(job, comp, todo, pipe.write, progress)
+                except BaseException:
+                    pipe.kill()
+                    out.unlink(missing_ok=True)
+                    raise
+                rc, err = pipe.close()
+                if rc != 0:
+                    out.unlink(missing_ok=True)
+                    if codec != "libx264":
+                        # the next attempt renders the film again for libx264
+                        self.encoder = "libx264"
+                    raise Failed(f"ffmpeg could not encode {out.name} with {codec}: {err[-600:]}")
+            else:
+                frame, total, painted = min(int(job.get("frame") or 0), comp["durationInFrames"] - 1), 1, 1
+                pages = self.pages(job, comp, 1, frame, True)
+                self.frames(job, comp, pages, [frame], lambda f, png: out.write_bytes(png), lambda: None)
+            for m in members:
+                if job["out"] in m.browser.lost:
+                    raise Failed(f"the browser lost its graphics context: {m.browser.lost[job['out']]}")
+                if job["out"] in m.browser.errors:
+                    raise Failed(f"{out.name}: the page threw an error: {m.browser.errors[job['out']]}")
+            refuse_blank(self.ffmpeg, out, job["type"] == "video")
+            own = [{"job": job["out"], "text": t}
+                   for t in dict.fromkeys(t for m in members for t in m.browser.findings.get(job["out"], []))]
+            if job["out"].endswith(".part.mp4"):
+                Path(job["out"][:-len(".mp4")] + ".findings.json").write_text(json.dumps(own))
+            # a film whose composition logged a finding keeps none of its frames, so the next render paints them again
+            if folder and not own:
+                for f in todo:
+                    os.replace(folder / f"{f:06d}.png", store / f"{keys[f]}.png")
+                trim(store, FRAMES_CAP)
+        finally:
+            if folder:
                 shutil.rmtree(folder, ignore_errors=True)
-        else:
-            frame, total = min(int(job.get("frame") or 0), comp["durationInFrames"] - 1), 1
-            pages = self.pages(job, comp, 1, frame, True)
-            self.frames(job, comp, pages, [frame], lambda f, png: out.write_bytes(png), lambda: None)
-        for m in members:
-            if job["out"] in m.browser.lost:
-                raise Failed(f"the browser lost its graphics context: {m.browser.lost[job['out']]}")
-            if job["out"] in m.browser.errors:
-                raise Failed(f"{out.name}: the page threw an error: {m.browser.errors[job['out']]}")
-        refuse_blank(self.ffmpeg, out, job["type"] == "video")
-        own = [{"job": job["out"], "text": t}
-               for t in dict.fromkeys(t for m in members for t in m.browser.findings.get(job["out"], []))]
-        if job["out"].endswith(".part.mp4"):
-            Path(job["out"][:-len(".mp4")] + ".findings.json").write_text(json.dumps(own))
-        return own, total
+                os.close(hold)
+        return own, total, painted
 
 
 def render_jobs(jobs, public, dist=DIST, ffmpeg=None, chromium=None, gl="auto", tabs=None, browsers=None):
     """Renders the jobs in one browser, each film across it and its crew; returns the report: seconds, jobs, failed,
-    retries, gl, card, encoder (None when no job is a film), frames, findings, timings."""
+    retries, gl, card, encoder (None when no job is a film), frames, painted (the frames not taken from the frames
+    cache), findings, timings."""
     t_start = time.monotonic()
     exe = chromium or globals()["chromium"]()
     ffmpeg = ffmpeg or shutil.which("ffmpeg")
@@ -832,11 +1085,12 @@ def render_jobs(jobs, public, dist=DIST, ffmpeg=None, chromium=None, gl="auto", 
     browsers = browsers or max(1, min(8, (os.cpu_count() or 1) // 2))
     server, url = serve(dist, public)
     r = Renderer(url, exe, ffmpeg, gl, tabs, browsers)
+    r.inputs = frame_inputs(dist, public, exe, gl)
     codec = encoder(ffmpeg) if any(job["type"] == "video" for job in jobs) else None
     if codec:
         r.encoder = codec
         print(f"encoding with {codec}{'' if codec == 'libx264' else ' on the card'}", file=sys.stderr, flush=True)
-    findings, timings, failed, retries, frames = [], [], 0, 0, 0
+    findings, timings, failed, retries, frames, painted = [], [], 0, 0, 0, 0
     stopped = None
     try:
         for job in jobs:
@@ -853,7 +1107,7 @@ def render_jobs(jobs, public, dist=DIST, ffmpeg=None, chromium=None, gl="auto", 
                             retries += 1
                             print(f"retrying {Path(job['out']).name} (attempt {attempt} of 3): {str(error)[:200]}", file=sys.stderr, flush=True)
                         r.fresh()
-                    own, n = r.run(job, t0)
+                    own, n, drawn = r.run(job, t0)
                     findings += own
                     error = None
                     break
@@ -870,7 +1124,8 @@ def render_jobs(jobs, public, dist=DIST, ffmpeg=None, chromium=None, gl="auto", 
                     stopped = f"an earlier job stopped: {error}"
             else:
                 frames += n
-                timings.append({"out": job["out"], "seconds": round(time.monotonic() - t0, 2), "frames": n})
+                painted += drawn
+                timings.append({"out": job["out"], "seconds": round(time.monotonic() - t0, 2), "frames": n, "painted": drawn})
     finally:
         r.close()
         server.shutdown()
@@ -878,7 +1133,8 @@ def render_jobs(jobs, public, dist=DIST, ffmpeg=None, chromium=None, gl="auto", 
     seconds = round(time.monotonic() - t_start, 2)
     print(f"rendered {len(jobs) - failed} of {len(jobs)} jobs in {seconds:.1f} s on {gl}", file=sys.stderr, flush=True)
     return {"seconds": seconds, "jobs": len(jobs), "failed": failed, "retries": retries, "gl": gl,
-            "card": gl == "vulkan" and GPU, "encoder": codec, "frames": frames, "findings": findings, "timings": timings}
+            "card": gl == "vulkan" and GPU, "encoder": codec, "frames": frames, "painted": painted, "findings": findings,
+            "timings": timings}
 
 
 def _stop(signum, frame):
@@ -942,7 +1198,8 @@ def main():
         print(f["text"][:300], file=sys.stderr)
     if rep["failed"]:
         return 1
-    print(f"wrote {out} ({rep['frames']} frames in {rep['seconds']:.1f} s, {rep['frames'] / max(rep['seconds'], 0.01):.1f} frames a second, {rep['gl']})")
+    print(f"wrote {out} ({rep['frames']} frames, {rep['painted']} painted, in {rep['seconds']:.1f} s, "
+          f"{rep['frames'] / max(rep['seconds'], 0.01):.1f} frames a second, {rep['gl']})")
     return 0
 
 

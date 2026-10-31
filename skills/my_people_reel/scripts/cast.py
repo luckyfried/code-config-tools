@@ -10,7 +10,7 @@ cast.json, one entry per person in rank order and the one photograph of them tog
     {"group": {"file": ..., "point": [u, v], "heads": {"handle": [u, v], ...}, "month": 4, "keep_light": false, "shot": "..."},
      "people": {"handle": [{"file": ..., "point": [u, v], "tip": [u, v], "face": [u0, v0, u1, v1],
                             "close": 1.0 | {"frame": 1.25, "bar": 2.2, "slice": 1.0}, "keep_light": false, "shot": "...",
-                            "trim": [u0, v0, u1, v1]}, ...]}}
+                            "trim": [u0, v0, u1, v1], "clip": ...}, ...]}}
 Points are fractions of the photograph's width and height. `point` is what a crop keeps in view (the face, or the
 person when no face shows); `tip` is where their tag points (default: point), and the tag stands under it, so on a
 figure small in its photograph (a surfer on the shoreline, a walker on a hill) the tip goes at their feet and the tag
@@ -26,6 +26,9 @@ or more, four each for two, nine for one (a film about fewer people shows more o
 in it and how (hair lifting in the wind off the water, the crowd's hands rising as the stage light sweeps the
 haze); the clip request adds the lens, the height and the light measured from the photograph, the camera's own
 small move, the beat's length and the loop. The group and each person's first photograph carry one.
+`clip` is a clip the person recorded (an .mp4, .mov or .m4v of theirs): `file` is then its poster frame, the still the
+boards frame, and the film plays the recording on that card for its beat, from its strongest seconds and silent,
+with the arrival and move the photograph would have had. draft sets it when a person's best pick is a clip.
 
 draft starts each person from their best photograph (picks.json) and more of them, alone first, and the group
 from the photograph with the most of them in it, its heads spread evenly: look at each photograph and correct the
@@ -54,6 +57,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 
+VIDEO = {".mp4", ".mov", ".m4v"}  # a recorded clip, as picks.py reads one
+
 LONG = 2400
 # a framed photograph's picture: 9:16, no wider than this; its blurred copy, darkened to this share of its light
 TALL = 16 / 9
@@ -81,12 +86,17 @@ def cmd_draft(a):
         h = p["handle"]
         rows = []
         if h in best:
-            rows.append({"file": best[h]["src"], "point": best[h].get("focal") or [0.5, 0.45], "shot": ""})
+            b = best[h]
+            recorded = Path(b["src"]).suffix.lower() in VIDEO
+            rows.append({"file": b["photo"] if recorded else b["src"], "point": b.get("focal") or [0.5, 0.45], "shot": "",
+                         **({"clip": b["src"]} if recorded else {})})
         alone = [ph for ph in p.get("photos", []) if ph.get("with") == [h]]
         for ph in alone + [ph for ph in p.get("photos", []) if ph not in alone]:
             if len(rows) >= cap:
                 break
-            if ph["src"] not in {r["file"] for r in rows}:
+            if Path(ph["src"]).suffix.lower() in VIDEO:
+                continue
+            if ph["src"] not in {r["file"] for r in rows} | {r.get("clip") for r in rows}:
                 rows.append({"file": ph["src"], "point": [0.5, 0.45]})
         people[h] = rows
     wall = {w["photo"]: w for w in picks.get("wall", [])}

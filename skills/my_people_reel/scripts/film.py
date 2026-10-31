@@ -3,9 +3,13 @@
 (S/motion/studio, which renders the board in any of the three formats).
 
 USAGE (from the workspace root; S = this skill's folder; R = the run folder, build/<run stamp>/):
-    python3 S/scripts/film.py cut      # the timed cut: R/render/cut.mp4 (9:16 with the mastered music),
+    python3 S/scripts/film.py cut --proof
+                                       # the proof, every critic round before deliver: the timed cut at half size,
+                                       # R/render/proof-cut.mp4 (540x960), with the same strip, beats at rest and cue
+                                       # tiles in R/frames/ the full cut makes
+    python3 S/scripts/film.py cut      # the full-size cut deliver takes: R/render/cut.mp4 (9:16 with the mastered music),
                                        # R/frames/film-strip.jpg (12 fps), R/frames/NN-<beat>.png (each beat at rest)
-                                       # and R/frames/cues/ (the frames around each sound cue over its waveform)
+                                       # and R/frames/cues/ (the frames around each effect over its waveform)
     python3 S/scripts/film.py render   # once qa.py check passes on this cut and its critic round is scored:
                                        # out/film.mp4 (the cut), out/cover.png (the posted image: the closer at rest)
                                        # and out/story.png (the story card: the hook at rest, 1080x1920)
@@ -16,9 +20,11 @@ USAGE (from the workspace root; S = this skill's folder; R = the run folder, bui
 
 cut lays the storyboard in film.json out as the 9:16 drive board (R/render/board-reel.json) at the film's tempo, renders
 it through the studio's drive film (1080x1920, 30 fps, H.264 High; on the graphics card when there is one), lays the
-music under it and measures it: render/cut.json carries the cuts as planned and as the picture shows them, the luma
+board's effects (sfx.py: whooshes on the cuts, shutters and pops as photographs and tags land, impacts on the title,
+the slammed words and the wall, the riser into the wall, the room under it all, on the music's grid and in its key)
+over the mastered music under it and measures it (cut.json's `sound`: the effects' count and loudness): render/cut.json carries the cuts as planned and as the picture shows them, the luma
 line and its quiet seconds, and frames/ the 1 and 2 fps strips beside the 12 fps strip the critic reads. frames/cues/
-holds one tile per sound cue for the critic's sound read: the cut's frames every 0.2 s from 0.6 s before the cue to 0.8 s
+holds one tile per sound effect (sfx.py's events) for the critic's sound read: the cut's frames every 0.2 s from 0.6 s before the cue to 0.8 s
 after it in one row, over the waveform of the film's sound across the same span with the cue's time marked, each frame's
 left edge over its own time; frames/cues.json names each tile's cue, its frames' times and the music's onsets in the
 span. A board that has not changed since the last cut, drawn by the same built composition, is not rendered again. render takes the cut as the reel, renders its cover (the closer at
@@ -39,6 +45,12 @@ in, and once every format has rendered moves each deliverable into out/ by renam
 and the reel last; a render stopped between two renames leaves no out/film.mp4, which the gate and deliver.py refuse.
 deliver.py writes the page again. cut takes render/cut.json away before it lays the board out and writes it after the
 measure, so a cut stopped on the way is one no later command reads.
+--proof renders the cut at half size (proof.py) as R/render/proof-cut.mp4, beside render/cut.mp4 and never over it or
+over out/film.mp4; the beats at rest, the strip and the cue tiles come out at the size the full cut gives them, and
+render/cut.json carries the cut's `scale`. A full cut takes the proof away once it has measured, so
+render/proof-cut.mp4 is there only while the newest cut is the proof: qa.py check and vote.py cut read it, and render
+and deliver.py refuse it. render/cut.json's `cut` names the board and the music the cut was made from, so the critics'
+round on a proof moves to the full-size cut of the same board and music.
 """
 import argparse
 import hashlib
@@ -46,11 +58,13 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import boards  # noqa: E402
+import proof  # noqa: E402
 import studio  # noqa: E402
 
 FPS = 30
@@ -70,20 +84,33 @@ def file_sha(p):
     return sha(Path(p).read_bytes())
 
 
-def mux(run, silent, out, seconds):
-    """The picture with the master music.json names under it (AAC 192 kbps, 48 kHz); the picture alone when it names
-    none."""
-    ff = _env.ffmpeg()
-    named = (_env.read_json("music.json") or {}).get("master")
-    master = Path(named) if named else None
+def mux(run, silent, out, seconds, board):
+    """The picture with its sound at `out`: the board's effects (sfx.py, from the board's `effects`: on the music's grid
+    and in its key) over the master music.json names, the music coming down for each impact, the whole mix raised onto
+    sfx.TARGET_LUFS and measured again through sfx.LIMIT, as sfx.mux masters it; the effects and the room alone when it
+    names none. The effects are laid once: the one file is measured alone for qa.py's audio row and then mixed, and it
+    lives only while ffmpeg reads it. Returns the effects' count, the integrated loudness of the effects alone and
+    whether music is under them."""
+    import music
+    import sfx
+    record = _env.read_json("music.json") or {}
+    fx_board = board["effects"]
     out.parent.mkdir(parents=True, exist_ok=True)
-    if master and master.exists():
-        cmd = [ff, "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a", "-c:v", "copy",
-               "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{seconds:.3f}", "-movflags", "+faststart", str(out)]
-    else:
-        cmd = [ff, "-y", "-v", "error", "-i", str(silent), "-c:v", "copy", "-movflags", "+faststart", str(out)]
-    run.spawn(cmd, check=True)
-    return bool(master and master.exists())
+    master = record.get("master")
+    bed = master if master and Path(master).is_file() else None
+    ff = _env.ffmpeg()
+    with tempfile.TemporaryDirectory(dir=out.parent) as d:
+        fx = Path(d) / "fx.wav"
+        chans, impacts = sfx.lay(fx_board, seconds, record)
+        sfx.write(fx, chans)
+        lufs = music.integrated_file(fx)
+        gain = 0.0
+        if bed:
+            gain = sfx.TARGET_LUFS - sfx.loudness(run.spawn, ff, silent, fx, bed, seconds, impacts, "")
+            gain += sfx.TARGET_LUFS - sfx.loudness(run.spawn, ff, silent, fx, bed, seconds, impacts, f"volume={gain:.2f}dB,{sfx.LIMIT}")
+        run.spawn(sfx.mux_cmd(ff, silent, fx, out, seconds, impacts, bed, gain), check=True)
+    events, _ = sfx.events(fx_board, sfx.music_of(fx_board, record)[0])
+    return {"effects": len(events), "fx_lufs": round(lufs, 2), "music": bool(bed)}
 
 
 def the_film():
@@ -107,44 +134,52 @@ def frames_of(board):
     return starts, run
 
 
-def strip_and_rests(run, board, starts):
-    """The critic's view of the cut: a 12 fps strip of the whole film, 24 frames a row, and every beat at rest."""
+def strip_and_rests(run, board, starts, cut=CUT, silent=SILENT):
+    """The critic's view of the cut: a 12 fps strip of the whole film, 24 frames a row, and every beat at rest, each at
+    one size whatever the cut's scale."""
     ff = _env.ffmpeg()
     d = Path("frames")
     if d.exists():
         shutil.rmtree(d)
     d.mkdir()
     secs = sum(b["frames"] for b in board["beats"]) / FPS
-    run.spawn([ff, "-y", "-v", "error", "-i", str(CUT), "-vf", f"fps=12,scale=-2:300,tile=24x{int(secs * 12 + 23) // 24}",
+    run.spawn([ff, "-y", "-v", "error", "-i", str(cut), "-vf", f"fps=12,scale=-2:300,tile=24x{int(secs * 12 + 23) // 24}",
                "-frames:v", "1", "-update", "1", str(d / "film-strip.jpg")], check=True)
     for i, (s, b) in enumerate(zip(starts, board["beats"]), 1):
         n = s + b.get("rest", b["frames"] - 2)
-        run.spawn([ff, "-y", "-v", "error", "-i", str(SILENT), "-vf", f"select='eq(n\\,{n})',scale=540:-1", "-frames:v", "1",
+        run.spawn([ff, "-y", "-v", "error", "-i", str(silent), "-vf", f"select='eq(n\\,{n})',scale=540:-1", "-frames:v", "1",
                    "-update", "1", str(d / f"{i:02d}-{b['id']}.png")], check=True)
 
 
 STEP, BEFORE, SHOWN, TILE_W = 0.2, 0.6, 8, 180
+WHAT = {"air": "a soft whoosh on the cut", "sweep": "a warm whoosh on the cut", "bright": "the film's one bright whoosh, on its first cut",
+        "shutter": "a photograph lands", "pop": "a mark or a tag lands", "impact": "a title or a slammed word lands, or the wall settles",
+        "riser": "the build into the wall, cut off as it settles"}
 
 
-def cue_tiles(run, board, music):
-    """The critic's sound read, one tile per sound cue in frames/cues/, and frames/cues.json (the module's USAGE says
-    what each holds). A cut with no music has no sound to read, and cues.json says so."""
+def cue_tiles(run, board, cut=CUT):
+    """The critic's sound read, one tile per effect in frames/cues/, and frames/cues.json (the module's USAGE says
+    what each holds). A cut with no music still carries its effects and the room, so every cut has its tiles."""
     d = Path("frames/cues")
     d.mkdir(parents=True, exist_ok=True)
-    if not music:
-        _env.write_json("frames/cues.json", {"cues": [], "why": "the cut has no sound: there is no music under it"})
-        return
     secs = sum(b["frames"] for b in board["beats"]) / FPS
     span, wide = STEP * SHOWN, TILE_W * SHOWN
     start = float((_env.read_json("film.json") or {}).get("music_start") or 0)
     onsets = [t - start for t in (_env.read_json("music.json") or {}).get("onsets") or []]
     out = []
-    for i, c in enumerate(sorted(board.get("sound") or [], key=lambda c: c["at"]), 1):
-        at = c["at"] * 60 / board["bpm"]
+    import sfx
+    fx = board["effects"]
+    events, _ = sfx.events(fx, sfx.music_of(fx, _env.read_json("music.json") or {})[0])
+    starts_s, t = [], 0
+    for b in board["beats"]:
+        starts_s.append((t / FPS, b["id"]))
+        t += b["frames"]
+    for i, (at, kind) in enumerate(events, 1):
+        c = {"kind": kind, "beat": [bid for s0, bid in starts_s if s0 <= at + 1e-6][-1], "what": WHAT[kind]}
         t0 = min(max(0.0, at - BEFORE), max(0.0, secs - span))
         tile = d / f"{i:02d}-{c['kind']}-{at:.2f}.png"
         x = round((at - t0) / span * wide)
-        run.spawn([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{t0:.3f}", "-t", f"{span:.3f}", "-i", str(CUT), "-filter_complex",
+        run.spawn([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{t0:.3f}", "-t", f"{span:.3f}", "-i", str(cut), "-filter_complex",
                    f"[0:v]fps={1 / STEP:g},scale={TILE_W}:-2,tile={SHOWN}x1,format=rgba[v];"
                    f"[0:a]showwavespic=s={wide}x160:colors=0xf4efe8,drawbox=x={x}:y=0:w=3:h=160:color=0xe0402a:t=fill,format=rgba[w];"
                    "[v][w]vstack", "-frames:v", "1", "-update", "1", str(tile)], check=True)
@@ -200,6 +235,8 @@ def publish(src, out):
 def cmd_cut(a, run):
     f = the_film()
     ctx = boards.Ctx()
+    scale = proof.SCALE if getattr(a, "proof", False) else 1
+    cut, silent = (proof.of(CUT), proof.of(SILENT)) if scale != 1 else (CUT, SILENT)
     prior = _env.read_json("render/cut.json") or {}
     # cut.json names the cut, its board and what it measured, so it goes before the board is laid out again and comes
     # back after the measure: a cut stopped on the way leaves none, and qa.py check, vote.py cut and film.py render refuse
@@ -210,34 +247,41 @@ def cmd_cut(a, run):
     drawn = sorted((q.relative_to(studio.DIST).as_posix(), file_sha(q)) for q in studio.DIST.rglob("*") if q.is_file())
     key = sha({"board": board, "clips": studio.props(board)["clips"], "drawn": drawn})
     rep = None
-    if prior.get("board") == key and SILENT.exists() and not a.again:
+    if prior.get("board") == key and prior.get("scale", 1) == scale and silent.exists() and not a.again:
         print("the board has not changed since the last cut; laying the music under it again")
     else:
-        jobs = [studio.video(board, SILENT, total)]
+        jobs = [studio.video(board, silent, total, scale=scale)]
         rep = studio.render(jobs, "cut", run)
         for x in rep.get("findings", []):
             print("finding:", x["text"][:400])
-        white = drew_white(run, [SILENT]) if SILENT.exists() else []
-        if rep.get("failed") or not SILENT.exists() or white:
+        white = drew_white(run, [silent]) if silent.exists() else []
+        if rep.get("failed") or not silent.exists() or white:
             print("the cut did not render" + (f": white frames in {'; '.join(white)}" if white else "")
                   + "; render/cut-report.json and render/cut.log name the failure")
             return 1
-    music = mux(run, SILENT, CUT, total / FPS)
-    strip_and_rests(run, board, starts)
-    cue_tiles(run, board, music)
-    m = studio.measure(CUT, [s / FPS for s in starts[1:]], boards.hook_frame(board), strips=Path("frames"), run=run)
+    sound = mux(run, silent, cut, total / FPS, board)
+    music = sound["music"]
+    strip_and_rests(run, board, starts, cut, silent)
+    cue_tiles(run, board, cut)
+    m = studio.measure(cut, [s / FPS for s in starts[1:]], boards.hook_frame(board), strips=Path("frames"), run=run, name="cut")
     roles = boards.roles(board)
-    info = {"board": key, "film": file_sha(CUT), "style": f["style"], "bpm": f["bpm"], "frames": total, "seconds": round(total / FPS, 3),
+    # the full-size cut takes the proof's place: render/proof-cut.mp4 stays only while the newest cut is the proof
+    for old in ([] if scale != 1 else (proof.of(CUT), proof.of(SILENT))):
+        old.unlink(missing_ok=True)
+    master = (_env.read_json("music.json") or {}).get("master")
+    info = {"board": key, "cut": sha({"board": key, "master": master}), "film": file_sha(cut), "scale": scale,
+            "style": f["style"], "bpm": f["bpm"], "frames": total, "seconds": round(total / FPS, 3),
             "beats": [{"id": b["id"], "start": s, "frames": b["frames"]} for b, s in zip(board["beats"], starts)],
             "hook_frame": boards.hook_frame(board), "roles": {k: board["beats"][i]["id"] for k, i in roles.items()},
-            "cards": f["storyboard"].get("cards", {}), "music": music, "measure": m,
+            "cards": f["storyboard"].get("cards", {}), "music": music, "sound": sound, "measure": m,
             "render": {k: rep.get(k) for k in ("seconds", "cpu_seconds", "gpu")} if rep else prior.get("render")}
     eng = _env.read_json("engine.json") or {}
     eng.update(engine="remotion", cut=info["render"])
     _env.write_json("engine.json", eng)
     _env.write_json(CUT_JSON, info)
     r = info["render"] or {}
-    print(f"cut: {total / FPS:.1f} s, {len(board['beats'])} beats, {m['cuts']} cuts{' with music' if music else ' (no music)'} -> {CUT}; "
+    print(f"cut: {total / FPS:.1f} s, {len(board['beats'])} beats, {m['cuts']} cuts{' with music' if music else ' (no music)'} -> {cut}"
+          f"{' (the half-size proof)' if scale != 1 else ''}; "
           f"strips and rests in frames/; render {r.get('seconds')} s wall, {r.get('cpu_seconds')} CPU-s")
     return 0
 
@@ -256,6 +300,9 @@ CARDS_JSON = Path("cards.json")
 def cmd_render(a, run):
     import vote
     f = the_film()
+    if proof.scale(CUT) != 1:
+        sys.exit(f"the newest cut is the half-size proof {proof.of(CUT)}: run film.py cut for the full-size cut, then "
+                 "qa.py check and vote.py cut, where the critics read the type at full size, then film.py render")
     cut = _env.read_json("render/cut.json") or {}
     if not CUT.exists() or not cut:
         sys.exit("render/cut.mp4 is missing: run film.py cut first")
@@ -273,9 +320,9 @@ def cmd_render(a, run):
     reel = _env.read_json("render/board-reel.json")
     starts, _ = frames_of(reel)
     videos = [Path(f"render/{kind}-silent.mp4") for kind in kinds]
-    jobs = []
+    jobs, boards_of = [], {}
     for kind, v in zip(kinds, videos):
-        board = board_for(f, ctx, kind)
+        board = boards_of[kind] = board_for(f, ctx, kind)
         jobs.append(studio.video(board, v, frames_of(board)[1]))
     ids = [b["id"] for b in reel["beats"]]
     # the cover, the image the reel is posted with: the closer at rest
@@ -311,7 +358,7 @@ def cmd_render(a, run):
     staged = {"reel": Path("render/film.mp4"), "square": Path("render/film-square.mp4"), "wide": Path("render/film-wide.mp4")}
     shutil.copyfile(CUT, staged["reel"])
     for kind, v in zip(kinds, videos):
-        mux(run, v, staged[kind], cut["frames"] / FPS)
+        mux(run, v, staged[kind], cut["frames"] / FPS, boards_of[kind])
     # out/film.mp4 is the index of out/: the gate holds it against the checked cut and deliver.py starts only when it is
     # there, so it goes before the first file moves in and comes back after the last. The review page speaks for the
     # whole delivered set, so it goes first; deliver.py writes it again.
@@ -348,6 +395,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["cut", "render"])
     ap.add_argument("--again", action="store_true", help="cut: run the render even when the board has not changed (its finished chunks are kept)")
+    ap.add_argument("--proof", action="store_true",
+                    help="cut: the cut at half size as render/proof-cut.mp4, for every critic round before deliver")
     ap.add_argument("--also", nargs="*", choices=ALSO, default=[],
                     help="render: what the person asked for beyond the reel (the wide film, the square film, the story cards)")
     a = ap.parse_args()

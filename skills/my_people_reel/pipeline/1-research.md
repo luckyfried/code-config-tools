@@ -81,12 +81,15 @@ silhouette or hands), `tip` (where their tag points: on the person, never on a t
 on the photograph with every person's tag in a row under the title). For the group photograph
 and each person's first one, write `shot`: the clip a cinematographer would make of it, in one sentence of your own
 from what you see (who or what moves in it, and how); the lens, the height, the light, the camera's own small move,
-the length and the loop are measured and added to it. Swap a photograph that
+the length and the loop are measured and added to it. When a person's best moment is a clip they recorded, draft
+sets its poster frame as `file` and the recording as `clip`: frame the poster like a photograph, and the film plays
+the recording on that card. Swap a photograph that
 does not show the person, shows them too small to read as a person, or carries someone else's mark (a photographer's
 watermark) for another of theirs from `R/photos/`, and when none other shows them, set `trim` to the part of it
 that leaves the mark out (its corners as fractions of the whole photograph; every point stays a place on the whole);
 set `keep_light` on one whose light is the point (a
-sunset silhouette, a night lit by a fire). `cast.py --help` has every key. Then:
+sunset silhouette, a night lit by a fire). A card stamps the month its first photograph was taken: a first photograph
+other than the one of their moment stamps its own month, without the moment's place. `cast.py --help` has every key. Then:
 
 ```
 python3 S/scripts/cast.py match

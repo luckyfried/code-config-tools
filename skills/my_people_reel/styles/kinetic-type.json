@@ -38,18 +38,33 @@
       ]
     },
     {
-      "id": "width-stretch",
-      "fits": [
-        "words",
-        "place"
-      ]
-    },
-    {
       "id": "marquee",
       "fits": [
         "photo",
         "landscape",
         "wall"
+      ]
+    },
+    {
+      "id": "picture-tunnel",
+      "fits": [
+        "photo",
+        "peak"
+      ],
+      "once": true
+    },
+    {
+      "id": "exploded-layers",
+      "fits": [
+        "photo",
+        "peak"
+      ]
+    },
+    {
+      "id": "width-stretch",
+      "fits": [
+        "words",
+        "place"
       ]
     },
     {

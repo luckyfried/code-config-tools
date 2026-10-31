@@ -110,20 +110,23 @@ class CueTiles(unittest.TestCase):
         self.addCleanup(os.chdir, cwd)
         _env.tools()
 
-    def test_each_sound_cue_gets_the_frames_around_it_over_the_waveform(self):
+    def test_each_effect_gets_the_frames_around_it_over_the_waveform(self):
         import film
         Path("render").mkdir()
         subprocess.run([_env.ffmpeg(), "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=s=108x192:r=30:d=4", "-f", "lavfi",
                         "-i", "sine=frequency=440:duration=4", "-shortest", "-pix_fmt", "yuv420p", "-c:a", "aac", str(film.CUT)],
                        check=True)
-        _env.write_json("music.json", {"onsets": [1.0, 2.5, 3.9]})
+        _env.write_json("music.json", {"onsets": [1.0, 2.5, 3.9], "bpm": 120})
         _env.write_json("film.json", {"music_start": 0.5})
-        board = {"bpm": 120, "beats": [{"frames": 60}, {"frames": 60}],
-                 "sound": [{"at": 4, "kind": "impact", "beat": "b", "what": "the wall lands"}, {"at": 0, "kind": "hit", "beat": "a", "what": "the hook"}]}
-        film.cue_tiles(types.SimpleNamespace(spawn=subprocess.run), board, True)
+        fx = {"id": "t", "bpm": 120, "beats": [
+            {"id": "a", "form": "photo", "start": 0, "layers": [{"kind": "Photo", "at": 0}]},
+            {"id": "b", "form": "wall", "start": 4, "layers": [{"kind": "Closer", "at": 4}]}]}
+        board = {"bpm": 120, "beats": [{"id": "a", "frames": 60}, {"id": "b", "frames": 60}], "effects": fx}
+        film.cue_tiles(types.SimpleNamespace(spawn=subprocess.run), board)
         cues = _env.read_json("frames/cues.json")["cues"]
-        self.assertEqual([c["kind"] for c in cues], ["hit", "impact"])
-        hook, wall = cues
+        self.assertEqual([c["kind"] for c in cues], ["shutter", "impact", "riser"])
+        self.assertEqual([c["beat"] for c in cues], ["a", "b", "b"])
+        hook, wall, _ = cues
         self.assertEqual(wall["at"], 2.0)
         self.assertEqual(wall["frames"][0], 1.4)
         self.assertEqual(len(wall["frames"]), 8)
@@ -134,13 +137,6 @@ class CueTiles(unittest.TestCase):
         size = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "stream=width,height", "-of", "csv=p=0", wall["tile"]],
                               capture_output=True, text=True).stdout.strip()
         self.assertEqual(size, f"{8 * film.TILE_W},{320 + 160}")
-
-    def test_a_cut_with_no_music_says_its_sound_cannot_be_read(self):
-        import film
-        film.cue_tiles(types.SimpleNamespace(spawn=subprocess.run), {"bpm": 120, "beats": [], "sound": [{"at": 1, "kind": "hit"}]}, False)
-        data = _env.read_json("frames/cues.json")
-        self.assertEqual(data["cues"], [])
-        self.assertIn("no sound", data["why"])
 
 
 if __name__ == "__main__":

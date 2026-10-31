@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Movement 4, beside the cut: the generated clips the storyboard asks for, conformed and placed on their cards.
+"""Movement 4, beside the cut: the clips the storyboard asks for, conformed and placed on their cards: the ones a
+video model generates from a photograph, and the ones the person recorded themselves.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/clips.py list --run R                    # every clip: its prompt, length, photo, the file to save
@@ -11,11 +12,17 @@ in the words its own photograph's light measures (board_drive.light_of). list wr
 clips/requests.json and prints one block per clip; the agent generates each clip from the named photograph with its
 video model and saves it as clips/NN.mp4 in the run (.mov, .webm and .m4v are read too).
 
+A card whose photograph is the poster of a clip the person recorded (role "their own clip", with its `source`) asks
+nothing of the model: normalize plays the recording itself, one shot the length of its beat cut from its strongest
+seconds (strongest(): where it moves most, sharp and well lit), without its sound. requests.json and clips.json
+carry that shot's `from` and `to`, seconds of the recording.
+
 normalize scales and crops each file to its photograph's own size, so the film maps it onto the card exactly where
 the photograph was, conforms it to 30 fps, trims it to its beat (looping a short file) and writes its frames as
-public/clips/NN-<digest>/0001.jpg onward. The film shows those frames on the photograph's card while the clip's beat plays. A
-clip that did not arrive stands in: the film makes the camera or depth move the storyboard names for it on the
-still photograph. clips.json records every clip as generated or stand-in, and brief.md lists them.
+public/clips/NN-<digest>/0001.jpg onward. The film shows those frames on the photograph's card while the clip's beat
+plays, with the card's own arrival and move. A generated clip that did not arrive stands in: the film makes the camera
+or depth move the storyboard names for it on the still photograph. clips.json records every clip as generated, their
+own, or stand-in, and brief.md lists them.
 """
 import argparse
 import hashlib
@@ -65,6 +72,46 @@ def size_of(image):
     return w - w % 2, h - h % 2
 
 
+def duration(src):
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+RATE, WIDE = 4, 48  # the recording is read RATE samples a second, WIDE pixels wide
+
+
+def strongest(src, seconds):
+    """(from, to): the `seconds` of the recording `src` that read strongest, sampled RATE times a second: movement from
+    the sample before, edge detail, and light near the middle of the range, the whole span's mean; a recording no longer
+    than `seconds` plays from its start."""
+    total = duration(src)
+    if total <= seconds + 1 / RATE:
+        return 0.0, round(total, 2)
+    h = WIDE * 16 // 9
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(src), "-an", "-vf", f"fps={RATE},scale={WIDE}:{h},format=gray",
+                        "-f", "rawvideo", "-"], capture_output=True)
+    n = WIDE * h
+    frames = [r.stdout[k:k + n] for k in range(0, len(r.stdout) - n + 1, n)]
+    score, before = [], None
+    for f in frames:
+        light = sum(f) / n / 255
+        sharp = sum(abs(f[i] - f[i + 1]) for i in range(0, n - 1, 3)) / (n / 3) / 255
+        move = sum(abs(f[i] - before[i]) for i in range(0, n, 3)) / (n / 3) / 255 if before else 0.0
+        score.append(min(1.0, move / 0.04) * 0.5 + min(1.0, sharp / 0.08) * 0.3 + (1 - min(1.0, abs(light - 0.48) * 2)) * 0.2)
+        before = f
+    if len(score) > 1:
+        score[0] = score[1]
+    span = max(1, round(seconds * RATE))
+    starts = range(0, max(1, len(score) - span + 1))
+    best = max(starts, key=lambda i: (sum(score[i:i + span]), -i)) if score else 0
+    t0 = min(best / RATE, max(0.0, total - seconds))
+    return round(t0, 2), round(t0 + seconds, 2)
+
+
 def cmd_list(a):
     b = board()
     win = windows(b)
@@ -73,11 +120,20 @@ def cmd_list(a):
     for c in b.get("clips") or []:
         w, h = size_of(c["image"])
         secs = round(max(c.get("seconds") or 0, win[c["beat"]][1] / FPS), 1)
-        reqs.append({"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "size": f"{w}x{h}",
-                     "image": str((PUBLIC / c["image"]).resolve()), "prompt": c["prompt"],
-                     "save_as": str((CLIPS / f"{c['id']}.mp4").resolve()), "stand_in": c["stand_in"]})
+        r = {"id": c["id"], "beat": c["beat"], "role": c["role"], "seconds": secs, "size": f"{w}x{h}",
+             "image": str((PUBLIC / c["image"]).resolve()), "prompt": c["prompt"], "stand_in": c["stand_in"]}
+        if c.get("source"):
+            r["from"], r["to"] = strongest(c["source"], win[c["beat"]][1] / FPS)
+            r["source"] = c["source"]
+        else:
+            r["save_as"] = str((CLIPS / f"{c['id']}.mp4").resolve())
+        reqs.append(r)
     _env.write_json(CLIPS / "requests.json", {"clips": reqs})
     for r in reqs:
+        if r.get("source"):
+            print(f"clip {r['id']} for {r['beat']} ({r['role']}), {r['seconds']} s: their own recording {r['source']}, "
+                  f"seconds {r['from']:g} to {r['to']:g}, silent; nothing to generate")
+            continue
         print(f"clip {r['id']} for {r['beat']} ({r['role']}), {r['seconds']} s at {r['size']} -> {r['save_as']}")
         print(f"  image-to-video from: {r['image']}")
         print(f"  prompt: {r['prompt']}")
@@ -85,12 +141,13 @@ def cmd_list(a):
     return 0
 
 
-def conform(cid, src, image, frames):
-    """The clip at the photograph's size, 30 fps, `frames` long, as one JPEG per frame in public/clips/<id>-<digest>/,
-    the digest naming the file and the conform; returns (frames, error, folder). The folder is made under its part
-    name and moved in whole, so a folder of that name is always finished and is kept."""
+def conform(cid, src, image, frames, start=0.0):
+    """The clip at the photograph's size, 30 fps, `frames` long from `start` seconds in, without its sound, as one JPEG
+    per frame in public/clips/<id>-<digest>/, the digest naming the file and the conform; returns (frames, error,
+    folder). The folder is made under its part name and moved in whole, so a folder of that name is always finished
+    and is kept."""
     w, h = size_of(image)
-    name = f"{cid}-{hashlib.sha256(Path(src).read_bytes() + f'|{frames}|{w}x{h}|{FPS}'.encode()).hexdigest()[:12]}"
+    name = f"{cid}-{hashlib.sha256(Path(src).read_bytes() + f'|{frames}|{w}x{h}|{FPS}|{start}'.encode()).hexdigest()[:12]}"
     dst = PUBLIC / "clips" / name
     if dst.exists():
         return len(list(dst.glob("*.jpg"))), "", name
@@ -98,8 +155,8 @@ def conform(cid, src, image, frames):
     shutil.rmtree(tmp, ignore_errors=True)
     tmp.mkdir(parents=True)
     vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS}"
-    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-i", str(src), "-frames:v", str(frames),
-                        "-vf", vf, "-q:v", "2", str(tmp / "%04d.jpg")], capture_output=True, text=True)
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-ss", f"{start:.3f}", "-i", str(src), "-an",
+                        "-frames:v", str(frames), "-vf", vf, "-q:v", "2", str(tmp / "%04d.jpg")], capture_output=True, text=True)
     n = len(list(tmp.glob("*.jpg")))
     if r.returncode or not n:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -117,6 +174,20 @@ def cmd_normalize(a):
     for c in b.get("clips") or []:
         at, n = win[c["beat"]]
         rec = {"beat": c["beat"], "role": c["role"], "image": c["image"], "prompt": c["prompt"], "from_frame": at}
+        if c.get("source"):
+            # their own recording: one shot as long as the beat, from its strongest seconds
+            src = Path(c["source"])
+            t0, t1 = strongest(src, n / FPS) if src.exists() else (0.0, 0.0)
+            got, err, name = conform(c["id"], src, c["image"], n, t0) if src.exists() else (0, "it is not there", None)
+            if got:
+                rec.update(status="their_clip", source=str(src), dir=f"clips/{name}", frames=got, **{"from": t0, "to": t1})
+            else:
+                rec.update(status="stand-in", stand_in="their photograph holds on the card",
+                           why=f"could not read their clip {src.name}: {err}")
+            out[c["id"]] = rec
+            print(f"clip {c['id']} ({c['beat']}): " + (f"their own, seconds {t0:g} to {t1:g}, {got} frames -> public/{rec['dir']}/"
+                                                        if got else f"stand-in ({rec['why']})"))
+            continue
         src = arrived(c["id"])
         got, err, name = conform(c["id"], src, c["image"], n) if src else (0, "", None)
         if got:
@@ -132,15 +203,16 @@ def cmd_normalize(a):
     for old in sorted((PUBLIC / "clips").iterdir()) if (PUBLIC / "clips").exists() else []:
         if old.name not in named:
             shutil.rmtree(old, ignore_errors=True)
-    g = sum(1 for r in out.values() if r["status"] == "generated")
-    print(f"clips: {g} generated, {len(out) - g} stand-in -> clips.json")
+    n = {k: sum(1 for r in out.values() if r["status"] == k) for k in ("generated", "their_clip", "stand-in")}
+    print(f"clips: {n['generated']} generated, {n['their_clip']} their own, {n['stand-in']} stand-in -> clips.json")
     return 0
 
 
 def placed():
-    """The generated clips the film shows, for the composition's props: where each starts and its frames."""
+    """The clips the film shows, generated and their own, for the composition's props: where each starts and its
+    frames."""
     return [{"id": k, "image": r["image"], "from": r["from_frame"], "frames": r["frames"], "dir": r["dir"]}
-            for k, r in ((_env.read_json("clips.json") or {}).get("clips") or {}).items() if r.get("status") == "generated"]
+            for k, r in ((_env.read_json("clips.json") or {}).get("clips") or {}).items() if r.get("status") in ("generated", "their_clip")]
 
 
 def main():

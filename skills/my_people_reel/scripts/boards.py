@@ -29,6 +29,10 @@ def said(t):
     return re.sub(r"(\s*@[\w.]+)+\s*$", "", re.sub(r"\s+", " ", EMOJI.sub("", t)).strip()).strip() or None
 
 
+MONTHS = ("january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november",
+          "december")
+
+
 class Person:
     """A person of the film: `told` is their entry in taste.json, which carries their moment (`when`, `where`, `what`:
     the month and place of the photograph of the two of them, and the person's caption of it) and `line`, the words the
@@ -55,6 +59,14 @@ class Person:
             if said(x.get("they")) and said(own):
                 self.replies.setdefault(said(x["they"]), said(own))
 
+    def taken(self, month, lowercase=True):
+        """The stamp names the month the card's photograph was taken: a moment's month that photograph was not taken in
+        gives way to its own month, and the moment's place goes with it."""
+        name = MONTHS[month - 1] if month else None
+        if name and self.when.lower() in MONTHS and self.when.lower() != name:
+            self.when, self.where = name, None
+            self.stamp = name if lowercase else name.title()
+
 
 class Ctx:
     """The run's people and photographs, read from people.json, taste.json and cast.json."""
@@ -78,6 +90,11 @@ class Ctx:
         cap = _env.per_person(len(cast["people"]))
         self.photos = L.Photos({**cast, "people": {h: rows[:cap] for h, rows in cast["people"].items()}}, "public")   # the photographs match carried
         self.cast = self.photos.cast
+        # the month each photograph was taken, from the index picks.py wrote
+        taken = {x["src"]: x.get("month") for x in _env.read_json("photo_index.json") or [] if x.get("src")}
+        for p in self.people:
+            first = (cast["people"].get(p.handle) or [{}])[0]
+            p.taken(taken.get(first.get("file")), lowercase)
         self.by = {p.handle: p for p in self.people}
 
     def person(self, h):

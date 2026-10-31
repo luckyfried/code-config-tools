@@ -88,7 +88,9 @@ class Final(unittest.TestCase):
         for patch in (
             mock.patch.object(film, "the_film", lambda: {"storyboard": {"cards": {"ana": "a", "bo": "b"}}}),
             mock.patch.object(film.boards, "Ctx", lambda: types.SimpleNamespace(people=people)),
-            mock.patch.object(film, "board_for", lambda f, ctx, kind: {"beats": beats, "kind": kind}),
+            mock.patch.object(film, "board_for", lambda f, ctx, kind: {"beats": beats, "kind": kind, "effects": {
+                "id": "t", "bpm": 120, "beats": [{"id": "a", "form": "photo", "start": 0.0, "move": None, "transition": None,
+                                                  "layers": [{"kind": "Photo", "at": 0.0}]}]}}),
             mock.patch.object(film, "frames_of", lambda b: ([0, 15], 30)),
             mock.patch.object(film.studio, "props", lambda b: {"board": b}),
             mock.patch.object(film.studio, "render", self.render),

@@ -110,7 +110,7 @@ export type Layer = {
 
 export type Beat = {
   id: string;
-  /** the form this beat plays: title (the hook), photo (a person's card), wall (the closer) */
+  /** the form this beat plays: title (the hook), photo (a person's card), clip (a card that plays their own recording), wall (the closer) */
   form?: string;
   /** length in bars of the track: 1, 2 or 4 */
   bars: number;
@@ -125,6 +125,8 @@ export type Beat = {
   layers: Layer[];
   /** the box, in format px, that a card beat's type and tags fill; the camera keeps it inside the safe area */
   keep?: [number, number, number, number];
+  /** the words a move that sets its own words carries on a card beat (slam-words, exploded-layers, counter) */
+  say?: string;
 };
 
 export type Board = {
@@ -144,7 +146,7 @@ export type Board = {
   said_by?: string;
   system: System;
   beats: Beat[];
-  /** the board's sound cues, `at` in musical beats from the film's start; its `stop` is where picture and sound stop together */
+  /** `stop`, in musical beats from the film's start: where the picture and the music stop together */
   sound?: {kind: string; at: number}[];
 };
 

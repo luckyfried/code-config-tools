@@ -128,9 +128,9 @@ def luma_line(mp4, run=None):
     return [round(y, 2) for y in ya]
 
 
-def measure(mp4, planned, hook_frame=None, strips=None, run=None):
+def measure(mp4, planned, hook_frame=None, strips=None, run=None, name=None):
     """Duration; the cuts, as the planned shot changes joined with the scene-score cuts (scene > 0.12 at 270x480) more
-    than 0.2 s from every one of them, and per minute; the luma line (`luma_line`) and its quiet seconds (`under_half`); and the 1 and 2 fps strips in the folder `strips` (beside the file when it is None). All of it is figures: nothing here passes or fails.
+    than 0.2 s from every one of them, and per minute; the luma line (`luma_line`) and its quiet seconds (`under_half`); and the 1 and 2 fps strips in the folder `strips` (beside the file when it is None), named for `name` (the file's own name when None: cut-strip.png for cut.mp4). All of it is figures: nothing here passes or fails.
     Under a command's lock (`run`) every process starts through run.spawn."""
     import re
     mp4 = Path(mp4)
@@ -147,8 +147,8 @@ def measure(mp4, planned, hook_frame=None, strips=None, run=None):
            **under_half(luma)}
     d = Path(strips) if strips else mp4.parent
     n = max(1, int(secs))
-    out["strip"] = str(d / (mp4.stem + "-strip.png"))
-    out["strip2"] = str(d / (mp4.stem + "-strip2.png"))
+    out["strip"] = str(d / ((name or mp4.stem) + "-strip.png"))
+    out["strip2"] = str(d / ((name or mp4.stem) + "-strip2.png"))
     ff(["-y", "-i", str(mp4), "-vf", f"fps=1,scale=216:-2,tile={n}x1:padding=6:color=white", "-frames:v", "1", "-update", "1", out["strip"]], run)
     ff(["-y", "-i", str(mp4), "-vf", f"fps=2,scale=135:-2,tile={2 * n}x1:padding=4:color=white", "-frames:v", "1", "-update", "1", out["strip2"]], run)
     return out

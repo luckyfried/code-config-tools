@@ -1,10 +1,12 @@
 # 4. The timed cut: the storyboard on the music
 
-Goal: `R/render/cut.mp4`, the storyboard timed to the music in 9:16 with the mastered music under it, and
-what the critics read it by: `R/frames/film-strip.jpg` (12 fps), `R/frames/NN-<beat>.png` (each beat at rest),
+Goal: `R/render/proof-cut.mp4`, the half-size proof of the cut: the storyboard timed to the music in 9:16 with the
+mastered music under it, rendered at half size because every critic round before deliver reads the proof, and what
+the critics read it by: `R/frames/film-strip.jpg` (12 fps), `R/frames/NN-<beat>.png` (each beat at rest),
 `R/frames/cues/` (the frames around each sound cue over the waveform of the film's sound) and `R/clips/requests.json`
 (the shots the film asks a video model for).
-The film (and any other format the person asked for) renders only after the cut passes movement 5.
+The full-size cut, `R/render/cut.mp4`, and the film (and any other format the person asked for) render only after
+the proof passes movement 5.
 
 ## Music
 
@@ -30,21 +32,26 @@ python3 S/scripts/music.py analyze
 ```
 python3 S/scripts/storyboard.py snap
 python3 S/scripts/music.py master
-python3 S/scripts/film.py cut
+python3 S/scripts/film.py cut --proof
 ```
 
 - `snap` cuts the picked board (`R/winner.json`) and refuses with no pick. It sets the board on the
   music's tempo (halved or doubled to the one nearest the board's own) from its first downbeat, and writes `R/film.json`,
   so every cut lands on the grid.
-- `master` trims the music to the film from that downbeat (`R/music/bed.wav`), lays the board's sound cues under it
-  (`R/music/fx.wav`, played in the recipe's own instruments: a hit as the camera lands on the hook, a hit as each
-  person's stamp lands, the build into the wall and its impact as the wall settles, the hit as the tag lands on the
-  last face, and the stop), the effects scaled by
-  loudness to `FX_UNDER_BED_LU` (8) LU under the bed, and brings the mix to -14 LUFS integrated, true peak -1.5 dB.
-  It prints both loudness numbers and writes them to `R/music.json`, and writes `storyboard.md` again with them and
-  with the film's length and tempo; the check's audio row is red when the effects sit less than 7 LU under.
+- `master` trims the music to the film from that downbeat, cuts it on the board's stop (the closer settles there with
+  its impact), brings it to -14 LUFS integrated by one gain, in float so no peak is cut (`cut` masters the music and
+  the effects together, through one limiter), writes its loudness to `R/music.json` and its
+  energy, one number a frame, to `R/music/energy.json`, and writes `storyboard.md` again with the film's length and
+  tempo. The music carries no effects: `cut` lays them over it.
+- `cut --proof` is the cut of every critic round before deliver. It renders the cut at half size (540x960) as
+  `R/render/proof-cut.mp4` and never writes over `R/render/cut.mp4` or `R/out/film.mp4`; the strip, the beats at rest
+  and the cue tiles in `R/frames/` come out at the size the full cut gives them. `qa.py check` and `vote.py cut` read
+  the proof while it is the newest cut, and every size they report is in board units, the same numbers the full-size
+  cut gives. Without `--proof`, `cut` is the full-size cut (1080x1920) that `film.py render` and deliver take
+  (movement 5), and it takes the proof away.
 - `cut` lays the board out in 9:16 at the film's tempo, renders it through the kit's built composition
-  (`S/motion/dist/`, drawn in Chromium with no window; on the graphics card when the machine has one), lays the music under it, and writes the strip and the beats at
+  (`S/motion/dist/`, drawn in Chromium with no window; on the graphics card when the machine has one), lays the board's effects (`scripts/sfx.py`: on the music's grid
+  and in its key) over the music under it, and writes the strip and the beats at
   rest and the cue tiles. A board that has not changed since the last cut is not rendered again; `--again` runs the render anyway. The
   renderer tries a job again when the card's context is lost or a shader fails to compile, and a film that still
   comes back with white frames fails the command, naming its white seconds.
@@ -59,14 +66,17 @@ python3 S/scripts/clips.py list
 film opens in, and each person's photograph brought to life), each naming its subject, the camera's move, the lens, the light read
 from the photograph, its length and a seamless loop, no two in a row moving the camera the same way, with the photograph to make it from and the file to save it as. When this
 session has an image-to-video model, make each clip from its photograph with its prompt and save it where the request
-says. Then:
+says. A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests R/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks. A card whose photograph is the poster of a clip the person recorded (cast.json's `clip`) asks for nothing: its
+request names the recording and the seconds of it the card plays, one shot the length of the beat from its strongest
+seconds, silent. Then:
 
 ```
 python3 S/scripts/clips.py normalize --why "<why any clip did not arrive, for example: no video model in this session>"
 ```
 
-`normalize` conforms what arrived and records the rest as stand-ins in `R/clips.json`; a clip that did not arrive
-stands in as the card's own layered move. When any clip arrived, run `film.py cut` again so the cut carries it.
+`normalize` conforms what arrived and the person's own recordings, and records the rest as stand-ins in
+`R/clips.json`; the film plays each on its card with the card's own arrival and move, and a clip that did not arrive
+stands in as the card's own layered move. When any clip arrived, run `film.py cut --proof` again so the cut carries it.
 
 ## A render renders in chunks and resumes
 
@@ -81,8 +91,8 @@ were kept, rendered and still to go. Once the first chunks land, a chunk's time 
 is the estimate to give the person.
 
 The standards the film is held to are in `S/motion/system/standards.md`. To change the film, edit the picked look's
-`R/storyboards/<style>/storyboard.json` (order, lengths, which of their own lines) or `R/cast.json`, then run `check`, `snap` and `cut`
-again; never edit `R/film.json` by hand.
+`R/storyboards/<style>/storyboard.json` (order, lengths, which of their own lines) or `R/cast.json`, then run `check`, `snap` and
+`cut --proof` again; never edit `R/film.json` by hand.
 
 ## Look before the critics do
 

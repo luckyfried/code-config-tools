@@ -51,8 +51,8 @@ frames, the browser's profile) go under `~/.cache/code-config/my_people_reel/`, 
 | 1 | research and cast | `S/pipeline/1-research.md` | `research.py [--people a,b,c] [--top N]`, write `R/taste.md`, fix `R/taste.json`, `cast.py draft`, correct `R/cast.json`, `cast.py match` | `R/public/matched/` |
 | 2 | three looks | `S/pipeline/2-storyboards.md` | `storyboard.py draft [--style ID]`, edit, `storyboard.py check`, `storyboard.py sheets`, look | the three pass `check`; `R/out/boards.png` |
 | 3 | the panel and the pick | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores, `vote.py tally`, show `R/out/boards.png` and ask (or pick by taste), `vote.py pick LOOK [--why "..."]` | `R/winner.json` |
-| 4 | the timed cut | `S/pipeline/4-produce.md` | `music.py find`, `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py cut`, `clips.py list`, `clips.py normalize` | `R/render/cut.mp4`, its 12 fps strip and cue tiles, `R/clips/requests.json` |
-| 5 | critic, render, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score R1 to R6, `vote.py verdict` (fix once if told and a lever reaches it), `film.py render [--also ...]`, write `R/caption.md`, `deliver.py` | green gate |
+| 4 | the timed cut | `S/pipeline/4-produce.md` | `music.py find`, `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py cut --proof`, `clips.py list`, `clips.py normalize` | `R/render/proof-cut.mp4` (the half-size proof every round before deliver reads), its 12 fps strip and cue tiles, `R/clips/requests.json` |
+| 5 | critic, render, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score R1 to R6, `vote.py verdict` (fix once if told and a lever reaches it) on the proof; the full-size `film.py cut`, `qa.py check`, `vote.py cut` and R3 read at full size; `film.py render [--also ...]`, write `R/caption.md`, `deliver.py` | green gate |
 | 6 | another look | this table | "make the second one" after a delivery: `vote.py pick second`, then movements 4 and 5 again in the same run | the new film's green gate |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
@@ -91,7 +91,9 @@ If `gather.py` exits 3, every door is closed: tell the person the one sentence i
   and run the step again.
 - A film renders in chunks saved in the run. When a render is interrupted (the machine restarted, the session died),
   run the same command again: the finished chunks are kept and only the missing ones render. Never start over and
-  never delete `R/render/chunks/`; a changed cut renders into chunks of its own. Run `film.py cut` and a long render each
+  never delete `R/render/chunks/`; a changed cut renders into chunks of its own. Every round before deliver cuts the
+  half-size proof (`film.py cut --proof`); the cut and the render deliver takes are full size (`film.py cut`, then
+  `film.py render`). Run `film.py cut` and a long render each
   in the foreground in one tool call with a 40-minute timeout on that call, never in the background, and read its progress in `R/render/<cut|final>.log`; once the first chunks land, their time
   multiplied by the chunks still to go is the estimate to give the person.
 - A cut under the bar is still delivered: the best cut ships, and its scores are written in `R/brief.md` only.

@@ -32,7 +32,13 @@ SWATCHES = ["#c2763a", "#2f5d7c", "#e9dcc4", "#3a2a20"]
 
 
 MOTION = KIT / "motion"
-ESBUILD = MOTION / "node_modules" / ".bin" / "esbuild"
+sys.path.insert(0, str(KIT / "scripts" / "dev"))
+import build_motion  # noqa: E402
+
+# the node modules the bundle resolves from (the kit's own, else the studio's beside it), as the tests' esbuild runs
+MODULES = build_motion.modules_of(KIT, KIT.parent / "video_studio") / "node_modules"
+ESBUILD = MODULES / ".bin" / "esbuild"
+NODE_ENV = dict(os.environ, NODE_PATH=str(MODULES))
 PEOPLE = [("dani.reyes", "july", "sicily", "remember when we missed the last ferry"),
           ("theo.makes", "april", "porto", "measured twice, still crooked"),
           ("ines.walks", "may", "oaxaca", "the whole valley going gold"),
@@ -181,7 +187,7 @@ class ManyPeople(unittest.TestCase):
             drive = MOTION / "studio" / "drive"
             entry.write_text(SCRIPT % (json.dumps(str(drive / "plan.ts")), json.dumps(str(drive / "camera.ts"))))
             subprocess.run([str(ESBUILD), str(entry), "--bundle", "--platform=node", "--format=esm", f"--outfile={bundle}",
-                            "--log-level=error", "--resolve-extensions=.ts,.tsx,.js"], check=True, cwd=MOTION)
+                            "--log-level=error", "--resolve-extensions=.ts,.tsx,.js"], check=True, cwd=MOTION, env=NODE_ENV)
             data.write_text(json.dumps(laid))
             r = subprocess.run(["node", str(bundle), str(data)], capture_output=True, text=True, check=True)
         grown = 0
@@ -217,10 +223,11 @@ class ManyPeople(unittest.TestCase):
             closer = board["beats"][-1]["layers"]
             faces = [[x + f0 * w, y + f1 * h, x + f2 * w, y + f3 * h] for s in closer if s["kind"] == "Slice"
                      for (x, y, w, h), (f0, f1, f2, f3) in [(s["place"], s["photo"]["face"])]]
-            stamps = [board_drive.hull(board_drive.turned(board_drive.box(ln, ink=True), ln)) for w in closer
-                      if w["kind"] == "Words" for ln in w["lines"] if ln.get("name", "").startswith("stamp-")]
+            lines = [ln for w in closer if w["kind"] == "Words" for ln in w["lines"] if ln.get("name", "").startswith("stamp-")]
+            stamps = [board_drive.hull(board_drive.turned(board_drive.box(ln, ink=True), ln)) for ln in lines]
             with self.subTest(format=kind):
-                self.assertEqual(len(stamps), 7)
+                # one stamp a person; a stamp too wide for its slice hangs on two lines, the place over the month
+                self.assertEqual(len({ln["name"] for ln in lines}), 7)
                 self.assertEqual([(s, f) for s in stamps for f in faces
                                   if s[0] < f[2] and f[0] < s[2] and s[1] < f[3] and f[1] < s[3]], [])
 

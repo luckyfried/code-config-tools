@@ -329,6 +329,44 @@ class SeedReel(unittest.TestCase):
             moves = [m for m in board_drive.CLIP_MOVES.values() if m[1:] in c["prompt"]]
             self.assertEqual(len(moves), 1, c["prompt"])
 
+    def test_a_clip_they_recorded_plays_on_their_card_and_every_other_beat_is_unchanged(self):
+        """A person whose first photograph is the poster of a clip they recorded gets a clip beat on their own slot:
+        the clip request is one shot the length of that beat with the recording as its source and nothing to generate,
+        the beat keeps the move its photograph chose, no layer's photograph is the recording, and every other beat
+        and its request is what it was without the clip."""
+        clip = str(KIT / "tests" / "fixtures" / "clip-tram.mp4")
+        _, before = self.board("reel")
+        cast = _env.read_json("cast.json")
+        self.addCleanup(_env.write_json, "cast.json", copy.deepcopy(cast))
+        cast["people"]["ana.costa"][0]["clip"] = clip
+        _env.write_json("cast.json", cast)
+        _, board = self.board("reel")
+        beats = {b["id"]: b for b in board["beats"]}
+        ana = next(b for b in board["beats"] if b.get("person") == "ana.costa")
+        old = {b["id"]: b for b in before["beats"]}
+        self.assertEqual(ana["form"], "clip")
+        self.assertEqual(old[ana["id"]]["form"], "photo")
+        self.assertEqual(ana["move"], old[ana["id"]]["move"])
+        mine = [c for c in board["clips"] if c["beat"] == ana["id"]]
+        self.assertEqual(len(mine), 1)
+        self.assertEqual(mine[0]["source"], str(Path(clip).resolve()))
+        self.assertEqual(mine[0]["role"], "their own clip")
+        self.assertIsNone(mine[0]["prompt"])
+        self.assertEqual(mine[0]["seconds"], round(ana["frames"] / 30, 1))
+
+        def files(v):
+            if isinstance(v, dict):
+                return [x for k, w in v.items() for x in ([w] if k == "file" and isinstance(w, str) else files(w))]
+            return [x for w in v for x in files(w)] if isinstance(v, list) else []
+        self.assertFalse([f for f in files(board["beats"]) if Path(f).suffix.lower() in (".mp4", ".mov", ".m4v")])
+        self.assertTrue(mine[0]["image"].endswith(".jpg"))
+        for b in board["beats"]:
+            if b["id"] != ana["id"]:
+                self.assertEqual(b, old[b["id"]])
+        self.assertEqual([c for c in board["clips"] if c["beat"] != ana["id"]],
+                         [c for c in before["clips"] if c["beat"] != ana["id"]])
+        self.assertIn(ana["id"], beats)
+
     def test_the_light_a_clip_asks_for_is_measured_from_its_photograph(self):
         """The light in a clip request reads the photograph: a gray one is black and white, a picture lit from its left
         says so, a dark one with a bright rim is lit from behind, a warm bright one is warm and bright, and a stage lit

@@ -239,6 +239,32 @@ const mountOf = (plan: Plan, mount: string | null) => {
   return {ground, rim: role(pic.rimColor), wrap: 1, rimOn: 0, shadow: 0.55, tape, border: pic.rim, tilt: pic.tilt};
 };
 
+/** The print a framed photograph shows from `below`, the picture under its edge in wall px, `leave` of the way into its
+ * slice: its corners (a print standing on the page is cropped at its sides until it trims into its slice), whether it
+ * shows, whether its top is the band's own top edge, where the blade's cut is not, and whether it then stands in a
+ * border `border` of its width. */
+const printIn = (c: Card, below: Pt[], border: number, leave: number) => {
+  const [, py, , ph] = c.place;
+  const [b0, b1] = c.band ?? [0, 1];
+  const [wTop, wFoot] = [onWall(c.T, [0, py + b0 * ph])[1], onWall(c.T, [0, py + b1 * ph])[1]];
+  const cropped = c.crop && leave < 0.5 ? [onWall(c.T, [c.crop[0], 0])[0], onWall(c.T, [c.crop[1], 0])[0]] : null;
+  const pts = within(below, wTop, wFoot).map(([x, y]) => [cropped ? Math.min(cropped[1], Math.max(cropped[0], x)) : x, y] as Pt);
+  const shown = !!c.band && pts[3][1] - pts[0][1] > 1;
+  const bandEdge = shown && pts[0][1] <= wTop + 0.5 && pts[1][1] <= wTop + 0.5;
+  return {pts, shown, bandEdge, bordered: bandEdge && border > 0};
+};
+
+/** Card `index`'s print as the camera holding on it sees it: `tilt` the degrees clockwise it hangs at (a print in its
+ * border turns the card's tilt, each other print the other way; any other photograph hangs level), `border` its white
+ * border as a share of its width (0: a bare print), and `tape` the strips across its top corners (none where the
+ * print's top is not the band's own edge). */
+export const dressOf = (plan: Plan, c: Card, index: number) => {
+  const mount = mountOf(plan, c.mount);
+  const {bordered, bandEdge} = printIn(c, quadsOf(c, plan.W, plan.H).below.map((p) => onWall(c.T, p)), mount.border, 0);
+  return {tilt: bordered ? (index % 2 ? -1 : 1) * mount.tilt : 0, border: bordered ? mount.border : 0,
+    tape: bandEdge ? mount.tape?.length ?? 0 : 0};
+};
+
 export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture, keepTexture, view}) => {
   const {W, H} = plan;
   const mount = mountOf(plan, c.mount);
@@ -293,6 +319,10 @@ export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture,
   const tm = timesOf(c);
   const fly = clamp01((t - tm.fly[0]) / tm.fly[1]);
   if (t < tm.fly[0] - 0.01) return null;
+  // the hook trims into the slot of the card after it and is gone once that card rests in it: its layers stand further
+  // over its page than that card's (its scale is the wall's), so it would show through that card's print
+  const next = plan.cards[index + 1];
+  if (c.hook && next && t >= next.leave) return null;
   const s = c.T.s;
   const lift = liftOf(c);
   const settled = restZ(index);
@@ -348,14 +378,7 @@ export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture,
   // the edges the blade did not make
   const [b0, b1] = c.band ?? [0, 1];
   const bandTop = py + b0 * ph, bandFoot = py + b1 * ph;
-  const [wTop, wFoot] = [onWall(c.T, [0, bandTop])[1], onWall(c.T, [0, bandFoot])[1]];
-  // a print standing on the page is cropped at its sides until it trims into its slice
-  const cropped = c.crop && leave < 0.5 ? [onWall(c.T, [c.crop[0], 0])[0], onWall(c.T, [c.crop[1], 0])[0]] : null;
-  const printPts = within(belowPts, wTop, wFoot).map(([x, y]) => [cropped ? Math.min(cropped[1], Math.max(cropped[0], x)) : x, y] as Pt);
-  const shown = framed && printPts[3][1] - printPts[0][1] > 1;
-  // the band's own top edge, where the blade's cut is not
-  const bandEdge = shown && printPts[0][1] <= wTop + 0.5 && printPts[1][1] <= wTop + 0.5;
-  const bordered = shown && bandEdge && mount.border > 0;
+  const {pts: printPts, shown, bandEdge, bordered} = printIn(c, belowPts, mount.border, leave);
   if (shown) {
     // a taped print stands turned on the page as the card holds and lies square once it is in its slice
     const mid: Pt = [(printPts[0][0] + printPts[2][0]) / 2, (printPts[0][1] + printPts[2][1]) / 2];

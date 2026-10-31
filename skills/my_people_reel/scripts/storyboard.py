@@ -24,9 +24,9 @@ public/matched/ (each person's photographs, matched to one light). A storyboard.
 composition, a person and one of their own lines, each with a length in pulses (beats of the tempo), and the style it
 is drawn in. The agent may edit it (order, lengths, which of their own lines) and runs check. storyboard.md carries,
 per beat, what its move reveals and what it carries across the cut, the music (its origin, the person's music brief and
-the loudness of the bed and the effects music.py master mixed), the sound cues and the generated shots the film asks
-for; once the board is snapped its length, its tempo and every time in it are the film's, at the tempo the music plays
-at, and music.py master writes it again with the mix.
+the master's loudness), the effects (sfx.py's, from the board's `effects`) and the generated shots the film asks for;
+once the board is snapped its length, its tempo and every time in it are the film's, at the tempo the music plays at,
+and music.py master writes it again with the master.
 
 check lays each board out in all three formats and refuses: type outside the format's safe area (on a card, as the
 camera's lens sees type standing in front of the photograph) or under its edge onto the photograph, type under 28 px
@@ -150,21 +150,23 @@ def markdown(sb, ctx):
     for i, b in enumerate(board["beats"], 1):
         L.append(f"{i}. **{b['id']}** reveals {b['reveals']}. It carries {b['carries']}.")
     track = _env.read_json("music.json") or {}
-    cues = board.get("sound") or []
-    mixed = (f"bed {track['bed_lufs']} LUFS, effects {track['fx_lufs']} LUFS, {track['bed_lufs'] - track['fx_lufs']:.1f} LU under; "
-             f"{track.get('sound_cues')} sound cues over {s['beats']} beats" if "fx_lufs" in track else "not yet; music.py master writes the bed's and the effects' loudness here")
+    import sfx
+    events, _ = sfx.events(board["effects"], sfx.music_of(board["effects"], track)[0])
+    mixed = (f"music {track['master_lufs']} LUFS, cut on the closer's stop; film.py lays {len(events)} effects over it"
+             if "master_lufs" in track else "not yet; music.py master writes the music's loudness here")
     L += ["", "## Music", "", "Music: " + (track.get("origin") or "none yet (music.py find)") + ".",
           "The music brief (taste.json `music`): " + json.dumps((_env.read_json("taste.json") or {}).get("music"), ensure_ascii=False) + ".",
-          f"Mixed: {mixed}."]
-    L += ["", f"## Sound: {len(cues)} cues, where each beat lands (music.py synthesises each and mixes it under the bed)", "",
-          "| at (s) | beat | cue | what |", "|---|---|---|---|"]
-    for c in sorted(cues, key=lambda c: c["at"]):
-        L.append(f"| {c['at'] * pulse:.2f} | {c['beat']} | {c['kind']} | {c['what']} |")
+          f"Mastered: {mixed}."]
+    L += ["", f"## Sound: {len(events)} effects (sfx.py: on the music's grid and in its key, laid over the music by film.py)", "",
+          "| at (s) | effect |", "|---|---|"]
+    for at, kind in events:
+        L.append(f"| {at:.2f} | {kind} |")
     clips = board.get("clips") or []
-    L += ["", f"## Clips: the {len(clips)} generated shots the film asks for (clips.py list writes them for the video model after the cut)", "",
+    L += ["", f"## Clips: the {len(clips)} shots the film plays on its cards (clips.py list writes the generated ones for the video model after the cut; their own clips play as they recorded them)", "",
           "| # | beat | what it is | seconds | the request |", "|---|---|---|---|---|"]
     for c in clips:
-        L.append(f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | {c['prompt']} |")
+        L.append(f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | "
+                 f"{c['prompt'] or 'their own recording, ' + Path(c['source']).name + ', its strongest seconds, silent'} |")
     return "\n".join(L) + "\n"
 
 

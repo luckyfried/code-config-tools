@@ -1,7 +1,7 @@
 // The drive film: the hook's photograph of them together with a tag on every head, then the people one by one, each
 // arriving on the closer's wall the way the style draws the beat's move, found by the tag, cut along their own edge by
 // the blade, the stamp of where and when landing on the edge, the style's cut into every beat; then the closer, where
-// the tag runs the wall in the film's order, and the style's own last frame, holding still and silent at the stop.
+// the tag runs the wall in the film's order, and the style's own last frame, held at the stop, silent, under its slow push.
 // The picture steps at the card's cadence and takes the card's finish.
 import {useLoader, useThree} from '@react-three/fiber';
 import {useLayoutEffect, useMemo} from 'react';
@@ -14,7 +14,7 @@ import {closerOf} from '../../system/moves';
 import {MoveLayer} from '../../system/moves/layer';
 import type {Board, Clip} from '../../system/types';
 import {CardView, liftOf} from './card';
-import {heldAt, shotAt, stationOf} from './camera';
+import {heldAt, landed, shotAt, stationOf} from './camera';
 import {onWall, planOf, type Plan} from './plan';
 import {TagTrack, tagsOf} from './tag';
 import {CardWords, CloserWords, HookWords} from './words';
@@ -139,13 +139,14 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, 
 
 export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips}) => {
   const frame = useCurrentFrame();
-  const plan = useMemo(() => planOf(board), [board]);
+  const plan = useMemo(() => landed(board, planOf(board)), [board]);
   const files = useMemo(() => [...new Set(filesOf(plan))], [plan]);
   const fonts = useFonts(files);
   // the picture steps at the card's cadence (a film's 18 frames a second holds each drawing that long), and from the
-  // stop on it holds
+  // stop on it holds while the closer keeps its slow push to the last frame
   const step = plan.finish.cadence > 0 ? board.format.fps / plan.finish.cadence : 1;
-  const t = Math.min((Math.floor(frame / step) * step) / plan.pulse, plan.closer.still);
+  const now = (Math.floor(frame / step) * step) / plan.pulse;
+  const t = Math.min(now, plan.closer.still);
   const shot = shotAt(plan, t);
   const ground = plan.colors[plan.closer.ground] ?? plan.closer.ground;
   const shape = plan.closer.shape;
@@ -153,7 +154,7 @@ export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
     <AbsoluteFill style={{background: ground}}>
       {fonts ? (
         <Stage pose={shot.pose} travel={shot.travel} background={ground}
-          over={<MoveLayer line={plan.over} look={plan.look} t={t} bars={plan.finish.bars}
+          over={<MoveLayer line={plan.over} look={plan.look} t={t} now={now} bars={plan.finish.bars}
             closer={shape ? {name: shape.name, at: shape.at, still: plan.closer.still} : undefined} />}>
           <Scene plan={plan} t={t} frame={frame} fonts={fonts} clips={clips} />
         </Stage>

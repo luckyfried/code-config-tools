@@ -48,8 +48,10 @@ paragraph per critic, at least 25 words: what works, what fails, the one change 
 
 ## The cut (movement 5)
 
-The motion designer and the person score the timed cut, before the film renders. Each rule is read from its own
-evidence, the files `film.py cut` and `clips.py list` made for this cut:
+The motion designer and the person score the timed cut, before the film renders. Every round before deliver scores
+the half-size proof, `R/render/proof-cut.mp4` from `film.py cut --proof`; its strip, beats at rest and cue tiles are
+the size the full cut gives them. Each rule is read from its own evidence, the files `film.py cut --proof` and
+`clips.py list` made for this cut:
 
 - `R/frames/film-strip.jpg`, the cut at 12 fps, 24 frames a row: R1 (what the tag does between the beats) and R4 (the
   moves between the rests, the holds, the closer).
@@ -64,7 +66,9 @@ evidence, the files `film.py cut` and `clips.py list` made for this cut:
 - `R/clips/requests.json`: R6.
 
 Never score from memory of the storyboard; the cut is what ships. Fill in `R/critic/cut-N.json` and run
-`vote.py verdict`. For every rule below 4, name in the paragraph the one change that fixes the worst thing, using the
+`vote.py verdict`. The type is read last on the full-size cut: once the verdict on the proof says to go on, `film.py
+cut` renders it at full size and `vote.py cut` empties each critic's R3 in the same round; read the type on the
+full-size cut's strip and beats at rest, at the size a phone shows it, and score R3 again. For every rule below 4, name in the paragraph the one change that fixes the worst thing, using the
 levers below.
 
 ## The verdict
@@ -72,18 +76,19 @@ levers below.
 A rule's score is the lower of the two critics'. The verdict states the mean and the least against the bar and never
 blocks the render:
 
-- at the bar (mean 4.5 or more, none under 4): render.
+- at the bar (mean 4.5 or more, none under 4): cut the full-size film, read the type on it, then render.
 - under the bar in round 1: fix the rule furthest under it once, when one of the levers below reaches it, and cut
-  again for round 2. When no lever reaches it, the budget is spent: render this cut.
-- under the bar after the fix: render this cut as the best one.
+  the proof again for round 2. When no lever reaches it, the budget is spent: cut the full-size film and render this
+  cut.
+- under the bar after the fix: cut the full-size film and render this cut as the best one.
 
 `R/brief.md` states every score against the bar, whichever way it went; the review page the person reads carries none.
 
 ## The levers
 
 - Order, beat lengths, which of a person's own lines: the picked look's `R/storyboards/<style>/storyboard.json`, then
-  `storyboard.py check`, `snap`, `music.py master`, `film.py cut`.
+  `storyboard.py check`, `snap`, `music.py master`, `film.py cut --proof`.
 - A photograph, its crop or its light: `R/cast.json` (another of their photographs, its `point`, `face`,
-  `keep_light`), then `cast.py match`, `storyboard.py check`, `film.py cut`.
+  `keep_light`), then `cast.py match`, `storyboard.py check`, `film.py cut --proof`.
 - The music: another track at `R/music/source.<ext>`, or `R/taste.json` `music` (its `styles` and `avoid` words) and `music.py find`, then `music.py analyze`,
-  `storyboard.py snap`, `music.py master`, `film.py cut`.
+  `storyboard.py snap`, `music.py master`, `film.py cut --proof`.

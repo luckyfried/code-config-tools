@@ -67,7 +67,8 @@
         "photo",
         "people",
         "portrait"
-      ]
+      ],
+      "once": true
     }
   ],
   "transitions": [
@@ -146,11 +147,11 @@
       ],
       "gamma": 1,
       "gain": [
-        0.98,
+        0.99,
         0.97,
-        0.95
+        0.93
       ],
-      "saturation": 0.75
+      "saturation": 0.9
     },
     "dip": "paper",
     "matte": "paper",

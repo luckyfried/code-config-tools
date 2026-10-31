@@ -25,6 +25,11 @@ import storyboard  # noqa: E402
 import boards  # noqa: E402
 import layout as L  # noqa: E402
 
+def unmoved(ctx, beats):
+    """picks() for a draft of people with no photographs: no beat moves, so none takes the frame."""
+    return {b["id"]: (None, None, "photo") for b in beats}
+
+
 # the photographs' colors the scrapbook card's palette rule makes the board's colors from
 SWATCHES = ["#c2763a", "#2f5d7c", "#e9dcc4", "#3a2a20"]
 
@@ -151,7 +156,8 @@ class DriveBoard(unittest.TestCase):
             return types.SimpleNamespace(rank=rank, handle=handle, line=line)
         people = [told(3, "dani.reyes", "remember when we missed the last ferry and it turned into the best night of the whole summer"),
                   told(1, "theo.makes", "porto in april has a light i keep trying to mix"), told(2, "liv.outside", None)]
-        beats = board_drive.draft(types.SimpleNamespace(people=people))
+        with mock.patch.object(board_drive, "picks", unmoved):
+            beats = board_drive.draft(types.SimpleNamespace(people=people))
         self.assertEqual([(b["id"], (b["line"] or "").split()[:1], b["pulses"]) for b in beats if b["comp"] == "person"],
                          [("person-1", ["remember"], 7), ("person-2", ["porto"], 6), ("person-3", [], 8)])
 
@@ -355,7 +361,8 @@ class DriveBoard(unittest.TestCase):
         F = board_drive.lensed(L.Frame("wide"))
         layers = board_drive.closer(F, ctx, {h: f"{h}-0" for h in handles}, board_drive.Edge(F, 700, 0.0))
         owners = {L_["photo"]["role"]: L_["owner"] for L_ in layers if L_["kind"] == "Slice"}
-        beats = board_drive.draft(types.SimpleNamespace(people=[types.SimpleNamespace(rank=p.rank, handle=p.handle, line=None) for p in people]))
+        with mock.patch.object(board_drive, "picks", unmoved):
+            beats = board_drive.draft(types.SimpleNamespace(people=[types.SimpleNamespace(rank=p.rank, handle=p.handle, line=None) for p in people]))
         self.assertEqual({f"{b['person']}-0": int(b["id"].split("-")[1]) for b in beats if b["comp"] == "person"}, owners)
 
     def test_a_wall_tag_never_stands_over_the_safe_area(self):
@@ -377,6 +384,12 @@ class DriveBoard(unittest.TestCase):
         self.assertEqual(board_drive.heard_line(boards.Person(p, {}, 2026)), "porto in april has a light i keep trying to mix")
         self.assertIsNone(board_drive.heard_line(boards.Person(p, {"line": ""}, 2026)))
         self.assertIsNone(board_drive.heard_line(boards.Person(p, {"line": "\U0001F382\U0001F382"}, 2026)))
+
+    def test_a_photograph_names_the_face_a_doodle_rings_and_the_persons_point_without_one(self):
+        info = {"p1": {"face": [0.52, 0.18, 0.76, 0.42]}, "p2": {"point": [0.31, 0.62]}}
+        photos = types.SimpleNamespace(info=lambda r: info[r], framed=lambda r: False, aspect={"p1": 0.8, "p2": 1.25}, band={})
+        self.assertEqual(board_drive.photo(photos, "p1")["focus"], [0.64, 0.3])
+        self.assertEqual(board_drive.photo(photos, "p2")["focus"], [0.31, 0.62])
 
     def test_a_line_with_emoji_is_said_without_them(self):
         """A person's line that carries emoji is said in their words with the emoji off, and the storyboard check knows
@@ -420,6 +433,14 @@ class FramedPrint(unittest.TestCase):
         head = place[1] + 0.3436 * place[3]
         self.assertLessEqual(print_top - 860, clear)
         self.assertGreaterEqual(head - 860, clear - 0.5)
+
+
+class Counted(unittest.TestCase):
+    def test_a_count_runs_up_to_the_number_and_the_word_that_names_it(self):
+        self.assertEqual(board_drive.counted("page 212 and i still don't trust the narrator"), "page 212")
+        self.assertEqual(board_drive.counted("12 years of this, still"), "12 years")
+        self.assertEqual(board_drive.counted("we ran three marathons."), "three marathons")
+        self.assertEqual(board_drive.counted("nothing to count here"), "nothing to count here")
 
 
 if __name__ == "__main__":

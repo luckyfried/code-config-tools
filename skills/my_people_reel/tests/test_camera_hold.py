@@ -18,13 +18,14 @@ KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
 import board_drive  # noqa: E402
 import layout as L  # noqa: E402
+sys.path.insert(0, str(KIT / "tests"))
+from test_many_people import ESBUILD, NODE_ENV  # noqa: E402
 
 # the photographs' colors the scrapbook card's palette rule makes the board's colors from
 SWATCHES = ["#c2763a", "#2f5d7c", "#e9dcc4", "#3a2a20"]
 
 
 MOTION = KIT / "motion"
-ESBUILD = MOTION / "node_modules" / ".bin" / "esbuild"
 # for each case, the most the picture runs past the photograph and the most the type runs past the safe area, in
 # picture px, over the hold
 SCRIPT = """
@@ -76,7 +77,7 @@ class CameraHold(unittest.TestCase):
             drive = MOTION / "studio" / "drive"
             entry.write_text(SCRIPT % (json.dumps(str(drive / "camera.ts")), json.dumps(str(drive / "card.tsx"))))
             subprocess.run([str(ESBUILD), str(entry), "--bundle", "--platform=node", "--format=esm", f"--outfile={bundle}",
-                            "--log-level=error", "--resolve-extensions=.ts,.tsx,.js"], check=True, cwd=MOTION)
+                            "--log-level=error", "--resolve-extensions=.ts,.tsx,.js"], check=True, cwd=MOTION, env=NODE_ENV)
             kinds = ("reel", "square", "wide")
             data.write_text(json.dumps([c for k in kinds for c in cases(k)]))
             r = subprocess.run(["node", str(bundle), str(data)], capture_output=True, text=True, check=True)

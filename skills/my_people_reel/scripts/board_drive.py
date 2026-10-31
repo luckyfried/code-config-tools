@@ -25,8 +25,8 @@ together as it settles.
 
 Every line of type is set from the card's face file, measured here, and carried on the board with its file. The
 storyboard is format-free (a hook, a beat per person naming their line, the closer); board() lays it out in one format
-with the sound cues, the clips and, per beat, its move, its transition, what its move reveals and what it carries across
-the cut.
+with its stop, its effects (sfx.py's board: where every whoosh, shutter, pop, impact and riser lands), the clips and,
+per beat, its move, its transition, what its move reveals and what it carries across the cut.
 """
 import copy
 import functools
@@ -552,11 +552,14 @@ def toned(F, file, place, ln, band=None):
 
 
 def photo(photos, role):
-    """A photograph as the film draws it; a framed one (a landscape photograph laid whole in a taller frame) also names
-    its band and how the style mounts it (Look.mount): taped to the page, projected on the dark, or laid flat."""
+    """A photograph as the film draws it, with its focus ([u, v] fractions of it: the face the cast names, else the
+    person's point); a framed one (a landscape photograph laid whole in a taller frame) also names its band and how the
+    style mounts it (Look.mount): taped to the page, projected on the dark, or laid flat."""
     face = photos.info(role).get("face") if role != "group" else None
     framed = {"band": photos.band[role], "mount": look().mount} if photos.framed(role) else {}
-    return {"file": f"matched/{role}.jpg", "aspect": photos.aspect[role], "role": role, **({"face": face} if face else {}), **framed}
+    focus = [round(v, 4) for v in focus_of(photos, role)]
+    return {"file": f"matched/{role}.jpg", "aspect": photos.aspect[role], "role": role, "focus": focus,
+            **({"face": face} if face else {}), **framed}
 
 
 def face_cut(F, slice_):
@@ -1198,8 +1201,8 @@ def centred(F, mid, size, rot):
 def print_card(F, photos, p, said, i, spec, label):
     """A person's print on the page: the photograph as one tilted, taped print filling the page over its caption, the
     person's words hand-lettered under it and the month under them in the accent, their name a sticker on the print's
-    corner on their side; on a page with a lower third the month is stamped there instead, beside a keepsake print
-    (keepsake_of). The composition stands in the middle of the safe area when the print runs out of width before
+    corner on their side; on a page with a lower third the month is stamped there instead, beside a keepsake print of
+    their second photograph (keepsake_of). The composition stands in the middle of the safe area when the print runs out of width before
     height: (place, crop, tags, month, words, fit, keepsake or None)."""
     role = f"{p.handle}-0"
     tip, head = subject(photos, role)
@@ -1251,39 +1254,33 @@ def print_card(F, photos, p, said, i, spec, label):
 
 def keepsake_of(F, photos, p, i, label, words_foot):
     """The page's lower third under a print's caption, where a reel has one: a second, smaller print of the person's
-    year (their next photograph, else a close crop of the face in this one), taped on turned, on one side, and the month
-    stamped low on the other, turned the other way and set larger than a caption's month. The sides swap from one
-    person to the next. (keepsake for the Cut layer, the month's line)."""
-    role = f"{p.handle}-1" if f"{p.handle}-1" in photos.aspect else f"{p.handle}-0"
+    year (their next photograph), taped on turned, on one side, and the month stamped low on the other, turned the other
+    way and set larger than a caption's month. The sides swap from one person to the next. A person with one photograph
+    has the month alone, stamped low in the middle of the page (keepsake for the Cut layer or None, the month's line)."""
+    role = f"{p.handle}-1"
     right = i % 2 == 0
     w = KEEPSAKE_W * F.W
     h = w * KEEPSAKE_ASPECT
     top = words_foot + KEEPSAKE_GAP
-    cx = F.W * (0.69 if right else 0.31)
-    a = photos.aspect[role]
-    b0, b1 = photos.band[role] if photos.framed(role) else (0.0, 1.0)
-    fx, fy = focus_of(photos, role)
-    if role.endswith("-0"):
-        face = photos.info(role).get("face")
-        if face:
-            fx, fy = (face[0] + face[2]) / 2, (face[1] + face[3]) / 2
-    # the picture's own width over its height, and the window's
-    r = 1 / (a * (b1 - b0))
-    wr = w / h
-    if role.endswith("-0"):
-        # a close crop: half the picture's width round the face
-        du = min(1.0, 0.5 * max(1.0, wr / r))
-        dv = (b1 - b0) * du * r / wr
-    elif r > wr:
-        du, dv = wr / r, b1 - b0
-    else:
-        du, dv = 1.0, (b1 - b0) * r / wr
-    u0 = min(1 - du, max(0.0, fx - du / 2))
-    v0 = min(b1 - dv, max(b0, fy - dv / 2))
-    keep = {"file": f"matched/{role}.jpg", "box": [round(cx - w / 2, 1), round(top, 1), round(cx + w / 2, 1), round(top + h, 1)],
-            "uv": [round(u0, 4), round(v0, 4), round(u0 + du, 4), round(v0 + dv, 4)], "turn": KEEPSAKE_TURN if right else -KEEPSAKE_TURN}
-    mx = F.W * (0.28 if right else 0.72)
-    room = 0.5 * F.W - 2 * KEEPSAKE_PAD
+    keep = None
+    if role in photos.aspect:
+        cx = F.W * (0.69 if right else 0.31)
+        a = photos.aspect[role]
+        b0, b1 = photos.band[role] if photos.framed(role) else (0.0, 1.0)
+        fx, fy = focus_of(photos, role)
+        # the picture's own width over its height, and the window's
+        r = 1 / (a * (b1 - b0))
+        wr = w / h
+        if r > wr:
+            du, dv = wr / r, b1 - b0
+        else:
+            du, dv = 1.0, (b1 - b0) * r / wr
+        u0 = min(1 - du, max(0.0, fx - du / 2))
+        v0 = min(b1 - dv, max(b0, fy - dv / 2))
+        keep = {"file": f"matched/{role}.jpg", "box": [round(cx - w / 2, 1), round(top, 1), round(cx + w / 2, 1), round(top + h, 1)],
+                "uv": [round(u0, 4), round(v0, 4), round(u0 + du, 4), round(v0 + dv, 4)], "turn": KEEPSAKE_TURN if right else -KEEPSAKE_TURN}
+    mx = F.W * (0.28 if right else 0.72) if keep else F.W / 2
+    room = (0.5 if keep else 1.0) * F.W - 2 * KEEPSAKE_PAD
     turn = -KEEPSAKE_STAMP_TURN if right else KEEPSAKE_STAMP_TURN
     size = round(label["size"] * KEEPSAKE_STAMP)
     while True:
@@ -1693,14 +1690,16 @@ def trimmed(poly, pl):
 
 def chip(F, p, span, edge, size, side="left"):
     """A person's stamp hanging under a closer edge in their slice, at its left or its right `side`: one line at the
-    largest size down to the floor that fits the slice, else the place over the month, set flush to that side."""
+    largest size down to the floor that fits the slice, else the place over the month, set flush to that side. It is
+    set in the face of the card's own stamp, the face the film carries it to the wall in."""
+    face = look().card["photo"]["label"]["face"]
     x0, x1 = max(F.left + 2, span[0] + 22), min(span[1] - 16, F.right - 2)
-    lo = max(floor_size("display"), 32)
+    lo = max(floor_size(face), 32)
     parts = [p.stamp]
-    if ", " in p.stamp and width(line(p.stamp, "display", max(lo, min(size, 40)), 0, 0)) > x1 - x0:
+    if ", " in p.stamp and width(line(p.stamp, face, max(lo, min(size, 40)), 0, 0)) > x1 - x0:
         place, when = p.stamp.split(", ", 1)
         parts = [place + ",", when]
-    nums = [line(t, "display", size, 0, 0, name=f"stamp-{p.rank}") for t in parts]
+    nums = [line(t, face, size, 0, 0, name=f"stamp-{p.rank}") for t in parts]
     while nums[0]["size"] > lo and max(width(n) for n in nums) > x1 - x0:
         for n in nums:
             n["size"] -= 2
@@ -1998,12 +1997,58 @@ def lengths(people):
 
 
 def draft(ctx):
-    """The hook, a card per person in the order taste.json lists them, each as long as lengths() says, and the closer."""
+    """The hook, a card per person in the order taste.json lists them, each as long as lengths() says, and the closer.
+    A person whose move takes the frame (TAKES) gets the beats it flies for on top, at the fastest tempo the look's
+    music plays, so their card's words have their whole time after it lands, and the last stays the longest by a beat."""
     beats = [{"id": "hook", "comp": "hook", "pulses": HOOK_BEATS, "role": "hook"}]
     for i, (p, n) in enumerate(zip(ctx.people, lengths(ctx.people)), 1):
         beats.append({"id": f"person-{i}", "comp": "person", "person": p.handle, "line": heard_line(p), "pulses": n})
     beats.append({"id": "closer", "comp": "closer", "pulses": ROUTE_AT + ROUTE + WALL_HOLD + SHAPE + HOLD, "role": "closer"})
+    chosen = picks(ctx, beats)
+    top = fastest()
+    persons = [b for b in beats if b["comp"] == "person"]
+    for b in persons:
+        b["pulses"] += math.ceil(fly(chosen[b["id"]][0], top) - 1e-9)
+    if len(persons) > 1:
+        persons[-1]["pulses"] = max(persons[-1]["pulses"], max(b["pulses"] for b in persons[:-1]) + 1)
     return beats
+
+
+# the seconds a move that takes the frame plays before the card is the picture again: its flight to the photograph
+# (the move's own landing), then the hand back to the card (arrival.tsx's 0.38 s)
+TAKES = {"picture-tunnel": 1.1, "exploded-layers": 1.15, "tilted-wall": 1.2, "slam-words": 1.2, "counter": 1.75}
+HAND_BACK = 0.38
+NUMBER = re.compile(r"\b(\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b", re.I)
+
+
+JOINING = {"and", "or", "but", "i", "we", "you", "of", "to", "in", "on", "at", "for", "the", "a", "an", "is", "was", "it"}
+
+
+def counted(line):
+    """What a count runs up to in `line`: its first number with the word that names it (the word after, else the word
+    before when the word after is a joining word or there is none), so the count says "page 212" or "three marathons"
+    and the whole line reads once, on the card after it."""
+    ws = line.split()
+    for i, w in enumerate(ws):
+        if NUMBER.fullmatch(w.strip(".,!?;:'\"()")):
+            after = ws[i + 1] if i + 1 < len(ws) and not w[-1] in ".,!?;:" else None
+            if after and after.strip(".,!?;:").lower() not in JOINING:
+                return f"{w} {after}".rstrip(".,!?;:")
+            return " ".join(ws[max(0, i - 1):i + 1]).rstrip(".,!?;:")
+    return line
+
+
+def fly(move, bpm):
+    """The beats, to the quarter, at `bpm`, that `move` holds the frame before the card takes it back (0 for a move that
+    leaves the card in the frame)."""
+    return math.ceil((TAKES[move] + HAND_BACK) * bpm / 60 * 4) / 4 if move in TAKES else 0.0
+
+
+def fastest():
+    """The fastest tempo the look's music recipe plays."""
+    import music_engine
+    rec = music_engine.recipes()["recipes"].get(look().card["music"]) or {}
+    return float((rec.get("tempo") or [BPM, BPM])[1])
 
 
 def cards(ctx, beats):
@@ -2030,6 +2075,8 @@ def tags_of(ctx, b, last):
         out.add("place")
     if last:
         out.add("peak")
+    if NUMBER.search(b.get("line") or heard_line(p) or ""):
+        out.add("number")
     return "photo", out
 
 
@@ -2041,12 +2088,32 @@ def picks(ctx, beats_in):
     used_m, used_t, prev_m, prev_t, out = {}, {}, None, None, {}
     persons = [b for b in beats_in if b["comp"] == "person"]
     footage = frame_of() == "footage"
-    for b in beats_in:
-        form, tags = tags_of(ctx, b, persons and b is persons[-1])
+    shown = [(b, *tags_of(ctx, b, persons and b is persons[-1])) for b in beats_in]
+    for i, (b, form, tags) in enumerate(shown):
         moves, cuts = c["moves"], c["transitions"]
+        # a `once` move plays at most once and wins the peak: before the peak it is held for it, after it is gone, and
+        # on the peak an unplayed one that fits is the beat's move whatever else the look prefers
+        held = set() if "peak" in tags else {o["id"] for o in moves if o.get("once") and any(
+            "peak" in t and f in o["fits"] for _, f, t in shown[i + 1:])}
+        moves = [o for o in moves if not (o.get("once") and (used_m.get(o["id"]) or o["id"] in held))] or moves
+        won = [o for o in moves if o.get("once") and form in o["fits"]] if "peak" in tags else []
         if footage and b["comp"] == "person":
             moves = [o for o in moves if o["id"] in ZOOMED or o["id"] == "light-leak"] or moves
-        m = S.pick(moves, tags, form, used_m, prev_m)
+        # a move made for one kind of beat (a line holding a number) stays off every other beat, and on a person's beat
+        # the look's lead moves, when one fits, are its grammar; a person right after one whose move took the frame
+        # moves on the card, so the film never makes that gesture twice running
+        moves = [o for o in moves if not o.get("only") or o["only"] in tags] or moves
+        if won:
+            moves = won
+        elif b["comp"] == "person" and prev_m in TAKES:
+            moves = [o for o in moves if o["id"] not in TAKES and not o.get("only") and not o.get("lead")] or moves
+        elif b["comp"] == "person":
+            only = [o for o in moves if o.get("only")]
+            lead = [o for o in moves if o.get("lead") and (form in o["fits"] or tags & set(o["fits"]))]
+            moves = only or lead or moves
+        else:
+            moves = [o for o in moves if not o.get("only") and not o.get("lead")] or moves
+        m = S.pick(moves, tags, form, used_m, prev_m, held)
         if footage and b["comp"] == "person":
             cuts = [o for o in cuts if o["id"] == "roll-burn"] if m not in ZOOMED else [o for o in cuts if o["id"] != "hard-cut"]
             cuts = cuts or c["transitions"]
@@ -2058,7 +2125,7 @@ def picks(ctx, beats_in):
 
 def board(sb, ctx, kind="reel", bpm=None):
     """The board the studio's drive film renders: the storyboard laid out in format `kind` at `bpm` in the style the
-    storyboard names, with the sound cues, the clips, and per beat its move, the transition into it, what its move
+    storyboard names, with its stop, its effects, the clips, and per beat its move, the transition into it, what its move
     reveals and what it carries, and the frame each beat rests on."""
     if LOOK is None or LOOK.card["id"] != sb["style"]:
         use(sb["style"], ctx)
@@ -2081,7 +2148,23 @@ def board(sb, ctx, kind="reel", bpm=None):
         p = ctx.person(b["person"])
         edge, role, layers, _ = card(G, ctx.photos, p, printed(p, b.get("line")), k, chosen[b["id"]][0])
         roles[p.handle] = role
-        scenes.append({"id": b["id"], "layers": layers, "rest": min(b["pulses"] - LEAVE - 0.4, CUT + RISE + 2.4)})
+        # a move that takes the frame plays first: the card is already standing under it, and its blade, stamp, words
+        # and tags come once the move has handed the frame back
+        f = fly(chosen[b["id"]][0], bpm)
+        if f:
+            for L_ in layers:
+                if L_["kind"] == "Cut":
+                    L_["fly"] = f
+                elif isinstance(L_.get("at"), (int, float)):
+                    L_["at"] = round(L_["at"] + f, 3)
+        scene = {"id": b["id"], "layers": layers, "rest": min(b["pulses"] - LEAVE - 0.4, CUT + RISE + 2.4 + f)}
+        # the words a move that sets its own words carries: the person's handle slams in, or bursts out of the
+        # exploded photograph; a count runs up to the number in their line
+        if chosen[b["id"]][0] in ("slam-words", "exploded-layers"):
+            scene["say"] = f"@{p.handle}"
+        elif chosen[b["id"]][0] == "counter":
+            scene["say"] = counted(b.get("line") or heard_line(p) or "")
+        scenes.append(scene)
     ending = closer(F, ctx, roles, edge)
     shape_at, shape = ROUTE_AT + ROUTE + WALL_HOLD, settles(look().card["closer"])
     ending.append({"kind": "Shape", "at": shape_at, "beats": shape, "name": look().card["closer"]})
@@ -2093,9 +2176,12 @@ def board(sb, ctx, kind="reel", bpm=None):
         run += b["pulses"] * pulse
         frames = round(run) - a
         move, transition, form = chosen[sc["id"]]
+        if b.get("person") and ctx.photos.info(f"{ctx.person(b['person']).handle}-0").get("clip"):
+            form = "clip"   # their own recording plays on the card, with the move its photograph chose
         out.append({"id": sc["id"], "frames": frames, "camera": "none", "transition": transition, "move": move, "form": form,
                     "layers": sc["layers"], "comp": b["comp"],
                     "rest": min(frames - 2, round(sc["rest"] * pulse)), **({"person": b["person"]} if b.get("person") else {}),
+                    **({"say": sc["say"]} if sc.get("say") else {}),
                     **({"keep": kept(sc["layers"])} if sc["id"] != "closer" else {})})
     story(out, ctx, people)
     lk = look()
@@ -2103,7 +2189,8 @@ def board(sb, ctx, kind="reel", bpm=None):
               "style": lk.card["id"], "ground": lk.ground, "tag_text": lk.tag_text, "signoff": SIGNOFF, "said_by": said_by(ctx),
               "format": {"width": F.W, "height": F.H, "fps": boards.FPS, "kind": kind, "name": kind, "safe": list(safe_box(F))},
               "system": system(), "beats": out}
-    board_["sound"] = sound(out, starts, ctx, people, F)
+    board_["sound"] = sound(out, starts)
+    board_["effects"] = effects(out, starts, bpm, board_["id"])
     board_["clips"] = clips(out, ctx, people)
     return board_
 
@@ -2154,27 +2241,63 @@ def story(beats, ctx, people):
             b["carries"] = "nothing: the picture and the music stop together as the closer settles, and the frame holds still and silent to the end"
 
 
-def sound(beats, starts, ctx, people, F):
-    """The film's sound cues, one where each beat lands, for music.py to mix under the bed: the camera landing on the
-    hook's photograph, the blade cutting each person's photograph as their stamp lands on its edge (one weight for
-    everyone), the build into the wall and its impact on the frame the wall settles, the tag landing on the last face,
-    and the stop as the card's closer settles. Tags pop, words rise and the camera cuts without a sound of their own."""
-    cues = [{"kind": "hit", "at": 0.0, "beat": "hook", "what": "the camera lands on the photograph of them together", "weight": 0.9}]
-    for b in beats:
-        if b["id"].startswith("person-"):
-            p = ctx.person(b["person"])
-            cues.append({"kind": "hit", "at": round(starts[b["id"]] + CUT, 3), "beat": b["id"],
-                         "what": f"the blade cuts @{p.handle}'s photograph and '{p.stamp}' lands on the edge", "weight": 0.7, "bright": 0.8})
+def sound(beats, starts):
+    """The film's stop, in musical beats: where the closer settles, and the picture and the music stop together. The
+    music is cut there, and every sound the film makes is the effects' (effects())."""
+    C = starts.get("closer")
+    if C is None:
+        return []
+    stop = round(C + ROUTE_AT + ROUTE + WALL_HOLD + settles(look().card["closer"]), 3)
+    return [{"kind": "stop", "at": stop, "beat": "closer", "what": "the closer settles; the picture and the music stop together"}]
+
+
+COUNT_S = 0.85
+"""Seconds the counter move's count runs from the cut to its stop (counter.tsx's COUNT)."""
+
+
+def effects(beats, starts, bpm, board_id):
+    """The board as the shared effects read it (sfx.py), every time in musical beats from the film's start:
+    - the hook: its photograph's shutter on frame 0, and an impact as 'my people.' lands;
+    - each person: a whoosh on the cut into them, then their photograph's shutter (or a mark's pop) as the blade cuts it
+      and their stamp lands, which on a beat whose move takes the frame is the moment that move lands the photograph
+      and hands it back; a slam-words beat hits on each word it slams, and a count hits on its stop;
+    - the closer: a riser into the frame the wall settles whole, cut off by its impact, a pop as the tag lands on the
+      last face, and an impact as the closer's title settles on the stop."""
+    import sfx
+    out = [{"id": "hook-photo", "form": "photo", "start": 0.0, "move": None, "transition": None,
+            "layers": [{"kind": "Photo", "at": 0.0}]},
+           {"id": "hook", "form": "title", "start": 0.0, "move": None, "transition": None,
+            "layers": [{"kind": "Title", "at": 0.0, "slam": [TITLE_AT, 0.5], "title": {"text": "my people."}}]}]
+    order = [b["id"] for b in beats]
+    for i, b in enumerate(beats):
+        if not b["id"].startswith("person-"):
+            continue
+        s = starts[b["id"]]
+        end = starts[order[i + 1]] if i + 1 < len(order) else s + 4
+        cut = next(L_ for L_ in b["layers"] if L_["kind"] == "Cut")
+        f = cut.get("fly") or 0
+        move = b["move"] if b["move"] in sfx.MARKS | {"slam-words"} else None
+        layer = {"kind": "Photo", "at": {"arrive": round(s + (f or CUT), 3), "end": round(end, 3)}}
+        if move == "slam-words":
+            layer["label"] = b.get("say") or ""
+        out.append({"id": b["id"], "form": "photo", "start": round(s, 3), "move": move, "transition": b["transition"],
+                    "layers": [layer]})
+        if b["move"] == "counter":
+            # the count runs from the cut and stops COUNT_S later, where its rings burst
+            stop = round(COUNT_S * bpm / 60, 3)
+            out.append({"id": f"{b['id']}-count", "form": "title", "start": round(s, 3), "move": None, "transition": None,
+                        "layers": [{"kind": "Title", "at": round(s, 3), "slam": [round(s, 3), stop]}]})
     C = starts.get("closer")
     if C is not None:
         land = round(C + ROUTE_AT, 3)
-        cues.append({"kind": "riser", "at": round(land - BUILD, 3), "beats": BUILD, "beat": "closer", "what": "the build into the wall"})
-        cues.append({"kind": "impact", "at": land, "beat": "closer", "what": "the wall settles whole"})
-        tagged = round(C + ROUTE_AT + ROUTE, 3)
-        cues.append({"kind": "hit", "at": tagged, "beat": "closer", "what": f"the tag lands on @{people[-1].handle}, the last face", "weight": 0.85, "bright": 0.7})
-        stop = round(C + ROUTE_AT + ROUTE + WALL_HOLD + settles(look().card["closer"]), 3)
-        cues.append({"kind": "stop", "at": stop, "beat": "closer", "what": "the closer settles; the picture and the music stop together"})
-    return sorted(cues, key=lambda c: c["at"])
+        shape_at, shape = ROUTE_AT + ROUTE + WALL_HOLD, settles(look().card["closer"])
+        out.append({"id": "closer", "form": "wall", "start": land, "move": None, "transition": None,
+                    "layers": [{"kind": "Closer", "at": land}]})
+        out.append({"id": "closer-tag", "form": "wall", "start": round(C + ROUTE_AT + ROUTE, 3), "move": "sticker-pop",
+                    "transition": None, "layers": [{"kind": "Tag", "at": round(C + ROUTE_AT + ROUTE, 3)}]})
+        out.append({"id": "closer-title", "form": "wall", "start": round(C + shape_at, 3), "move": None, "transition": None,
+                    "layers": [{"kind": "Title", "at": round(C + shape_at, 3), "slam": [round(C + shape_at, 3), shape]}]})
+    return {"id": board_id, "bpm": bpm, "beats": out}
 
 
 # the camera's own move in a clip, chosen from the shot: a close face holds nearly still, a wide place opens up, a
@@ -2291,7 +2414,9 @@ def clips(beats, ctx, people):
     agent wrote for the photograph in cast.json (who or what moves and how), the lens and the height from where the
     face sits, the light measured from the photograph, the camera's own small move chosen from the shot (clip_move),
     the beat's length and a loop that closes on its first frame; and `stand_in`, the move the film makes in a clip's
-    place when no clip has arrived."""
+    place when no clip has arrived. A card whose photograph is the poster of a clip the person recorded (cast.json's
+    `clip`) plays that recording instead: one shot the length of its beat, cut from its strongest seconds by clips.py,
+    silent, on the same card with the same arrival and move; nothing is generated for it."""
     out = []
     photos = ctx.photos
     for b in beats:
@@ -2301,6 +2426,11 @@ def clips(beats, ctx, people):
         role = cut["photo"]["role"]
         info = photos.info(role)
         hook = b["id"] == "hook"
+        if info.get("clip"):
+            import cast
+            out.append({"id": f"{len(out):02d}", "beat": b["id"], "role": "their own clip", "source": str(cast.resolve(info["clip"]).resolve()),
+                        "seconds": round(b["frames"] / boards.FPS, 1), "image": cut["photo"]["file"], "prompt": None, "stand_in": None})
+            continue
         who = "them together" if hook else f"@{ctx.person(b['person']).handle}"
         said = (info.get("shot") or "").strip().rstrip(".")
         if not said:

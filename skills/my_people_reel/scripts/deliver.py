@@ -26,6 +26,8 @@ in by rename. out/film.mp4 is the index of out/: deliver refuses without it, set
 and puts it back after it, so a deliver stopped on the way leaves a set no later command
 takes for delivered and film.py render makes it again. deliver holds the run's lock (studio.lock) from the moment it enters the run until its last
 write, and runs the gate (qa.gate) in its own process under that lock, so every tool the gate starts holds it.
+deliver refuses a run whose newest cut is the half-size proof (R/render/proof-cut.mp4) and names the full-size cut,
+its check and round, and the render to run before it.
 """
 import html
 import os
@@ -36,6 +38,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import gather  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import storyboard  # noqa: E402
 import studio  # noqa: E402
@@ -242,6 +245,11 @@ def main():
         return 0
     _env.enter_run()
     with studio.lock("deliver") as run:
+        # the film deliver takes is the full-size render: a run whose newest cut is the half-size proof is refused
+        if proof.scale(qa.CUT) != 1:
+            sys.exit(proof.refusal(qa.CUT, then="film.py cut for the full-size cut, then qa.py check and vote.py cut, "
+                                               "where the critics read the type at full size, then film.py render and "
+                                               "deliver.py again"))
         return deliver(run)
 
 

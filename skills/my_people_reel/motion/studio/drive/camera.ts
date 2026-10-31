@@ -9,8 +9,9 @@ import {bezier, clamp01, lerp, mixPt, span, type Pt} from '../../system/three/mo
 import type {Travel} from '../../system/three/travel';
 import {fxAt, nudgeAt} from '../../system/moves/layer';
 import type {Nudge} from '../../system/moves/types';
+import type {Board} from '../../system/types';
 import {onWall, type Card, type Plan} from './plan';
-import {cardScale, liftOf, typeZ} from './card';
+import {cardScale, dressOf, liftOf, typeZ} from './card';
 
 /** What the camera frames: a wall point at the middle of the picture, `h` wall px tall at depth `z`, and how it is turned. */
 export type Framing = {c: Pt; h: number; z: number; fov: number; yaw: number; pitch: number; roll: number};
@@ -155,6 +156,49 @@ const setCam = (p: Pose, aspect: number) => {
   cam.aspect = aspect;
   cam.updateProjectionMatrix();
   cam.updateMatrixWorld();
+};
+
+/** Where card `i`'s print stands on the frame at beat `t` as the camera sees it then, [x0, y0, x1, y1] px (its band of a
+ * framed picture, its crop on a page), and where its whole picture lies, [x, y, w, h] px: the frame a move that takes
+ * the frame lands on, so the move hands the picture back to the card where the card stands. */
+export const printAt = (plan: Plan, i: number, t: number): {box: [number, number, number, number]; place: [number, number, number, number]} => {
+  const c = plan.cards[i];
+  setCam(poseOf(plan, heldAt(plan, i, t)), plan.W / plan.H);
+  const z = liftOf(c);
+  const seen = (p: Pt): Pt => {
+    const q = onWall(c.T, p);
+    const v = new THREE.Vector3(q[0] - plan.W / 2, plan.H / 2 - q[1], z).project(cam);
+    return [((v.x + 1) / 2) * plan.W, ((1 - v.y) / 2) * plan.H];
+  };
+  const [px, py, pw, ph] = c.place;
+  const [v0, v1] = c.band ?? [0, 1];
+  const [x0, x1] = c.crop ?? [px, px + pw];
+  const a = seen([x0, py + ph * v0]), b = seen([x1, py + ph * v1]);
+  const pa = seen([px, py]), pb = seen([px + pw, py + ph]);
+  return {box: [a[0], a[1], b[0], b[1]], place: [pa[0], pa[1], pb[0] - pa[0], pb[1] - pa[1]]};
+};
+
+/** The seconds into a move's 0.38 s hand back at which the picture it lands and the card are one. */
+const HAND_BACK = 0.19;
+type Box = [number, number, number, number];
+
+/** The plan as the moves see it: every photo beat carries its card's print as the card draws it (the degrees it hangs
+ * at, its border in px, 0 on a bare print, and its strips of tape), and each move that takes the frame (its flight on
+ * the beat's Cut layer) lands on its card's print where the camera sees it HAND_BACK into the hand back. The camera
+ * holding a card pushes in toward the person and keeps the picture on the photograph, so the print stands there, never
+ * at its place on the card. */
+export const landed = (board: Board, plan: Plan): Plan => {
+  const fix = <B extends {id: string; box?: Box; place?: Box}>(b: B): B => {
+    const i = plan.cards.findIndex((c) => c.key === b.id);
+    if (i < 0 || !b.box) return b;
+    const fly = board.beats.find((x) => x.id === b.id)?.layers.find((l) => l.kind === 'Cut')?.fly;
+    const {box, place} = fly ? printAt(plan, i, plan.cards[i].arrive + fly - HAND_BACK / plan.beat) : {box: b.box, place: b.place};
+    const {tilt, border, tape} = dressOf(plan, plan.cards[i], i);
+    // the border is a share of the print's width: the width where its box and its place meet
+    const wide = place ? Math.min(box[0] + box[2], place[0] + place[2]) - Math.max(box[0], place[0]) : box[2];
+    return {...b, box, place, tilt, rim: border * Math.max(0, wide), tape};
+  };
+  return {...plan, line: {...plan.line, beats: plan.line.beats.map(fix)}, over: {...plan.over, beats: plan.over.beats.map(fix)}};
 };
 
 /** Which held shot beat `t` is in: the cards in turn, then the closer. */

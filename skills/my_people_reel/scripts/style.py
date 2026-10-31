@@ -20,6 +20,20 @@ NEEDS = ("id", "name", "faces", "palette", "moves", "transitions", "ease", "fini
 
 _CARDS = {}
 
+# The trailer moves each look takes on top of its card's own list, merged into the card as it is read: an id the card
+# lists already gains these fits. `lead`: on a person's beat a lead move that fits is chosen before the card's others,
+# so the look's own grammar is these moves. `only`: the move is chosen on a beat that shows this (a person's line that
+# holds a number) and never elsewhere. The peak belongs to the card's own `once` move (pick).
+MORE_MOVES = {
+    "kinetic-type": [
+        {"id": "picture-tunnel", "fits": ["photo", "people", "portrait"], "lead": True},
+        {"id": "exploded-layers", "fits": ["photo", "words", "landscape"], "lead": True},
+        {"id": "tilted-wall", "fits": ["photo", "people", "peak"], "lead": True},
+        {"id": "slam-words", "fits": ["photo", "words", "place"], "lead": True},
+        {"id": "counter", "fits": ["photo", "number"], "lead": True, "only": "number"},
+    ],
+}
+
 
 def styles():
     """Every style id there is a card for."""
@@ -37,6 +51,13 @@ def card(style):
         bad += [f"the {k} face's file {v['file']}" for k, v in c.get("faces", {}).items() if not (SKILL / v["file"]).is_file()]
         if bad:
             raise SystemExit(f"styles/{style}.json is not a style card: it lacks " + ", ".join(bad))
+        for extra in MORE_MOVES.get(style, []):
+            have = next((m for m in c["moves"] if m["id"] == extra["id"]), None)
+            if have is None:
+                c["moves"].append(dict(extra))
+            else:
+                have.update({k: v for k, v in extra.items() if k != "fits"})
+                have["fits"] = list(dict.fromkeys(have.get("fits", []) + extra["fits"]))
         _CARDS[style] = c
     return _CARDS[style]
 
@@ -80,12 +101,17 @@ def cased(text, face):
 SHAPES = {"landscape", "portrait"}
 
 
-def pick(options, tags, form, used, avoid):
+def pick(options, tags, form, used, avoid, held=()):
     """The option whose `fits` matches the beat best (its form counts twice, each other tag once); between equals the
     one used least so far, then the card's order. The option `avoid` (the previous beat's) is never picked while another
-    exists, nor one made for the other shape of photograph (a portrait's push on a landscape laid whole)."""
+    exists, nor one made for the other shape of photograph (a portrait's push on a landscape laid whole). A move the card
+    marks `once` plays at most once a film and wins the story's peak: on the peak beat the unplayed `once` moves that fit
+    its form are the only ones picked from, and the ids in `held` (the `once` moves a peak still to come will take) are
+    never picked before it."""
     shape = SHAPES & tags
-    pool = [o for o in options if o["id"] != avoid] or options
+    pool = [o for o in options if o["id"] != avoid and not (o.get("once") and (used.get(o["id"]) or o["id"] in held))] or options
+    if "peak" in tags:
+        pool = [o for o in pool if o.get("once") and form in o["fits"] and not used.get(o["id"])] or pool
     pool = [o for o in pool if not shape or not (SHAPES & set(o["fits"])) or shape & set(o["fits"])] or pool
     score = lambda o: 2 * (form in o["fits"]) + len((tags - {form}) & set(o["fits"]))
     best = max(pool, key=lambda o: (score(o), -used.get(o["id"], 0), -options.index(o)))

@@ -1,7 +1,8 @@
 """A card's type takes its color from the field it sits on: on the paper it is ink, whatever the photograph hidden
 behind the paper reads in. On a card laid under an edge every line stands level at rest, whatever the edge's tilt; on
 the scrapbook's print card the caption is hand-lettered under the print, turned with the hand and inside the safe area,
-and on a reel a keepsake print and the month fill the page's lower third under it; the prints arrive differently from one
+and on a reel a keepsake print of their second photograph and the month fill the page's lower third under it (the
+month alone, in the middle, for a person with one photograph); the prints arrive differently from one
 person to the next. A home movie's typed lines stand a third larger than its card's size when they clear the eyes.
 A handle of the person's own at the start or end of their words is printed once, on their tag; every other name in
 the words stays.
@@ -114,6 +115,19 @@ class PrintCard(unittest.TestCase):
         self.assertGreater(bd.top_of([month]), bd.foot_of(said))
         self.assertTrue(y0 < month["y"] < y1)
         self.assertTrue((x0 + x1) / 2 > F.W / 2 > month["x"] or (x0 + x1) / 2 < F.W / 2 < month["x"])
+        self.assertEqual(bd.problems({"format": {"kind": "reel"}, "beats": [{"id": "person-3", "layers": layers}]}), [])
+
+    def test_a_person_with_one_photograph_has_the_month_alone_stamped_low_in_the_middle(self):
+        """No keepsake cut from the photograph the print already shows: the month stands alone in the lower third."""
+        F = bd.lensed(L.Frame("reel"))
+        edge, role, layers, ok = bd.card(F, Photos([0.35, 0.3, 0.6, 0.5]), ZE, "the best summer of my life", 2)
+        self.assertNotIn("keepsake", layers[0])
+        lines = [ln for la in layers if la["kind"] == "Words" for ln in la["lines"]]
+        said = [ln for ln in lines if ln["name"].startswith("said-")]
+        month = next(ln for ln in lines if ln["name"].startswith("stamp-"))
+        self.assertTrue(month["low"])
+        self.assertGreater(bd.top_of([month]), bd.foot_of(said))
+        self.assertEqual(month["x"], F.W / 2)
         self.assertEqual(bd.problems({"format": {"kind": "reel"}, "beats": [{"id": "person-3", "layers": layers}]}), [])
 
     def test_a_square_page_has_no_lower_third_and_keeps_the_month_under_the_caption(self):

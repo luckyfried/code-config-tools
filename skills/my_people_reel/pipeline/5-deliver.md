@@ -1,7 +1,7 @@
 # 5. Critic, render, deliver
 
 Goal: a cut that passes `qa.py check`, scored by both critics on R1 to R6 against the bar (a mean of 4.5, no rule
-under 4), then the film, a green `qa.py gate`, and `R/out/` complete: `film.mp4`, `cover.png`, `story.png`,
+under 4) on its half-size proof, the full-size cut with the type read again on it, then the film, a green `qa.py gate`, and `R/out/` complete: `film.mp4`, `cover.png`, `story.png`,
 `caption.md`, `review.html`, and `film-square.mp4`, `film-wide.mp4` and `people/NN-<handle>.png` (one story card per person) only
 when the person asked for them, and nothing else. How it was made, `R/brief.md`, stays in the run.
 
@@ -25,12 +25,16 @@ the render did not make.
 python3 S/scripts/qa.py check
 ```
 
+Every round before deliver reads the half-size proof from `film.py cut --proof`: while `R/render/proof-cut.mp4` is the
+newest cut, `check` and `vote.py cut` read it and their first line says "reading the half-size proof". Every size they
+report is in board units, the full-size cut's numbers, so a proof passes or fails exactly where the full cut would.
+
 `check` measures the cut and its board before anything else renders: the format (1080x1920 H.264 High at 30 fps,
-8 to 30 s, and 4 s more for each person after the fifth), the audio and its loudness, black stretches, a frozen stretch before the board's stop (the still after
-the stop is the ending), the hook inside the first 30 frames, the board in all three formats (`storyboard.py check`),
+8 to 30 s, and 4 s more for each person after the fifth), the audio and its loudness, black stretches, a frozen stretch anywhere in the film, its
+ending too (the closer keeps its slow push to the last frame), the hook inside the first 30 frames, the board in all three formats (`storyboard.py check`),
 the render report, and every person on screen. It also writes two figures that are never a pass or a fail: the cuts
 and their rate, and the seconds whose picture barely changes. Fix anything it fails in the storyboard or the cast
-and cut again. Then:
+and cut the proof again. Then:
 
 ```
 python3 S/scripts/vote.py cut
@@ -38,7 +42,7 @@ python3 S/scripts/vote.py cut
 
 Read `S/critic/critic.md`, section "The cut". As the motion designer, then as the person, score each rule from its
 own evidence with the Read tool: the 12 fps strip (`R/frames/film-strip.jpg`), the beats at rest (`R/frames/NN-*.png`),
-the cue tiles (`R/frames/cues/*.png`, with `R/frames/cues.json`: the frames around each sound cue over the waveform),
+the cue tiles (`R/frames/cues/*.png`, with `R/frames/cues.json`: the frames around each sound effect over the waveform),
 `R/qa/check.json` and `R/clips/requests.json`, and fill in the round file it names (`R/critic/cut-1.json`): a score
 1-5 for each of R1 to R6 and a paragraph each. Run again on the same cut, `vote.py cut` names the same round; a new cut
 opens the next one.
@@ -49,13 +53,31 @@ python3 S/scripts/vote.py verdict
 
 The verdict states the mean and the least against the bar, and never stops the render:
 
-- `AT THE BAR`: render.
+- `AT THE BAR`: cut the full-size film and read the type on it (next section), then render.
 - `FIX ONCE`: round 1 is under the bar, and it names the rule furthest under it. When one of the levers in
   `critic.md` reaches that rule, fix it in the storyboard, the cast or the music, run `storyboard.py check`, `snap`,
-  `music.py master`, `film.py cut`, `clips.py list` and `qa.py check`, then `vote.py cut` for round 2 (say in `fixed`
-  what changed) and score the new cut's files again. When no lever reaches it, the budget is spent: render this cut.
-- `UNDER THE BAR after the fix`: render this cut as the best one. `R/brief.md` states every score, whichever way it
-  went; the review page carries none.
+  `music.py master`, `film.py cut --proof`, `clips.py list` and `qa.py check`, then `vote.py cut` for round 2 (say in
+  `fixed` what changed) and score the new cut's files again. When no lever reaches it, the budget is spent: cut the
+  full-size film and render this cut.
+- `UNDER THE BAR after the fix`: cut the full-size film and render this cut as the best one. `R/brief.md` states every
+  score, whichever way it went; the review page carries none.
+
+## Cut the full-size film and read the type on it
+
+Once the verdict on the proof says to go on, cut the film at full size and score it once more:
+
+```
+python3 S/scripts/film.py cut
+python3 S/scripts/qa.py check
+python3 S/scripts/vote.py cut
+python3 S/scripts/vote.py verdict
+```
+
+`film.py cut` renders `R/render/cut.mp4` at 1080x1920 and takes the proof away. `vote.py cut` moves the round to the
+full-size cut and empties each critic's R3, the type; the other scores stand. As each critic, open the strip and the
+beats at rest in `R/frames/` again, read the type at the size a phone shows it, and score R3 again. An R3 that drops
+the round under the bar here is a `FIX ONCE` like any other: fix it, cut the proof again, and score round 2.
+`film.py render` refuses while the newest cut is the proof.
 
 ## Render the film
 
@@ -64,7 +86,7 @@ python3 S/scripts/film.py render
 ```
 
 Add `--also` with what the person's words asked for, and nothing else (for example `film.py render --also
-stories`). `render` takes the checked cut as `R/out/film.mp4`; with `square` or `landscape` it lays the same storyboard
+stories`). This is the full-size render deliver takes: `render` takes the checked full-size cut as `R/out/film.mp4`; with `square` or `landscape` it lays the same storyboard
 out again for 1:1 or 16:9 (each re-solved for its frame: the hook, the cards and the wall re-placed, never scaled to
 fit) and renders it with the music; with `stories` it takes each person's story card from the settled frame of the
 beat that names them: open every story card in `R/out/people/` with the Read tool. A film or story card in `R/out/`
@@ -90,6 +112,10 @@ write one, it drafts a short one that tags everyone.
 python3 S/scripts/deliver.py
 ```
 
+deliver.py delivers only the full-size film: when the newest cut is the half-size proof it refuses with `not
+delivered: the newest render is the half-size proof` and names the full-size cut, its check and
+round, and the render to run before it.
+
 It writes `R/out/caption.md`, `R/out/review.html` (the person's page: the reel with `cover.png` as its poster, any
 asked-for formats and story cards, the caption, the two looks that were not picked under "Prefer another look? Say
 'make the second one'", and how it was made in a few plain sentences; no score), copies those two looks' sheets into
@@ -113,7 +139,7 @@ that "make the second one" makes it again in another look.
 ## Another look
 
 "Make the second one" (or "the scrapbook one", "C") after a delivery is `vote.py pick <look>`, then movement 4
-(`music.py find`, `analyze`, `storyboard.py snap`, `music.py master`, `film.py cut`, `clips.py list` and `normalize`)
+(`music.py find`, `analyze`, `storyboard.py snap`, `music.py master`, `film.py cut --proof`, `clips.py list` and `normalize`)
 and this movement again, in the same run folder. The film delivered before is replaced by the new one.
 
 When the gate is still red, the reply says the film is not ready and which checks failed, in plain words, taken
