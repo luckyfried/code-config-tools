@@ -106,7 +106,7 @@ const toneOf = (r: Reel, v: string) => {
   return hex;
 };
 
-/** What the moves, cuts, and the closing page are given: the frame, the beat in frames, the colors, the card's tones,
+/** What the moves, cuts, and the closing page are given: the frame and its safe area, the beat in frames, the colors, the card's tones,
  * grid, print and faces, whether its words take the finish, the month's first photograph, and the board's own words. */
 export const lookOf = (r: Reel, sys: System): Look => {
   const {finish, photo} = sys;
@@ -127,7 +127,11 @@ export const lookOf = (r: Reel, sys: System): Look => {
       rows: Array.from({length: g.rows + 1}, (_, i) => m + (i * (r.H - 2 * m)) / g.rows),
     },
     finished: finish.words !== 'clean',
+    // the safe area, which the moves lay their words out from
+    safe: r.safe,
     photo: first?.file ? staticFile(first.file) : undefined,
+    // every photograph the reel shows, the walls and corridors the spectacle moves build from
+    photos: r.cards.filter((c) => c.file).map((c) => staticFile(c.file!)),
     print: {
       box: [Math.max(0, pic.box[0]) * r.W, Math.max(0, pic.box[1]) * r.H,
         (Math.min(1, pic.box[0] + pic.box[2]) - Math.max(0, pic.box[0])) * r.W, (Math.min(1, pic.box[1] + pic.box[3]) - Math.max(0, pic.box[1])) * r.H],

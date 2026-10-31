@@ -77,8 +77,8 @@ export const bandMaterial = (texture: THREE.Texture | null, fill: string) => {
 type Field = {place: {value: THREE.Vector4}; band: {value: THREE.Vector4}; words: {value: THREE.Vector4}; hook: {value: THREE.Vector4};
   quad: {value: THREE.Vector4}; fill: {value: THREE.Color}; scrim: {value: number}; hookScrim: {value: number}};
 
-/** The field: the photograph mirrored on past its own edges and falling off slowly to `fill` there, and fading out
- * toward the quad's edges, so it never ends in a hard edge. On a dark ground it is the photograph softened and dimmed;
+/** The field: the photograph mirrored on past its own edges, blurred to a haze within 120 px of them so no mirrored
+ * figure reads, and falling off to `fill` there, and fading out toward the quad's edges, so it never ends in a hard edge. On a dark ground it is the photograph softened and dimmed;
  * on a paper ground it is the whole photograph, a little soft, raised toward white and laid in the paper's tone, a pale
  * print of itself around the band, so the card reads as a picture and never as bare or grey paper. Behind each line
  * of words the field goes back to the ground on a soft plate as the line lands, so the words stand on the ground
@@ -103,11 +103,12 @@ const fieldMaterial = (texture: THREE.Texture | null, fill: string) => {
           vec2 uv = vMapUv;
           vec2 p = vec2(uPlace.x + uv.x * uPlace.z, uPlace.y + (1.0 - uv.y) * uPlace.w);
           vec2 mirror = 1.0 - abs(1.0 - abs(uv));
-          vec3 soft = softAt(mirror, vec2(26.0 / uPlace.z, 26.0 / uPlace.w));
           float past = boxOut(p, vec4(uPlace.xy, uPlace.xy + uPlace.zw));
+          float far = smoothstep(0.0, 120.0, past);
+          vec3 soft = mix(softAt(mirror, vec2(26.0 / uPlace.z, 26.0 / uPlace.w)), softAt(mirror, vec2(110.0 / uPlace.z, 110.0 / uPlace.w)), far);
           float paper = smoothstep(0.2, 0.6, dot(uFill, vec3(0.2126, 0.7152, 0.0722)));
-          vec3 pale = mix(texture2D(map, mirror, 2.0).rgb, vec3(1.0), 0.3) * uFill;
-          vec3 c = mix(uFill, mix(soft * 0.62, pale, paper), mix(0.9, 0.6, paper) * exp(-max(past, 0.0) / 420.0));
+          vec3 pale = mix(texture2D(map, mirror, mix(2.0, 6.0, far)).rgb, vec3(1.0), mix(0.3, 0.5, far)) * uFill;
+          vec3 c = mix(uFill, mix(soft * 0.62, pale, paper), mix(0.9, 0.6, paper) * exp(-max(past, 0.0) / 260.0));
           c = mix(c, soft, mix(0.45, 0.2, paper) * exp(-max(boxOut(p, uBand), 0.0) / 16.0));
           float shade = 1.0 - smoothstep(-24.0, 70.0, boxOut(p - vec2(18.0, 34.0), uBand));
           c *= 1.0 - mix(0.62, 0.22, paper) * shade;

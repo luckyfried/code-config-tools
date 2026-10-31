@@ -124,13 +124,15 @@ export const ClimbFilm: React.FC<{reel: Reel; clips: Clip[]}> = ({reel: r, clips
   const t = frame / pulse;
   const sys = useSys().system;
   const look = useMemo(() => lookOf(r, sys), [r, sys]);
-  const shot = shotAt(r, t, pulse, r.timeline, look);
+  // a beat's photograph, as the moves draw it, is the file the render's public folder serves
+  const line = useMemo(() => ({...r.timeline, beats: r.timeline.beats.map((b) => (b.photo ? {...b, photo: staticFile(b.photo)} : b))}), [r]);
+  const shot = shotAt(r, t, pulse, line, look);
   const page = r.closer.page;
   return (
     <AbsoluteFill style={{background: r.colors.bg}}>
       {fonts ? (
         <Stage pose={shot.pose} travel={shot.travel} background={r.colors.bg}
-          over={<MoveLayer line={r.timeline} look={look} t={Math.min(t, page.still)} bars={sys.finish.bars} closer={page} />}>
+          over={<MoveLayer line={line} look={look} t={Math.min(t, page.still)} bars={sys.finish.bars} closer={page} />}>
           <Scene reel={r} t={t} frame={frame} fonts={fonts} clips={clips} />
         </Stage>
       ) : null}

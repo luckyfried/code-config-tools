@@ -1,14 +1,17 @@
-// grid-wipe: every other cell of the card's grid snaps shut in the card's ground in reading order, the cut happens
-// under the checker, and the cells open again in the same order. Half the grid at most is ever shut, so the picture
-// holds the other half.
+// grid-wipe: every other cell of the card's grid snaps shut in reading order, each a window onto the frame the cut
+// opens onto (the incoming print on its ground, or the wall's posts), the cut happens under the checker, and the
+// cells open again in the same order onto the incoming beat itself. Half the grid at most is ever shut, so the picture
+// holds the other half. A cut into a beat with nothing to show shuts its cells in the card's ground.
 import React from 'react';
 import {clamp01, fill, SNAP} from '../kit';
+import {Incoming, opensOnto} from '../arrival';
 import type {Cut, CutProps} from '../types';
 
-const Overlay: React.FC<CutProps> = ({look, u}) => {
-  const {cols, rows} = look.grid;
+/** The shut cells at `u` through the window, each [x, y, w, h] px. */
+export const shutAt = (grid: {cols: number[]; rows: number[]}, u: number) => {
+  const {cols, rows} = grid;
   const nc = cols.length - 1, nr = rows.length - 1;
-  const cells: React.ReactNode[] = [];
+  const out: [number, number, number, number][] = [];
   for (let r = 0; r < nr; r++) {
     for (let c = 0; c < nc; c++) {
       if ((r + c) % 2) continue;
@@ -16,10 +19,24 @@ const Overlay: React.FC<CutProps> = ({look, u}) => {
       const k = SNAP(clamp01((u - d) / 0.2)) - SNAP(clamp01((u - 0.5 - d) / 0.2));
       if (k <= 0) continue;
       const x = cols[c], y = rows[r], w = cols[c + 1] - x, h = rows[r + 1] - y;
-      cells.push(<div key={`${r}-${c}`} style={{position: 'absolute', left: x, top: y, width: w * k + 1, height: h + 1, background: look.tone.ground}} />);
+      out.push([x, y, w * k + 1, h + 1]);
     }
   }
-  return <div style={fill}>{cells}</div>;
+  return out;
+};
+
+const Overlay: React.FC<CutProps> = ({look, into, u}) => {
+  const shut = shutAt(look.grid, u);
+  if (!shut.length) return null;
+  if (!opensOnto(look, into)) {
+    return <div style={fill}>{shut.map(([x, y, w, h], i) => <div key={i} style={{position: 'absolute', left: x, top: y, width: w, height: h, background: look.tone.ground}} />)}</div>;
+  }
+  const path = shut.map(([x, y, w, h]) => `M ${x} ${y} h ${w} v ${h} h ${-w} Z`).join(' ');
+  return (
+    <div style={{...fill, overflow: 'hidden', clipPath: `path('${path}')`}}>
+      <Incoming look={look} into={into} />
+    </div>
+  );
 };
 
 export default {beats: 1.4, jump: true, Overlay} satisfies Cut;

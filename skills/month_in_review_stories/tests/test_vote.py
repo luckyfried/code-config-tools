@@ -270,13 +270,6 @@ class Gate(unittest.TestCase):
         self.assertIn("storyboard-drive.png", got["detail"])
         shutil.rmtree(run_, ignore_errors=True)
 
-    def test_the_effects_sit_eight_lu_under_the_music(self):
-        import music
-        self.assertEqual(music.FX_UNDER_BED_LU, 8)
-        self.assertFalse(qa.mixed({"sound_cues": 7, "bed_lufs": -23.0, "fx_lufs": -30.9}, 5)[0])
-        self.assertTrue(qa.mixed({"sound_cues": 7, "bed_lufs": -23.0, "fx_lufs": -31.0}, 5)[0])
-        self.assertTrue(qa.mixed({"sound_cues": 7, "bed_lufs": -23.0, "fx_lufs": -30.97}, 5)[0])
-
     def test_the_music_stops_where_the_ask_lands(self):
         self.assertTrue(qa.stopped([(1.0, 1.5), (13.1, None)], 13.0, 15.0)[0])
         self.assertFalse(qa.stopped([(1.0, 1.5), (14.2, None)], 13.0, 15.0)[0])

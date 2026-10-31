@@ -32,6 +32,8 @@ is never moved away: each file is renamed into it, whole, and its ready page is 
 first, before either out/ changes, and is written again only once the workspace's out/ stands. The last line a green
 deliver prints is the delivered reel, the run's out/film.mp4, as a path from the workspace root (for example
 build/20261026T005754Z/out/film.mp4): the path the reply names.
+deliver delivers only the full-size render: it refuses a run whose newest render is the half-size proof (out/proof.mp4),
+before it changes anything, and names the full-size render, qa.py check and vote.py cut to run first.
 """
 import html
 import os
@@ -41,6 +43,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import studio  # noqa: E402
 import vote  # noqa: E402
@@ -113,6 +116,8 @@ def clip_rows(run):
     out = []
     for k, x in ((_env.read_json(run / "clips.json") or {}).get("clips") or {}).items():
         out.append(f"- clip {k} ({x['beat']}): " + ("made by the video model" if x["status"] == "generated" else
+                                                     f"their own clip, {Path(x['source']).name}, from {x['from_second']} s"
+                                                     if x["status"] == "their own clip" else
                                                      f"stood in for ({x.get('why')}): {x.get('stand_in')}"))
     return out or ["- None: the cards are type, because no photographs or clips came with these posts."]
 
@@ -263,6 +268,8 @@ def main():
 
 
 def deliver(run, hold):
+    if proof.scale(run / "out" / "film.mp4") != 1:
+        sys.exit(proof.refusal(run / "out" / "film.mp4"))
     # delivered.json vouches for the out/ folders below, so it goes before either changes and comes back once both stand
     (run / "delivered.json").unlink(missing_ok=True)
     lib, taste, win = (_env.read_json(run / f) or {} for f in ("library.json", "taste.json", "winner.json"))

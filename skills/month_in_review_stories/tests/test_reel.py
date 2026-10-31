@@ -4,17 +4,21 @@
 """
 import copy
 import json
+import math
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import fixture
 import compose
 from compose import reel
 from compose.common import H, SAFE, W
+
+KIT = Path(__file__).resolve().parents[1]
 
 # the four moments the agent picks, the wedding the peak, each with the shot it wrote from its photograph
 PICKED = [(5, False), (13, True), (17, False), (28, False)]
@@ -48,6 +52,10 @@ def ink(ln):
     spaced = ln.get("tracking", 0.0) * ln["size"] * max(0, len(ln["text"]) - 1)
     x = ln["x"] - {"middle": 0.5, "end": 1.0}.get(ln.get("anchor"), 0.0) * reel.width(ln["text"], ln["size"], ln["file"], ln.get("tracking", 0.0))
     return x + x0 * k, ln["y"] + y0 * k, x + x1 * k + spaced, ln["y"] + y1 * k
+
+
+# how far in a turned print's window side stands at the type, px: half the card's tilt over the half height of the print
+TURN = 16
 
 
 def on_screen(box, hold, zoom):
@@ -96,6 +104,32 @@ class Reel(unittest.TestCase):
             hook = next(x for x in c["lines"] if x.get("name") == "hook")
             self.assertGreaterEqual(c["band"][0] - (hook["y"] + 0.25 * hook["size"]), 24, (name, hook["y"], hook["size"], c["band"]))
 
+    def test_the_first_cards_words_stand_inside_the_window_of_the_print_its_title_move_drops(self):
+        # polaroid-drop on the title stands its print inside the safe area, as wide as the frame allows and no taller
+        # than the safe area, its rim covering everything outside the picture's window: the month's line, the day and
+        # their words stand inside that window through the whole hold, in every style whose first move it is
+        sy0, sy1 = SAFE["top"], H - SAFE["bottom"]
+        w = min(W * 0.96, (sy1 - sy0) / 1.31)
+        rest = sy0 + max(0.0, (sy1 - sy0 - 1.31 * w) / 2)
+        top, foot = rest + 0.035 * w, rest + 1.05 * w - 0.035 * w
+        # the print turns a little on the title, so its window's sides stand up to TURN px further in at the type
+        left, right = (W - w) / 2 + 0.035 * w + TURN, (W + w) / 2 - 0.035 * w - TURN
+        seen = 0
+        for name in compose.style.styles():
+            r = compose.board(name, self.month)["reel"]
+            if r["timeline"]["beats"][0]["move"] != "polaroid-drop":
+                continue
+            seen += 1
+            c = r["cards"][0]
+            for ln in c["lines"]:
+                x0, y0, x1, y1 = on_screen(ink(ln), c["hold"], r["zoom"])
+                where = (name, ln["text"], round(x0), round(y0), round(x1), round(y1), round(left), round(top), round(right), round(foot))
+                self.assertGreaterEqual(y0, top, where)
+                self.assertLessEqual(y1, foot, where)
+                self.assertGreaterEqual(x0, left, where)
+                self.assertLessEqual(x1, right, where)
+        self.assertGreater(seen, 0)
+
     def test_the_walls_month_line_stands_whole_above_the_paper_foot_a_wall_move_lays(self):
         # a wall move lays its paper from four fifths of the frame down (page-drift's torn foot): the month line under
         # the wall, its descenders included, stands above it in every look
@@ -106,11 +140,13 @@ class Reel(unittest.TestCase):
 
     def test_a_moments_words_stand_where_the_cards_line_sets_them_in_every_look(self):
         # the look's own page: centred under a scrapbook print, in the swiss grid's column, from the left margin
-        # in the editorial page; every word inside the safe area through its hold
+        # in the editorial page, the first card's a further INSET in (inside its title move's print); every word
+        # inside the safe area through its hold
         for name in compose.TRIO:
             r = compose.board(name, self.month)["reel"]
             box = compose.style.card(name)["photo"]["line"]
-            for c in r["cards"]:
+            for k, c in enumerate(r["cards"]):
+                inset = reel.INSET if k == 0 else 0
                 said = [x for x in c["lines"] if x.get("name") != "hook"]
                 for ln in said:
                     x0, y0, x1, y1 = on_screen(ink(ln), c["hold"], r["zoom"])
@@ -124,14 +160,16 @@ class Reel(unittest.TestCase):
                 if box["align"] != "center":
                     self.assertEqual(len({x["x"] for x in said}), 1, (name, c["key"]))
                     # in its column, or from the left margin when the column would cut their words
-                    self.assertIn(said[0]["x"], {max(reel.TX, round(box["box"][0] * W, 1)), reel.TX}, (name, c["key"]))
+                    starts = {max(reel.TX, round(box["box"][0] * W, 1)) + inset, reel.TX + inset}
+                    self.assertIn(said[0]["x"], starts, (name, c["key"]))
                 self.assertNotIn("…", " ".join(x["text"] for x in said[1:]) if name != "editorial-quiet" else "", (name, c["key"]))
         short = copy.deepcopy(self.month)
         for x in short["moments"]:
             x["line"] = " ".join(x["line"].split()[:3])
         swiss = compose.board("swiss-grid", short)["reel"]["cards"]
         column = max(reel.TX, round(compose.style.card("swiss-grid")["photo"]["line"]["box"][0] * W, 1))
-        self.assertTrue(all(c["lines"][-1]["x"] == column for c in swiss), [c["lines"][-1]["x"] for c in swiss])
+        at = [c["lines"][-1]["x"] for c in swiss]
+        self.assertEqual(at, [column + reel.INSET] + [column] * (len(swiss) - 1), at)
 
     def test_picture_and_music_stop_as_the_closing_page_finishes_its_build_in_every_look(self):
         # every closing page draws its build on its progress from its start to the stop, so the stop is where it ends
@@ -303,3 +341,137 @@ class Reel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Cuts(unittest.TestCase):
+    """The cuts that jump and the moves that fly a photograph in, on the scrapbook card, whose photo beats cut hard."""
+
+    def test_no_frame_is_drawn_inside_a_jump_and_its_cut_falls_between_two_frames(self):
+        r = compose.board("scrapbook", picked(fixture.month()))["reel"]
+        tick = r["bpm"] / (60 * r["fps"])
+        jumps = [c["move"] for c in r["cards"] if c["move"][1] - c["move"][0] < 1.5 * tick]
+        self.assertTrue(jumps)
+        for a, b in jumps:
+            # the last frame before the jump ends is drawn before it starts
+            self.assertLessEqual((math.ceil(b / tick - 1e-6) - 1) * tick, a + 1e-6, (a, b))
+            mid = (a + b) / 2 / tick
+            self.assertAlmostEqual(mid - math.floor(mid), 0.5, delta=0.01)
+            self.assertIn(round(a + (b - a) / 2, 3), [round(x, 3) for x in r["timeline"]["cuts"]])
+
+    def test_a_stack_that_flies_in_keeps_its_cards_hold_and_its_words_and_shutter_wait_for_its_landing(self):
+        pick = reel.style.pick
+
+        def prefer(options, tags, form, used, avoid):
+            if form == "photo" and "exploded-layers" in [o["id"] for o in options] and not used.get("exploded-layers"):
+                used["exploded-layers"] = 1
+                return "exploded-layers"
+            return pick(options, tags, form, used, avoid)
+
+        # a 28 s reel, which has the beats past its four moments' natural holds that a move taking the frame adds
+        month = dict(picked(fixture.month()), ask={"seconds": 28})
+        with mock.patch.object(reel.style, "pick", prefer):
+            r = compose.board("scrapbook", month)["reel"]
+        beat = next(b for b in r["timeline"]["beats"] if b["move"] == "exploded-layers")
+        card = next(c for c in r["cards"] if c["key"] == beat["id"])
+        # the stack lands the photograph and hands back with a cut on the landing (exploded-layers.tsx), so the beat
+        # holds as long as its card does
+        self.assertEqual(beat["held"], reel.held_of(card)["held"])
+        # the landing exploded-layers reads from its beat (motion/system/moves/arrival.tsx): 0.55 of the room from the
+        # cut to the hold's end, at most 1.15 s
+        land = min(1.15, 0.55 * seconds(r, beat["held"][1] - beat["at"]))
+        first = min(ln["at"] for ln in card["lines"] if ln["text"].strip())
+        self.assertGreaterEqual(seconds(r, first - beat["at"]), land - 1e-3)
+        # the shutter under the photograph sounds as the stack lands
+        cue = next(b for b in r["fx"]["beats"] if b["id"] == beat["id"])
+        self.assertAlmostEqual(seconds(r, cue["layers"][0]["at"]["arrive"] - beat["at"]), land, delta=0.02)
+
+
+    def test_each_photographs_beat_hands_its_move_the_part_that_matters_as_fractions_of_the_photograph(self):
+        # a move that marks the photograph (doodle-draw-on) rings this point, so it is where the card's crop centres
+        r = compose.board("scrapbook", picked(fixture.month()))["reel"]
+        cards = {c["key"]: c for c in r["cards"] if c["file"]}
+        beats = [b for b in r["timeline"]["beats"] if b["id"] in cards]
+        self.assertTrue(beats)
+        for b in beats:
+            (x, y, w, h), (fx, fy) = cards[b["id"]]["place"], cards[b["id"]]["focus"]
+            u, v = b["focus"]
+            self.assertAlmostEqual(x + u * w, fx, delta=0.5, msg=b["id"])
+            self.assertAlmostEqual(y + v * h, fy, delta=0.5, msg=b["id"])
+            self.assertTrue(0 <= u <= 1 and 0 <= v <= 1, b)
+
+    def test_a_move_that_takes_the_frame_plays_only_on_beats_past_every_moments_natural_hold(self):
+        # a move that takes the frame adds its beats to its own beat; it plays only when the reel has those beats past
+        # every moment's natural hold, so no other moment's words are cut short for it, even when the look prefers one
+        pick, carried = reel.style.pick, reel.carried
+        natural = []
+
+        def prefer(options, tags, form, used, avoid):
+            for name in reel.TAKES:
+                if form == "photo" and name in [o["id"] for o in options]:
+                    used[name] = used.get(name, 0) + 1
+                    return name
+            return pick(options, tags, form, used, avoid)
+
+        def kept(m, caps):
+            natural[:] = carried(m, caps)
+            return list(natural)
+
+        played = 0
+        for secs in (15, 20, 24, 28, 30):
+            month = dict(picked(fixture.month()), ask={"seconds": secs})
+            with mock.patch.object(reel.style, "pick", prefer), mock.patch.object(reel, "carried", kept):
+                r = compose.board("scrapbook", month)["reel"]
+            last = reel.closing(r["bpm"], compose.style.card("scrapbook")["closer"])[3]
+            spare = r["end"] - reel.OPEN - last - sum(natural)
+            moves = [b["move"] for b in r["timeline"]["beats"] if b.get("move") in reel.TAKES]
+            played += len(moves)
+            self.assertLessEqual(sum(reel.TAKES[x] * r["bpm"] / 60 for x in moves), max(0.0, spare) + 1e-6, (secs, moves))
+        self.assertGreater(played, 0)
+
+    def test_a_move_that_lays_a_window_plays_only_on_the_first_card_whose_band_stands_inside_it(self):
+        # tape-slap paints the card's ground outside a window from 16 to 78 percent of the frame down; a later card's
+        # words stand from ABOVE over its band or under it to past that foot, and the wall runs from WALL_TOP, so a
+        # window move plays on the first card alone, even when the look prefers one on every beat
+        pick = reel.style.pick
+
+        def prefer(options, tags, form, used, avoid):
+            for name in sorted(reel.WINDOWS):
+                if name in [o["id"] for o in options]:
+                    used[name] = used.get(name, 0) + 1
+                    return name
+            return pick(options, tags, form, used, avoid)
+
+        for name in compose.TRIO:
+            with mock.patch.object(reel.style, "pick", prefer):
+                r = compose.board(name, picked(fixture.month()))["reel"]
+            moves = [b.get("move") for b in r["timeline"]["beats"]]
+            self.assertFalse([x for x in moves[1:] if x in reel.WINDOWS], (name, moves))
+        self.assertIn("tape-slap", reel.WINDOWS)
+
+    def test_a_calmer_photograph_shortens_its_look_never_the_time_its_words_take_to_read(self):
+        m = compose.Month(picked(fixture.month()))
+        compose.board("scrapbook", m)
+        caps = [[p.said] for p in m.walk]
+        with mock.patch.object(reel, "busy_ratio", lambda m, p: 1.0):
+            even = reel.carried(m, caps)
+        with mock.patch.object(reel, "busy_ratio", lambda m, p: 0.5):
+            calm = reel.carried(m, caps)
+        for p, a, b in zip(m.walk, even, calm):
+            if p is not m.peak:
+                self.assertGreaterEqual(b, min(a, 9.0) - 2.5 * (1 - 0.5 ** 0.5) - 1e-9, p.said)
+
+
+class Field(unittest.TestCase):
+    """The card's field around its print: the photograph mirrored past its edges is a haze, never a second picture."""
+
+    def test_the_mirrored_field_blurs_to_a_haze_past_the_photograph_and_falls_off_soon(self):
+        src = (KIT / "motion" / "studio" / "climb" / "card.tsx").read_text()
+        field = src[src.index("const fieldMaterial"):src.index("customProgramCacheKey = () => 'field'")]
+        self.assertIn("float far = smoothstep(0.0, 120.0, past);", field)
+        self.assertIn("softAt(mirror, vec2(110.0 / uPlace.z, 110.0 / uPlace.w)), far)", field)
+        self.assertIn("exp(-max(past, 0.0) / 260.0)", field)
+
+    def test_the_look_hands_the_moves_the_safe_area(self):
+        src = (KIT / "motion" / "studio" / "climb" / "plan.ts").read_text()
+        look = src[src.index("export const lookOf"):]
+        self.assertIn("safe: r.safe,", look[:look.index("\n};")])

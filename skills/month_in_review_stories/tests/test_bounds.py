@@ -8,7 +8,6 @@ looks and expects the check's line for it. The render draws every shot of the fi
 and the last frame, and expects no failed frame and no FONT_ERROR or IMAGE_ERROR.
 """
 import copy
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -69,7 +68,7 @@ class Bounds(unittest.TestCase):
                 self.assertTrue(any(want in g for g in got), f"{name}: wanted {want!r}, got {got}")
 
     def test_cards_render_at_rest(self):
-        work = Path(tempfile.mkdtemp(prefix="mir-bounds-"))
+        work = fixture.tempdir("mir-bounds-")
         jobs = studio.rest_jobs(self.board, work / "rest")
         report = studio.render(jobs, work, "bounds", board=self.board)
         self.assertEqual(report.get("failed"), 0, report.get("findings", [])[:3])

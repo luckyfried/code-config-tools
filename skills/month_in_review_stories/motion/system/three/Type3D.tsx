@@ -5,6 +5,10 @@ import {useMemo} from 'react';
 import * as THREE from 'three';
 import {glyphGeometry, layout, type Font} from './type';
 
+/** A shadow map ignores a material's opacity: type casts its shadow only while it is more than this much there, so a
+ * word fading out leaves no shadow copy of itself behind. */
+const SHADOW_FROM = 0.5;
+
 /** One em of the line's frame: x along the baseline, y up from it, z toward the camera. A line rises through the
  * loose window, which keeps its descenders; a count rolls through the tight one, cut just outside its figures. */
 const LOOSE: [number, number] = [-0.3, 1.08];
@@ -125,7 +129,7 @@ export const Type3D: React.FC<Type3DProps> = ({
         : null}
       {draws.map((d, i) => (
         <mesh key={i} geometry={glyphGeometry(font, d.g, depth)} material={(m => (depth > 0 ? [m.face, m.sides] : m.face))(d.ghost ? mats.ghost : mats.solid)} position={[d.x, d.y, 0]}
-          castShadow={castShadow} renderOrder={renderOrder + 1} />
+          castShadow={castShadow && opacity > SHADOW_FROM} renderOrder={renderOrder + 1} />
       ))}
     </group>
   );

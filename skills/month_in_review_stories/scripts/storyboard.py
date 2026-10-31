@@ -360,7 +360,7 @@ def write_md(board, path, brief=None):
          + f", type in {lk.get('font_used')}" + (f" ({lk['font_note']})" if lk.get("font_note") else "") + ".", "",
          "The music brief (taste.json `music`): " + json.dumps(brief, ensure_ascii=False) + ".",
          "Music: not made yet; music.py make writes its origin here.",
-         "Mixed: not yet; film.py render writes the bed's and the effects' loudness and the cue count here.", ""]
+         "Mixed: not yet; film.py render writes the effect count here.", ""]
     r = board.get("reel")
     if r:
         f = lambda beat: round(beat * r["fps"] * 60 / r["bpm"])
@@ -375,7 +375,9 @@ def write_md(board, path, brief=None):
                 c = cards[b["key"]]
                 L += [f"- photograph: {c.get('source') or 'none'}", "- on screen: " + " / ".join(x["text"] for x in c["lines"])]
             L += [f"- sound at {c['at']:g} (frame {f(c['at'])}): {c['kind']}, {c['what']}" for c in r["sound"] if c.get("beat") == b["key"]]
-            L += [f"- clip {c['id']}, {c['seconds']} s: {c['prompt']}; until one arrives, {c['stand_in']}" for c in r.get("clips", []) if c["beat"] == b["key"]]
+            L += [f"- clip {c['id']}, {c['seconds']} s: their own clip, {Path(c['source']).name}, from its strongest second, sound off"
+                  if c.get("source") else f"- clip {c['id']}, {c['seconds']} s: {c['prompt']}; until one arrives, {c['stand_in']}"
+                  for c in r.get("clips", []) if c["beat"] == b["key"]]
             L.append("")
     L += [f"## the series: {len(board['beats'])} cards of 15 s", ""]
     for i, c in enumerate(board["beats"]):

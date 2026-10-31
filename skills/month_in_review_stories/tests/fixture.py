@@ -1,6 +1,7 @@
 """The fixture month as a user's agent gets it: the fixture's tables, photographs and pulled account copied into a fresh
 workspace, then gather.py and research.py run there. month() returns month.json, build(ws) the run's build folder; the
 workspace lives under TMPDIR."""
+import atexit
 import copy
 import json
 import os
@@ -17,9 +18,18 @@ sys.path.insert(0, str(SCRIPTS))
 
 _month = None
 
+# every folder a test makes lives under this one, which goes when the test process ends
+ROOT = Path(tempfile.mkdtemp(prefix="mir-tests-"))
+atexit.register(shutil.rmtree, ROOT, True)
+
+
+def tempdir(prefix):
+    """A fresh folder under ROOT."""
+    return Path(tempfile.mkdtemp(prefix=prefix, dir=ROOT))
+
 
 def workspace():
-    ws = Path(tempfile.mkdtemp(prefix="mir-test-"))
+    ws = tempdir("mir-test-")
     shutil.copy2(FIXTURE / "posts.csv", ws / "posts.csv")
     shutil.copytree(FIXTURE / "pulled", ws / "pulled")
     shutil.copytree(FIXTURE / "photos", ws / "photos")

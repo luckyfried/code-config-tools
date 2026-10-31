@@ -9,9 +9,10 @@ USAGE (from the workspace root):
 
 month.json is what the board builder composes:
   {"handle", "name", "month": {"year", "month"},
-   "posts": [{"day", "type": "photo"|"reel", "caption", "photo", "place", "likes", "comments"}]}
+   "posts": [{"day", "type": "photo"|"reel", "caption", "photo", "clip", "place", "likes", "comments"}]}
       the month's posts and reels; photo is the post's first still, else a frame cut from its video into the run's
-      stills/ (a reel with no still), else null; likes and comments are the post's figures as the data carries them, or
+      stills/ (a reel with no still), else null; clip is the post's own recorded video when it has one (the reel plays
+      it on that moment's beat), else null; likes and comments are the post's figures as the data carries them, or
       null
 research.json lists the same posts with the people each caption tags (@mentions) and its place. taste.json's `ask` is
 what the person asked for, read from their own words: {"counts": true when they ask for their top posts or their
@@ -67,6 +68,11 @@ def still_of(media, dest):
     return str(dest.resolve()) if r.returncode == 0 and dest.exists() else None
 
 
+def clip_of(media):
+    """The post's own recorded video, the first of its media that is one and is there; None with none."""
+    return next((str(Path(f).resolve()) for f in media if Path(f).suffix.lower() in VID and Path(f).is_file()), None)
+
+
 def shot_of(photo):
     """A moment's shot drafted from its photograph: the lens from how busy it is, the camera's height from where its
     subject sits, the light from its lightness and warmth and the side its brighter third is on; the subject and the move
@@ -108,7 +114,8 @@ def month_json(lib, run):
     inm = lambda r: r.get("ts") and f"{when(r['ts']):%Y-%m}" == mo["key"]
     rows = [(t, r) for k, t in (("posts", "photo"), ("reels", "reel")) for r in lib[k] if inm(r)]
     posts = [{"day": when(r["ts"]).day, "type": t, "caption": (r.get("caption") or "").strip(),
-              "photo": still_of(r.get("media") or [], run / "stills" / f"{when(r['ts']).day:02d}-{j + 1}.jpg"), "place": (r.get("place") or "").strip(),
+              "photo": still_of(r.get("media") or [], run / "stills" / f"{when(r['ts']).day:02d}-{j + 1}.jpg"), "clip": clip_of(r.get("media") or []),
+              "place": (r.get("place") or "").strip(),
               "likes": r.get("likes"), "comments": r.get("comments")}
              for j, (t, r) in enumerate(rows)]
     return {"handle": lib.get("handle"), "name": lib.get("name"),

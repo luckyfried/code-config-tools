@@ -8,7 +8,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -105,7 +104,7 @@ class Look(unittest.TestCase):
         self.assertIn("not one of the card's faces", bad[0]["detail"])
 
     def test_the_frame_check_reads_the_palette_off_the_rendered_still(self):
-        run_ = Path(tempfile.mkdtemp(prefix="mir-look-"))
+        run_ = fixture.tempdir("mir-look-")
         (run_ / "out" / "cards").mkdir(parents=True)
         cards = [{"png": "out/cards/01-story.png"}]
         im = Image.new("RGB", (1080, 1920), "#1f3d2b")
@@ -265,7 +264,7 @@ class Handle(unittest.TestCase):
         self.assertEqual((signed["reel"]["look"]["handle"], b["reel"]["look"]["handle"]), ("@ines.photo", ""))
         self.assertEqual(len(b["beats"][0]["lines"]), len(signed["beats"][0]["lines"]) - 1)
         self.assertIsNone(b["handle"])
-        self.assertEqual(b["reel"]["look"]["signoff"].lower(), "see you in october.")
+        self.assertEqual(b["reel"]["look"]["signoff"].lower(), "see you again in october.")
 
     def test_gather_never_takes_an_email_or_a_name_as_the_handle(self):
         for given in ("pat@example.com", "pat baker", "example.com"):
@@ -286,7 +285,7 @@ class Handle(unittest.TestCase):
 
 class Wall(unittest.TestCase):
     def test_every_post_with_a_photograph_has_a_cell_and_one_without_counts(self):
-        ws = Path(tempfile.mkdtemp(prefix="mir-wall-"))
+        ws = fixture.tempdir("mir-wall-")
         rows = ["date,type,caption,likes,comments,photo"]
         src = sorted((fixture.FIXTURE / "photos").iterdir())
         (ws / "photos").mkdir()
@@ -315,7 +314,7 @@ class Grade(unittest.TestCase):
         target = photos.median_lightness(paths)
         b = compose.board("editorial-quiet", picked(m))
         self.assertAlmostEqual(b["reel"]["grade"]["target"], round(target, 4))
-        out = Path(tempfile.mkdtemp(prefix="mir-grade-"))
+        out = fixture.tempdir("mir-grade-")
         for i, p in enumerate(paths):
             before = photos.lightness(photos.open_image(p))
             after = photos.lightness(Image.open(photos.stage(p, out / f"{i}.jpg", target)))

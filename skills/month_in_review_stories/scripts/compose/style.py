@@ -5,7 +5,8 @@ look is read from that card.
 
 The three boards take TRIO, one style each; when the person names a style, it is the first board's and the other two
 are the two of TRIO that share the fewest axes with it. Each beat's move, and the cut into it, is chosen from what the
-beat shows (`pick`), within the card's allowlists."""
+beat shows (`pick`), within the card's allowlists, which take this kit's trailer moves (GRAMMAR) beside the card's
+own."""
 import json
 from pathlib import Path
 
@@ -13,6 +14,25 @@ KIT = Path(__file__).resolve().parents[2]
 STYLES = KIT / "styles"
 TRIO = ("editorial-quiet", "scrapbook", "swiss-grid")
 AXES = ("family", "palette", "camera", "transition", "finish", "music")
+
+# the trailer moves this kit adds to a shared card's own (motion/system/moves/move): a look that wants energy takes them
+# ahead of its own moves, as its grammar (a tunnel of the month's photographs, a wall of prints swinging flat, a
+# photograph coming apart into its layers, the moment's name slammed in word by word, its figure counted up); a calm
+# look takes the one its card marks `once`, so it plays on one beat of a film at most
+GRAMMAR = {
+    "swiss-grid": [{"id": "picture-tunnel", "fits": ["photo", "landscape", "place"]},
+                   {"id": "exploded-layers", "fits": ["photo", "people", "portrait"]},
+                   {"id": "tilted-wall", "fits": ["photo", "wall"]},
+                   {"id": "slam-words", "fits": ["photo", "words", "peak"]},
+                   {"id": "counter", "fits": ["photo", "peak"]}],
+    "kinetic-type": [{"id": "picture-tunnel", "fits": ["photo", "landscape", "place"]},
+                     {"id": "exploded-layers", "fits": ["photo", "people", "portrait"]},
+                     {"id": "tilted-wall", "fits": ["photo", "wall"]},
+                     {"id": "slam-words", "fits": ["photo", "words", "peak"]},
+                     {"id": "counter", "fits": ["photo", "peak"]}],
+    "cinematic-letterbox": [{"id": "picture-tunnel", "fits": ["photo", "peak", "place"]},
+                            {"id": "tilted-wall", "fits": ["photo", "people", "wall"]}],
+}
 
 _CARDS = {}
 
@@ -22,8 +42,17 @@ def styles():
     return sorted(f.stem for f in STYLES.glob("*.json") if f.stem != "schema")
 
 
+def moves_of(style, own):
+    """The card's moves with this kit's trailer moves: GRAMMAR's after the first (the title's) and ahead of the rest, so
+    they win a beat they fit as well as the card's own."""
+    lead = [dict(m) for m in GRAMMAR.get(style, []) if m["id"] not in {o["id"] for o in own[:1]}]
+    ids = {m["id"] for m in lead}
+    return own[:1] + lead + [m for m in own[1:] if m["id"] not in ids]
+
+
 def card(style):
-    """The style card `style`, or ValueError naming the styles there are."""
+    """The style card `style`, its moves with this kit's trailer moves (moves_of), or ValueError naming the styles there
+    are."""
     if style not in _CARDS:
         f = STYLES / f"{style}.json"
         if not f.is_file():
@@ -32,7 +61,7 @@ def card(style):
         for k, face in c["faces"].items():
             if not (KIT / face["file"]).is_file():
                 raise ValueError(f"styles/{style}.json: the {k} face's file {face['file']} is not in the kit")
-        _CARDS[style] = c
+        _CARDS[style] = {**c, "moves": moves_of(style, c["moves"])}
     return _CARDS[style]
 
 
@@ -69,8 +98,9 @@ def ids(c, kind):
 def pick(options, tags, form, used, avoid):
     """The option whose `fits` matches the beat best (its form counts twice, each other tag once); between equals the
     one used least so far, then the card's order. The option `avoid` (the previous beat's) is never picked while another
-    exists."""
-    pool = [o for o in options if o["id"] != avoid] or options
+    exists, and an option marked `once` that has played is never picked again."""
+    fresh = [o for o in options if not (o.get("once") and used.get(o["id"]))] or options
+    pool = [o for o in fresh if o["id"] != avoid] or fresh
     score = lambda o: 2 * (form in o["fits"]) + len((set(tags) - {form}) & set(o["fits"]))
     best = max(pool, key=lambda o: (score(o), -used.get(o["id"], 0), -options.index(o)))
     used[best["id"]] = used.get(best["id"], 0) + 1

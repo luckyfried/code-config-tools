@@ -27,7 +27,7 @@ import math
 
 from .common import CARD, FPS, H, SAFE, W
 from .month import Month, number
-from . import look, style
+from . import look, sound, style
 from .reel import LABEL, LEADING, SPACE, big, busy_ratio, cover, label, legible, line, picture, plate, said_face, said_sizes, tally, wide, width, words_of
 
 # a card's type stands INSET px inside the safe area's sides, so a hold's push in keeps every line inside it
@@ -170,15 +170,12 @@ def shot(beats, v, reveals, push=0.04, to=None, arc=None):
     return d
 
 
-def cue(kind, at, what, **kw):
-    return {"kind": kind, "at": round(at, 3), "what": what, **{k: v for k, v in kw.items() if v is not None}}
-
-
 def make(cid, idea, shots, still, beats, **parts):
     card = {"id": cid, "frames": CARD, "idea": idea, "shots": shots, "still": still, "move": [OUT, IN], "bank": parts.pop("bank", 1.0)}
     for k in ("bands", "rules", "strips", "lines", "bursts"):
         card[k] = parts.get(k) or []
-    card["sound"] = sorted(parts.get("sound", []), key=lambda c: c["at"])
+    card["fx"] = parts["fx"]
+    card["sound"] = parts["sound"]
     total = sum(s["beats"] for s in shots)
     if total != beats:
         raise ValueError(f"card {cid}: its shots run {total} beats, a card is {beats}")
@@ -237,6 +234,11 @@ def lengths_of(m):
     return [shots_of(m, p) for p in m.moments]
 
 
+def sign_of(m, last):
+    """A card's sign-off: the handle; on the last card the month's farewell with it."""
+    return "  ·  ".join([m.farewell] + ([m.handle] if m.handle else [])) if last else m.handle
+
+
 def moment(m, i, p, pic, lengths):
     """Moment i's card: its photograph, the line rising across it to above its subject, the subject's whole gesture up
     close as their words land under it, then the whole photograph as the line climbs on, signed off with the handle."""
@@ -282,18 +284,18 @@ def moment(m, i, p, pic, lengths):
     lines += [timed(head, s[2] + 0.3)] + under + typeset
     strips += [{"rect": plate([head], 262, 346), "at": s[2] + 0.2, "len": 0.5},
                {"rect": plate(under, foot, max(x["y"] + 0.22 * x["size"] for x in under) + 28), "at": s[1] + 0.3, "len": 0.5}]
-    # a sound where the line lands above its subject (the peak's built into and landing as an impact) and where it reaches the top
-    sound = ([cue("riser", a, f"the build into {p.name}, the month's peak", beats=rise), cue("impact", a + rise, f"the line lands above {p.name}, the month's peak")]
-             if peak else [cue("hit", a + rise, f"the line lands above {p.name}", weight=0.85, bright=0.4)])
-    sound.append(cue("hit", b1, "the line reaches the top", weight=0.6, bright=0.35))
+    # the card's sound (compose/sound.py), in its own beats: cut into from the card before on a whoosh, the line landing
+    # above the subject on an impact, and on the last card the riser building into the sign-off and its impact
+    fx = sound.board(f"story-{i + 1}", m.bpm, [sound.beat(f"story-{i + 1}", "Title", 0.0, form="title", cut="slide" if i else None, slam=[a, rise])]
+                     + ([sound.beat("sign-off", "Closer", s[3] + 0.4, form="closer")] if last and sign_of(m, last) else []))
     end = f"{m.short} {p.day} held whole"
-    # every card signs off with the handle; the last says see you in the next month with it
-    sign = "  ·  ".join([f"see you in {m.next.name}."] + ([m.handle] if m.handle else [])) if last else m.handle
+    # every card signs off with the handle; the last says the month's farewell with it
+    sign = sign_of(m, last)
     if sign:
         sl = line(m, sign, L0, 404, fit_size(m, sign, 34, R0 - L0), color="line")
         lines.append(timed(sl, s[3] + 0.4))
         strips.append({"rect": plate([sl], 346, 430), "at": s[3] + 0.3, "len": 0.5})
-        end += f", and see you in {m.next.name}" if last else f", signed {m.handle}"
+        end += f", and {m.farewell.rstrip('.')}" if last else f", signed {m.handle}"
     # the close look: the subject's whole gesture and the words landing under the band, in one framing
     gesture = box_of(typeset[0]) if typeset else [max(0, sx - REACH[0]), max(rect[1], sy - REACH[1]), min(W, sx + REACH[0]), min(rect[3], sy + REACH[1])]
     words_box = [min(b[0] for b in map(box_of, under)), min(b[1] for b in map(box_of, under)), max(b[2] for b in map(box_of, under)), max(b[3] for b in map(box_of, under))]
@@ -314,7 +316,8 @@ def moment(m, i, p, pic, lengths):
     n_beats = beats_of(m)
     return make(f"story-{i + 1}", f"{m.short} {p.day}: {p.name}", shots, still=n_beats - 1.0, beats=n_beats, bank=0.0, bands=[band_],
                 rules=[{"x0": 0, "x1": W, "y": lit, "at": a - 0.3, "color": "line"}], lines=lines, strips=strips,
-                bursts=[{"at": round(a + rise, 3), "x0": 0, "x1": W, "y": y_sub, "big": peak}], sound=sound)
+                bursts=[{"at": round(a + rise, 3), "x0": 0, "x1": W, "y": y_sub, "big": peak}], fx=fx,
+                sound=sound.cues(fx, getattr(m, "bpm_music", m.bpm)))
 
 
 def system(m):

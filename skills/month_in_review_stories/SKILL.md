@@ -16,7 +16,7 @@ words on the ground under the band (the day, the place, their caption), the phot
 of the wall as the camera moves on; and the closer pulls back to the whole wall: every one of the month's posts with
 a photograph and nothing else, each in a cell with its day beneath it, the grid fitted to how many there are, the
 moments standing out furthest, "my september, in four stories", where picture and music stop together and hold still,
-silent for more than a second. No word stands on a photograph, in the reel or on a card. The closer never draws a calendar or a cell
+the music gone for more than a second. No word stands on a photograph, in the reel or on a card. The closer never draws a calendar or a cell
 without a photograph. Every photograph takes one grade toward the set's median lightness first, so the set reads as
 one. The story is the kit's; the look is one of three, each with its own type, palette, moves, cuts, closing page and
 music: editorial quiet (a serif on wide white space, felt piano), scrapbook (prints on paper, a hand-lettered face, a
@@ -69,8 +69,8 @@ the browser's profile) go under `~/.cache/code-config/month_in_review_stories/`,
 | 1 | research | `S/pipeline/1-research.md` | `research.py`, then you write the run's `taste.md` | `month.json`, taste.md with its five headings, the ask, the moments with each one's shot, and the music brief in taste.json |
 | 2 | storyboard | `S/pipeline/2-storyboards.md` | `storyboard.py draft`, `storyboard.py check`, `storyboard.py sheets`, look | three boards green, each with its reel sheet and rest sheet, and `out/boards.png` |
 | 3 | vote and pick | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores, `vote.py tally`, show `out/boards.png` and ask, `vote.py pick N` | `winner.json`, the look they picked |
-| 4 | produce | `S/pipeline/4-produce.md`, `S/critic/critic.md` | `music.py make`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed` (the four reads), `film.py render`, look | `out/film.mp4`, `out/cards/` (and `out/series.mp4` when asked) |
-| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `vote.py cut`, score the seven rules, `vote.py verdict` (fix once if told), write `caption.md`, `deliver.py` | `GATE GREEN` |
+| 4 | produce | `S/pipeline/4-produce.md`, `S/critic/critic.md` | `music.py make`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed` (the four reads), `film.py render --proof`, look | `out/proof.mp4`, the half-size proof every round before deliver reads, with the cards' proofs and stills |
+| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `vote.py cut`, score the seven rules, `vote.py verdict` (fix once if told) on the proof; the full-size `film.py render`, `vote.py cut` and R3 read at full size; write `caption.md`, `deliver.py` | `GATE GREEN` |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
 
@@ -107,7 +107,7 @@ month with none is a set of type cards whose reel closes on its words with no wa
 - The music is the track they placed in `music/`, else made for this film by the studio's music engine from the
   picked look's recipe and their music brief (`taste.json` `music`: the styles they named, empty unless they said,
   and what to leave out; never an artist, band or song), and the sound effects sit under it: one where each beat
-  lands, 8 LU under the music.
+  lands, mastered with the music in one pass to -14 LUFS.
 - The reel shows each moment once, a beat each: the peak first (the first moment by date when there is no peak),
   then the others in date order, each held for what its photograph carries (its words and how busy it is); the peak
   holds longest. The kit makes a reel of 12 to 30 s. When they name a length in that range, the reel runs it to the
@@ -130,7 +130,8 @@ month with none is a set of type cards whose reel closes on its words with no wa
 - Do not hand-edit anything in `out/`; run the step again.
 - A film renders in chunks saved in the run. An interrupted render (the machine restarted, the session died) is
   resumed by running the same command again: finished chunks are kept and only the missing ones render. Never start
-  over, and never delete `preview/chunks/` or `render/chunks/`; a changed board invalidates its chunks by itself. Run `film.py preview` and a long render each in the foreground in one tool call with a 40-minute timeout on that call, never in the background, read its progress in `render/render.log`, and once the first
+  over, and never delete `preview/chunks/` or `render/chunks/`; a changed board invalidates its chunks by itself. Every round before deliver
+  renders the half-size proof (`film.py render --proof`); the render deliver takes is full size (`film.py render`). Run `film.py preview` and a long render each in the foreground in one tool call with a 40-minute timeout on that call, never in the background, read its progress in `render/render.log`, and once the first
   chunks land, tell the person their time times the chunks still to go.
 - The critics score the cut on the seven rules (R1 to R7, `S/critic/critic.md`) against the bar: a mean of 4.5 with
   none under 4. Under the bar after the first cut you make the one fix `vote.py verdict` names; after it, or when no

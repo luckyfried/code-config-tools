@@ -10,7 +10,8 @@ USAGE (from the workspace root; S = this skill's folder; every path below is ins
                                          # picked by their taste, the reason in one line) becomes the winner
     python3 S/scripts/vote.py timed      # critic/timed.json: the four reads of the previewed reel, to fill in; run it
                                          # again once they are written, and it records what they found
-    python3 S/scripts/vote.py cut        # critic/cut-N.json to fill in for the rendered film, series and cards (round N)
+    python3 S/scripts/vote.py cut        # critic/cut-N.json to fill in for the newest render's film, series and cards
+                                         # (round N): the half-size proof before deliver, then the full-size render
     python3 S/scripts/vote.py verdict    # the latest round against the bar: AT THE BAR, FIX ONCE (the lowest rule the
                                          # agent has a lever for), or SPENT (deliver the best cut with its scores)
 
@@ -33,6 +34,10 @@ frames: none of its paragraphs repeats the round before. Each rule's score is th
 is BAR: a mean of 4.5 over the seven rules and none under 4. Under the bar after the first cut, the verdict names the
 lowest rule the agent has a lever for (LEVERS) and the one fix it makes; with no lever left, or after the second cut,
 the fix is spent and the cut is delivered as the best one, every score stated against the bar.
+Every round before deliver scores the half-size proof (film.py render --proof, out/proof.mp4): `cut` reads the newest
+render and its first line says when that is the proof. Once the full-size render of the same board is in, `cut` moves
+the latest round to it and empties each critic's type score (R3): the critics read the type again on the full-size
+film, its stories and stills, at the size a phone shows them, and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -41,6 +46,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
 CRITERIA = {
     "R1": "one concept: the hook states the month in its first second, the line recurs on every beat and pays off in the "
@@ -52,13 +58,16 @@ CRITERIA = {
           "a fade, settled within a second of their beat, every line at rest inside the safe area, nothing colliding",
     "R4": "motion and rhythm: one continuous camera with anticipation before a big move and overshoot where a thing "
           "lands, no two consecutive beats making the same move, the peak held longest, the closer still and silent after the ask",
-    "R5": "sound to picture: a cue only where a beat lands, the effects 8 LU under the music, the music stopping where the ask lands",
+    "R5": "sound to picture: a cue only where a beat lands, the effects mastered with the music under -1.5 dBTP, the music stopping "
+          "where the ask lands",
     "R6": "generated shots: every clip request a shot a cinematographer would write (subject, move, lens, light, the "
           "beat's duration, a seamless loop) for the hook's world, the texture between chapters, or a still brought to life",
     "R7": "the deliverable: out/ holds the films, the cover, the cards, the caption and the review page as the film's "
           "cover, and nothing a viewer could mistake for the product",
 }
 NOT_READ = "not read"
+# the rule the critics read again on the full-size render: type at the size a phone shows it
+TYPE = "R3"
 BAR = {"mean": 4.5, "least": 4}
 # what the agent changes when a rule is under the bar after the first cut; R2 and R7 are the motion system's and the
 # kit's own, so the agent has no lever for them
@@ -70,7 +79,7 @@ LEVERS = {
     "R6": "taste.json `moments[].shot`: each shot rewritten as a cinematographer would write it from its photograph",
 }
 AGAIN = ("then movement 2 again (storyboard.py draft, check, sheets, the vote) and movement 4 (music.py make, clips.py "
-         "list and normalize, film.py preview, vote.py timed, film.py render), and vote.py cut for round 2")
+         "list and normalize, film.py preview, vote.py timed, film.py render --proof), and vote.py cut for round 2")
 PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "person": "the person (from taste.md)"}
 CUT_PANEL = {"motion_designer": "the motion designer", "person": "the person (from taste.md)"}
 # the four reads of the timed cut, each a pass, a fail, or "not read", with at least 25 words on where it holds and
@@ -256,15 +265,20 @@ def cmd_timed(a):
     return 0
 
 
-def cut_files(run):
+def cut_files(run, scale=None):
+    """The files a round scores: the newest render's (`scale` None), the full-size render's (1), or the proof's."""
     out = run / "out"
-    return [out / "series.mp4", out / "film.mp4", out / "cover.png"] + sorted((out / "cards").glob("*.mp4")) + sorted((out / "cards").glob("*.png"))
+    scale = proof.scale(out / "film.mp4") if scale is None else scale
+    at = proof.of if scale != 1 else Path
+    stories = [p for p in sorted((out / "cards").glob("*.mp4")) if p.name.startswith("proof-") == (scale != 1)]
+    return [at(out / "series.mp4"), at(out / "film.mp4"), out / "cover.png"] + stories + sorted((out / "cards").glob("*.png"))
 
 
-def fingerprint(run):
-    """One hash over the film, the series when it was made, the cover, and every card, animated and still."""
+def fingerprint(run, scale=None):
+    """One hash over the film, the series when it was made, the cover, and every card, animated and still, of the
+    newest render (`scale` None), or of the render at `scale`."""
     h = hashlib.sha256()
-    for f in cut_files(run):
+    for f in cut_files(run, scale):
         if f.exists():
             h.update(f.name.encode())
             h.update(f.read_bytes())
@@ -276,25 +290,45 @@ def rounds(run):
 
 
 def cmd_cut(a):
+    import studio
     run = _env.run()
+    out = run / "out"
+    scale = proof.scale(out / "film.mp4")
+    reel, whole = (proof.of(out / "film.mp4"), proof.of(out / "series.mp4")) if scale != 1 else (out / "film.mp4", out / "series.mp4")
+    if scale != 1:
+        print(proof.reading(reel))
     d = run / "critic"
     d.mkdir(parents=True, exist_ok=True)
     # film.json is written once every file of a render is in out/, so a round only ever opens on a whole render
-    if not (run / "film.json").exists():
-        sys.exit(f"{run / 'film.json'} is missing: run film.py render first")
+    board = _env.read_json(run / "film.json")
+    if not board:
+        sys.exit(f"{run / 'film.json'} is missing: run film.py render --proof first")
     # a round belongs to the files it scored: the newest round is reused while they stand, and only a new render opens one
-    rs, fp = rounds(run), fingerprint(run)
-    if rs and (_env.read_json(rs[-1]) or {}).get("film") == fp:
+    rs, fp, cut = rounds(run), fingerprint(run, scale), studio.board_hash(board)
+    last = (_env.read_json(rs[-1]) or {}) if rs else {}
+    if last.get("film") == fp:
         print(f"round {len(rs)} is for the current files: fill in {rs[-1]} (a new round opens only after a new render)")
+        return 0
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == cut:
+        # the full-size render of the board the round scored on its proof: the same round, with the type read at full size
+        last.update(film=fp, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"][TYPE] = None
+        _env.write_json(rs[-1], last)
+        print(f"round {len(rs)} moves to the full-size render: as each critic, read the type again on {reel}, every card in "
+              f"{out / 'cards'}/ and the strips in {run / 'timeline'}/, at the size a phone shows them, and score {TYPE} in "
+              f"{rs[-1]}; the other scores stand")
         return 0
     n = len(rs) + 1
     f = d / f"cut-{n}.json"
     data = blank(CUT_PANEL, ["film"])
     data["round"] = n
     data["film"] = fp
+    data["scale"] = scale
+    data["cut"] = cut
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: fill in {f} after watching {run / 'out'}/film.mp4" + (" and series.mp4" if (run / "out" / "series.mp4").exists() else "")
+    print(f"round {n}: fill in {f} after watching {reel}" + (f" and {whole.name}" if whole.exists() else "")
           + f" with sound, every card in {run / 'out' / 'cards'}/ "
           f"and the strips in {run / 'timeline'}/, which this render wrote" + (" (say in 'fixed' what changed since the last round; "
           "each paragraph reads this cut's frames, never the last round's)" if n > 1 else ""))
@@ -348,13 +382,16 @@ def cmd_verdict(a):
     sc = standing(data)
     ok, mean, said = against_bar(sc)
     n = data.get("round")
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    full = (f". Render the full-size film (film.py render), run qa.py check, then vote.py cut: the critics read the type "
+            f"({TYPE}) again at full size" if data.get("scale") == proof.SCALE else "")
     if ok:
-        print(f"AT THE BAR: round {n}: {said}")
+        print(f"AT THE BAR: round {n}: {said}{full}")
         return 0
     fixable = sorted((v, k) for k, v in sc.items() if k in LEVERS and v != NOT_READ and v < 5)
     if len(rs) >= 2 or not fixable:
         print(f"SPENT: round {n} is under the bar: {said}. " + ("The one fix is spent" if len(rs) >= 2 else "No rule under it has a lever")
-              + "; deliver this cut as the best one, and build/<run>/brief.md states every score against the bar")
+              + f"; deliver this cut as the best one, and build/<run>/brief.md states every score against the bar{full}")
         return 0
     v, k = fixable[0]
     print(f"FIX ONCE: round {n} is under the bar: {said}. The lowest rule with a lever is {k} at {v} ({CRITERIA[k]}). "

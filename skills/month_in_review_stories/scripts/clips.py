@@ -18,8 +18,11 @@ card exactly where the photograph was, conforms it to 30 fps, trims it to its wi
 its frames as clips/frames-<stamp>/NN/0001.jpg onward, a folder of its own that clips.json names once every clip is
 conformed, and every render copies the folder clips.json names into its public folder. The film shows those
 frames on the photograph's card while the clip's window plays. A clip that did not arrive stands in: the film plays
-the layered move the storyboard names for it on the still photograph. clips.json records every clip as generated or
-stand-in, and brief.md lists them.
+the layered move the storyboard names for it on the still photograph. A moment the person recorded plays their own
+clip (`use` their own clip, its `source` the recording): list asks for nothing, and normalize trims the recording from
+its strongest second (the second whose samples move most and are sharpest, `strongest`) to its window, holding its
+last frame when it runs short, with no sound. clips.json records every clip as generated, their own clip, or stand-in,
+and brief.md lists them.
 """
 import argparse
 import shutil
@@ -39,6 +42,11 @@ W, H = 1080, 1920
 # what a shot names, as the agent wrote it for its photograph
 SHOT = ("subject", "move", "lens", "height", "light")
 EXTS = (".mp4", ".mov", ".webm", ".m4v")
+# the clip a person recorded, which plays as it is (compose/reel.py `OWN`)
+OWN = "their own clip"
+# how a recording is read for its strongest second: samples a second, each SAMPLE px wide in grey, and the share of a
+# sample's score its motion gives (the rest its sharpness)
+RATE, SAMPLE, MOTION = 6, 48, 0.6
 
 
 def reel(run):
@@ -83,6 +91,9 @@ def cmd_list(a):
     reqs = []
     for c in r.get("clips") or []:
         card = cards[c["beat"]]
+        if c["use"] == OWN:
+            print(f"clip {c['id']} for {c['beat']}: their own clip, {c['source']}, {c['seconds']} s from its strongest second; nothing to make")
+            continue
         reqs.append({"id": c["id"], "beat": c["beat"], "use": c["use"], **{k: c[k] for k in SHOT},
                      "seconds": c["seconds"], "loop": c["loop"],
                      "size": f"{W}x{H}", "image": card["source"], "prompt": c["prompt"],
@@ -97,13 +108,38 @@ def cmd_list(a):
     return 0
 
 
-def conform(src, size, frames, dst):
-    """The clip at `size`, 30 fps, `frames` long, as one JPEG per frame in `dst`."""
+def strongest(src, seconds):
+    """Where a recording's shot of `seconds` starts: at its strongest second (the one-second run of samples that move
+    most and are sharpest), moved earlier as far as the shot needs to end inside the recording; 0.0 when it cannot be
+    read."""
+    h = SAMPLE * 2
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(src), "-an", "-vf",
+                        f"fps={RATE},scale={SAMPLE}:{h}:force_original_aspect_ratio=increase,crop={SAMPLE}:{h},format=gray",
+                        "-f", "rawvideo", "-"], capture_output=True)
+    n = SAMPLE * h
+    frames = [r.stdout[i:i + n] for i in range(0, len(r.stdout) - n + 1, n)] if r.returncode == 0 else []
+    if len(frames) < 2:
+        return 0.0
+    move = [0.0] + [sum(abs(a - b) for a, b in zip(f, g)) / n for f, g in zip(frames[1:], frames)]
+    sharp = [sum(abs(f[i] - f[i + 1]) for i in range(n - 1) if (i + 1) % SAMPLE) / n for f in frames]
+    top = lambda xs: max(xs) or 1.0
+    score = [MOTION * m / top(move) + (1 - MOTION) * s / top(sharp) for m, s in zip(move, sharp)]
+    run = min(RATE, len(score))
+    best = max(range(len(score) - run + 1), key=lambda i: (sum(score[i:i + run]), -i))
+    return round(max(0.0, min(best / RATE, len(frames) / RATE - seconds)), 3)
+
+
+def conform(src, size, frames, dst, start=None):
+    """The clip at `size`, 30 fps, `frames` long, as one JPEG per frame in `dst`: looped when it runs short, or, for a
+    recording of the person's own (`start`, the second its shot starts), from `start`, its last frame held."""
     w, h = size
     shutil.rmtree(dst, ignore_errors=True)
     dst.mkdir(parents=True)
     vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS}"
-    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-i", str(src), "-frames:v", str(frames),
+    head = ["-stream_loop", "-1", "-i", str(src)] if start is None else ["-ss", f"{start:.3f}", "-i", str(src)]
+    if start is not None:
+        vf += ",tpad=stop=-1:stop_mode=clone"
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *head, "-an", "-frames:v", str(frames),
                         "-vf", vf, "-q:v", "2", str(dst / "%04d.jpg")], capture_output=True, text=True)
     n = len(list(dst.glob("*.jpg")))
     return (n, "") if r.returncode == 0 and n else (0, r.stderr[-300:])
@@ -121,6 +157,17 @@ def cmd_normalize(a):
         card = cards[c["beat"]]
         at, n = win[c["id"]]
         rec = {"beat": c["beat"], "use": c["use"], "image": c["image"], "prompt": c["prompt"], "from_frame": at}
+        if c["use"] == OWN:
+            start = strongest(c["source"], n / FPS)
+            got, err = conform(c["source"], size_of(card), n, frames_dir / c["id"], start=start)
+            if got:
+                rec.update(status=OWN, source=c["source"], from_second=start, dir=f"clips/{c['id']}", frames=got)
+            else:
+                rec.update(status="stand-in", stand_in=c["stand_in"], why=f"could not read {Path(c['source']).name}: {err}")
+            out[c["id"]] = rec
+            print(f"clip {c['id']} ({c['beat']}): " + (f"their own clip from {start} s, {got} frames -> clips/{name}/{c['id']}/" if got
+                                                        else f"stand-in ({rec['why']}): {c['stand_in']}"))
+            continue
         src = arrived(run, c["id"])
         got, err = conform(src, size_of(card), n, frames_dir / c["id"]) if src else (0, "")
         if got:
@@ -136,7 +183,8 @@ def cmd_normalize(a):
         if old.name != name:
             shutil.rmtree(old)
     g = sum(1 for x in out.values() if x["status"] == "generated")
-    print(f"clips: {g} generated, {len(out) - g} stand-in -> {run / 'clips.json'}")
+    o = sum(1 for x in out.values() if x["status"] == OWN)
+    print(f"clips: {g} generated, {o} their own, {len(out) - g - o} stand-in -> {run / 'clips.json'}")
     return 0
 
 
@@ -147,9 +195,10 @@ def frames(run):
 
 
 def placed(run):
-    """The generated clips the film shows, for the composition's props: where each starts and its frames."""
+    """The clips the film shows, generated and the person's own, for the composition's props: where each starts and its
+    frames."""
     return [{"id": k, "image": x["image"], "from": x["from_frame"], "frames": x["frames"], "dir": x["dir"]}
-            for k, x in ((_env.read_json(Path(run) / "clips.json") or {}).get("clips") or {}).items() if x.get("status") == "generated"]
+            for k, x in ((_env.read_json(Path(run) / "clips.json") or {}).get("clips") or {}).items() if x.get("status") in ("generated", OWN)]
 
 
 def main():

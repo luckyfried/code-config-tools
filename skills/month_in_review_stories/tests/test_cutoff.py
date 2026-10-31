@@ -51,7 +51,7 @@ def made(jobs, work, name, board=None, run=None, hold=None):
     return {"failed": 0, "exit": 0, "findings": []}
 
 
-def wrote(silent, wav, seconds, out, fx, **kw):
+def wrote(silent, wav, seconds, out, fx, record=None, **kw):
     Path(out).write_bytes(b"new")
     return {"lufs": -14.0}
 

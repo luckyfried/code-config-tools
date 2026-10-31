@@ -3,7 +3,7 @@
 // film's title. Each band is one run of the words and a bullet in its gap, laid end to end, so the band repeats with no
 // seam; the bands keep clear of where the beat's label and line stand.
 import React from 'react';
-import {fill, measure, px} from '../kit';
+import {fill, measure, OPTICAL, px} from '../kit';
 import type {BeatOn, Look, Move, MoveProps} from '../types';
 
 const SPEED = 260;
@@ -40,7 +40,7 @@ const Overlay: React.FC<MoveProps> = ({look, beat, local}) => {
           <div key={i} style={{position: 'absolute', left: 0, right: 0, top: y, height: band, background: i ? look.colors.bg : look.colors.accent, overflow: 'hidden'}}>
             {Array.from({length: count}, (_, k) => (
               <div key={k} style={{position: 'absolute', top: band * 0.08, left: (k - 1) * unit + shift, width: unit, display: 'flex', whiteSpace: 'pre',
-                fontFamily: `'${look.text}'`, fontSize: size, lineHeight: 1.12, color: i ? look.colors.accent : look.colors.bg}}>
+                ...OPTICAL, fontFamily: `'${look.text}'`, fontSize: size, lineHeight: 1.12, color: i ? look.colors.accent : look.colors.bg}}>
                 <span>{text}</span>
                 <span style={{width: space, textAlign: 'center'}}>•</span>
               </div>

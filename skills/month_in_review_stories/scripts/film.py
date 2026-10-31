@@ -4,7 +4,12 @@ into the deliverables.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/film.py preview     # the reel at half size with its sound, measured: preview/film.mp4, preview.json
-    python3 S/scripts/film.py render      # out/film.mp4, out/cover.png, out/cards/ (and out/series.mp4 when asked), then qa.py check
+    python3 S/scripts/film.py render --proof
+                                          # the proof, every round before deliver: every video at half size beside
+                                          # the full-size ones (out/proof.mp4, out/proof-series.mp4,
+                                          # out/cards/proof-NN-story.mp4), the stills as the full render makes them
+    python3 S/scripts/film.py render      # the deliver render, full size: out/film.mp4, out/cover.png, out/cards/ (and
+                                          # out/series.mp4 when asked), then qa.py check
 
 preview is what the critic's timed read (vote.py timed) watches before the film renders: the reel with its mastered
 sound, its cuts as planned and as the picture shows them, the luma line and its quiet seconds, the hook frame, and the
@@ -13,21 +18,23 @@ change to the taste always reaches the film, and refuses until critic/timed.json
 (its hash); it prints any read that did not pass and renders the board all the same. It renders the storyboard of the
 look that won the vote (winner.json `board`), one format (1080x1920 at 30 fps), in one bundle and one browser:
   out/film.mp4              the reel (the Reel composition, motion/studio/climb): their month as a walk through
-                            its moments, as long as the board's reel, with its sound cues under the music, picture and music stopping together
-                            on the board's stop and holding to the end
+                            its moments, as long as the board's reel, with its sound effects under the music, picture and music stopping
+                            together on the board's stop and holding to the end
   out/series.mp4            only when the person asked for the cards as one video (the board's ask.series): the whole
                             series, every card in order (the Film composition, motion/studio/story), each card one
-                            camera over one moment, with its own sound cues under the music
-  out/cards/NN-story.mp4    each card as its own 15 s story: the series' render cut at the card's bounds, its cues
-                            under the music
+                            camera over one moment, with its sound effects under the music
+  out/cards/NN-story.mp4    each card as its own 15 s story: the series' render and its effects cut at the card's
+                            bounds, under the music
   out/cards/NN-story.png    each card's still: the card at its `still` beat, in its last whole-frame hold
   out/cover.png             the reel's cover: the closer's wall, every post of the month in its cell with the month's
                             line landed under it, the frame before the style's closing page comes over it
 One card a moment, in date order, three or four of them as taste.json picks them.
-Every video's sound is mastered one way (music.py `master`): the music (music.py make) from the video's first frame,
-the video's sound cues under it by loudness, the whole at -14 LUFS under a peak limiter; the reel stops on its stop,
-and every card and the series fade over their last 1.2 s. render writes the reel's mix (the bed's and the effects'
-loudness and the cue count) into music.json and the storyboard's Mixed line.
+Every video's sound is made one way: the music (music.py make), cut from the video's first frame by music.py
+`master` (the music alone at -14 LUFS), and the board's sound effects (the reel's `fx`, every card's on the series'
+clock: compose/sound.py), laid by sfx.mux on the music's grid and in its key and mastered with the music once: one gain
+onto -14 LUFS, one limiter, one AAC encode without noise substitution, so the true peak stays under -1.5 dBTP. The reel's
+music stops on its stop, and every card and the series fade over their last 1.2 s. render writes the reel's effect count
+into the storyboard's Mixed line, and the music's energy under the reel, one number a frame, into music/energy.json.
 Both commands render each video in chunks kept in the run (preview/chunks/, render/chunks/; 60 frames each without an
 NVIDIA card, one per video with one): a render that is cut off resumes when the same command runs again, rendering
 only the chunks still missing, and render.log in the same folder shows its progress. render makes every deliverable in
@@ -41,6 +48,11 @@ render/render-report.json (preview/render-report.json for the preview); timeline
 figures (studio.measure) and timeline/<name>-strip.png and -strip2.png its 1 and 2 fps strips; cards.json names
 every card's files; engine.json names the renderer and the compositions. Once the files are in, render runs qa.py check, so qa/check.json
 describes the film out/ holds after every render.
+--proof renders every video at half size (proof.py) under its proof name beside the full-size one in out/, never over
+it, and the stills (the cards' stills, the cover) as the full render makes them; render-report.json's `scale` says
+which render it was, and cards.json and timeline.json name the proof's videos. A full render takes the proof's videos
+out of out/ and out/cards/, so out/proof.mp4 is there only while the newest render is the proof, which qa.py check and
+vote.py cut read and deliver.py refuses.
 """
 import argparse
 import os
@@ -51,7 +63,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import music  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
+import sfx  # noqa: E402
 import studio  # noqa: E402
 
 def card_start(board, ci):
@@ -64,10 +78,31 @@ def still_frame(board, ci):
     return card_start(board, ci) + min(studio.card_frames(board, card) - 1, studio.jround(card["still"] * studio.pulse(board)))
 
 
-def series_cues(board):
-    """Every card's sound cues on the series' clock: each card's beats offset by the beats of the cards before it."""
+def series_fx(board, at=0):
+    """The series' effects board on the clock of a video that starts at series frame `at`: every card's (compose/sound.py)
+    beats offset by the beats of the cards before it, less `at`, so every card cut from the series plays the same effects
+    at the same frames."""
     p = studio.pulse(board)
-    return [{**x, "at": round(x["at"] + card_start(board, i) / p, 3)} for i, c in enumerate(board["beats"]) for x in c.get("sound", [])]
+
+    def shifted(b, off):
+        ly = b["layers"][0]
+        moved = {k: round(v + off, 4) for k, v in ly["at"].items()}
+        slam = {"slam": [round(ly["slam"][0] + off, 4), ly["slam"][1]]} if "slam" in ly else {}
+        return {**b, "start": round(b["start"] + off, 4), "layers": [{**ly, "at": moved, **slam}]}
+
+    beats = [shifted(b, (card_start(board, i) - at) / p) for i, c in enumerate(board["beats"])
+             for b in (c.get("fx") or {}).get("beats", [])]
+    return {"id": f"{board['id']}-series", "bpm": board["bpm"], "beats": beats}
+
+
+def stop_of(r):
+    """The reel's stop, in seconds from its first frame: where picture and sound stop together (its `stop` cue)."""
+    return next((c["at"] * 60 / r["bpm"] for c in r.get("sound") or [] if c["kind"] == "stop"), None)
+
+
+def effects_count(fx):
+    """How many effects an effects board lays."""
+    return len(sfx.events(fx)[0]) if fx else 0
 
 
 def won(run):
@@ -93,18 +128,19 @@ def bed(run):
     return Path(m["file"])
 
 
-def sound(silent, wav, seconds, out, fx, start=0.0, cues=(), bpm=None, spawn=subprocess.run):
-    """The silent render with its sound mastered (music.master) under its cues, `at` in beats of `bpm` from its first
-    frame, put at `out` by rename once it is whole, its master and stems left beside it (<name>.wav, .bed.wav,
-    .fx.wav, .mix.wav); the cues play the effect files `fx` names. Returns music.master's loudness. Every process starts
-    through `spawn`."""
+def sound(silent, wav, seconds, out, fx, record, start=0.0, stop=None, energy=None, fps=30, spawn=subprocess.run):
+    """The silent render with its sound: the music (music.master: the bed from `start`, stopping at `stop` seconds) and
+    the effects board `fx` (its beats on the render's clock) laid and mastered together by sfx.mux under the music
+    `record` (music.json) describes, put at `out` by rename once it is whole, the music's master left beside it
+    (<name>.wav); with `energy`, the master's energy written there, one number a frame at `fps`, where the shared layer
+    reads it. Every process starts through `spawn`."""
     out = Path(out)
     master, part = out.with_suffix(".wav"), out.with_name(f"{out.stem}.part.mp4")
-    mix = music.master(wav, seconds, master, start=start, cues=cues, bpm=bpm, fx=fx, spawn=spawn)
-    spawn([_env.ffmpeg(), "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a",
-           "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", f"{seconds:.3f}", "-movflags", "+faststart", str(part)], check=True)
+    music.master(wav, seconds, master, start=start, stop=stop, spawn=spawn)
+    if energy:
+        sfx.energy(_env.ffmpeg(), master, fps, energy)
+    sfx.mux(spawn, silent, part, seconds, fx, dict(record or {}, master=str(master)), _env.ffmpeg())
     os.replace(part, out)
-    return mix
 
 
 # a card is re-encoded the way the render encodes: NVENC at constant quality 14 with the NVIDIA device, x264 crf 17 without,
@@ -119,11 +155,12 @@ def cut(series, start, seconds, out, spawn=subprocess.run):
            *ENCODE, "-profile:v", "high", "-pix_fmt", "yuv420p", str(out)], check=True)
 
 
-def report(rep, work):
-    """The render's report; a failed render exits, its renderer's report left in `work`."""
+def report(rep, work, scale=1):
+    """The render's report at `scale` (1, or proof.SCALE for the proof); a failed render exits, its renderer's report
+    left in `work`."""
     found = studio.findings(rep)
     record = {"failed": rep.get("failed"), "exit": rep.get("exit"), "seconds": rep.get("seconds"), "findings": found,
-              "lines": studio.lines(found)}
+              "lines": studio.lines(found), "scale": scale}
     if rep.get("failed") or rep.get("exit"):
         print("\n".join(studio.lines(found)[:20]))
         sys.exit(f"the render failed ({rep.get('failed')} jobs); see {work / 'render.log'}")
@@ -143,10 +180,11 @@ def cmd_preview(a):
         rep = studio.render([job], d, "render", board=board, run=run, hold=hold)
         found = report(rep, d)["findings"]
         seconds = r["frames"] / r["fps"]
-        lufs = sound(d / "film-silent.mp4", bed(run), seconds, d / "film.mp4", music.effects(run, r["bpm"]), cues=r["sound"],
-                     bpm=r["bpm"], spawn=hold.spawn)["lufs"]
+        sound(d / "film-silent.mp4", bed(run), seconds, d / "film.mp4", r["fx"], _env.read_json(run / "music.json"),
+              stop=stop_of(r), spawn=hold.spawn)
         m = studio.measure(d / "film.mp4", r["cuts"], strips=d, spawn=hold.spawn)
-        m.update(hash=studio.board_hash(board), lufs=round(lufs, 1), findings=studio.lines(found))
+        lufs = qa.loudness(d / "film.mp4", spawn=hold.spawn)
+        m.update(hash=studio.board_hash(board), lufs=None if lufs is None else round(lufs, 1), findings=studio.lines(found))
         _env.write_json(d / "preview.json", m)
         print(f"preview: {m['seconds']} s, {m['cuts']} cuts ({m['cuts_per_minute']} a minute), hook at frame {m['hook_frame']}, "
               f"seconds under 0.5: {m['seconds_under_half']}, {m['lufs']} LUFS -> {d / 'preview.json'}; strips {m['strip']}, {m['strip2']}")
@@ -168,6 +206,10 @@ def cmd_render(a):
         print(f"the timed read: {', '.join(f'{k} ' + ('fail' if timed['reads'][k].get('pass') is False else str(timed['reads'][k].get('pass'))) for k in unmet)}; "
               "rendering the board, and the gate states it")
     r = board["reel"]
+    # the proof draws every video at half size and names it beside the full-size one; the stills are drawn as the full
+    # render draws them
+    scale = proof.SCALE if getattr(a, "proof", False) else 1
+    named = (lambda rel: proof.of(rel).as_posix()) if scale != 1 else str
     # the series' render is what every card is cut from; it is delivered as one video only when the person asked for it
     series = bool((board.get("ask") or {}).get("series"))
     wav = bed(run)
@@ -194,46 +236,54 @@ def cmd_render(a):
         cover_at = round((r["closer"]["sign"] - leaving - 0.1) * 60 / r["bpm"] * r["fps"])
         jobs.append({"type": "still", "composition": "Reel", "props": props, "frame": min(r["frames"] - 1, cover_at), "scale": 1,
                      "out": str((made / "cover.png").resolve())})
-        jobs += [{"type": "video", "composition": "Reel", "props": props, "frames": r["frames"], "out": str((work / "film-silent.mp4").resolve()), "crf": 17},
-                 {"type": "video", "composition": "Film", "props": props, "frames": series_frames, "out": str((work / "series-silent.mp4").resolve()), "crf": 17}]
-        record = report(studio.render(jobs, work, "render", board=board, run=run, hold=hold), work)
+        # a full-size video's job carries no scale: the renderer draws a job without one at the board's size
+        at = {"scale": scale} if scale != 1 else {}
+        jobs += [{"type": "video", "composition": "Reel", "props": props, "frames": r["frames"], **at,
+                  "out": str((work / "film-silent.mp4").resolve()), "crf": 17},
+                 {"type": "video", "composition": "Film", "props": props, "frames": series_frames, **at,
+                  "out": str((work / "series-silent.mp4").resolve()), "crf": 17}]
+        record = report(studio.render(jobs, work, "render", board=board, run=run, hold=hold), work, scale)
         film_s = r["frames"] / r["fps"]
         series_s = series_frames / studio.FPS
-        fx = music.effects(run, r["bpm"])
-        mix = sound(work / "film-silent.mp4", wav, film_s, made / "film.mp4", fx, cues=r["sound"], bpm=r["bpm"], spawn=hold.spawn)
-        # the reel's mix goes on the music's record and the storyboard's Mixed line, where qa.py's audio row reads it
-        track = {**(_env.read_json(run / "music.json") or {}), **{k: v for k, v in mix.items() if k != "lufs"}, "sound_cues": len(r["sound"])}
-        _env.write_json(run / "music.json", track)
-        said = qa.mixed(track, len(r["beats"]))[1]
+        rec = _env.read_json(run / "music.json") or {}
+        reel, whole = named("film.mp4"), named("series.mp4")
+        sound(work / "film-silent.mp4", wav, film_s, made / reel, r["fx"], rec, stop=stop_of(r),
+              energy=run / "music" / "energy.json", fps=r["fps"], spawn=hold.spawn)
+        said = qa.mixed(effects_count(r["fx"]), len(r["beats"]))
         music.noted(run / "storyboards" / won(run) / "storyboard.md", f"Mixed: {said}.")
         print(f"mixed: {said}")
         timeline = {"style": board["style"], "bpm": board["bpm"], "hash": h,
-                    "film": {**studio.measure(made / "film.mp4", r["cuts"], strips=tl_dir, spawn=hold.spawn), "file": str(out / "film.mp4")}}
+                    "film": {**studio.measure(made / reel, r["cuts"], strips=tl_dir, spawn=hold.spawn, name="film"), "file": str(out / reel)}}
         if series:
-            sound(work / "series-silent.mp4", wav, series_s, made / "series.mp4", fx, cues=series_cues(board), bpm=board["bpm"], spawn=hold.spawn)
-            timeline["series"] = {**studio.measure(made / "series.mp4", studio.cut_frames(board), strips=tl_dir, spawn=hold.spawn),
-                                  "file": str(out / "series.mp4")}
+            sound(work / "series-silent.mp4", wav, series_s, made / whole, series_fx(board), rec, spawn=hold.spawn)
+            timeline["series"] = {**studio.measure(made / whole, studio.cut_frames(board), strips=tl_dir, spawn=hold.spawn, name="series"),
+                                  "file": str(out / whole)}
         rows, at = [], 0
         for i, c in enumerate(board["beats"]):
             f = studio.card_frames(board, c)
             silent = work / f"{names[i]}-silent.mp4"
             cut(work / "series-silent.mp4", at / studio.FPS, f / studio.FPS, silent, spawn=hold.spawn)
-            sound(silent, wav, f / studio.FPS, made / "cards" / f"{names[i]}.mp4", fx, start=at / studio.FPS, cues=c.get("sound", []),
-                  bpm=board["bpm"], spawn=hold.spawn)
+            story = named(f"cards/{names[i]}.mp4")
+            sound(silent, wav, f / studio.FPS, made / story, series_fx(board, at), rec, start=at / studio.FPS,
+                  spawn=hold.spawn)
             rows.append({"n": i + 1, "id": c["id"], "role": c["idea"], "png": f"out/cards/{names[i]}.png",
-                         "mp4": f"out/cards/{names[i]}.mp4", "from_frame": at, "frames": f, "still_frame": still_frame(board, i) - at})
+                         "mp4": f"out/{story}", "from_frame": at, "frames": f, "still_frame": still_frame(board, i) - at})
             at += f
         # out/ changes from here: the page that says the film is ready to post and the records that vouch for its files
         # go first, every file moves in by rename with the reel last, and the records come back once all of them are in,
         # film.json, the board these files show, last
-        for x in (out / "review.html", run / "render-report.json", run / "cards.json", run / "film.json", *([] if series else [out / "series.mp4"])):
+        for x in (out / "review.html", run / "render-report.json", run / "cards.json", run / "film.json", *([] if series else [out / whole])):
             x.unlink(missing_ok=True)
-        for rel in [*(f"cards/{x}.{ext}" for x in names for ext in ("png", "mp4")), "cover.png", *(["series.mp4"] if series else []), "film.mp4"]:
+        # the full-size videos take the proof's place: out/proof.mp4 stays only while the newest render is the proof
+        for x in ([] if scale != 1 else proof.films(out) + proof.films(out / "cards")):
+            x.unlink()
+        for rel in [*(f"cards/{x}.png" for x in names), *(named(f"cards/{x}.mp4") for x in names), "cover.png",
+                    *([whole] if series else []), reel]:
             os.replace(made / rel, out / rel)
         _env.write_json(run / "render-report.json", record)
         timeline["cards"] = rows
         _env.write_json(run / "timeline.json", timeline)
-        _env.write_json(run / "cards.json", {"of": n, "cards": rows, **({"series": "out/series.mp4"} if series else {}), "film": "out/film.mp4"})
+        _env.write_json(run / "cards.json", {"of": n, "cards": rows, **({"series": f"out/{whole}"} if series else {}), "film": f"out/{reel}"})
         _env.write_json(run / "engine.json", {"engine": "chromium", "compositions": "motion/dist", "board": board["style"],
                                               "format": board["format"]})
         _env.write_json(run / "film.json", board)
@@ -242,7 +292,7 @@ def cmd_render(a):
         if series:
             s = timeline["series"]
             print(f"series {s['seconds']} s, {s['cuts']} cuts ({s['cuts_per_minute']} a minute), hook frame {s['hook_frame']}")
-        print(f"{n} cards and the cover -> {out}/")
+        print(f"{n} cards and the cover -> {out}/" + (f" (the half-size proof: {out / reel})" if scale != 1 else ""))
     # the measured checks run again on every render, so qa/check.json always describes the film out/ holds
     qa.report(qa.checks(run, False), run / "qa" / "check.json", False)
     return 0
@@ -251,6 +301,8 @@ def cmd_render(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["preview", "render"])
+    ap.add_argument("--proof", action="store_true",
+                    help="render: every video at half size beside the full-size ones (out/proof.mp4), for every round before deliver")
     a = ap.parse_args()
     return {"preview": cmd_preview, "render": cmd_render}[a.cmd](a)
 

@@ -210,18 +210,20 @@ def hook_frame(mp4, spawn=subprocess.run):
     return next((i + 1 for i, x in enumerate(v) if x >= HOOK_STEP), None)
 
 
-def measure(mp4, planned, strips=None, spawn=subprocess.run):
+def measure(mp4, planned, strips=None, spawn=subprocess.run, name=None):
     """The figures of one film, from one decode of it: duration; the cuts, as the planned cuts (film frames) joined with
     the scene-score cuts (scene > 0.12 at 270x480) more than 0.2 s from every one of them, and per minute; the hook
     frame; the luma line (each second's change: the mean luma difference between the frame at the start of the second
     and the frame at its end, downscaled to LUMA_WIDTH px wide, where moving grain cancels and a move, however slow,
     adds up, so a locked frame under moving grain reads 0.25 or less) and its quiet seconds; and the 1 and 2 fps strips
-    in the folder `strips` (beside the file when None)."""
+    in the folder `strips` (beside the file when None), named `name` (the file's own name when None), so a proof's strips
+    keep the film's names."""
     mp4 = Path(mp4)
     secs = duration(mp4, spawn)
     d = Path(strips) if strips else mp4.parent
     d.mkdir(parents=True, exist_ok=True)
-    strip, strip2 = d / f"{mp4.stem}-strip.png", d / f"{mp4.stem}-strip2.png"
+    stem = name or mp4.stem
+    strip, strip2 = d / f"{stem}-strip.png", d / f"{stem}-strip2.png"
     k = max(1, int(secs))
     graph = ("[0:v]split=4[s][l][a][b];"
              "[s]scale=270:480,select='gt(scene,0.12)',showinfo[so];"

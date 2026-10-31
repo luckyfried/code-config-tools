@@ -138,12 +138,15 @@ const nudged = (f: Framing, n: Nudge): Framing => ({
 });
 
 /** The pose at beat `t` and the travel pass for it: the camera's framing as the beat's move turns it, the blur of the
- * move the shutter saw over the last half frame, the vignette, and what the beat's move and the cut playing add. The
- * picture holds still from the board's stop. */
+ * move the shutter saw over the last half frame (from the jump, on the frame after one), the vignette, and what the
+ * beat's move and the cut playing add. The picture holds still from the board's stop. */
 export const shotAt = (r: Reel, t: number, pulse: number, line: Timeline, look: Look): {pose: Pose; travel: Travel} => {
   const at = (tt: number) => nudged(framingAt(r, tt), nudgeAt(line, look, Math.min(tt, r.closer.still)));
   const pose = poseOf(r, at(t));
-  const prev = poseOf(r, at(t - 0.5 / pulse));
+  // the shutter's half frame never reaches back across a jump (a move shorter than a frame): the first frame after a
+  // jump cut is sharp
+  const back = r.cards.reduce((b, c) => (c.move[1] - c.move[0] < 1 / pulse && c.move[0] < t && c.move[1] > b ? Math.min(t, c.move[1]) : b), t - 0.5 / pulse);
+  const prev = poseOf(r, at(back));
   const aspect = r.W / r.H;
   const p = new THREE.Vector3(...pose.target);
   setCam(prev, aspect);

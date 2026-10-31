@@ -51,7 +51,7 @@ def with_posts(m, n):
     m = copy.deepcopy(m)
     base = m["posts"]
     days = sorted({1 + (i * 27) // n for i in range(n)})
-    into = Path(tempfile.mkdtemp(prefix="mir-posts-"))
+    into = fixture.tempdir("mir-posts-")
     m["posts"] = [dict(base[i % len(base)], day=d) for i, d in enumerate(days)]
     for p in m["posts"]:
         if p.get("photo"):
@@ -196,7 +196,7 @@ class Fixture(unittest.TestCase):
         lib = {"month": {"key": "2026-09", "year": 2026, "month": 9, "name": "september"}, "handle": "a",
                "posts": [], "reels": [{"ts": ts(5), "caption": "a", "media": ["a.mp4", "a.jpg"]},
                                       {"ts": ts(6), "caption": "b", "media": ["b.MP4"]}]}
-        self.assertEqual([p["photo"] for p in research.month_json(lib, Path(tempfile.mkdtemp()))["posts"]], ["a.jpg", None])
+        self.assertEqual([p["photo"] for p in research.month_json(lib, fixture.tempdir("mir-month-"))["posts"]], ["a.jpg", None])
         # a month with two photographs among its posts is told, the rest as type; fewer than three posts is not a month
         ws = fixture.workspace()
         fixture.researched(ws)
@@ -239,6 +239,15 @@ class Fixture(unittest.TestCase):
         shorter = {c["day"]: c["leave"] - c["arrive"] for c in compose.board("editorial-quiet", m)["reel"]["cards"]}
         self.assertLess(shorter[28], short[28])
 
+    def test_the_peak_stays_on_screen_longest_in_every_style_and_with_three_moments(self):
+        # a move that takes the frame lengthens its moment's time on screen, and the last moment runs on into the wall;
+        # the peak is still the moment on screen longest
+        for moments in (PICKED, [{"day": 13, "peak": True}, {"day": 17}, {"day": 28}]):
+            for st in style.styles():
+                cs = compose.board(st, picked(self.month, moments))["reel"]["cards"]
+                span = {c["day"]: round(c["leave"] - c["arrive"], 3) for c in cs}
+                self.assertTrue(all(span[13] > v for d, v in span.items() if d != 13), (st, len(moments), span))
+
     def test_the_words_on_screen_are_theirs(self):
         caps = {p["day"]: p["caption"].lower() for p in self.month["posts"]}
         for c in self.board["reel"]["cards"]:
@@ -272,7 +281,7 @@ class Fixture(unittest.TestCase):
         # a post and a reel of one day whose photographs share a file name in different folders
         two = copy.deepcopy(self.month)
         post = next(p for p in two["posts"] if p["day"] == 17)
-        into = Path(tempfile.mkdtemp(prefix="mir-twin-"))
+        into = fixture.tempdir("mir-twin-")
         twin = dict(post, type="reel", photo=str(into / Path(post["photo"]).name), caption="the queue outside before the doors")
         Path(twin["photo"]).symlink_to(two["posts"][0]["photo"])
         two["posts"].append(twin)
@@ -350,11 +359,11 @@ class Fixture(unittest.TestCase):
         # the month's line lands under the wall, and the style's closing page comes over it with the handle and the ask
         self.assertEqual([x["text"].lower() for x in cl["lines"]], ["my september, in four stories"])
         self.assertEqual(cl["page"]["name"], style.card("editorial-quiet")["closer"])
-        self.assertEqual((r["look"]["handle"], r["look"]["signoff"].lower()), ("@ines.photo", "see you in october."))
+        self.assertEqual((r["look"]["handle"], r["look"]["signoff"].lower()), ("@ines.photo", "see you again in october."))
         self.assertNotIn("count", cl)
         self.assertNotIn("slot", cl)
         last = self.board["beats"][-1]
-        self.assertIn("see you in october.  ·  @ines.photo", [w.lower() for w in storyboard.card_words(last)])
+        self.assertIn("see you again in october.  ·  @ines.photo", [w.lower() for w in storyboard.card_words(last)])
         stop = [c for c in r["sound"] if c["kind"] == "stop"]
         self.assertEqual(len(stop), 1)
         self.assertLess(stop[0]["at"], r["end"])
@@ -479,7 +488,7 @@ class Fixture(unittest.TestCase):
         words = " ".join(on_screen(b))
         self.assertNotIn(self.month["handle"], words)
         self.assertIn("oct 13", words)
-        self.assertIn("see you in november", words)
+        self.assertIn("see you again in november", words)
 
 
 class Asked(unittest.TestCase):
@@ -532,7 +541,8 @@ class Asked(unittest.TestCase):
             r = self.checked(m)["reel"]
             self.assertEqual(r["frames"], 450)
             self.assertAlmostEqual(r["end"], 15 * r["bpm"] / 60, places=2)
-            span = {c["day"]: c["leave"] - c["arrive"] for c in r["cards"]}
+            # the peak's words hold the longest, from when they land (after any move that takes the frame) to the cut
+            span = {c["day"]: c["leave"] - c["rise"][0] for c in r["cards"]}
             if any(c["peak"] for c in r["cards"]):
                 peak = next(c["day"] for c in r["cards"] if c["peak"])
                 self.assertTrue(all(span[peak] > v for d, v in span.items() if d != peak), span)

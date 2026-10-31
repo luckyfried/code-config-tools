@@ -9,6 +9,7 @@ figures reach the screen only when the ask is for their numbers. The look a boar
 compose/look.py's."""
 import calendar
 import datetime as dt
+from pathlib import Path
 
 from . import look
 
@@ -55,6 +56,8 @@ class Post:
         self.name = (d.get("name") or name_of(self.caption) or self.type).strip()
         self.place = (d.get("place") or "").strip().lower()
         self.photo = d.get("photo")
+        # the post's own recorded video, which plays on the moment's beat in place of its still
+        self.clip = d.get("clip") if d.get("clip") and Path(d["clip"]).is_file() else None
         # the shot the agent wrote for a moment's photograph (taste.json `moments[].shot`)
         self.shot = {}
         self.likes, self.comments = d.get("likes"), d.get("comments")
@@ -124,6 +127,9 @@ class Month:
         self.year, self.name, self.short, self.letter, self.days = p.year, p.name, p.short, p.letter, p.days
         self.label = f"{p.name} {p.year}"
         self.next = p.after(1)
+        # the sign-off: a closing page that sets it on two lines balances them by length, and "again" keeps two
+        # words on each, where "see you in" over a long month's name would leave the month alone on its line
+        self.farewell = f"see you again in {self.next.name}."
         # the handle is the account's username as their data carries it; with none, no card carries a handle line
         h = (d.get("handle") or "").strip().lstrip("@")
         self.handle = f"@{h}" if h else None

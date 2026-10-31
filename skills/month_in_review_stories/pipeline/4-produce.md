@@ -12,9 +12,9 @@ python3 S/scripts/music.py make
 `make` refuses until the vote has a winner (`winner.json`). A track the person placed as `music/source.<ext>` wins;
 otherwise the studio's music engine makes the bed from the winning look's recipe and the music brief in
 `taste.json` (`music`: the styles they named, and what to leave out), as long as the longer of the reel and the series. `music.json` names the file and
-its origin, and the storyboard's Music line carries the origin. Every render's sound cues sit under the music: the effects stem is scaled
-so its integrated loudness is 8 LU under the bed's, and `film.py render` writes both numbers and the cue count into
-`music.json` and the storyboard's Mixed line, which `qa.py check` reads.
+its origin, and the storyboard's Music line carries the origin. Every render's music is cut from the render's first frame and
+brought to -14 LUFS alone; the render's mux lays the sound effects over it (one where each beat lands) and masters the
+two together, and `film.py render` writes the effect count into the storyboard's Mixed line.
 
 ## Clips
 
@@ -26,7 +26,7 @@ python3 S/scripts/clips.py list
 would make from it: its use (the first is the hook's world, the others a still brought to life), the shot you wrote in
 `taste.json` (subject, move, lens, height, light), its length, a seamless loop, the prompt and the file to save
 (`clips/NN.mp4` in the run). A field printed "(not written)" is a shot to write in `taste.json` before the board is
-drafted again. Generate each clip with the video model you have and save it there. Then:
+drafted again. Generate each clip with the video model you have and save it there. A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests <run>/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks. Then:
 
 ```
 python3 S/scripts/clips.py normalize --why "<why any did not arrive>"
@@ -60,14 +60,23 @@ its cause in the board: say so in the read, and the cut's critics carry it to th
 ## Render
 
 ```
-python3 S/scripts/film.py render
+python3 S/scripts/film.py render --proof
 ```
+
+Every round before deliver renders the proof: `--proof` draws every video at half size beside the full-size one in
+`out/` (`out/proof.mp4`, `out/proof-series.mp4` when they asked for the series, `out/cards/proof-NN-story.mp4`) and
+never writes over `out/film.mp4` or a card's story. The cards' stills and `out/cover.png` render as the full render
+makes them. `qa.py check` and `vote.py cut` read the proof while it is the newest render, and every size they report
+is in board units, the same numbers the full-size render gives. Without `--proof`, `render` is the full-size render
+that goes to deliver (movement 5), and it takes the proof's videos out of `out/`.
 
 `render` refuses a board drafted from another `taste.json` than the run's (a changed taste reaches the film only
 through `storyboard.py draft`), and refuses until the timed read of this board is made; it prints any read that did
 not pass and renders the board all the same, and the gate states each read. After every render it runs `qa.py check`,
 so `qa/check.json` always describes the delivered film. One storyboard, one format, one bundle and one browser
 (the compositions in `S/motion/studio`, on the motion system in `S/motion/system`):
+
+The full-size render makes these (the proof makes the same, its videos under their proof names at half size):
 
 - `out/film.mp4`: the reel, the Reel composition (`S/motion/studio/climb`), as long as the board's reel, its sound
   cues under the music, the picture and the music stopping together on the stop and holding to the end.
@@ -80,7 +89,8 @@ so `qa/check.json` always describes the delivered film. One storyboard, one form
 Every file is made in `render/out/` and moves into `out/` once all of them are made, so a render that fails or is cut
 off leaves `out/` as it was.
 
-Every video is 1080x1920 at 30 fps, H.264 High, yuv420p, with AAC at 192 kbps and -14 LUFS under a peak limiter. On a
+Every video is 1080x1920 at 30 fps (540x960 in the proof), H.264 High, yuv420p, with AAC at 192 kbps and -14 LUFS, music and effects through one limiter 4 dB under full scale and encoded
+without noise substitution, so the true peak stays under -1.5 dBTP. On a
 machine with an NVIDIA graphics card the browser draws on the card and the encoder runs there too; with another
 graphics card on Linux the browser draws on it and the processor encodes; with neither, both run on the processor and
 the files are the same to the eye. A frame drawn with a failed shader or a lost graphics context is never kept: the
@@ -100,7 +110,8 @@ Run the preview and the render each in the foreground in one tool call, and ask 
 (`preview/render.log` for the preview). Once the first chunks have landed, the time they took times the chunks still to
 go is the estimate to tell the person.
 
-`render` writes, in the run's build folder: `render-report.json` (every finding and failed job), `timeline.json`
+`render` writes, in the run's build folder: `render-report.json` (every finding and failed job, and its `scale`: 0.5
+for the proof, 1 for the full-size render), `timeline.json`
 (each video's figures), `timeline/film-strip.png`, `film-strip2.png` (and `series-strip.png` and `series-strip2.png`
 when the series is made),
 `cards.json`, `engine.json` and `film.json` (the rendered board). A render that fails writes none of these and leaves

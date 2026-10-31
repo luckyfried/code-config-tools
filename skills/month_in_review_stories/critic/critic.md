@@ -35,7 +35,7 @@ the rule.
 | `R2` | image treatment | through each hold the photograph moves against its band and the camera, its edge wrapped in the ground's light and shading the photograph under it, a shadow under every card lifted off the wall, grain over all, one grade on every photograph; the closer's still is still | a flat photograph on a plain push, a hard unlit edge, photographs that do not match in color |
 | `R3` | type in motion | two faces on one scale; every line enters word by word, each word's tracking closing as it lands, and leaves the same way, never a fade; every line settled within a second of its beat; every line inside the safe area through the hold; nothing crosses a word | lines that fade or slide in whole, a line pushed past the side margins, the line or the dust over a word, a stray color for the same field |
 | `R4` | motion and rhythm | one camera that backs off before each move and lands a little past where it stops; the camera moves differently through each hold, never the same way two holds in a row; the peak holds longest; the closer holds still and silent at least a second after the ask | uniform beats, the same push on every card, a move that starts and stops dead, a closer that ends as the ask lands |
-| `R5` | sound to picture | one cue where each beat lands and nowhere else; the effects 8 LU under the music; the music stops where the ask lands | a cue on a word or a move, effects over the music, music running past the ask |
+| `R5` | sound to picture | one cue where each beat lands and nowhere else; the effects under the music; the music stops where the ask lands | a cue on a word or a move, effects over the music, music running past the ask |
 | `R6` | generated shots | every clip request is a shot a cinematographer would write from its photograph: its subject, the camera's move, the lens, the height, the light, the beat's length and a seamless loop, the first the hook's world | requests that say the same thing, a request with no lens or light, a subject that is not in the photograph |
 | `R7` | the deliverable | `out/` holds the films, the cover, the cards, the caption and the review page, which opens on the reel with its cover and nothing a viewer could mistake for the product | a storyboard sheet or a working file in `out/`, a review page with no cover, card headers that do not match |
 
@@ -71,10 +71,12 @@ the same, and the gate states each read.
 
 ## The cut (movement 5)
 
-The motion designer and the person score the rendered reel, the series and every card on the seven rules. Look,
-actually look, at the files this render wrote:
+The motion designer and the person score the rendered reel, the series and every card on the seven rules. Every
+round before deliver scores the half-size proof from `film.py render --proof` (`out/proof.mp4`, and each card's
+`out/cards/proof-NN-story.mp4`); its stills and cover are the ones the full render makes. Look, actually look, at the
+files this render wrote:
 
-- `out/film.mp4`;
+- the film `vote.py cut` names (`out/proof.mp4` on the proof, `out/film.mp4` at full size);
 - `timeline/film-strip.png`, `film-strip2.png` and (when the series is made) `series-strip.png` full size with the
   Read tool;
 - every still in `out/cards/NN-story.png` and `out/cover.png`;
@@ -86,12 +88,16 @@ the cut is what ships. Fill in `critic/cut-N.json`
 and run `vote.py verdict`. A round after the first says in `fixed` what changed and reads the new render's frames:
 no paragraph repeats the round before.
 
+R3 is read last on the full-size render: once the proof is at the bar (or the fix is spent), `film.py render` renders
+at full size and `vote.py cut` empties each critic's R3 score in the same round. Watch `out/film.mp4`, open the strips
+and every card, read the type at the size a phone shows it, and score R3 again.
+
 ## The verdict
 
 Each rule stands at the lower of the two critics' scores. The bar is a mean of 4.5 over the seven rules with none
 under 4 (`vote.py` BAR). `vote.py verdict` prints one of three:
 
-- `AT THE BAR`: deliver.
+- `AT THE BAR`: deliver; on the proof, render at full size first and read R3 there.
 - `FIX ONCE`: after the first cut, the lowest rule under the bar that the agent has a lever for. Make that one change
   with the lever below and run the movements it names again.
 - `SPENT`: the fix is made (or no rule under the bar has a lever). Deliver this cut as the best one: `brief.md`
@@ -110,4 +116,4 @@ under 4 (`vote.py` BAR). `vote.py verdict` prints one of three:
 `R2` and `R7` are the motion system's and the kit's own; the agent has no lever for them, and a score under the bar
 on either is spent. After any lever, run movement 2 again (`storyboard.py draft`, `check` and `sheets`, the vote),
 then movement 4 (`music.py make`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed`, `film.py
-render`), then `vote.py cut` for round 2.
+render --proof`), then `vote.py cut` for round 2.

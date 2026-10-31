@@ -67,6 +67,13 @@
         "wall",
         "photo"
       ]
+    },
+    {
+      "id": "exploded-layers",
+      "fits": [
+        "photo",
+        "peak"
+      ]
     }
   ],
   "transitions": [
