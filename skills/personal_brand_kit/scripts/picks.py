@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Movement 1, research: read every photo. Writes build/photo_index.json, build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: read every photo. Writes photo_index.json, picks.json and photos/*.jpg.
 
 USAGE (from the workspace root):
     python3 S/scripts/picks.py
@@ -8,11 +8,11 @@ Reads every photo of the person's posts and stories and every liked image (color
 point, and the five colors each covers with their shares), converting HEIC and rotating by EXIF. Each index row
 carries its kind (post, story, liked) and, for a post, "row", its place in library.json's posts, so the research
 joins a photo to its caption and its time. picks.json names the opener, the feed's most striking photo, as a
-1600 px JPEG copy in build/photos/. To grade a photo for the film, run `grade.py photos FILE` and put
-"graded/<name>.jpg" in the beat's "photos" in build/storyboards/N/storyboard.json.
+1600 px JPEG copy in photos/.
 """
 import datetime as dt
 import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 
 _env.need("PIL")
-from PIL import Image, ImageFilter, ImageOps, ImageStat  # noqa: E402
+from PIL import Image, ImageChops, ImageFilter, ImageOps, ImageStat  # noqa: E402
 
 try:
     import pillow_heif  # type: ignore
@@ -30,8 +30,11 @@ try:
 except Exception:
     pillow_heif = None
 
-PHOTOS = Path("build/photos")
+PHOTOS = Path("photos")
 VIDEO = {".mp4", ".mov", ".m4v"}
+# a cell of a picture holds no detail when its edge strength is under QUIET (0-255); a picture with at least FLAT of its
+# cells quiet (a sky, a beach, a plain wall) is plain, and its subject is the spot that stands out from its surround
+QUIET, FLAT = 12, 0.7
 
 
 def open_image(path, draft=None):
@@ -43,7 +46,7 @@ def open_image(path, draft=None):
 
 
 def prepare(path):
-    """A 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
+    """A 1600 px JPEG copy in photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
     src = Path(path)
     dest = PHOTOS / (hashlib.sha1(str(src.resolve()).encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -56,12 +59,15 @@ def prepare(path):
         return None
     im.thumbnail((1600, 1600), Image.LANCZOS)
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    im.save(dest, "JPEG", quality=90)
+    # a photograph that is there is kept, so it is made under another name and moved in whole
+    tmp = _env.part(dest)
+    im.save(tmp, "JPEG", quality=90)
+    os.replace(tmp, dest)
     return str(dest.resolve())
 
 
 def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in build/photos/, 40% of the way in. Returns its path or None."""
+    """A reel's poster frame as a 1600 px JPEG in photos/, 40% of the way in. Returns its path or None."""
     src = Path(video)
     dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -73,9 +79,32 @@ def poster(video):
         at = float(r.stdout.strip()) * 0.4
     except ValueError:
         at = 0.5
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
-                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
-    return str(dest.resolve()) if dest.exists() and dest.stat().st_size > 0 else None
+    tmp = _env.part(dest)
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
+                        "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
+    if r.returncode != 0 or not tmp.exists() or tmp.stat().st_size == 0:
+        tmp.unlink(missing_ok=True)
+        return None
+    os.replace(tmp, dest)
+    return str(dest.resolve())
+
+
+def subject(path):
+    """Where a photograph's subject sits (u, v, 0 to 1) and whether the picture is plain, mostly without detail: in a
+    plain picture, as a couple on an empty beach, the spot whose colour stands out most from what surrounds it; in a
+    picture whose detail runs all over it, where its detail gathers (analyse's focal point)."""
+    im = open_image(path, draft=(160, 200))
+    w, h = im.size
+    small = im.resize((64, max(1, round(64 * h / w))))
+    sw, sh = small.size
+    edges = small.convert("L").filter(ImageFilter.FIND_EDGES).get_flattened_data()
+    # the outer three cells are left out: the edge filter reads the picture's own border as detail
+    inner = [k for k in range(sw * sh) if 3 <= k % sw < sw - 3 and 3 <= k // sw < sh - 3]
+    if sum(edges[k] < QUIET for k in inner) < FLAT * len(inner):
+        return analyse(path)["focal"], False
+    stands = ImageChops.difference(small, small.filter(ImageFilter.BoxBlur(8))).convert("L").filter(ImageFilter.BoxBlur(1))
+    k = max(inner, key=stands.get_flattened_data().__getitem__)
+    return [round((k % sw + 0.5) / sw, 2), round((k // sw + 0.5) / sh, 2)], True
 
 
 def analyse(path):
@@ -111,7 +140,8 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
+    _env.enter()
+    d = _env.read_json("library.json")
     if not d:
         sys.exit("run gather.py first")
     index, skipped = [], 0
@@ -133,7 +163,7 @@ def main():
                 index.append(row)
     if not any(e["kind"] != "liked" for e in index):
         sys.exit("no photos of their own could be opened; the kit reads their photos")
-    _env.write_json("build/photo_index.json", index)
+    _env.write_json("photo_index.json", index)
     feed = [e for e in index if e["kind"] == "post"] or [e for e in index if e["kind"] != "liked"]
     opener = max((e for e in feed if e["bright"] > 0.25), key=lambda e: e["score"], default=max(feed, key=lambda e: e["score"]))
     out = {"chapters": {}, "focal": {}, "source_of": {}}
@@ -142,11 +172,11 @@ def main():
     if op:
         out["focal"][op] = f"{opener['focal'][0] * 100:.0f}% {opener['focal'][1] * 100:.0f}%"
         out["source_of"][op] = opener["src"]
-    _env.write_json("build/picks.json", out)
+    _env.write_json("picks.json", out)
     kinds = {k: sum(1 for e in index if e["kind"] == k) for k in ("post", "story", "liked")}
     print(f"indexed {len(index)} photos ({kinds['post']} post, {kinds['story']} story, {kinds['liked']} liked; "
           f"{skipped} could not be opened)")
-    print("wrote build/picks.json and build/photo_index.json")
+    print("wrote picks.json and photo_index.json")
     return 0
 
 

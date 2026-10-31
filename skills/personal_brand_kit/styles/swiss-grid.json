@@ -1,0 +1,222 @@
+{
+  "id": "swiss-grid",
+  "name": "Swiss grid",
+  "faces": {
+    "display": {
+      "family": "Geist",
+      "file": "fonts/styles/swiss-grid/Geist[wght].ttf",
+      "weight": 400,
+      "tracking": -0.03,
+      "case": "none",
+      "lineHeight": 0.95
+    },
+    "text": {
+      "family": "Geist Mono",
+      "file": "fonts/styles/swiss-grid/GeistMono[wght].ttf",
+      "weight": 400,
+      "tracking": 0,
+      "case": "none",
+      "lineHeight": 1.25
+    }
+  },
+  "palette": {
+    "rule": "mono-plus-one"
+  },
+  "moves": [
+    {
+      "id": "grid-snap",
+      "fits": [
+        "title",
+        "photo",
+        "wall",
+        "clip",
+        "screen"
+      ]
+    },
+    {
+      "id": "cell-reveal",
+      "fits": [
+        "photo",
+        "portrait"
+      ]
+    },
+    {
+      "id": "rule-draw",
+      "fits": [
+        "photo",
+        "words"
+      ]
+    },
+    {
+      "id": "crop-shift",
+      "fits": [
+        "photo",
+        "clip"
+      ]
+    },
+    {
+      "id": "scale-to-cell",
+      "fits": [
+        "photo",
+        "screen"
+      ]
+    },
+    {
+      "id": "tilted-wall",
+      "fits": [
+        "wall",
+        "photo"
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "hard-cut",
+      "fits": [
+        "photo",
+        "words",
+        "portrait"
+      ]
+    },
+    {
+      "id": "grid-wipe",
+      "fits": [
+        "wall",
+        "peak",
+        "closer",
+        "landscape"
+      ]
+    }
+  ],
+  "ease": {
+    "curve": "quart",
+    "enter": [
+      0.76,
+      0,
+      0.24,
+      1
+    ],
+    "exit": [
+      0.76,
+      0,
+      0.24,
+      1
+    ],
+    "move": [
+      0.76,
+      0,
+      0.24,
+      1
+    ],
+    "spring": {
+      "damping": 40,
+      "stiffness": 200,
+      "mass": 1
+    },
+    "hit": {
+      "damping": 40,
+      "stiffness": 260,
+      "mass": 1
+    },
+    "stagger": 0.05,
+    "lean": 0
+  },
+  "finish": {
+    "grain": 0,
+    "vignette": 0,
+    "bloom": 0,
+    "dust": 0,
+    "blur": 0,
+    "halation": 1,
+    "cadence": 0,
+    "bars": 0,
+    "burn": "#ffffff",
+    "grade": {
+      "lift": [
+        0,
+        0,
+        0
+      ],
+      "gamma": 1,
+      "gain": [
+        1,
+        1,
+        1
+      ],
+      "saturation": 1
+    },
+    "dip": "none",
+    "matte": "ink",
+    "light": "paper",
+    "words": "clean"
+  },
+  "music": "swiss-grid",
+  "closer": "poster",
+  "photo": {
+    "picture": {
+      "show": true,
+      "box": [
+        0.0556,
+        0.34375,
+        0.8889,
+        0.46875
+      ],
+      "rim": 0,
+      "rimColor": "paper",
+      "tilt": 0,
+      "tape": 0,
+      "tapeColor": "accent2",
+      "penColor": "ink"
+    },
+    "ground": "paper",
+    "line": {
+      "box": [
+        0,
+        0,
+        0.62,
+        0.36
+      ],
+      "face": "display",
+      "size": 104,
+      "align": "start",
+      "color": "ink",
+      "enter": "cut",
+      "rotate": 0,
+      "scrim": 0
+    },
+    "label": {
+      "face": "text",
+      "size": 32,
+      "color": "accent"
+    },
+    "rule": false,
+    "grid": {
+      "cols": 4,
+      "rows": 6,
+      "margin": 0.0556,
+      "rules": "margins"
+    },
+    "landscape": {
+      "box": [
+        0.0556,
+        0.5,
+        0.8889,
+        0.46875
+      ],
+      "line": [
+        0,
+        0.0918,
+        0.62,
+        0.55
+      ]
+    }
+  },
+  "axes": {
+    "family": "grid",
+    "palette": "mono-accent",
+    "camera": "snap",
+    "transition": "cut",
+    "finish": "clean",
+    "music": "pulse"
+  }
+}

@@ -1,5 +1,6 @@
 {
-  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type and the guide cards stay inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail), so a card shown in the film sits inside it; guide is the 1080x1350 card, whose body keeps an 80 px margin.",
+  "about": "Where type may sit, per format, in px from each edge. Photographs run to the edges; type, labels and discs stay inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail). square is the feed post and wide the landscape cut; neither carries an interface, so both keep a 50 px top and foot, and every text column stays the reel's 858 px.",
   "reel": {"width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150},
-  "guide": {"width": 1080, "height": 1350, "top": 80, "bottom": 80, "left": 80, "right": 80}
+  "square": {"width": 1080, "height": 1080, "top": 50, "bottom": 50, "left": 72, "right": 150},
+  "wide": {"width": 1920, "height": 1080, "top": 50, "bottom": 50, "left": 96, "right": 96}
 }

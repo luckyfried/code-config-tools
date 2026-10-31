@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the palette, measured per post. Reads build/photo_index.json, writes build/palette.json.
+"""Movement 1, research: the palette, measured per post. Reads photo_index.json, writes palette.json.
 
 USAGE (from the workspace root):
-    python3 S/scripts/palette.py [--accent "#E8743B"] [--lead-floor 0.08]
+    python3 S/scripts/palette.py [--lead-floor 0.08]
 
 Clusters the colors of their post photos into candidate colors (stories and liked images stay out, so a week of
 stories or a mood board cannot recolor the feed; with fewer than 12 post photos the stories join), then reads
 each post: the candidate covering most of its photos is the color that post leads with. "feed" is every named
 color that leads at least --lead-floor of their posts, with the share of posts it leads, how many posts, how much
 of the feed's area it covers, and the post that shows it best. "likes" is the same clustering over the liked
-images, by area. Every color carries a plain name ("terracotta", "sea blue"), never a code alone. The card roles
-come from the feed: bg (a deep tone of their darkest color), ink (warm white), accent (their most vivid color,
-lifted until it reads on bg at 3:1 or more) and accent2. --accent overrides the accent role.
+images, by area. Every color carries a plain name ("terracotta", "sea blue"), never a code alone. A film's colors are
+made from the feed colors by the chosen style's palette rule (palette_of), and from nothing else.
 """
 import argparse
 import colorsys
@@ -102,6 +101,105 @@ def hex_rgb(h):
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 
 
+# the swatches a run with no photographs' colors yet is colored from: a dark, a warm white, a gray and a yellow
+NEUTRAL = ("#14161c", "#f3eee4", "#8f94a1", "#ffc93c")
+ROLES = ("bg", "ink", "paper", "accent", "accent2", "muted")
+
+
+def swatches_of(taste, palette=None):
+    """The photographs' swatches a style's palette rule reads, as lowercase hexes: taste.json's `swatches` (hexes, or
+    rows with a `hex`), else palette.json's feed colors, else the neutral four."""
+    rows = (taste or {}).get("swatches") or [c for c in (palette or {}).get("feed") or []]
+    out = [str(r["hex"] if isinstance(r, dict) else r).lower() for r in rows]
+    return [h for h in out if len(h) == 7 and h.startswith("#")] or list(NEUTRAL)
+
+
+def _hex(rgb):
+    return hexc(rgb).lower()
+
+
+def _mix(a, b, t):
+    return tuple(a[i] * (1 - t) + b[i] * t for i in range(3))
+
+
+def _toward(c, other, want, step=0.02):
+    """`c` darkened or lightened (whichever reads more against `other`) until it reads against `other` at `want`:1."""
+    h, l, s = hls(c)
+    up = lum(other) < 0.18
+    while contrast(from_hls(h, l, s), other) < want and 0.02 < l < 0.98:
+        l += step if up else -step
+    return from_hls(h, max(0.0, min(1.0, l)), s)
+
+
+def warmth(swatches):
+    """How warm the swatches are, red over blue, weighted by how vivid each is: above 0 is warm."""
+    rgbs = [hex_rgb(h) for h in swatches]
+    return sum((r - b) * (0.2 + hls((r, g, b))[2]) for r, g, b in rgbs) / max(1, len(rgbs))
+
+
+def palette_of(rule, swatches):
+    """The board's colors from a style card's palette rule and the photographs' swatches: {"roles": the six roles,
+    "swatches": the swatches as the rule turned them, "made": every hex the rule produced}. A board may show these
+    hexes and no others.
+
+    photos: the swatches desaturated; paper the lightest of them lifted, bg the paper, ink the darkest, one muted
+    accent. photos-plus-accent: pastel tints of the swatches; paper from their highlights, the most vivid tint the
+    accent. two-inks: the most saturated hue and its complement as two flat fields that read against each other at the
+    rule's contrast. mono-plus-one: an off-white paper and a near-black ink in the hues of the lightest and darkest
+    swatches, and the swatches' most saturated hue. fixed: the card's warm or cool roles, chosen by the swatches'
+    warmth."""
+    rgbs = [hex_rgb(h) for h in swatches]
+    vivid = sorted(rgbs, key=lambda c: -hls(c)[2] * (1 - abs(hls(c)[1] - 0.5)))
+    kind = rule["rule"]
+    turned = []
+    if kind == "fixed":
+        roles = dict(rule["warm"] if warmth(swatches) >= 0 else rule["cool"])
+    elif kind == "photos":
+        d = rule.get("desaturate", 0.25)
+        turned = [from_hls(h, l, s * (1 - d)) for h, l, s in (hls(c) for c in rgbs)]
+        light = max(turned, key=lum)
+        h, l, s = hls(light)
+        paper = from_hls(h, max(l, 0.94), min(s, 0.18))
+        h, l, s = hls(min(turned, key=lum))
+        ink = from_hls(h, min(l, 0.13), min(s, 0.25))
+        h, l, s = hls(max(turned, key=lambda c: hls(c)[2]))
+        accent = _toward(from_hls(h, 0.45, s * 0.6), paper, 3.0)
+        accent2 = _toward(from_hls(h, 0.6, s * 0.4), paper, 1.6)
+        roles = {"bg": paper, "ink": ink, "paper": paper, "accent": accent, "accent2": accent2, "muted": _mix(ink, paper, 0.55)}
+    elif kind == "photos-plus-accent":
+        t = rule.get("tint", 0.62)
+        turned = [_mix(c, (255, 255, 255), t) for c in rgbs]
+        h, l, s = hls(max(rgbs, key=lum))
+        paper = from_hls(h, 0.93, min(max(s, 0.25), 0.45))
+        h, l, s = hls(min(rgbs, key=lum))
+        ink = from_hls(h, min(l, 0.16), min(s, 0.35))
+        accent = _toward(_mix(vivid[0], (255, 255, 255), t * 0.45), paper, 2.2)
+        accent2 = _mix(vivid[1] if len(vivid) > 1 else vivid[0], (255, 255, 255), t)
+        roles = {"bg": paper, "ink": ink, "paper": paper, "accent": accent, "accent2": accent2, "muted": _mix(ink, paper, 0.5)}
+    elif kind == "two-inks":
+        want = rule.get("contrast", 4.5)
+        h, l, s = hls(vivid[0])
+        a = from_hls(h, 0.5, max(s, 0.85))
+        b = _toward(from_hls((h + 0.5) % 1, 0.5, max(s, 0.85)), a, want)
+        if contrast(a, b) < want:
+            b = _toward(from_hls((h + 0.5) % 1, 0.9, 0.6), a, want)
+        dark, light = sorted((a, b), key=lum)
+        roles = {"bg": a, "ink": dark, "paper": light, "accent": b, "accent2": a, "muted": _mix(a, b, 0.5)}
+    elif kind == "mono-plus-one":
+        h, l, s = hls(max(rgbs, key=lum))
+        paper = from_hls(h, 0.94, min(s, 0.12))
+        h, l, s = hls(min(rgbs, key=lum))
+        ink = from_hls(h, 0.06, min(s, 0.15))
+        h, l, s = hls(vivid[0])
+        accent = _toward(from_hls(h, 0.5, max(s, 0.8)), paper, 3.0)
+        roles = {"bg": paper, "ink": ink, "paper": paper, "accent": accent, "accent2": accent, "muted": _mix(ink, paper, 0.5)}
+    else:
+        raise SystemExit(f"no palette rule named {kind!r}")
+    roles = {k: (v if isinstance(v, str) else _hex(v)).lower() for k, v in roles.items()}
+    turned = [_hex(c) for c in turned]
+    return {"roles": roles, "swatches": turned, "made": sorted(set(roles.values()) | set(turned))}
+
+
 REACH = 30  # Lab distance past which a color belongs to no candidate
 
 
@@ -138,12 +236,12 @@ def nearest(rgb, cands, reach=None):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--accent")
     ap.add_argument("--lead-floor", type=float, default=0.08, help="share of posts a color must lead to join the feed palette")
     a = ap.parse_args()
-    idx = _env.read_json("build/photo_index.json")
+    _env.enter()
+    idx = _env.read_json("photo_index.json")
     if not idx:
-        sys.exit("build/photo_index.json missing: run picks.py first (research.py runs it)")
+        sys.exit("photo_index.json missing: run picks.py first (research.py runs it)")
     import picks  # noqa: E402  (same folder; prepares photos the same way)
     own = [e for e in idx if e["kind"] == "post"]
     if len(own) < 12:
@@ -176,12 +274,14 @@ def main():
             best_photo[i] = (frac, p["photos"][0]["src"])
     n = len(posts)
     order = sorted(range(len(cands)), key=lambda i: -led[i])
-    keep = [i for i in order if led[i] / n >= a.lead_floor]
-    keep += [i for i in order if i not in keep and led[i]][:max(0, 3 - len(keep))]
     area_of = [0.0] * len(cands)
     for e in own:
         for c in e["colors"]:
             area_of[nearest(tuple(c["rgb"]), cands)] += c["share"]
+    keep = [i for i in order if led[i] / n >= a.lead_floor]
+    # a feed that leads with one or two colors still has a palette of three: the colors covering most of the feed
+    # beside them fill it
+    keep += sorted((i for i in range(len(cands)) if i not in keep), key=lambda i: (-led[i], -area_of[i]))[:max(0, 3 - len(keep))]
     feed, names = [], set()
     for i in keep:
         nm = unique_name(cands[i], names)
@@ -202,34 +302,16 @@ def main():
             likes.append({"hex": hexc(rgb), "name": nm, "area": round(w / larea, 3)})
         likes.sort(key=lambda c: -c["area"])
 
-    rgbs = [hex_rgb(c["hex"]) for c in feed]
-    darkest = min(rgbs, key=lum)
-    h, l, s = hls(darkest)
-    bg = from_hls(h, min(l, 0.11), min(s, 0.45))
-    ink = (250, 246, 238)
-    vivid = sorted(rgbs, key=lambda c: -(hls(c)[2] * (1 - abs(hls(c)[1] - 0.55))))
-    def lift(c):
-        hh, ll, ss = hls(c)
-        while contrast(from_hls(hh, ll, ss), bg) < 3.2 and ll < 0.92:
-            ll += 0.03
-        return from_hls(hh, ll, max(ss, 0.45))
-    accent = hex_rgb(a.accent) if a.accent else lift(vivid[0])
-    accent2 = lift(next((c for c in vivid[1:] if dist(c, vivid[0]) > 25), vivid[-1]))
-    roles = {"bg": hexc(bg), "ink": hexc(ink), "accent": hexc(accent), "accent2": hexc(accent2),
-             "muted": hexc(tuple(int(ink[i] * 0.72 + bg[i] * 0.28) for i in range(3)))}
-    _env.write_json("build/palette.json", {"feed": feed, "others": others, "likes": likes, "posts_read": n,
+    _env.write_json("palette.json", {"feed": feed, "others": others, "likes": likes, "posts_read": n,
                                             "off_palette": off,
-                                            "lead_floor": a.lead_floor, "roles": roles,
-                                            "notes": {"accent_on_bg": round(contrast(accent, bg), 2),
-                                                      "ink_on_bg": round(contrast(ink, bg), 2)}})
+                                            "lead_floor": a.lead_floor})
     print(f"feed palette ({n} posts): " + ", ".join(f"{c['name']} {c['hex']} leads {c['share']:.0%}" for c in feed))
     print(f"off palette: {len(off)} posts")
     if others:
         print("below the floor: " + ", ".join(f"{c['name']} {c['posts']} posts" for c in others))
     if likes:
         print("likes palette: " + ", ".join(f"{c['name']} {c['hex']} ({c['area']:.0%})" for c in likes))
-    print("roles: " + ", ".join(f"{k} {v}" for k, v in roles.items()))
-    print("wrote build/palette.json")
+    print("wrote palette.json")
     return 0
 
 

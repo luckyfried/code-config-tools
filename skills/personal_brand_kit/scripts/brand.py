@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""The brand system and the 30-day plan. Writes build/brand.json, build/plan.json and out/plan.md.
+"""The brand system and the 30-day plan. Writes brand.json, plan.json and out/plan.md.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/brand.py system          # build/taste.json "brand" -> build/brand.json, validated
+    python3 S/scripts/brand.py system          # taste.json "brand" -> brand.json, validated
     python3 S/scripts/brand.py plan [--start 2026-10-20] [--fresh]
-                                               # build/plan.json (made once, then yours to edit) -> out/plan.md,
+                                               # plan.json (made once, then yours to edit) -> out/plan.md,
                                                # and the plan's first seven days into brand.json "first_week"
     python3 S/scripts/brand.py check [FILE]    # validate a brand.json against design/brand.schema.json
 
@@ -16,7 +16,7 @@ other "support". Pillar shares must sum to 1 within 0.01. Exits 1 on any schema 
 plan: 30 days from --start (default tomorrow). Each of their cadence days carries a feed post at its time;
 every other day a story. Pillars are dealt by weighted round robin so the month matches their shares. Each
 caption is a draft assembled from their own pieces (their labels, their pillar's words, their questions) and
-marked "draft": the agent rewrites every one in their voice in build/plan.json, then runs plan again (without
+marked "draft": the agent rewrites every one in their voice in plan.json, then runs plan again (without
 --fresh) to render out/plan.md. Each entry in plan.md is one line "- **YYYY-MM-DD** Tue · post 08:00 ·
 pillar: table" with the caption under it.
 """
@@ -24,6 +24,7 @@ import argparse
 import colorsys
 import datetime as dt
 import json
+import os
 import random
 import re
 import sys
@@ -124,26 +125,25 @@ def roles(palette):
 
 
 def system(a):
-    taste = _env.read_json("build/taste.json") or {}
-    research = _env.read_json("build/research.json") or {}
-    lib = _env.read_json("build/library.json") or {}
+    taste = _env.read_json("taste.json") or {}
+    research = _env.read_json("research.json") or {}
+    lib = _env.read_json("library.json") or {}
     b = dict(taste.get("brand") or {})
     if not b:
-        sys.exit("build/taste.json has no brand block: run research.py first")
-    old = _env.read_json("build/brand.json") or {}
+        sys.exit("taste.json has no brand block: run research.py first")
+    old = _env.read_json("brand.json") or {}
     aspire = dict(b.get("aspire") or {})
     if not aspire.get("line"):
         mine = " and ".join(c["name"] for c in (b.get("palette") or [])[:2])
         theirs = " and ".join(c["name"] for c in (aspire.get("palette") or [])[:2])
-        aspire["line"] = (f"your likes lean {theirs}" + (f" and {aspire['subjects'][0]}" if aspire.get("subjects") else "") +
-                          f"; your feed is {mine}")
+        lean = " and ".join(x for x in (theirs, (aspire.get("subjects") or [None])[0]) if x)
+        aspire["line"] = (f"your likes lean {lean}; " if lean else "") + f"your feed is {mine}"
     brand = {
         "handle": b.get("handle") or lib.get("handle") or research.get("handle") or "you",
         "name": b.get("name") or lib.get("name"),
         "statement": b.get("statement"),
         "source": b.get("source") or lib.get("source") or "",
         "palette": roles([{k: c[k] for k in ("name", "hex", "share", "posts", "role") if k in c} for c in b.get("palette") or []]),
-        "type": b.get("type"),
         "compositions": b.get("compositions") or [],
         "pillars": [{k: p[k] for k in ("name", "share", "words", "example") if k in p} for p in b.get("pillars") or []],
         "cadence": b.get("cadence"),
@@ -152,16 +152,14 @@ def system(a):
         "stop": b.get("stop") or [],
         "first_week": old.get("first_week") or [],
     }
-    if brand["type"] and "lead" in brand["type"] and "direction" not in brand["type"]:
-        brand["type"]["direction"] = brand["type"].pop("lead")
-    _env.write_json("build/brand.json", brand)
+    _env.write_json("brand.json", brand)
     errs = [e for e in check(brand) if not e.startswith("brand.first_week")]
     print(f"brand: {brand['statement']}")
     print("palette: " + ", ".join(f"{c['name']} {c['hex']} {c['role']}" for c in brand["palette"]))
     print("pillars: " + ", ".join(f"{p['name']} {p['share']:.0%}" for p in brand["pillars"]))
     for e in errs:
         print("ERROR", e)
-    print("wrote build/brand.json" + ("" if brand["first_week"] else "; run `brand.py plan` to fill first_week"))
+    print("wrote brand.json" + ("" if brand["first_week"] else "; run `brand.py plan` to fill first_week"))
     return 1 if errs else 0
 
 
@@ -209,11 +207,11 @@ def draft(rng, piece, voice_names, lower):
 
 
 def plan(a):
-    brand = _env.read_json("build/brand.json")
+    brand = _env.read_json("brand.json")
     if not brand:
-        sys.exit("build/brand.json is missing: run `brand.py system` first")
-    research = _env.read_json("build/research.json") or {}
-    path = Path("build/plan.json")
+        sys.exit("brand.json is missing: run `brand.py system` first")
+    research = _env.read_json("research.json") or {}
+    path = Path("plan.json")
     if a.fresh or not path.exists():
         start = a.start or (dt.date.today() + dt.timedelta(days=1))
         slots = {s["day"]: s["time"] for s in brand["cadence"]["slots"]}
@@ -245,10 +243,13 @@ def plan(a):
         L.append(f"- **{d['date']}** {d['day']} · {when} · pillar: {d['pillar']}")
         L += ["  > " + line if line.strip() else "  >" for line in d["caption"].splitlines()]
         L.append("")
+    # out/ changes, so its page goes first (deliver.py writes it again); the plan is made beside out/ and moved in whole
     Path("out").mkdir(exist_ok=True)
-    Path("out/plan.md").write_text("\n".join(L))
+    Path("out/review.html").unlink(missing_ok=True)
+    Path("out.plan.md").write_text("\n".join(L))
+    os.replace("out.plan.md", "out/plan.md")
     brand["first_week"] = [{k: d[k] for k in ("date", "day", "kind", "time", "pillar", "caption")} for d in p["days"][:7]]
-    _env.write_json("build/brand.json", brand)
+    _env.write_json("brand.json", brand)
     errs += check(brand)
     count = {}
     for d in p["days"]:
@@ -257,7 +258,7 @@ def plan(a):
           f"; {sum(1 for d in p['days'] if d['kind'] == 'post')} posts; {drafts} captions still marked draft")
     for e in errs:
         print("ERROR", e)
-    print("wrote out/plan.md and brand.json first_week" + (f"; rewrite the {drafts} draft captions in build/plan.json "
+    print("wrote out/plan.md and brand.json first_week" + (f"; rewrite the {drafts} draft captions in plan.json "
                                                            "in their voice, set draft false, run plan again" if drafts else ""))
     return 1 if errs else 0
 
@@ -265,13 +266,14 @@ def plan(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("system", help="taste.json brand -> build/brand.json")
-    pp = sub.add_parser("plan", help="build/plan.json -> out/plan.md")
+    sub.add_parser("system", help="taste.json brand -> brand.json")
+    pp = sub.add_parser("plan", help="plan.json -> out/plan.md")
     pp.add_argument("--start", type=dt.date.fromisoformat, help="first day (default tomorrow)")
-    pp.add_argument("--fresh", action="store_true", help="draft build/plan.json again from brand.json")
+    pp.add_argument("--fresh", action="store_true", help="draft plan.json again from brand.json")
     cp = sub.add_parser("check", help="validate a brand.json")
-    cp.add_argument("file", nargs="?", default="build/brand.json")
+    cp.add_argument("file", nargs="?", default="brand.json")
     a = ap.parse_args()
+    _env.enter()
     if a.cmd == "system":
         return system(a)
     if a.cmd == "plan":
