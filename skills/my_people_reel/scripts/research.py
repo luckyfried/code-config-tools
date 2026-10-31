@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Movement 1: the counting behind the taste profile. Reads build/library.json; writes build/research.json,
-a machine draft of build/taste.json, and build/taste.draft.md (the numbers under the five headings the agent
-turns into build/taste.md).
+"""Movement 1: the reading behind the taste profile. Reads R/library.json; writes R/research.json,
+a machine draft of R/taste.json, and R/taste.draft.md (the draft under the five headings the agent
+turns into R/taste.md).
 
 USAGE (from the workspace root):
     python3 S/scripts/research.py [--top 5] [--people a,b,c]
@@ -16,13 +16,17 @@ each person's best photo and the group photos, the year's palette), then reads:
   cadence   posts per month and weekday, streaks and gaps
   reels     how long their reels run and how fast they cut (ffmpeg scene changes)
   places    places from captions, albums and check-ins, and the trips by month
-  people    for each person: why they are in the film (their signals in plain words), their stretch of the year,
-            their best line and where it came from, their voice, the exchanges between them and the person, and the
-            colors of their best photo; who came next; the order each signal alone would give
-  moments   the busiest and quietest month, the trip, and the year as stretches, each owned by one person
+  people    for each person: why they are in the film (their signals in plain words, nothing counted), their stretch
+            of the year, their moment, their best line and where it came from, their voice, the exchanges between
+            them and the person, and the colors of their best photo; who came next
+  moments   each person's moment: the photograph of the two of them, the month it was posted and the place its caption
+            names (else the one the person named most that month, when more than home), the person's caption of it and
+            the line the other wrote; and the year as stretches, each led by one person
 taste.json also carries the type direction, pacing, register, texture, the people with their lines (the agent may
-swap a line for one of the person's other lines in people.json) and the grade inputs; the agent edits it freely
-before storyboards are drafted.
+swap a line for one of the person's other lines in people.json), the palette, and music: the brief the film's music is
+made from (a mood, calm, drive or film, which is how the person describes the feel; `styles`, genre and instrument
+words that steer the picked look's recipe and stay empty unless the person names some; an optional `tempo`; and what
+to avoid; never an artist, band or song); the agent edits it freely before storyboards are drafted.
 """
 import collections
 import datetime as dt
@@ -70,6 +74,7 @@ PLACES = ["lisbon", "porto", "oaxaca", "sicily", "palermo", "marrakech", "paris"
           "los angeles", "san francisco", "chicago", "amsterdam", "copenhagen", "vienna", "prague", "budapest", "home"]
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
 FILM = {"film photography"}
+QUIET = {"slow living", "food", "coffee", "light"}  # pillars a calm bed carries, when their reels do not cut fast
 
 
 def run(script, *args):
@@ -213,17 +218,37 @@ def cadence(rows):
     }
 
 
-def moments(rows, ppl, place_by_month):
+def place_in(place_by_month, m):
+    """The place the person named most in month `m`, when they named it more than home; None otherwise."""
+    c = (place_by_month.get(m) if m else None) or {}
+    away = [(n, pl) for pl, n in c.items() if pl != "home"]
+    n, top = max(away) if away else (0, None)
+    return top if n > c.get("home", 0) else None
+
+
+def named_place(text):
+    """The first place a caption names, other than home; None when it names none."""
+    text = (text or "").lower()
+    return next((pl for pl in PLACES if pl != "home" and re.search(rf"\b{re.escape(pl)}\b", text)), None)
+
+
+def moments(ppl, picks):
+    """Each person's moment: the photograph of the two of them picks.py chose, the month it was posted and its place (the
+    one its caption names, none when it names none), the person's caption of it, and the line the other wrote (the one
+    picks.py carries with that photograph: left on it when one of their lines was)."""
+    photo = {x["handle"]: x for x in picks.get("people", [])}
     out = []
-    by_m = collections.Counter(month(r["ts"]) for r in rows if r.get("ts"))
-    if by_m:
-        b, q = max(by_m, key=lambda m: by_m[m]), min(by_m, key=lambda m: by_m[m])
-        out.append({"kind": "busiest month", "month": MONTHS[b - 1], "posts": by_m[b]})
-        out.append({"kind": "quietest month", "month": MONTHS[q - 1], "posts": by_m[q]})
-    trips = [(m, c.most_common(1)[0]) for m, c in sorted(place_by_month.items()) if c and c.most_common(1)[0][0] != "home"]
-    if trips:
-        m, (place, n) = max(trips, key=lambda x: x[1][1])
-        out.append({"kind": "the trip", "month": MONTHS[m - 1], "place": place, "posts": n})
+    for p in ppl.get("people", []):
+        ph = photo.get(p["handle"]) or {}
+        m = month(ph["ts"]) if ph.get("ts") else None
+        out.append({"who": p["handle"], "when": MONTHS[m - 1].lower() if m else (p.get("stretch") or {}).get("label"),
+                    "where": named_place(ph.get("caption")), "what": ph.get("caption"),
+                    "they_said": (ph.get("line") or p.get("line") or {}).get("text")})
+    return out
+
+
+def stretches(ppl, place_by_month):
+    """The year in stretches: who leads each run of months, and the place the person named most in its first month."""
     eras, cur = [], None
     for e in ppl.get("eras", []):
         if cur and cur["owner"] == e["owner"]:
@@ -232,9 +257,13 @@ def moments(rows, ppl, place_by_month):
             cur = {"owner": e["owner"], "from": e["month"], "to": e["month"]}
             eras.append(cur)
     for e in eras:
-        m = MONTHS.index(e["from"].capitalize()) + 1
-        e["place"] = place_by_month[m].most_common(1)[0][0] if place_by_month.get(m) else None
-    return out, eras
+        e["place"] = place_in(place_by_month, MONTHS.index(e["from"].capitalize()) + 1)
+    return eras
+
+
+def where_when(m):
+    """A moment's place and month as one phrase: "sicily, july", or the month alone where no place was named."""
+    return ", ".join(x for x in (m.get("where"), m.get("when")) if x)
 
 
 def color_name(rgb):
@@ -246,33 +275,31 @@ def color_name(rgb):
     return SPOKEN.get(w, w)
 
 
-def people_read(ppl, picks):
-    """Each person in plain words: why they are in the film, their stretch, their line, their voice, the colors of their photo."""
+SIGNALS = (("own_tags", "in your photographs"), ("tags_of_owner", "you in theirs"), ("their_comments", "their comments under yours"),
+           ("owner_comments", "yours under theirs"), ("story_tags", "in your stories"))
+
+
+def people_read(ppl, picks, moments):
+    """Each person in plain words: why they are in the film, their stretch, their moment, their line, their voice, the
+    colors of their photo."""
     photo = {x["handle"]: x for x in picks.get("people", [])}
+    mom = {m["who"]: m for m in moments}
     out = []
     for p in ppl.get("people", []):
-        s = p["signals"]
-        why = []
-        if s["her_tags"]:
-            why.append(f"in {s['her_tags']} of your posts")
-        if s["tags_of_her"]:
-            why.append(f"{s['tags_of_her']} of their posts tag you")
-        if s["their_comments"]:
-            why.append(f"{s['their_comments']} comments from them")
-        if s["her_comments"]:
-            why.append(f"{s['her_comments']} from you")
-        if s["story_tags"]:
-            why.append(f"{s['story_tags']} stories")
+        s = p.get("signals") or {}
+        why = [what for key, what in SIGNALS if s.get(key)]
+        m = mom.get(p["handle"]) or {}
         ph = photo.get(p["handle"]) or {}
         colors = []
         for c in sorted(ph.get("colors", []), key=lambda c: -c["share"]):
             nm = color_name(c["rgb"])
             if nm not in colors:
                 colors.append(nm)
-        line = p.get("line") or {}
-        out.append({"rank": p["rank"], "handle": p["handle"], "score": p["score"], "why": ", ".join(why),
-                    "stretch": p["stretch"]["label"], "line": line.get("text"), "line_from": line.get("from"),
-                    "other_lines": [x["text"] for x in p.get("lines", [])], "voice": p["voice"].get("describe"),
+        line = ph.get("line") or p.get("line") or {}
+        out.append({"rank": p["rank"], "handle": p["handle"], "why": ", ".join(why), "stretch": p["stretch"]["label"],
+                    "when": m.get("when"), "where": m.get("where"), "what": m.get("what"), "line": line.get("text"), "line_from": line.get("from"),
+                    "other_lines": [x["text"] for x in [p.get("line")] + p.get("lines", []) if x and x["text"] != line.get("text")][:3],
+                    "voice": p["voice"].get("describe"),
                     "exchanges": p.get("exchanges", []), "photos_together": p.get("photos_together"),
                     "photo_colors": colors[:3], "photo": ph.get("photo")})
     return out
@@ -282,13 +309,10 @@ def type_direction(themes, register, pacing):
     film = themes.get("film photography", 0)
     loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
     if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
+        return {"lead": "kinetic", "why": "heavy emoji and fast reels read as loud"}
     if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
+        return {"lead": "documentary", "why": "travel carried on film reads as a record of places"}
+    return {"lead": "editorial", "why": "quiet captions and film photography read as calm"}
 
 
 def main():
@@ -297,14 +321,15 @@ def main():
     ap.add_argument("--top", type=int, default=5, help="how many people when the person named none")
     ap.add_argument("--people", help="the person's own list, comma separated, in their order")
     a = ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.enter_run()
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     pass_on = ["--top", str(a.top)] + (["--people", a.people] if a.people else [])
     for s, args in (("people.py", pass_on), ("picks.py", []), ("palette.py", [])):
         print(run(s, *args).strip().splitlines()[-1])
-    ppl = _env.read_json("build/people.json")
-    pal = _env.read_json("build/palette.json") or {}
+    ppl = _env.read_json("people.json")
+    pal = _env.read_json("palette.json") or {}
     posts = lib["posts"]
     captioned = posts + lib["reels"] + lib.get("facebook", [])
     caps = caption_read(captioned)
@@ -322,9 +347,14 @@ def main():
     top10 = sum(n for _, n in like_accounts.most_common(10))
     pacing = reel_pacing(lib["reels"])
     places, place_by_month = places_in(posts + lib["reels"], lib.get("facebook", []))
-    mom, eras = moments(posts + lib["reels"], ppl, place_by_month)
-    picks = _env.read_json("build/picks.json") or {}
-    people = people_read(ppl, picks)
+    picks = _env.read_json("picks.json") or {}
+    mom = moments(ppl, picks)
+    eras = stretches(ppl, place_by_month)
+    people = people_read(ppl, picks, mom)
+    # the film runs in taste.json's order: the person's own list as they gave it, else their moments in the order the
+    # year had them; the agent sets the order the story runs in
+    when = {x["handle"]: x.get("ts") or 0 for x in picks.get("people", [])}
+    order = people if ppl.get("named") else sorted(people, key=lambda x: when.get(x["handle"], 0))
     td = type_direction(own_themes + liked_themes, caps, pacing)
     year_palette = [{"hex": s["hex"], "name": s.get("name"), "share": s.get("share"), "photo": s.get("photo")}
                     for s in (pal.get("year") or [])]
@@ -342,15 +372,18 @@ def main():
         "posts_themes": dict(own_themes.most_common()),
         "cadence": cadence(posts + lib["reels"]),
         "reels": pacing,
-        "people": people, "ranked_by": ppl.get("ranked_by"), "next": ppl.get("next"), "single_signal": ppl.get("single_signal"),
+        "people": people, "ranked_by": ppl.get("ranked_by"), "next": ppl.get("next"),
         "places": [{"place": p, "posts": n} for p, n in places.most_common(8)],
         "moments": mom, "eras": eras,
         "wall": [{"date": dt.datetime.fromtimestamp(t["ts"], dt.timezone.utc).date().isoformat(), "people": t["people"],
                   "reel": bool(t.get("video")), "caption": t.get("caption")} for t in picks.get("wall", [])],
         "type": td,
     }
-    _env.write_json("build/research.json", research)
+    _env.write_json("research.json", research)
     shot = pacing.get("avg_shot_seconds")
+    pillars = [t for t, _ in (own_themes + liked_themes).most_common(4)]
+    # a film of the people who made their year: the kit's drive bed unless their texture or their quiet says otherwise
+    mood = "drive" if td["lead"] == "kinetic" else "film" if film else "calm" if QUIET & set(pillars) else "drive"
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "year": lib["year"],
@@ -363,31 +396,31 @@ def main():
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
                      "samples": caps.get("samples", [])[:4]},
-        "pillars": [t for t, _ in (own_themes + liked_themes).most_common(4)],
-        "people": [{"rank": x["rank"], "handle": x["handle"], "stretch": x["stretch"], "line": x["line"], "line_from": x["line_from"],
-                    "voice": x["voice"], "why": x["why"]} for x in people],
+        "pillars": pillars,
+        "people": [{"rank": x["rank"], "handle": x["handle"], "stretch": x["stretch"], "when": x["when"], "where": x["where"], "what": x["what"],
+                    "line": x["line"], "line_from": x["line_from"], "voice": x["voice"], "why": x["why"]} for x in order],
         "eras": eras,
         "places": [p for p, _ in places.most_common(5) if p != "home"],
         "moments": mom,
-        "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
         "avoid": ["cold blue grading", "neon", "stock-photo gloss"] if film else ["muddy grading"],
+        "music": {"mood": mood, "styles": [],
+                  "avoid": ["vocals", "spoken word", "harsh distortion"]},
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
-    lines = [f"# taste draft for @{lib['handle']} ({lib['year']})", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
+    if not Path("taste.json").exists() or "research.py draft" in (_env.read_json("taste.json") or {}).get("written_by", ""):
+        _env.write_json("taste.json", taste)
+    lines = [f"# taste draft for {'@' + lib['handle'] if lib['handle'] else 'the person'} ({lib['year']})", "",
+             "The agent writes R/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
              f"- places: {', '.join(f'{p} ({n})' for p, n in places.most_common(6))}",
-             f"- moments: {'; '.join(m['kind'] + ': ' + ', '.join(str(v) for k, v in m.items() if k != 'kind') for m in mom)}",
-             f"- your people, ranked by {ppl.get('ranked_by')}:"]
+             f"- moments: {'; '.join('@' + m['who'] + ' ' + where_when(m) + ': ' + repr(m['what'] or '') for m in mom)}",
+             f"- your people, found from {ppl.get('ranked_by')}:"]
     for x in people:
-        lines.append(f"  {x['rank']}. @{x['handle']} ({x['score']}): {x['why']}; owns {x['stretch'] or 'no single stretch'}; "
+        lines.append(f"  {x['rank']}. @{x['handle']}: {x['why']}; {where_when(x)}: \"{x['what']}\"; owns {x['stretch'] or 'no single stretch'}; "
                      f"voice: {x['voice']}; best line ({x['line_from']}): \"{x['line']}\"")
         for e in x["exchanges"][:2]:
-            lines.append(f"     they: \"{e['they']}\" / you: \"{e['she']}\"")
+            lines.append(f"     they: \"{e['they']}\" / you: \"{e['own']}\"")
     lines += [f"- the year in stretches: {'; '.join('@' + e['owner'] + ' ' + e['from'] + ('-' + e['to'] if e['to'] != e['from'] else '') + (' (' + e['place'] + ')' if e.get('place') else '') for e in eras)}",
               f"- next after them: {', '.join('@' + x['handle'] for x in ppl.get('next', []))}",
-              f"- tags alone would rank {', '.join(ppl['single_signal']['tags_only'])}; comments alone {', '.join(ppl['single_signal']['comments_only'])}",
               f"- the wall's group photos: {'; '.join(w['date'] + ' ' + ', '.join('@' + h for h in w['people']) for w in research['wall'])}",
               "", "## you like",
              f"- {len(like_accounts)} accounts got {sum(like_accounts.values())} likes; the top ten got {int(research['likes']['top10_share'] * 100)}%",
@@ -398,6 +431,9 @@ def main():
              "", "## your style is",
              f"- reels: {pacing.get('avg_seconds')} s on average, a cut every {shot} s" if shot else "- no reels to measure",
              f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+             f"- music: {mood}; the picked look's own recipe makes the bed"
+             + (f", steered by {', '.join(taste['music']['styles'])}" if taste["music"]["styles"] else "")
+             + f"; no {', no '.join(taste['music']['avoid'])}",
              "", "## your voice is",
              f"- {caps.get('avg_words')} words a caption, {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
              f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
@@ -405,15 +441,15 @@ def main():
              f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
              f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
+    _env.write_text("taste.draft.md", "\n".join(lines))
     print(f"themes: {dict(own_themes.most_common(4))}; liked themes: {dict(liked_themes.most_common(4))}")
     print(f"year palette: {[s['hex'] for s in year_palette]}; likes palette: {[s['hex'] + ' ' + s['name'] for s in likes_palette]}")
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
     print(f"reels: {pacing.get('reels_measured')} measured, {pacing.get('avg_seconds')} s, shot {shot} s; type lead {td['lead']}")
-    print(f"moments: {[m['kind'] for m in mom]}; stretches: {'; '.join(e['owner'] + ' ' + e['from'] for e in eras)}")
+    print(f"moments: {'; '.join('@' + m['who'] + ' ' + where_when(m) for m in mom)}; stretches: {'; '.join(e['owner'] + ' ' + e['from'] for e in eras)}")
     for x in people:
         print(f"  {x['rank']}. @{x['handle']}: {x['why']}; line ({x['line_from']}): {x['line']}")
-    print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
+    print("wrote R/research.json, R/taste.json (draft) and R/taste.draft.md; now write R/taste.md")
     return 0
 
 

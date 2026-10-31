@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build one invented person's 2026 on Instagram and Facebook, as the two "Download your information" exports,
-with the people she spent the year with.
+with the people the year was spent with.
 
 USAGE:
     python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18]
@@ -9,11 +9,11 @@ DEST is a folder (a workspace). It receives:
     instagram-maren.okafor-2026-10-18/       the Instagram export, JSON layout:
         personal_information/personal_information/personal_information.json
         your_instagram_activity/content/posts_1.json, reels.json, stories.json   (media carry "tagged_users")
-        your_instagram_activity/content/posts_you_are_tagged_in.json             (their posts that tag her)
+        your_instagram_activity/content/posts_you_are_tagged_in.json             (their posts that tag the account)
         your_instagram_activity/likes/liked_posts.json
         your_instagram_activity/saved/saved_posts.json
-        your_instagram_activity/comments/post_comments_1.json                    (comments she wrote, replies included)
-        your_instagram_activity/comments/comments_on_your_posts.json             (comments others wrote on hers)
+        your_instagram_activity/comments/post_comments_1.json                    (comments the account wrote, replies included)
+        your_instagram_activity/comments/comments_on_your_posts.json             (comments others wrote on the account's posts)
         connections/followers_and_following/followers_1.json, following.json
         logged_information/past_instagram_insights/posts.json, reels.json
         media/posts/YYYYMM/*.jpg|*.heic, media/reels/*.mp4, media/stories/YYYYMM/*.jpg, media/tagged/YYYYMM/*.jpg
@@ -22,10 +22,10 @@ DEST is a folder (a workspace). It receives:
 The person, Maren Okafor (@maren.okafor), has a clear taste: film-grain travel and food in warm earth tones. About
 140 posts, 29 reels, 60 stories, 900 likes across 40 accounts, saves, comments, followers and following.
 
-Her people are six recurring accounts with clearly different volumes, each the one she is with most in one stretch
+The account's people are six recurring accounts with clearly different volumes, each the one most present in one stretch
 of the year:
 
-    person          stretch          her tags  story tags  tag her  comments to her  her comments  voice
+    person          stretch          own tags  story tags  tag owner  comments to owner  owner comments  voice
     dani.reyes      July-August         24         6          7           30              30       loud, capitals, emoji
     theo.makes      March-April         15         4          5           21              20       dry, precise, a maker
     ines.walks      May-June            11         3          4           24              20       slow, a walker, images
@@ -34,19 +34,21 @@ of the year:
     sam_and_june    February             3         1          1            4               4       a couple, "we", warm
 
 Eleven group photos and two short group reels (mp4, 5 s) tag three to five of them at once; each person also has
-one or two portraits that tag them alone. Their comments come in six distinct voices (liv.outside writes none), and
-Maren replies to about four in ten with an @mention. The intended order, every signal counted once, is
+one or two portraits that tag them alone, each captioned from the photograph people-cast.json casts that person on (a
+caption is written from its photograph, so a line on screen never names what the picture under it does not show).
+Their comments come in six distinct voices (liv.outside writes none), and Maren replies to about four in ten with an
+@mention. The intended order, every tag and comment counted once (the count decides the order and never reaches the
+screen), is
 
-    1 dani.reyes   2 theo.makes   3 ines.walks   4 liv.outside   5 kofi.cooks   (6 sam_and_june, far below)
+    1 dani.reyes 110   2 theo.makes 78   3 ines.walks 72   4 kofi.cooks 43   5 liv.outside 43   (6 sam_and_june, far below)
 
-Tags alone put liv.outside first; comments alone drop her from the five. Strings are written the way Meta writes
+Tags alone put liv.outside first; comments alone drop liv.outside from the five. Strings are written the way Meta writes
 them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic name over
 plain JPEG bytes. Needs Pillow and ffmpeg.
 """
 import argparse
 import datetime as dt
 import json
-import math
 import os
 import random
 import shutil
@@ -96,7 +98,7 @@ ACCOUNTS = FRIENDS + [
 ]
 assert len(ACCOUNTS) == 40, len(ACCOUNTS)
 
-# handle -> (name, stretch months, her post tags, story tags, tags of her, their comments, her comments)
+# handle -> (name, stretch months, own post tags, story tags, tags of the owner, their comments, owner comments)
 PEOPLE = {
     "dani.reyes": ("Dani Reyes", (7, 8), 24, 6, 7, 30, 30),
     "theo.makes": ("Theo Marsh", (3, 4), 15, 4, 5, 21, 20),
@@ -105,8 +107,8 @@ PEOPLE = {
     "kofi.cooks": ("Kofi Mensah", (9, 10), 8, 2, 3, 12, 10),
     "sam_and_june": ("Sam and June", (2,), 3, 1, 1, 4, 4),
 }
-INTENDED = ["dani.reyes", "theo.makes", "ines.walks", "liv.outside", "kofi.cooks"]
-GROUPS = [  # (month, the people in frame): group photos she posted
+INTENDED = ["dani.reyes", "theo.makes", "ines.walks", "kofi.cooks", "liv.outside"]
+GROUPS = [  # (month, the people in frame): group photos the account posted
     (1, ["liv.outside", "sam_and_june", "dani.reyes"]), (1, ["liv.outside", "theo.makes", "ines.walks"]),
     (3, ["theo.makes", "liv.outside", "dani.reyes"]), (4, ["theo.makes", "ines.walks", "kofi.cooks", "liv.outside"]),
     (5, ["ines.walks", "dani.reyes", "liv.outside"]), (6, ["ines.walks", "theo.makes", "kofi.cooks"]),
@@ -120,14 +122,14 @@ GROUP_CAPTIONS = ["the whole table, finally", "everyone i love in one bad photo"
                   "last night of the trip with these ones", "this lot \U0001F35E", "the usual suspects",
                   "found them all at the market", "dinner ran until two again"]
 PORTRAIT_CAPTIONS = {
-    "dani.reyes": ["@{h} at the harbor, refusing to pose", "@{h} owned this whole summer"],
-    "theo.makes": ["@{h} in his workshop in porto", "@{h} measuring the light twice"],
+    "dani.reyes": ["@{h} at the market, laughing at something i said", "@{h} owned this whole summer"],
+    "theo.makes": ["@{h} laughing at my phone again", "@{h} by the river in porto, measuring the light twice"],
     "ines.walks": ["@{h} eleven kilometres in and still smiling", "@{h} on the ridge above oaxaca"],
-    "liv.outside": ["@{h} in lisbon, the first good day of the year", "@{h} on every hill in lisbon"],
-    "kofi.cooks": ["@{h} and the tagine we nearly burned", "@{h} at the stove, as always"],
+    "liv.outside": ["@{h} on the beach in lisbon, the first good day of the year", "@{h} in the sea until the sun went"],
+    "kofi.cooks": ["@{h} and the fire we nearly lost", "@{h} at the grill, as always"],
     "sam_and_june": ["@{h} on their sofa, which is now my sofa"],
 }
-VOICES = {  # the comments each one wrote on her posts
+VOICES = {  # the comments each one wrote on the account's posts
     "dani.reyes": ["MAREN. the light. i'm screaming \U0001F62D", "THIS IS US. framing it for the kitchen \U0001F34B\U0001F34B",
                    "ok who said you could be this good", "PUT ME IN EVERY PHOTO FOREVER", "obsessed obsessed obsessed",
                    "remember when we missed the last ferry and it turned into the best night of the whole summer",
@@ -151,7 +153,7 @@ REPLIES = ["@{h} you're in every good photo i took this year", "@{h} stop it \U0
            "@{h} only because you were there", "@{h} we're going back, that's final", "@{h} this one is for you"]
 
 
-NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked, planted clear of everything else
+NINE = [  # (month, kind, scene, likes, comments, caption): the account's nine most-liked, planted clear of everything else
     (7, "post", "sunset", 486, 41, "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"),
     (5, "reel", "market", 451, 52, "forty seconds of the oaxaca market at opening time. you asked for the sound of it \U0001F33F"),
     (1, "post", "coffee", 418, 33, "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"),
@@ -489,7 +491,7 @@ def main():
                                              "Media Owner": {"value": acct}, "Time": {"timestamp": ts}}})
 
 
-    # her people: portraits, group photos, group reels, tags on posts and stories, their posts of her, comments both ways
+    # the account's people: portraits, group photos, group reels, tags on posts and stories, their posts of the owner, comments both ways
     def month_of(ts):
         return dt.datetime.fromtimestamp(ts, dt.timezone.utc).month
 
@@ -533,8 +535,8 @@ def main():
     by_month = {}
     for post in posts:
         by_month.setdefault(month_of(post["media"][0]["creation_timestamp"]), []).append(post)
-    for h, (name, stretch, her_tags, story_tags, tags_of_her, theirs, hers) in PEOPLE.items():
-        for m in spread(h, her_tags - shown[h]):
+    for h, (name, stretch, own_tags, story_tags, tags_of_owner, theirs, owners) in PEOPLE.items():
+        for m in spread(h, own_tags - shown[h]):
             free = [p for p in by_month.get(m, []) if not p["media"][0].get("tagged_users")] or \
                 [p for p in by_month.get(m, []) if h not in [t["value"] for t in p["media"][0].get("tagged_users", [])]]
             tag(rng.choice(free or posts)["media"][0], [h])
@@ -559,8 +561,8 @@ def main():
         reel_insights.append(insight(uri, ts, rng.randint(150, OTHER_CAP - 1), rng.randint(15, 30)))
 
     tagged_in, received = [], []
-    for h, (name, stretch, her_tags, story_tags, tags_of_her, theirs, hers) in PEOPLE.items():
-        for m in spread(h, tags_of_her):
+    for h, (name, stretch, own_tags, story_tags, tags_of_owner, theirs, owners) in PEOPLE.items():
+        for m in spread(h, tags_of_owner):
             ts = ts_for(rng, year, m, end)
             uri = media_path("tagged", ts, ".jpg")
             others_in = [o for o in PEOPLE if o != h and rng.random() < 0.15]
@@ -568,7 +570,7 @@ def main():
             tagged_in.append({"owner": h, "uri": uri, "creation_timestamp": ts,
                               "title": ig_text(f"with @{HANDLE} " + rng.choice(EMOJI)),
                               "tagged_users": [{"value": HANDLE}] + [{"value": o} for o in others_in]})
-        counts[h][2] = tags_of_her
+        counts[h][2] = tags_of_owner
         lines = VOICES.get(h, [])
         for i, m in enumerate(spread(h, theirs)):
             own = by_month.get(m) or posts
@@ -585,11 +587,11 @@ def main():
                                                      "Time": {"timestamp": ts + rng.randint(300, 20000)}}})
                 counts[h][5] += 1
         counts[h][3] = theirs
-        for m in spread(h, hers):
+        for m in spread(h, owners):
             comments.append({"media_list_data": [{"uri": ""}],
                              "string_map_data": {"Comment": {"value": ig_text(rng.choice(comment_lines))},
                                                  "Media Owner": {"value": h}, "Time": {"timestamp": ts_for(rng, year, m, end)}}})
-        counts[h][4] = hers
+        counts[h][4] = owners
     tagged_in.sort(key=lambda t: t["creation_timestamp"])
     received.sort(key=lambda c: c["string_map_data"]["Time"]["timestamp"])
     comments.sort(key=lambda c: c["string_map_data"]["Time"]["timestamp"])
@@ -644,7 +646,7 @@ def main():
     for i in range(14):
         m = rng.choice(months)
         ts = ts_for(rng, year, m, end)
-        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated her status.")}
+        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated the status.")}
         if rng.random() < 0.6:
             uri = f"your_facebook_activity/posts/media/timeline/{10161000000000000 + i}.jpg"
             jobs.append((str(fb / uri), 1080, 1080, rng.choice(SEASON[m][1]), pal(m), rng.random()))
@@ -663,7 +665,7 @@ def main():
                       "saved": len(saved), "comments": len(comments), "followers": len(followers),
                       "following": len(following), "facebook_posts": len(fb_posts), "facebook_albums": len(albums),
                       "images": len(jobs), "tagged_in": len(tagged_in), "comments_received": len(received),
-                      "people": {h: dict(zip(("her_tags", "story_tags", "tags_of_her", "their_comments", "her_comments", "her_replies"), v))
+                      "people": {h: dict(zip(("own_tags", "story_tags", "tags_of_owner", "their_comments", "owner_comments", "owner_replies"), v))
                                  for h, v in counts.items()}}, indent=2))
 
 

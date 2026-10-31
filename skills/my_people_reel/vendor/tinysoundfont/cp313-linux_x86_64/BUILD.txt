@@ -1,0 +1,15 @@
+This folder is not from a published wheel: tinysoundfont 0.3.7 publishes wheels up to CPython 3.12, so this module
+was compiled for CPython 3.13 on linux x86_64 from the project's own source release, unchanged.
+
+Sources:
+  tinysoundfont-0.3.7.tar.gz  https://files.pythonhosted.org/packages/0d/c9/96ef50b61a0c39fb7dbafff61ee759e0eb60e87f98eb04860579672127c8/tinysoundfont-0.3.7.tar.gz
+    sha256 13b560f35469303064d7b597c1584ec35f18193fd915c502c29fcba90ac11d31 (MIT, LICENSE and NOTICE here)
+  pybind11-3.1.0.tar.gz (headers only, BSD-3-Clause)
+    sha256 a1cc06b524ab3edca51f8ad3895f9c4fa20b8b19283173dff4ae781449dc9639
+
+Command (glibc-floor.h holds five .symver lines binding log10f, expf, logf, powf and pow to GLIBC_2.2.5):
+  g++ -O2 -DNDEBUG -fno-math-errno -shared -fPIC -std=c++17 -fvisibility=hidden -include glibc-floor.h \
+      -I pybind11-3.1.0/include -I <python3.13 include> src/_tinysoundfont/main.cpp \
+      -o _tinysoundfont.cpython-313-x86_64-linux-gnu.so -s
+
+It needs glibc 2.32 or later and libstdc++ from GCC 11 or later.

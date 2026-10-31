@@ -1,19 +1,6 @@
 {
-  "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); story is each person's card and leaves the top bar and the reply field.",
-  "reel": {
-    "width": 1080,
-    "height": 1920,
-    "top": 270,
-    "bottom": 670,
-    "left": 72,
-    "right": 150
-  },
-  "story": {
-    "width": 1080,
-    "height": 1920,
-    "top": 250,
-    "bottom": 340,
-    "left": 72,
-    "right": 72
-  }
+  "about": "Where type, tags and cards may sit, per format, in px from each edge. Photographs run full bleed; everything meant to be read stays inside. reel follows the Reels interface (the top 14% for the header, the bottom 35% for the caption and audio bar, the right edge for the action rail) and is also the story card's frame, inside the story interface's own margins. square and wide are feed and landscape posts, which carry no interface over the picture: a margin of 50 px top and bottom keeps the safe band 980 px tall, the same as the reel's, so a column of type or the wall's rows re-place without shrinking.",
+  "reel": {"width": 1080, "height": 1920, "top": 270, "bottom": 670, "left": 72, "right": 150},
+  "square": {"width": 1080, "height": 1080, "top": 50, "bottom": 50, "left": 72, "right": 72},
+  "wide": {"width": 1920, "height": 1080, "top": 50, "bottom": 50, "left": 96, "right": 96}
 }
