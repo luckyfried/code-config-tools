@@ -120,8 +120,8 @@ const toneOf = (colors: Record<string, string>, v: string) => {
 };
 
 /** The film around every move, cut, and closer: drive.py's look with the card's tones, its layout grid in frame px, its
- * print, whether its words take the finish, and the photograph the masked words are filled with (the film's peak post,
- * else its first). */
+ * print, whether its words take the finish, the profile's safe area every word at rest stands inside, and the photograph
+ * the masked words are filled with (the film's peak post, else its first). */
 export const lookOf = (board: Board, base: Base, posts: Post[]): Look => {
   const {W, H} = base;
   const {finish, photo} = board.system;
@@ -143,7 +143,9 @@ export const lookOf = (board: Board, base: Base, posts: Post[]): Look => {
       rows: Array.from({length: g.rows + 1}, (_, i) => m + (i * (H - 2 * m)) / g.rows),
     },
     finished: finish.words !== 'clean',
+    safe: board.format.name ? board.system.safe[board.format.name] : undefined,
     photo: shown ? staticFile(shown.file) : undefined,
+    photos: posts.map((p) => staticFile(p.file)),
     print: {
       box: [Math.max(0, pic.box[0]) * W, Math.max(0, pic.box[1]) * H,
         (Math.min(1, pic.box[0] + pic.box[2]) - Math.max(0, pic.box[0])) * W, (Math.min(1, pic.box[1] + pic.box[3]) - Math.max(0, pic.box[1])) * H],
@@ -181,6 +183,17 @@ export const planOf = (board: Board): Plan => {
 
 /** A wall px point at depth z, in world space: x right from the frame's middle, y up. */
 export const toWorld = (plan: Plan, p: Pt, z: number): [number, number, number] => [p[0] - plan.W / 2, plan.H / 2 - p[1], z];
+
+// how far a held post's crop pushes in on its focus point over the hold, a share of its width
+export const PUSH_IN = 0.05;
+
+/** A held post's crop in texture coordinates `hold` of the way through its hold: its subject's rect scaled about the
+ * photograph's focus point as the crop pushes in on it. */
+export const heldUv = (p: Post, hold: number): UV => {
+  const [f, k] = [p.uvFocal, 1 - PUSH_IN * hold];
+  const [u0, v0, u1, v1] = p.uvSubject;
+  return [f[0] + (u0 - f[0]) * k, f[1] + (v0 - f[1]) * k, f[0] + (u1 - f[0]) * k, f[1] + (v1 - f[1]) * k];
+};
 
 /** The grid cell of a slot, as a box. */
 export const cellBox = (g: Grid, slot: number): Box => {

@@ -1,6 +1,6 @@
 """The storyboard of a synthetic person: its bounds and type floor, the wall that fills every frame, the hook's line
 and rest, the words on every page (their own captions under the day they go up, their handle and bio, never a count), the beat
-frames every format shares, and the sound cues, one where each beat lands. With no post of theirs on the wall the film
+frames every format shares, and the sound effects, each where the picture lands. With no post of theirs on the wall the film
 opens on the new posts. The three boards are three styles, each move chosen from its beat's content, and the vote
 ships only at the bar. No files, no render.
 
@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import compose  # noqa: E402
 import drive  # noqa: E402
 import film  # noqa: E402
+import sfx  # noqa: E402
 import storyboard as B  # noqa: E402
 import vote  # noqa: E402
 
@@ -133,11 +134,18 @@ class Board(unittest.TestCase):
         # its caption stands longer than the closer's still after the stop
         self.assertGreater(stand[peak[0]] * 60 / drive.BPM, self.board["seconds"] - self.board["stop_seconds"])
 
-    def test_a_held_caption_starts_within_a_second_of_its_photograph_coming_in(self):
+    def test_a_held_caption_starts_within_a_second_of_its_photograph_coming_in_or_of_its_trailer_move_handing_back(self):
+        moves = {b["id"]: b["move"] for b in self.board["timeline"]["beats"]}
         for b in held(self.board):
             p = b["layers"][0]
-            with self.subTest(beat=b["id"]):
-                self.assertLessEqual((p["page"]["lines"][0]["at"] - p["times"]["fly"][0]) * 60 / drive.BPM, 1.0)
+            mv = moves[b["id"]]
+            # a trailer move lands the photograph from the lock and hands the frame back 0.38 s later; the caption never
+            # enters under it
+            lock = p["times"]["close"][0] + p["times"]["close"][1]
+            start = lock + 2 * (drive.ARRIVES[mv] + 0.38) if mv in drive.ARRIVES else p["times"]["fly"][0]
+            with self.subTest(beat=b["id"], move=mv):
+                self.assertGreaterEqual(p["page"]["lines"][0]["at"], start - 1e-6)
+                self.assertLessEqual((p["page"]["lines"][0]["at"] - start) * 60 / drive.BPM, 1.0)
 
     def test_a_held_posts_page_carries_its_own_caption_and_its_day_and_nothing_else(self):
         for b in held(self.board):
@@ -179,7 +187,7 @@ class Board(unittest.TestCase):
 
     def test_no_word_cue_or_story_line_counts_saves_or_rolls_a_date(self):
         board = self.board
-        said = [c["what"] for c in board["sound"]] + [s["reveals"] for s in board["story"]] + [s["carries"] for s in board["story"]]
+        said = [w for *_, w in B.effects_of(board)] + [s["reveals"] for s in board["story"]] + [s["carries"] for s in board["story"]]
         for w in said:
             with self.subTest(line=w):
                 self.assertNotRegex(w, r"\bsaves?\b|\broll|\bdate\b")
@@ -189,15 +197,41 @@ class Board(unittest.TestCase):
                 # a page's label names the day the post goes up, in words, and counts nothing
                 self.assertNotRegex(label, r"\bsaves?\b|\d{4}")
 
-    def test_a_sound_lands_where_a_beat_lands_and_nowhere_else(self):
+    def test_the_effects_land_where_the_picture_does_on_the_music_grid(self):
         board = self.board
-        cues = board["sound"]
-        self.assertLessEqual(len(cues), len(board["beats"]) + 4)
-        self.assertEqual({c["kind"] for c in cues}, {"hit", "riser", "impact", "stop"})
-        self.assertEqual([(c["kind"], c["beat"]) for c in cues if c["kind"] != "hit"],
-                         [("riser", "closer"), ("impact", "closer"), ("stop", "closer")])
+        fx = board["fx"]
+        sec = 60 / fx["bpm"]
+        ev, _ = sfx.events(fx)
+        kinds = [k for _, k in ev]
         posts = [b["id"] for b in board["beats"] if b["id"].startswith("post-")]
-        self.assertEqual([c["beat"] for c in cues if c["kind"] == "hit"], ["hook"] + posts + ["closer"])
+        # the hook line slams home as its last word lands, the first effect of the film
+        landed = drive.page_landed(board["page"]) * 60 / drive.BPM
+        self.assertEqual(kinds[0], "impact")
+        self.assertAlmostEqual(ev[0][0], landed, delta=sec / 8 + 1e-6)
+        # one whoosh as each photograph comes in (as a trailer move takes the frame, on a post that has one), one
+        # shutter as each seats and one as each trailer move lands its photograph, the frame's landing on the wall a whoosh
+        trailers = {b["id"]: b for b in board["timeline"]["beats"] if b["move"] in drive.ARRIVES}
+        self.assertTrue(trailers)
+        self.assertEqual(sum(k in ("air", "sweep", "bright") for k in kinds), len(posts) + 1)
+        self.assertEqual(kinds.count("shutter"), len(posts) + len(trailers))
+        self.assertLessEqual(kinds.count("bright"), 1)
+        lands = [board["fx"]["beats"][[f["id"] for f in board["fx"]["beats"]].index(bid)]["layers"][0]["at"]["arrive"] * sec
+                 for bid in trailers]
+        seats = [b["layers"][0]["times"]["seat"] * 60 / drive.BPM for b in board["beats"] if b["id"] in posts]
+        shutters = [t for t, k in ev if k == "shutter"]
+        for t, at in zip(shutters, sorted(seats + lands)):
+            self.assertAlmostEqual(t, at, delta=sec / 8 + 1e-6)
+        # the riser leads into the closer's lock and an impact lands on it; the closing card lands on an impact
+        lock = board["beats"][-1]["layers"][0]["lock"] * 60 / drive.BPM
+        self.assertIn("riser", kinds)
+        self.assertTrue(any(k == "impact" and abs(t - lock) <= sec / 8 + 1e-6 for t, k in ev), ev)
+        closing = board["closerShape"]["at"] * sec
+        self.assertTrue(any(k == "impact" and abs(t - closing) <= sec / 8 + 1e-6 for t, k in ev), ev)
+        # every effect on a quarter of a beat, none after the music stops
+        for t, k in ev:
+            with self.subTest(at=t, kind=k):
+                self.assertAlmostEqual(t / (sec / 4), round(t / (sec / 4)), places=4)
+                self.assertLessEqual(t, board["stop_seconds"])
 
     def test_with_no_loud_posts_the_hook_finds_the_off_color_posts_never_the_least_saved(self):
         before = [{"pos": i, "saves": i, "flags": [], "file": f"before/{i:02d}.jpg", "size": [1080, 1350],
@@ -247,7 +281,8 @@ class Board(unittest.TestCase):
                     wx, wy, ww, wh = post1["whole"]
                     self.assertTrue(wx - 0.5 <= x and wy - 0.5 <= y and x + w <= wx + ww + 0.5 and y + h <= wy + wh + 0.5,
                                     (x, y, w, h))
-                    self.assertEqual([c["beat"] for c in board["sound"] if c["kind"] == "hit"], [f"post-{n}" for n in range(1, 10)] + ["closer"])
+                    self.assertEqual([b["id"] for b in board["fx"]["beats"] if b["layers"][0]["kind"] in ("Photo", "Closer")
+                                      and not b["id"].endswith("-seat")], [f"post-{n}" for n in range(1, 10)] + ["closer"])
                     self.assertLess(drive.rests(board)["hook"], round(post1["times"]["seat"] * drive.PULSE))
             with self.subTest(name=name, length="reel"):
                 self.assertTrue(B.length_band(9)[0] <= boards["reel"]["seconds"] <= B.LENGTH[1])
@@ -322,12 +357,11 @@ class Board(unittest.TestCase):
     def test_the_hook_rests_on_the_middle_column(self):
         self.assertEqual(rest_slot(self.board) % 3, 1)
 
-    def test_every_sound_names_its_event_and_the_stop_is_the_last(self):
-        cues = self.board["sound"]
-        self.assertTrue(all(c["what"].strip() for c in cues))
-        self.assertEqual(cues[-1]["kind"], "stop")
-        self.assertEqual(max(c["at"] for c in cues), cues[-1]["at"])
-        self.assertAlmostEqual(cues[-1]["at"] * drive.PULSE / drive.FPS, self.board["stop_seconds"], places=3)
+    def test_every_effect_names_what_it_is_on_and_the_storyboard_lists_them(self):
+        effects = B.effects_of(self.board)
+        self.assertTrue(effects)
+        self.assertTrue(all(what.strip() for *_, what in effects))
+        self.assertEqual(effects[-1][2], "closing-card: the closing card lands")
 
     def test_a_wrapped_caption_never_ends_on_a_comma(self):
         lines = drive.wrap("cold hands, warm coffee and the long walk home", 40, 760)
@@ -371,6 +405,87 @@ class Styles(unittest.TestCase):
             for b in compose.TRIO[i + 1:]:
                 with self.subTest(pair=(a, b)):
                     self.assertNotEqual(seen[a][:2], seen[b][:2])
+
+    def test_a_look_that_wants_energy_takes_a_trailer_move_on_every_held_post_and_a_calm_one_takes_one_on_its_peak(self):
+        before, nine, plan, breaks = people()
+        for style in compose.TRIO:
+            reel = B.boards_of(style, None, before, nine, plan, None, breaks, None, None, "maren.okafor", BIO)["reel"]
+            tl = reel["timeline"]["beats"]
+            photo = [b for b in tl if b["form"] == "photo"]
+            trailers = [b for b in tl if b["move"] in drive.ARRIVES]
+            with self.subTest(style=style):
+                # the wall is the camera's travel and never takes one, so no photograph lands on it and fades into the wall
+                self.assertTrue(all(b["form"] == "photo" for b in trailers), trailers)
+                if compose.card(style)["axes"]["camera"] in drive.CALM:
+                    self.assertEqual([b["id"] for b in trailers], [b["id"] for b in photo if b["peak"]])
+                else:
+                    self.assertEqual(trailers, photo)
+                    # three held posts, three different trailer moves
+                    self.assertEqual(len({b["move"] for b in trailers}), len(trailers))
+                # a trailer beat names the middle of its handback, where the film lays the photograph its crop shows
+                for b in trailers:
+                    self.assertAlmostEqual(b["hand"], drive.ARRIVES[b["move"]] + drive.HAND_MID, places=3)
+
+    def test_a_reel_past_the_length_band_gives_up_its_trailer_moves_besides_the_peaks(self):
+        before, nine, plan, breaks = people()
+        style = "kinetic-type"
+        full = B.boards_of(style, None, before, nine, plan, None, breaks, None, None, "maren.okafor", BIO)["reel"]
+        band = B.LENGTH
+        try:
+            B.LENGTH = (band[0], full["seconds"] - 0.5)
+            boards = B.boards_of(style, None, before, nine, plan, None, breaks, None, None, "maren.okafor", BIO)
+        finally:
+            B.LENGTH = band
+        reel = boards["reel"]
+        trailers = lambda r: [b["id"] for b in r["timeline"]["beats"] if b["move"] in drive.ARRIVES]
+        peak = [b["id"] for b in reel["timeline"]["beats"] if b.get("peak")]
+        self.assertLess(reel["seconds"], full["seconds"])
+        self.assertLess(len(trailers(reel)), len(trailers(full)))
+        self.assertTrue(set(peak) <= set(trailers(reel)), (peak, trailers(reel)))
+        # every format keeps the reel's moves on the reel's beat frames
+        for fmt, board in boards.items():
+            with self.subTest(fmt=fmt):
+                self.assertEqual(trailers(board), trailers(reel))
+                self.assertEqual([b["frames"] for b in board["beats"]], [b["frames"] for b in reel["beats"]])
+
+    def test_a_trailer_move_lands_then_its_post_reads_its_caption_whole(self):
+        before, nine, plan, breaks = people()
+        for style in ("swiss-grid", "kinetic-type"):
+            reel = B.boards_of(style, None, before, nine, plan, None, breaks, None, None, "maren.okafor", BIO)["reel"]
+            moves = {b["id"]: b["move"] for b in reel["timeline"]["beats"]}
+            for b in held(reel):
+                p = b["layers"][0]
+                pg = p["page"]
+                lock = p["times"]["close"][0] + p["times"]["close"][1]
+                read = (drive.PEAK_READ * drive.pace_of(compose.card(style)) if p.get("peak")
+                        else drive.READ * max(drive.pace_of(compose.card(style)), 1.0))
+                with self.subTest(style=style, beat=b["id"]):
+                    self.assertIn(moves[b["id"]], drive.ARRIVES)
+                    # the caption enters once the move has landed and handed the frame back, and stands whole for its read
+                    self.assertGreaterEqual(pg["lines"][0]["at"], lock + 2 * (drive.ARRIVES[moves[b["id"]]] + drive.HANDBACK) - 1e-6)
+                    self.assertGreaterEqual(pg["sink"] - drive.page_landed(pg), read - 1e-6)
+
+    def test_a_move_that_sets_words_full_frame_takes_only_the_hook_line(self):
+        before, nine, plan, breaks = people()
+        for style in compose.TRIO:
+            reel = B.boards_of(style, None, before, nine, plan, None, breaks, None, None, "maren.okafor", BIO)["reel"]
+            tl = reel["timeline"]["beats"]
+            hook = next(b for b in tl if b["id"] == "hook-title")
+            card = compose.ids(compose.card(style), "moves")
+            with self.subTest(style=style):
+                self.assertFalse([b for b in tl if b["move"] in drive.SETS_WORDS and b["id"] != "hook-title"])
+                self.assertEqual(hook["move"], "slam-words" if "slam-words" in card else None)
+                # the words come once the paper has closed round their grid, so the film still opens on the grid
+                shut = (drive.OPENING + drive.OPEN_OUT) * reel["tempo"] / drive.BPM
+                self.assertAlmostEqual(hook["at"], round(shut, 3), places=2)
+                fx_hook = next(b for b in reel["fx"]["beats"] if b["id"] == "hook-title")
+                self.assertEqual(fx_hook["start"], hook["at"])
+                # each slammed word lands on an impact; the page's single slam is the hook's impact otherwise
+                impacts = [t for t, k in sfx.events(reel["fx"])[0] if k == "impact" and t < hook["end"] * 60 / reel["tempo"]]
+                self.assertEqual(len(impacts), len(hook["words"].split()) if hook["move"] == "slam-words" else 1)
+        # the counter takes a line only when it holds a number
+        self.assertTrue(drive.NUMBER.search("my starter turned one this week"))
+        self.assertFalse(drive.NUMBER.search("same feed, warmer grid"))
 
     def test_a_move_follows_what_the_beat_shows_never_its_place_in_the_film(self):
         options = [{"id": "push", "fits": ["photo", "portrait"]}, {"id": "slide", "fits": ["photo", "landscape"]},
@@ -437,6 +552,104 @@ class Posts(unittest.TestCase):
                 for c in self.CAPS:
                     words = film.post_words({"caption": c}, line["face"], size, film.PW - 2 * film.MARGIN_M, 5, 40)
                     self.assertEqual(" ".join(words[2]), film.cased(c, line["face"]))
+
+
+class Caption(unittest.TestCase):
+    def test_every_line_of_a_page_keeps_two_words_unless_that_costs_more_than_widow_of_the_size(self):
+        text = "the 28 tram up past the shop at seven, every morning"
+        size, lines = drive.set_page(text, 120, 40, drive.MOST, 900, 860, upper=True)
+        self.assertTrue(all(len(x.split()) > 1 for x in lines), lines)
+        drive_widow = drive.WIDOW
+        try:
+            drive.WIDOW = 2.0
+            alone = drive.set_page(text, 120, 40, drive.MOST, 900, 860, upper=True)
+        finally:
+            drive.WIDOW = drive_widow
+        # the break that leaves a word alone is the larger, and the two-word last line gives up less than WIDOW of it
+        self.assertEqual(len(alone[1][-1].split()), 1)
+        self.assertGreaterEqual(size, drive.WIDOW * alone[0])
+        self.assertEqual(" ".join(lines), text.upper())
+        self.assertEqual(drive.set_page("same", 120, 40, drive.MOST, 900, 860), (120, ["same"]))
+
+
+    def test_a_line_box_over_the_photograph_runs_on_to_the_type_area_rather_than_leave_a_word_alone(self):
+        compose.use("swiss-grid")
+        G, text = drive.geometry("reel"), "sliced thin for @sam_and_june's picnic"
+        pg = drive.page(G, compose.card("swiss-grid"), {}, text, "Tuesday 3 November", 0, 0, None, 0)
+        self.assertEqual(" ".join(ln["text"] for ln in pg["lines"]), text)
+        self.assertTrue(all(len(ln["text"].split()) > 1 for ln in pg["lines"]), [ln["text"] for ln in pg["lines"]])
+        self.assertLessEqual(pg["box"][3], pg["pic"][1])
+        self.assertLessEqual(pg["box"][2], drive.type_area(G)[2])
+
+    def test_words_set_one_by_one_stand_a_word_space_apart(self):
+        before, nine, plan, breaks = people()
+        reel = B.boards_of("kinetic-type", None, before, nine, plan, None, breaks, None, None, "maren.okafor", BIO)["reel"]
+        pages = [x["page"] for b in reel["beats"] for x in b.get("layers", []) if x.get("page")]
+        self.assertTrue([pg for pg in pages if pg["enter"] in ("slam", "rise")])
+        compose.use("kinetic-type")
+        for pg in pages:
+            for ln in pg["lines"]:
+                for w, nxt in zip(ln["words"], ln["words"][1:]):
+                    gap = nxt["x"] - w["x"] - drive.em(w["text"], "display") * ln["size"]
+                    self.assertGreaterEqual(gap, drive.WORD_SPACE * ln["size"] - 0.2, (ln["text"], w["text"]))
+
+
+class OwnClip(unittest.TestCase):
+    """A post made from a clip they recorded: a clip beat on that post, playing the recording as one shot the length of
+    its beat; every other beat as it was."""
+    CLIP = str(Path(__file__).resolve().parent / "fixtures" / "clip-tram.mp4")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.plain = {}
+        cls.clipped = {}
+        for style in ("editorial-quiet", "swiss-grid", "kinetic-type"):
+            before, nine, plan, breaks = people()
+            cls.plain[style] = drive.build("reel", before, nine, plan, None, breaks, None, None, "maren.okafor", BIO, style=style)
+            nine[4]["clip"] = {"src": cls.CLIP, "from": 0.25}
+            cls.clipped[style] = drive.build("reel", before, nine, plan, None, breaks, None, None, "maren.okafor", BIO, style=style)
+
+    def test_a_clip_request_is_one_shot_the_length_of_its_beat(self):
+        for style, board in self.clipped.items():
+            with self.subTest(style=style):
+                beat = next(b for b in board["beats"] if b["id"] == "post-5")
+                own = [c for c in board["clips"] if c["role"] == "their own clip"]
+                self.assertEqual(len(own), 1)
+                c = own[0]
+                self.assertEqual((c["beat"], c["source"], c["from"], c["prompt"]), ("post-5", self.CLIP, 0.25, None))
+                self.assertAlmostEqual(c["seconds"], beat["frames"] / drive.FPS, places=3)
+                self.assertTrue(0 <= c["hold"] < beat["frames"])
+                t = next(b for b in board["timeline"]["beats"] if b["id"] == "post-5")
+                self.assertEqual((t["form"], t["tags"]), ("clip", ["clip"]))
+                # the photograph layer is the clip's poster, never the recording itself
+                self.assertEqual(beat["layers"][0]["file"], "graded/05.jpg")
+                self.assertFalse(any(str(ly.get("file") or "").endswith(".mp4") for b in board["beats"] for ly in b["layers"]))
+
+    def test_a_clip_behind_a_trailer_move_holds_its_first_frame_until_the_move_hands_back(self):
+        board = self.clipped["swiss-grid"]
+        t = next(b for b in board["timeline"]["beats"] if b["id"] == "post-5")
+        c = next(c for c in board["clips"] if c["role"] == "their own clip")
+        self.assertIn(t["move"], drive.ARRIVES)
+        # the move starts as the frame locks on the post, inside its beat, and lands and hands back after that
+        self.assertGreater(c["hold"], (drive.ARRIVES[t["move"]] + 2 * drive.HAND_MID) * drive.FPS - 1)
+        self.assertLess(c["hold"], next(b for b in board["beats"] if b["id"] == "post-5")["frames"])
+        # with no trailer move the recording plays from the beat's first frame
+        plain = next(c for c in self.clipped["editorial-quiet"]["clips"] if c["role"] == "their own clip")
+        move = next(b for b in self.clipped["editorial-quiet"]["timeline"]["beats"] if b["id"] == "post-5")["move"]
+        self.assertEqual(plain["hold"] == 0, move not in drive.ARRIVES)
+
+    def test_a_beat_without_a_clip_is_unchanged(self):
+        for style in self.plain:
+            with self.subTest(style=style):
+                plain, clipped = self.plain[style], self.clipped[style]
+                self.assertFalse(any(c["role"] == "their own clip" for c in plain["clips"]))
+                strip = lambda c: {k: v for k, v in c.items() if k != "seconds"}
+                self.assertEqual([strip(c) for c in plain["clips"] if c["beat"] != "post-5"],
+                                 [strip(c) for c in clipped["clips"] if c["beat"] != "post-5"])
+                shape = lambda b: (b["id"], b["form"], b.get("tags"))
+                self.assertEqual([shape(b) for b in plain["timeline"]["beats"] if b["id"] != "post-5"],
+                                 [shape(b) for b in clipped["timeline"]["beats"] if b["id"] != "post-5"])
+                self.assertEqual(next(b for b in plain["timeline"]["beats"] if b["id"] == "post-5")["form"], "photo")
 
 
 if __name__ == "__main__":

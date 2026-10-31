@@ -47,8 +47,8 @@ sentence, and exits 1: tell the person that sentence and stop.
 | 2 | plan | `S/pipeline/2-plan.md` | `plan.py draft`, write the captions, each post's shot and the film's hook, ask and world, `plan.py check` | `plan.md` |
 | 3 | storyboards | `S/pipeline/3-board.md` | `storyboard.py draft`, `storyboard.py sheets`, look at each sheet | three storyboards, `out/boards.png` |
 | 4 | vote and pick | `S/pipeline/4-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill the scores, `vote.py tally`; show `out/boards.png` and ask, or pick by taste; `storyboard.py pick <letter>` | `winner.json`, `board.json` |
-| 5 | produce | `S/pipeline/5-produce.md` | `clips.py list`, `clips.py normalize`, `music.py find`, `music.py master`, `film.py render`, look | the three films, `out/posts/`, `out/story.png`, `out/caption.txt`, `out/grid-after.png` |
-| 6 | critic, gate, deliver | `S/pipeline/6-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (on FIX ONCE make the fix it names and run the steps it names, through round 2), `deliver.py` | green gate |
+| 5 | produce | `S/pipeline/5-produce.md` | `clips.py list`, `clips.py normalize`, `music.py find`, `music.py master`, `film.py render --proof`, look | the half-size proof of the three films, `out/posts/`, `out/story.png`, `out/caption.txt`, `out/grid-after.png` |
+| 6 | critic, gate, deliver | `S/pipeline/6-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` on the proof (on FIX ONCE make the fix it names and run the steps it names, through round 2); then the full-size `film.py render`, `qa.py check`, `vote.py cut` and the type read at full size; `deliver.py` | green gate |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
 
@@ -71,9 +71,10 @@ If `gather.py` exits 3, every door is closed: tell the person the one sentence i
 - Do not hand-edit `board.json`, a storyboard or anything in `out/`; change the plan or taste and run the step again.
 - A film renders in chunks saved in the run. A render that was interrupted (the machine restarted, the session died)
   resumes when you run the same command again: finished chunks are kept and only the missing ones render. Never start
-  over and never delete `render/chunks/`; a changed cut leaves its old chunks behind by itself. Run a render
+  over and never delete `render/chunks/`; a changed cut leaves its old chunks behind by itself. Every round before deliver renders the half-size proof (`film.py render --proof`); the render deliver takes is full
+  size (`film.py render`), and the critics read the type on it once more. Run a render
   in the foreground in one tool call with a 40-minute timeout on that call, never in the background, and read its progress in `render/<name>.log`.
-- The verdict is the run's own: on `FIX ONCE` you make the one fix it names in this run, render again and score
+- The verdict is the run's own: on `FIX ONCE` you make the one fix it names in this run, render the proof again and score
   round 2 before delivering; a film under the bar after that, or with no lever in the run, is delivered as the best
   cut with every score stated.
 - Done means `deliver.py` printed `GATE GREEN`. Your reply then names the reel first: its full path from the project's

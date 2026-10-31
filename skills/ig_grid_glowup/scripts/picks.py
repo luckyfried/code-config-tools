@@ -8,6 +8,8 @@ USAGE (from the workspace root):
 Measures every photo (its mean color in Lab, chroma, warmth, brightness, detail, how much of it is flat near-white,
 its focal point and five dominant colors), converts HEIC, rotates by EXIF and saves a 1600 px JPEG copy of every
 grid cover and every library photo in photos/. A reel's cover is its poster frame (ffmpeg, 40% of the way in).
+A clip in their photo folder (mp4, mov) is measured on the frame of its strongest second (strongest()) and its
+pool row carries that second as `from`; the film plays the clip from there on the post it becomes.
 
 grid.json: the last 30 posts and reels in grid order (position 0 is the top left), each with its cover, its
 likes, comments and saves, and the flags the audit reads:
@@ -82,19 +84,54 @@ def prepare(path):
     return str(dest.resolve())
 
 
-def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in photos/, 40% of the way in. Returns its path or None."""
+def seconds_of(video):
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def strongest(video, rate=4, side=48):
+    """The second a recorded clip is shown from: the start of its one-second window where the most moves while the
+    picture stays sharp and lit, read from small gray samples `rate` times a second. A sample that is near black or
+    blown to white scores nothing. A clip of a second or less starts at 0."""
+    total = seconds_of(video)
+    if total <= 1.0:
+        return 0.0
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(video), "-vf", f"fps={rate},scale={side}:{side},format=gray",
+                        "-f", "rawvideo", "-"], capture_output=True)
+    n = side * side
+    frames = [r.stdout[i:i + n] for i in range(0, len(r.stdout) - n + 1, n)]
+    if r.returncode or len(frames) < rate + 1:
+        return 0.0
+
+    def still(f):
+        light = sum(f) / n / 255
+        if light < 0.08 or light > 0.92:
+            return 0.0
+        sharp = sum(abs(f[i] - f[i + 1]) for i in range(n - 1) if (i + 1) % side) / n / 255
+        return sharp
+
+    reads = [still(f) for f in frames]
+    moved = [0.0] + [sum(abs(a - b) for a, b in zip(f, g)) / n / 255 for f, g in zip(frames, frames[1:])]
+    score = [m * s for m, s in zip(moved, reads)]
+    best = max(range(len(frames) - rate + 1), key=lambda i: (sum(score[i:i + rate]), -i))
+    return round(min(best / rate, max(0.0, total - 1.0)), 2)
+
+
+def poster(video, at=None):
+    """A clip's poster frame as a 1600 px JPEG in photos/: the frame at `at` seconds, else 40% of the way in (a reel's
+    cover). Returns its path or None."""
     src = Path(video)
-    dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
+    key = "#poster" if at is None else f"#poster@{at:.2f}"
+    dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + key).encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
         return str(dest.resolve())
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
-                       capture_output=True, text=True)
-    try:
-        at = float(r.stdout.strip()) * 0.4
-    except ValueError:
-        at = 0.5
+    if at is None:
+        at = seconds_of(src) * 0.4 or 0.5
     tmp = _env.part(dest)
     r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
                         "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
@@ -222,8 +259,10 @@ def grid_sheet(cells, path, cell=240):
 
 def measure(job):
     m, kind, r, pos = job
+    # a clip in their photo folder is shown from its strongest second, so its poster is that second's frame
+    shown = strongest(m) if kind == "photo" and Path(m).suffix.lower() in VIDEO else None
     try:
-        path = m if kind == "post" else (poster(m) if Path(m).suffix.lower() in VIDEO else prepare(m))
+        path = m if kind == "post" else (poster(m, shown) if Path(m).suffix.lower() in VIDEO else prepare(m))
         if not path:
             return None
         a = analyse(path)
@@ -233,7 +272,7 @@ def measure(job):
     own = kind in ("grid", "post")
     return {"src": m, "photo": None if kind == "post" else path, "kind": kind, "pos": pos, "ts": r.get("ts"),
             "likes": r.get("likes") if own else None, "saves": r.get("saves") if own else None,
-            "comments": r.get("comments") if own else None, **a}
+            "comments": r.get("comments") if own else None, **({"from": shown} if shown is not None else {}), **a}
 
 
 def main():
@@ -261,7 +300,7 @@ def main():
                     jobs.append((m, kind, r, None))
     for r in d.get("photos") or []:
         for m in r.get("media") or []:
-            if m not in grid_src and Path(m).suffix.lower() not in VIDEO:
+            if m not in grid_src:
                 jobs.append((m, "photo", r, None))
     jobs = [(m, k, {x: r.get(x) for x in ("ts", "likes", "saves", "comments")}, p) for m, k, r, p in jobs]
 
@@ -303,7 +342,7 @@ def main():
     focal = {e["photo"]: f"{e['focal'][0] * 100:.0f}% {e['focal'][1] * 100:.0f}%" for e in pool}
     focal.update({c["cover"]: f"{c['a']['focal'][0] * 100:.0f}% {c['a']['focal'][1] * 100:.0f}%" for c in cells if c.get("cover")})
     out = {"pool": [{k: e[k] for k in ("photo", "src", "kind", "ts", "fit", "lab", "chroma", "warmth", "bright", "detail",
-                                       "focal", "w", "h", "colors")} for e in pool],
+                                       "focal", "w", "h", "colors", "from") if k in e} for e in pool],
            "chapters": {"grid": [c["cover"] for c in cells if c.get("cover")], "pool": [e["photo"] for e in pool]},
            "focal": focal, "source_of": {e["photo"]: e["src"] for e in pool}}
     _env.write_json("picks.json", out)

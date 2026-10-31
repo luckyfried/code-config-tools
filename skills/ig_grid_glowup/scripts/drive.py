@@ -19,9 +19,10 @@ palette rule makes from their photographs, the easing of every camera move, the 
 the cut into it (chosen from what the beat shows, within the card's allowlists), the closer, and the pace: a snap
 camera reads at the base length, a slam camera shorter, a slow camera longer. Every beat starts on a beat of the music.
 
-The sound is one cue where each beat lands, under the music: a hit as the frame lands on the hook's first post
-and as each post seats in the grid, the build into the closer and its impact as the frame locks round the first
-screen, the closing card, and the stop. The frame and the words move silently.
+The sound is the shared effects layer (sfx.py), read from the board's `fx`, a board in the shape it reads: an impact
+as the hook line lands, a whoosh as the frame lands on the hook's first post and as each photograph arrives, a shutter
+as each post seats in the grid, a riser into the closer and its impact as the frame locks round the first screen, an
+impact as the closing card lands, all on the music's grid and in its key; the music stops on the closing card.
 
 Every time here is a unit of half a second from the film's start (`bpm` 120 on the board); the timeline the card's
 moves read is in beats of the music (`tempo`). Every place is px of the format's frame, y down. The board carries the
@@ -81,6 +82,22 @@ FLOOR = 40
 # the moves a held post never takes: crop-shift and scale-to-cell take a column of the frame's grid off the
 # photograph, and a held post's page already stands it in the card's own picture box, which the card means whole
 NOT_HELD = {"crop-shift", "scale-to-cell"}
+# the trailer moves that take the frame on a post the frame holds, and the seconds each takes to land the photograph on
+# its picture: it starts as the frame locks on the post, lands, and hands the frame back over HANDBACK seconds, and the
+# post's caption enters after that, so the words read whole after the landing; the wall is the camera's travel and
+# never takes one
+ARRIVES = {"picture-tunnel": 1.1, "exploded-layers": 1.15, "tilted-wall": 1.2}
+HANDBACK = 0.5
+# the seconds from a trailer move's landing to the middle of its handback (it hands back over 0.38 s, arrival.tsx), where
+# the film lays the photograph as its held crop shows it
+HAND_MID = 0.19
+# the moves that set a beat's words full frame, offered only on a beat with words (the hook line), the counter only
+# where they hold a number
+SETS_WORDS = {"slam-words", "counter"}
+COUNTS = {"counter"}
+NUMBER = re.compile(r"\b(\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b", re.I)
+# the cameras of the calm looks, whose film takes one trailer move, on the peak post
+CALM = {"slow"}
 # each format's wall width (the frame's width when None)
 LAYOUT = {"reel": {"wall": None}, "square": {"wall": None}, "landscape": {"wall": 2100}}
 
@@ -415,41 +432,70 @@ def page_boxes(G, photo, size):
     return pic, [round(v, 1) for v in ln]
 
 
-def even(words, span, n, cap):
-    """`words` in `n` lines none wider than `cap`, the lines as near one width as they go (least sum of squared
-    widths)."""
+# the least gap in em between words a page sets one by one
+WORD_SPACE = 0.3
+
+
+# the least share of its size a page's words keep when they are set so that no line is one word alone
+WIDOW = 0.7
+
+
+def even(words, span, n, cap, ok=lambda a, z: True):
+    """`words` in `n` lines none wider than `cap`, each line words[a:z] one `ok` takes, the lines as near one width as
+    they go (least sum of squared widths); None when no such break exists."""
     near = cap * (1 + 1e-9)
     best = {0: (0.0, [])}
     for _ in range(n):
         best = {z: min(((c + span(a, z) ** 2, ls + [" ".join(words[a:z])]) for a, (c, ls) in best.items()
-                        if a < z and span(a, z) <= near), default=None, key=lambda c: c[0]) for z in range(1, len(words) + 1)}
+                        if a < z and ok(a, z) and span(a, z) <= near), default=None, key=lambda c: c[0])
+                for z in range(1, len(words) + 1)}
         best = {z: v for z, v in best.items() if v}
-    return best[len(words)][1]
+    got = best.get(len(words))
+    return got[1] if got else None
 
 
-def set_page(text, size, floor, most, tall, wide, upper=False):
+def breaks(words, span, n, ok):
+    """`words` in `n` lines, each one `ok` takes, broken where the widest line is narrowest and then the lines are as
+    near one width as they go; None when no such break exists."""
+    # widest[z]: the narrowest the widest line can be setting the first z words in the lines so far
+    widest = {z: span(0, z) for z in range(1, len(words) + 1) if ok(0, z)}
+    for _ in range(n - 1):
+        widest = {z: min((max(widest[a], span(a, z)) for a in widest if a < z and ok(a, z)), default=None)
+                  for z in range(1, len(words) + 1)}
+        widest = {z: w for z, w in widest.items() if w is not None}
+    return even(words, span, n, widest[len(words)], ok) if len(words) in widest else None
+
+
+def set_page(text, size, floor, most, tall, wide, upper=False, space=None):
     """`text` broken for the page in the display face: (size, [line, ...]) at the largest size from `size` down to
     `floor` px, two px at a time, where it breaks into the fewest lines (`most` at most) none wider than `wide` and all
     of them no taller than `tall` from the first line's caps to the last baseline, each break where it leaves the
-    widest line narrowest and the lines as near one width as they go; None when it fits at no size."""
+    widest line narrowest and the lines as near one width as they go; every line keeps two words or more whenever
+    that sets at WIDOW of the size the text takes otherwise; the words stand `space` em apart when it is given (words set
+    one by one), else a space apart. None when it fits at no size."""
     words = (text.upper() if upper else text).split()
     if not words:
         return size, []
     lead = compose.face_of("display")["lineHeight"]
-    measure = lambda t: em(t, "display")
+    measure = lambda t: em(t, "display") if space is None else sum(em(w, "display") for w in t.split()) + space * (len(t.split()) - 1)
     span = lambda a, z: measure(" ".join(words[a:z]))
-    # widest[n][z]: the narrowest the widest line can be setting the first z words in n lines
-    widest = [{z: span(0, z) for z in range(1, len(words) + 1)}]
-    for n in range(2, min(most, len(words)) + 1):
-        widest.append({z: min(max(widest[-1][a], span(a, z)) for a in range(n - 1, z)) for z in range(n, len(words) + 1)})
-    arranged = [even(words, span, n, w[len(words)]) for n, w in enumerate(widest, 1)]
-    s = size
-    while s >= floor:
-        for ls in arranged:
-            if CAP["display"] * s + (len(ls) - 1) * lead * s <= tall and all(measure(x) * s <= wide for x in ls):
-                return s, ls
-        s -= 2
-    return None
+    counts = range(1, min(most, len(words)) + 1)
+
+    def fit(ok):
+        arranged = [ls for ls in (breaks(words, span, n, ok) for n in counts) if ls]
+        s = size
+        while s >= floor:
+            for ls in arranged:
+                if CAP["display"] * s + (len(ls) - 1) * lead * s <= tall and all(measure(x) * s <= wide for x in ls):
+                    return s, ls
+            s -= 2
+        return None
+
+    any_break = fit(lambda a, z: True)
+    if not any_break or len(words) < 2:
+        return any_break
+    paired = fit(lambda a, z: z - a >= 2)
+    return paired if paired and paired[0] >= WIDOW * any_break[0] else any_break
 
 
 def page(G, card, colors, text, label, at, sink, close, open_):
@@ -471,7 +517,18 @@ def page(G, card, colors, text, label, at, sink, close, open_):
     gap = round(LABEL_GAP * lab_size) if lab_text else 0
     floor = math.ceil(FLOOR / CAP["display"])
     tall = box[3] - box[1] - drop - gap - 0.28 * size
-    fit = set_page(text, size, floor, MOST, tall, box[2] - box[0] - 0.03 * size, upper=over)
+    enter = ln_card["enter"]
+    # words that enter one by one are set one by one, a word space apart that heavy caps still read as a space
+    space = max(em(" ", "display"), WORD_SPACE) if enter in ("slam", "rise") else None
+    fit = set_page(text, size, floor, MOST, tall, box[2] - box[0] - 0.03 * size, upper=over, space=space)
+    area = type_area(G)
+    lone = lambda f: f and len(text.split()) > 1 and any(len(x.split()) < 2 for x in f[1])
+    if lone(fit) and not over and (box[3] <= pic[1] or box[1] >= pic[3]) and box[2] < area[2]:
+        # a line box above or below the photograph that leaves a word alone on a line runs on to the type area's edge,
+        # where nothing stands beside it
+        run_on = set_page(text, size, floor, MOST, tall, area[2] - box[0] - 0.03 * size, upper=over, space=space)
+        if run_on and not lone(run_on):
+            fit, box = run_on, [box[0], box[1], area[2], box[3]]
     if not fit:
         return None
     size, said = fit
@@ -487,13 +544,12 @@ def page(G, card, colors, text, label, at, sink, close, open_):
         pic = [pic[0], round(pic[1] + dy, 1), pic[2], round(pic[3] + dy, 1)]
         box = [box[0], round(max(a[1], box[1] + dy), 1), box[2], round(min(a[3], box[3] + dy), 1)]
     y = box[1] + drop + gap + CAP["display"] * size
-    enter = ln_card["enter"]
     lines, t = [], at
     for i, s in enumerate(said):
         words, x, wx = s.split(), box[0], []
         for w in words:
             wx.append(round(x, 1))
-            x += em(w + " ", "display") * size
+            x += (em(w, "display") + (space if space is not None else em(" ", "display"))) * size
         lines.append({"text": s, "x": box[0], "y": round(y + i * lead, 1), "size": size, "at": round(t, 3),
                       "words": [{"text": w, "x": x_, "at": round(t + j * PAGE_WORD, 3)} for j, (w, x_) in enumerate(zip(words, wx))]})
         t += (len(words) * PAGE_WORD if enter in ("slam", "rise") else len(s) * LETTER if enter == "type" else 0.12)
@@ -705,7 +761,8 @@ def day_of(iso):
 
 
 # ------------------------------------------------------------------ the board
-def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=None, frames=None, style=None, tempo=None):
+def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=None, frames=None, style=None, tempo=None,
+          extra=None):
     """One format's board in the style `style` (a card id; the trio's first when None), its beats starting on beats of
     music at `tempo` bpm. `frames` are the beat frames of the hook and each post (the reel's, so every format cuts on
     the same frames); with none, they come from this format's own bands."""
@@ -780,22 +837,79 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
     if not fits:
         unfit["closer"] = " ".join(x for x in (at_handle, bio or "") if x)
 
+    # the card's move for each beat of the timeline, chosen before the beats are timed, since a trailer move on a held
+    # post lengthens it: the hook line's move for words (the title's page sets the line alone when the card has none),
+    # the wall's move (one for each run of the hook and the posts that only pass into their cells), and each held post's
+    # move for what its photograph shows; a look that wants energy takes a trailer move on every held post its card
+    # offers one for (at most `extra` of them besides the peak's, when given), a calm look one, on the peak post
+    calm = card["axes"]["camera"] in CALM
+    peopled = lambda p: bool(re.search(r"@[A-Za-z0-9._]{2,}", p.get("moment") or p.get("caption") or ""))
+    used, prev_move, move_of = {}, None, {}
+    besides = []
+
+    def choose(bid, form, tags=(), words=""):
+        nonlocal prev_move
+        tags = set(tags) | {"words" if words else "wordless"}
+        trailer = form == "photo" and ("peak" in tags or (not calm and (extra is None or len(besides) < extra)))
+        options = [o for o in card["moves"] if not (form == "photo" and o["id"] in NOT_HELD)
+                   and not (o["id"] in SETS_WORDS and not (form == "words" and words))
+                   and not (o["id"] in COUNTS and not NUMBER.search(words))
+                   and not (o["id"] in ARRIVES and not trailer)]
+        if form == "words":
+            options = [o for o in options if o["id"] in SETS_WORDS]
+            if not options:
+                move_of[bid] = None
+                return
+        elif trailer:
+            # the trailer moves the film has used least, so each held post arrives its own way while the card has another
+            arrive = [o for o in options if o["id"] in ARRIVES]
+            least = min((used.get(o["id"], 0) for o in arrive), default=0)
+            options = [o for o in arrive if used.get(o["id"], 0) == least] or options
+        mv = compose.pick(options or card["moves"], tags, form, used, prev_move)
+        prev_move = move_of[bid] = mv
+        if trailer and mv in ARRIVES and "peak" not in tags:
+            besides.append(bid)
+    if slots and title_len:
+        choose("hook-title", "words", words=hook_words)
+    last_wall = None
+    if slots:
+        choose("hook", "wall", words=at_handle)
+        last_wall = "hook"
+    for i, p in enumerate(nine):
+        bid = f"post-{p['n']}"
+        if not held[i]:
+            if last_wall:
+                move_of[bid] = move_of[last_wall]
+            else:
+                choose(bid, "wall")
+                last_wall = bid
+            continue
+        last_wall = None
+        choose(bid, "photo", {"landscape" if wide_of(p) else "portrait"} | ({"peak"} if i == peak else set())
+               | ({"people"} if peopled(p) else set()) | ({"clip"} if p.get("clip") else set()))
+    # the half-second units a held post's trailer move holds its caption back: the move lands, hands the frame back, and
+    # the caption enters after it
+    held_back = lambda i: 2 * (ARRIVES[move_of[f"post-{nine[i]['n']}"]] + HANDBACK) if move_of.get(f"post-{nine[i]['n']}") in ARRIVES else 0.0
+
     # beats and their starts, on whole frames
     if frames is None:
-        lengths = [hook_len] + [full_length(entering.get(i, RISE), peak_read if i == peak else read) if mv == "close"
+        lengths = [hook_len] + [full_length(entering.get(i, RISE) + held_back(i), peak_read if i == peak else read) if mv == "close"
                                 else drop_len if mv == "drop" else slide_len for i, (p, mv) in enumerate(zip(nine, moves))]
-        # every beat starts on a beat of the music
+        # every beat starts on a beat of the music, and a held post runs to the next beat after its length, so its caption
+        # reads whole for its read
         beat_frames = PULSE * per_beat
-        bounds = [round(round(sum(lengths[:i]) * PULSE / beat_frames) * beat_frames) for i in range(len(lengths) + 1)]
+        whole = [0 if not n else max(1, math.ceil(n / per_beat - 1e-6) if i and moves[i - 1] == "close" else round(n / per_beat))
+                 for i, n in enumerate(lengths)]
+        bounds = [round(sum(whole[:i]) * beat_frames) for i in range(len(whole) + 1)]
         frames = [b - a for a, b in zip(bounds, bounds[1:])]
     lengths = [f / PULSE for f in frames]
     starts = [sum(frames[:i]) / PULSE for i in range(len(frames))]
     C = sum(frames) / PULSE
 
-    sound, story, keys, cam, band_keys, posts = [], [], [], [], [], []
-
-    def cue(kind, at, beat, what, **kw):
-        sound.append({"kind": kind, "at": round(at, 3), "beat": beat, "what": what, **kw})
+    story, keys, cam, band_keys, posts = [], [], [], [], []
+    # each photograph's arrival for the effects: (beat, the moment it comes into view, the moment it seats, and the
+    # start and landing of the trailer move it arrives by, if any)
+    arrivals = []
 
     def framing(c, h, z=0.0, fov=HOLD_FOV, yaw=0.0, pitch=0.0, roll=0.0):
         return {"c": [round(c[0], 1), round(c[1], 1)], "h": round(h, 1), "z": round(z, 1), "fov": fov, "yaw": round(yaw, 3),
@@ -846,6 +960,7 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
         # picture box, the hook line enters under their handle; its words leave and its paper opens out onto the wall
         # as the frame lands
         shut = [OPENING, OPENING + OPEN_OUT]
+        words_at = min(shut[1], title_end)
         title_page = page(G, card, colors, hook_words, at_handle, shut[1] + 0.1, title_end - 0.3, shut,
                           title_end - 0.25) if title_len else None
         if title_len and not title_page:
@@ -857,7 +972,6 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
         if title_end > 0.35:
             fkey(title_end - 0.35, big, 600, "move")
         fkey(land_t, rest_box, WALL_Z + 8, "land")
-        cue("hit", land_t, "hook", "the frame lands on the first post that breaks the grid", weight=0.55, bright=0.6)
         hook_rest = max(0.0, title_end - max(0.6, 0.25 * title_end)) if title_len else land_t + 0.9
         # the hops run from half a second after the landing to 0.6 before the hook's end, a quarter apart or more
         last_hop = hook_end - 0.6
@@ -948,7 +1062,7 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
                                   roll=-0.01 * side), W, H, G["grid"]["y0"], sides=sides)
         # the page: the paper closes in round the photograph as the frame locks on it, the caption enters, then sinks
         # and the paper opens out as the crop draws back to drop into the grid
-        pg = page(G, card, colors, said.get(i, ""), day(i), lock + 0.15, drop - 0.35, [close, lock + 0.1], drop - 0.15) if full else None
+        pg = page(G, card, colors, said.get(i, ""), day(i), lock + 0.15 + held_back(i), drop - 0.35, [close, lock + 0.1], drop - 0.15) if full else None
         posts.append({"n": p["n"], "beat": bid, "file": p["file"], "size": p["size"], "uvSubject": uv_of(p["size"], subj, 1 / ratio),
                       "uv34": uv_of(p["size"], p["crop34"], 4 / 3),
                       "uvFocal": [round(focal[0], 4), round(1 - focal[1], 4)], "whole": [round(v, 1) for v in whole],
@@ -998,8 +1112,10 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
         elif move == "close":
             fkey(drop, crop_box, LIFT + 6)
             fkey(seat, slot0, WALL_Z + 8, "drop")
-        # the post's one sound is its landing in the grid; the frame and the words move silently
-        cue("hit", seat, bid, f"post {p['n']} seats at the top left of the grid", weight=0.95, bright=0.45)
+        # the photograph comes into view as the frame meets it (a held post) or just before it seats (a passing one)
+        trailer = move_of.get(bid) if move_of.get(bid) in ARRIVES else None
+        arrivals.append((bid, meet if move == "close" else max(fly[0], seat - 0.6), seat,
+                         (lock, lock + 2 * ARRIVES[trailer]) if full and trailer else None))
         # the camera: on the photograph whole, then pushed onto the subject, then back over the grid as it drops; for a
         # post that falls, close on the grid's first cell as the card falls into it, holding on it as it seats
         gscreen = first_screen(G)
@@ -1051,10 +1167,6 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
     # stop: never a second, which reads as a frozen frame with the music still playing
     stop = round(math.ceil((closer_at + max(2.4, 1.6 * per_beat)) * PULSE - 1e-6) / PULSE, 3)
     end = stop + HOLD_AFTER
-    cue("riser", C - 1.0, "closer", "the frame opens out over the whole first screen", beats=1.6)
-    cue("impact", lock_c, "closer", "the frame locks round the first screen")
-    cue("hit", closer_at, "closer", "the style's closing card takes the frame", weight=0.7, bright=0.5)
-    cue("stop", stop, "closer", "picture and music stop together on the closing card")
     camkey(lock_c + 0.2, framing(closer_c, closer_h, 0, fov=CLOSER_FOV), 0.05, walled=False, ease=SETTLE)
     still_f = framing(closer_c, closer_h, 0, fov=CLOSER_FOV)
     s_c = gscreen[2] / BAND_W
@@ -1102,7 +1214,9 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
     # the shots a video model would make, each written from the plan's own shot for it: the hook's world on the post
     # the frame rests on, a still brought to life on each post the frame holds, and a texture on each post it passes;
     # each names the camera move its beat makes and its length, and loops seamlessly (clips.py normalize loops a clip
-    # short of its beat)
+    # short of its beat). A post made from a clip they recorded plays that clip instead, as one shot the length of its
+    # beat from its strongest second, sound off; behind a trailer move it holds its first frame (the photograph the move
+    # lands) until the move has handed the frame back
     moving = {"close": "a slow push in", "slide": "a slow truck {}", "drop": "a slow tilt down"}
     loop = lambda sec: f"{sec} s, a seamless loop: the last frame matches the first"
     clips = []
@@ -1113,9 +1227,18 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
                       "image": next(b["file"] for b in before if b["pos"] - 1 == rest_slot),
                       "prompt": f"{world}; a slow dolly forward; {loop(sec)}",
                       "stand_in": "the wall of their posts under the frame's hops, the low camera passing over it and the frame and its band standing off the wall"})
+    trailer_of = {bid: tr for bid, _, _, tr in arrivals}
     for i, pp in enumerate(posts):
         sec = round(frames[i + 1] / FPS, 1)
         mv = pp["move"]
+        own = nine[i].get("clip")
+        if own:
+            tr, arrive = trailer_of.get(pp["beat"]), move_of.get(pp["beat"])
+            hold = round((tr[0] - starts[i + 1]) * PULSE + (ARRIVES[arrive] + 2 * HAND_MID) * FPS) if tr and arrive in ARRIVES else 0
+            clips.append({"id": f"{i + 1:02d}", "beat": pp["beat"], "role": "their own clip", "seconds": round(frames[i + 1] / FPS, 3),
+                          "image": pp["file"], "source": own["src"], "from": own["from"], "hold": min(hold, frames[i + 1]),
+                          "prompt": None, "stand_in": None})
+            continue
         shot = (nine[i].get("shot") or "").strip().rstrip(".") or "the scene this photograph shows, at the photograph's own lens and light"
         clips.append({"id": f"{i + 1:02d}", "beat": pp["beat"], "role": "still" if mv == "close" else "texture", "seconds": sec,
                       "image": pp["file"], "prompt": f"{shot}; {moving[mv].format('left' if pp['side'] > 0 else 'right')}; {loop(sec)}",
@@ -1128,23 +1251,21 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
     # the frame holds, and the closer. The film is one take, the camera never jumps, so no beat change is a cut and no
     # card transition covers one; each move is the card's for what its beat shows
     to_beats = lambda u: round(u / per_beat, 3)
-    tl, used, prev_move = [], {}, None
+    tl = []
 
-    def beat_on(bid, form, at, end_, words="", label="", tags=(), peak_=False):
-        nonlocal prev_move
+    def beat_on(bid, form, at, end_, words="", label="", peak_=False, tags=None):
         if form == "wall" and tl and tl[-1]["form"] == "wall":
             tl[-1]["end"] = to_beats(end_)
             return
-        tags = set(tags) | {"words" if words or label else "wordless"}
-        options = [o for o in card["moves"] if not (form == "photo" and o["id"] in NOT_HELD)] or card["moves"]
-        mv = compose.pick(options, tags, form, used, prev_move)
-        prev_move = mv
-        tl.append({"id": bid, "form": form, "at": to_beats(at), "end": to_beats(end_), "move": mv, "transition": None,
-                   "words": words, "label": label, "peak": peak_})
+        tl.append({"id": bid, "form": form, "at": to_beats(at), "end": to_beats(end_), "move": move_of.get(bid), "transition": None,
+                   "words": words, "label": label, "peak": peak_, **({"tags": tags} if tags else {}),
+                   **({"hand": round(ARRIVES[move_of[bid]] + HAND_MID, 3)} if form in ("photo", "clip") and move_of.get(bid) in ARRIVES else {})})
     if slots and title_end > 0:
-        # the title's page sets the hook line, so no move draws over it
-        tl.append({"id": "hook-title", "form": "words", "at": 0.0, "end": to_beats(title_end), "move": None, "transition": None,
-                   "words": hook_words, "label": "", "peak": False})
+        # the title's page sets the hook line; the card's move for words, when it has one, sets it over the page once
+        # the paper has closed round their grid, so the film still opens on the grid, and cuts to the page as its
+        # paper opens onto the wall
+        tl.append({"id": "hook-title", "form": "words", "at": to_beats(words_at), "end": to_beats(title_end), "move": move_of.get("hook-title"),
+                   "transition": None, "words": hook_words, "label": "", "peak": False})
         beat_on("hook", "wall", title_end, starts[1] if len(starts) > 1 else C, label=at_handle)
     elif slots:
         beat_on("hook", "wall", 0.0, starts[1] if len(starts) > 1 else C, label=at_handle)
@@ -1153,11 +1274,10 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
         if not pp["full"]:
             beat_on(pp["beat"], "wall", a0, a1)
             continue
-        # the post's caption stands on its band, so the move is handed no words and moves the picture alone: it is
-        # chosen for what the picture shows
-        tags = {"landscape" if wide_of(p) else "portrait"} | ({"peak"} if pp.get("peak") else set()) \
-            | ({"people"} if re.search(r"@[A-Za-z0-9._]{2,}", p.get("moment") or p.get("caption") or "") else set())
-        beat_on(pp["beat"], "photo", a0, a1, tags=tags, peak_=bool(pp.get("peak")))
+        # the post's caption stands on its page, so the move is handed no words and moves the picture alone; a post made
+        # from their own clip is a clip beat
+        beat_on(pp["beat"], "clip" if p.get("clip") else "photo", a0, a1, peak_=bool(pp.get("peak")),
+                tags=["clip"] if p.get("clip") else None)
     # the closer's words are the header's and the card's closing card's, and the header is laid for a camera that has
     # stopped, so its beat has no move: nothing draws over the profile and nothing turns the camera
     tl.append({"id": "closer", "form": "closer", "at": to_beats(C), "end": to_beats(end), "move": None, "transition": None,
@@ -1169,12 +1289,60 @@ def build(fmt, before, nine, plan, audit, breaks, taste, palette, handle, bio=No
             "title": hook_words, "handle": at_handle, "signoff": ask or at_handle}
     closer_shape = {"name": card["closer"], "at": to_beats(closer_at), "still": to_beats(stop)}
 
+    # the effects' board (sfx.py reads it): the hook line as a title that slams home as its last word lands, the
+    # frame's landing on the hook's first post, each post as a photograph that arrives by the card's cut for what it
+    # shows and seats with a shutter, the closer's lock (its riser and impact), and the closing card's landing
+    fx_beats, cut_used, prev_cut = [], {}, None
+    tl_of = {b["id"]: b for b in tl}
+
+    def fx_cut(tags, form):
+        nonlocal prev_cut
+        prev_cut = compose.pick(card["transitions"], tags, form, cut_used, prev_cut)
+        return prev_cut
+
+    if slots and title_end > 0:
+        # the page slams home as its last word lands; slam-words lands an impact with every word itself
+        landed = (page_landed(title_page) if title_page else 0) or title_end
+        hook_move = move_of.get("hook-title")
+        fx_beats.append({"id": "hook-title", "form": "words", "move": hook_move, "transition": None, "start": to_beats(words_at),
+                         "layers": [{"kind": "Title", "at": {"arrive": to_beats(words_at), "end": to_beats(title_end)}, "title": {"text": hook_words},
+                                     **({} if hook_move == "slam-words" else {"slam": [to_beats(landed), 0.0]})}]})
+    if slots:
+        fx_beats.append({"id": "hook", "form": "wall", "move": None, "transition": fx_cut({"wall"}, "wall"),
+                         "start": to_beats(max(0.0, land_t - 0.15)),
+                         "layers": [{"kind": "Wall", "at": {"arrive": to_beats(land_t), "end": to_beats(starts[1] if len(starts) > 1 else C)}}]})
+    for (bid, seen, seat_t, trailer), pp, p in zip(arrivals, posts, nine):
+        t = tl_of.get(bid) or {}
+        tags = {"landscape" if wide_of(p) else "portrait"} | ({"peak"} if pp.get("peak") else set())
+        form = "photo" if pp["full"] else "wall"
+        if trailer:
+            # a trailer move: its whoosh as it takes the frame, the shutter as the photograph lands on its picture, and
+            # the post's own shutter as it seats in the grid
+            fx_beats.append({"id": bid, "form": form, "move": t.get("move"), "transition": fx_cut(tags, form), "start": to_beats(trailer[0]),
+                             "layers": [{"kind": "Photo", "at": {"arrive": to_beats(trailer[1]), "end": to_beats(trailer[1] + 0.1)},
+                                         "label": "", "text": ""}]})
+            fx_beats.append({"id": f"{bid}-seat", "form": "wall", "move": None, "transition": None, "start": to_beats(seat_t - 0.6),
+                             "layers": [{"kind": "Photo", "at": {"arrive": to_beats(seat_t), "end": to_beats(seat_t + 0.1)},
+                                         "label": "", "text": ""}]})
+            continue
+        fx_beats.append({"id": bid, "form": form, "move": t.get("move") if t.get("form") != "wall" else None,
+                         "transition": fx_cut(tags, form), "start": to_beats(seen),
+                         "layers": [{"kind": "Photo", "at": {"arrive": to_beats(seat_t), "end": to_beats(seat_t + 0.1)},
+                                     "label": "", "text": t.get("words") or ""}]})
+    fx_beats.append({"id": "closer", "form": "closer", "move": None, "transition": None, "start": to_beats(lock_c),
+                     "layers": [{"kind": "Closer", "at": {"arrive": to_beats(lock_c), "end": to_beats(closer_at)},
+                                 "signoff": {"text": ask or at_handle}}]})
+    fx_beats.append({"id": "closing-card", "form": "card", "move": None, "transition": None, "start": to_beats(closer_at),
+                     "layers": [{"kind": "Title", "at": {"arrive": to_beats(closer_at), "end": to_beats(end)},
+                                 "title": {"text": ask or at_handle}, "slam": [to_beats(closer_at), 0.0]}]})
+    fx = {"id": f"{card['id']}-{fmt}", "bpm": tempo, "beats": fx_beats}
+
     system = compose.system(card, colors, {fmt: G["safe"]})
     return {"id": f"{card['id']}-{fmt}", "style": card["id"], "name": f"the next {m}", "handle": handle,
             "year": dates[0].year if dates else dt.date.today().year, "bpm": BPM, "tempo": tempo,
             "format": {"width": W, "height": H, "fps": FPS, "name": fmt}, "system": system,
             "beats": beats, "timeline": timeline, "look": look, "header": header, "closerShape": closer_shape, "page": title_page,
-            "sound": sorted(sound, key=lambda c: c["at"]), "clips": clips, "story": story,
+            "fx": fx, "clips": clips, "story": story,
             "seconds": round(end * 60 / BPM, 3), "stop_seconds": round(stop * 60 / BPM, 3), "unfit": unfit,
             "hook": {"slots": slots, "rest": round(hook_rest, 3), "title": round(title_end, 3)}}
 

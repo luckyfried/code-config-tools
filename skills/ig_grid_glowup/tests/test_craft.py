@@ -55,9 +55,10 @@ class Board(unittest.TestCase):
     def words(self, name):
         return self.board["beats"][0]["layers"][1]["words"][name]
 
-    def test_the_hook_states_the_glow_up_from_the_first_frame(self):
+    def test_the_hook_states_the_glow_up_once_the_paper_has_closed_round_the_grid(self):
         first = self.board["timeline"]["beats"][0]
-        self.assertEqual((self.board["look"]["title"], first["words"], first["at"]), (FILM["hook"], FILM["hook"], 0.0))
+        shut = round((drive.OPENING + drive.OPEN_OUT) * self.board["tempo"] / drive.BPM, 3)
+        self.assertEqual((self.board["look"]["title"], first["words"], first["at"]), (FILM["hook"], FILM["hook"], shut))
         # the film opens on their grid, and the title is a page of the card that closes round it, its words entering in
         # the card's display face once the paper is in
         self.assertIsNone(first["move"])
@@ -187,6 +188,25 @@ class Board(unittest.TestCase):
             self.assertRegex(c["prompt"], r"; a slow (dolly forward|push in|truck (left|right)|tilt down); ")
             self.assertIn(f"{c['seconds']} s, a seamless loop", c["prompt"])
         self.assertEqual(len({c["prompt"] for c in clips}), len(clips))
+
+
+class Paper(unittest.TestCase):
+    """The black-and-white card's paper takes the feed's temperature: a warm feed's white is a warm paper the photographs
+    sit on as one picture, and a cool feed's stays white."""
+
+    def test_a_warm_feed_prints_on_warm_paper_and_a_cool_feed_on_white(self):
+        import palette
+        warm = palette.palette_of({"rule": "mono-plus-one"}, ["#322922", "#8a7d6a", "#5f615e", "#67402b", "#b29c70"])["roles"]
+        r, g, b = palette.hex_rgb(warm["paper"])
+        self.assertEqual(warm["bg"], warm["paper"])
+        self.assertGreater(r - b, 8, warm["paper"])
+        self.assertGreater(palette.lum((r, g, b)), 0.85, warm["paper"])
+        self.assertGreater(palette.contrast(palette.hex_rgb(warm["ink"]), (r, g, b)), 15)
+        mr, _, mb = palette.hex_rgb(warm["muted"])
+        self.assertGreater(mr, mb, warm["muted"])
+        self.assertGreaterEqual(palette.contrast(palette.hex_rgb(warm["accent"]), (r, g, b)), 3.0)
+        cool = palette.palette_of({"rule": "mono-plus-one"}, ["#1c2a3a", "#4f6d8a", "#9fb7cc", "#2e4a5f", "#d5e1ea"])["roles"]
+        self.assertEqual((cool["paper"], cool["bg"]), ("#ffffff", "#ffffff"))
 
 
 class PlanShots(unittest.TestCase):

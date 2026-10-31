@@ -139,11 +139,11 @@ def luma_line(mp4, run=None):
     return [round(y, 2) for y in ya]
 
 
-def measure(mp4, planned, hook_frame=None, strips=None, run=None):
+def measure(mp4, planned, hook_frame=None, strips=None, run=None, name=None):
     """Duration; the cuts, as the planned shot changes joined with the scene-score cuts (scene > 0.12 at 270x480) more
     than 0.2 s from every one of them, and per minute; the luma line (`luma_line`) and its quiet seconds (`under_half`);
-    and the 1, 2 and 12 fps strips in the folder `strips` (beside the file when it is None). All of it is figures: nothing
-    here passes or fails. Under a command's lock (`run`) every probe starts through run.spawn."""
+    and the 1, 2 and 12 fps strips in the folder `strips` (beside the file when it is None), named for `name` (the file's
+    own name when None: film-strip.png for film.mp4). All of it is figures: nothing here passes or fails. Under a command's lock (`run`) every probe starts through run.spawn."""
     mp4 = Path(mp4)
     secs = float((run.spawn if run else subprocess.run)([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(mp4)],
                                 capture_output=True, text=True).stdout)
@@ -157,12 +157,13 @@ def measure(mp4, planned, hook_frame=None, strips=None, run=None):
            "cuts_per_minute": round(len(allc) / (secs / 60), 1), "hook_event_frame": hook_frame, "luma": luma,
            **under_half(luma)}
     d = Path(strips) if strips else mp4.parent
+    stem = name or mp4.stem
     n = max(1, int(secs))
-    out["strip"] = str(d / (mp4.stem + "-strip.png"))
-    out["strip2"] = str(d / (mp4.stem + "-strip2.png"))
+    out["strip"] = str(d / (stem + "-strip.png"))
+    out["strip2"] = str(d / (stem + "-strip2.png"))
     ff(["-y", "-i", str(mp4), "-vf", f"fps=1,scale=216:-2,tile={n}x1:padding=6:color=white", "-frames:v", "1", "-update", "1", out["strip"]], run)
     ff(["-y", "-i", str(mp4), "-vf", f"fps=2,scale=135:-2,tile={2 * n}x1:padding=4:color=white", "-frames:v", "1", "-update", "1", out["strip2"]], run)
     # every frame at 12 a second, one second to a row: where a field is the stage or a beat holds past its words
-    out["strip12"] = str(d / (mp4.stem + "-strip12.jpg"))
+    out["strip12"] = str(d / (stem + "-strip12.jpg"))
     ff(["-y", "-i", str(mp4), "-vf", f"fps=12,scale=-2:300,tile=12x{math.ceil(secs)}", "-frames:v", "1", "-update", "1", out["strip12"]], run)
     return out

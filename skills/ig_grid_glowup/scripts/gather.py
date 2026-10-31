@@ -33,8 +33,8 @@ items.json (every key optional; ts is a unix timestamp; media are paths relative
 The grid: the last 30 posts and reels, newest first (grid position 0 is the top left of their profile), each with its
 cover media, likes, comments and saves; library.json "grid" holds them in that order. Everything else (older posts,
 carousel slides, stories, Facebook photos, the photo folder) is the library the next nine posts are drawn from.
-A photo folder, named with --photos or found with no feed, is library.json "photos", and the next nine are made from
-it alone.
+A photo folder, named with --photos or found with no feed, is library.json "photos" (its photographs and its clips,
+mp4, mov and m4v), and the next nine are made from it alone.
 gather.py starts a new run folder, build/<run stamp>/ under the workspace root, and every later script works inside
 it; --root, --photos and --pulled are read against the workspace root.
 Links every media file into the run's library/<kind>/ (posts, reels, stories, likes, saved, facebook, photos) under its date,
@@ -515,12 +515,13 @@ def main():
     # account or download beside it leaves the grid empty
     feed = d["posts"] or d["reels"]
     folder = photos or (None if feed else largest_photo_folder(root))
-    named = []
+    named, recorded = [], []
     if folder:
         _env.need("PIL")
-        named, _ = read_photos(folder)
+        named, recorded = read_photos(folder)
         d["found"]["photos"] = str(folder)
-        doors["photo_folder"] = f"open: {len(named)} photos in {rel(folder, root)}, the next nine are made from them"
+        doors["photo_folder"] = (f"open: {len(named)} photos" + (f" and {len(recorded)} clip{'s' * (len(recorded) != 1)}" if recorded else "")
+                                 + f" in {rel(folder, root)}, the next nine are made from them")
     if not feed:
         if folder:
             source = "photos"
@@ -538,7 +539,7 @@ def main():
     assumptions.append(f"Handle: @{handle}." if d["handle"] else "No username in the data; the cards say 'you'.")
     dated = lambda rows: sorted((r for r in rows if r.get("ts")), key=lambda r: r["ts"])
     lib = {k: dated(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
-    lib["photos"] = dated(named)
+    lib["photos"] = dated(named + recorded)
     dates = [r["ts"] for r in lib["posts"] + lib["reels"] + lib["stories"]]
     span = {"first": dt.datetime.fromtimestamp(min(dates), dt.timezone.utc).date().isoformat() if dates else None,
             "last": dt.datetime.fromtimestamp(max(dates), dt.timezone.utc).date().isoformat() if dates else None}

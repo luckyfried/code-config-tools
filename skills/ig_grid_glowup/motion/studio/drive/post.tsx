@@ -10,10 +10,10 @@
 // once it is near the wall), and carries the light wrap on its cut edges, except where it lies flat on its page's paper.
 import {useMemo} from 'react';
 import * as THREE from 'three';
-import {bezier, clamp01, lerp, span, type Pt} from '../../system/three/motion';
+import {bezier, clamp01, lerp, span} from '../../system/three/motion';
 import {ARC, easeOf, frameAt} from './frame';
 import {closedAt} from './page';
-import {toWorld, type Box, type Plan, type Post} from './plan';
+import {heldUv, toWorld, type Box, type Plan, type Post} from './plan';
 import {cornersOf, quad, rimMaterial, setQuad, setRim, UNIT, uvCorners, type Quad} from './quad';
 import {reflowOf} from './wall';
 
@@ -22,8 +22,6 @@ const WALL_Z = 1.5;
 const RECEDE = [60, 50];
 // the field's brightness once the frame has closed
 const DIM = 0.3;
-// how far the crop pushes in on the focus point over the hold, a share of its width
-const PUSH_IN = 0.05;
 // the light wrap's strength and width, a share of the card's shorter side
 const WRAP = 0.55;
 const WRAP_W = 0.07;
@@ -70,9 +68,6 @@ const fieldMaterial = (texture: THREE.Texture) => {
 
 const about = (o: THREE.Vector3, r: THREE.Matrix4) =>
   new THREE.Matrix4().makeTranslation(o.x, o.y, o.z).multiply(r).multiply(new THREE.Matrix4().makeTranslation(-o.x, -o.y, -o.z));
-
-/** A uv rect scaled about a point by `k`. */
-const toward = (uv: number[], f: Pt, k: number) => [f[0] + (uv[0] - f[0]) * k, f[1] + (uv[1] - f[1]) * k, f[0] + (uv[2] - f[0]) * k, f[1] + (uv[3] - f[1]) * k];
 
 export const PostView: React.FC<{plan: Plan; post: Post; index: number; t: number; texture: THREE.Texture}> = ({plan, post: p, index, t, texture}) => {
   const parts = useMemo(() => {
@@ -162,7 +157,7 @@ export const PostView: React.FC<{plan: Plan; post: Post; index: number; t: numbe
   // the crop: at the station, pushing in on the focus point over the hold, then drawing back and dropping into slot 0,
   // its 4:5 turning into the 3:4 cell
   const box: Box = [lerp(cx, sx, drop), lerp(cy, sy, drop), lerp(cw, sw, drop), lerp(ch, sh, drop)];
-  const held = toward(p.uvSubject, p.uvFocal, 1 - PUSH_IN * hold);
+  const held = heldUv(p, hold);
   const uv = held.map((v, i) => lerp(v, p.uv34[i], clamp01(drop))) as [number, number, number, number];
   const dist = Math.hypot(sx - cx + (sw - cw) / 2, sy - cy + (sh - ch) / 2);
   const z = lerp(p.z, WALL_Z, drop) + Math.sin(Math.PI * clamp01(drop)) * ARC * dist;

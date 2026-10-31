@@ -33,7 +33,10 @@ export const closedAt = (pg: Page, t: number, ease: (u: number) => number) => {
 
 const Words: React.FC<{plan: Plan; pg: Page; ln: PageLine; t: number; out: number}> = ({plan, pg, ln, t, out}) => {
   const enter = bezier(plan.ease.enter);
-  const style = {fontFamily: `'${plan.look.display}'`, fontWeight: pg.weight, letterSpacing: `${pg.tracking}em`};
+  // the face is drawn at its default optical size, the instance the plan measured each word's place in, so a word
+  // set one by one never runs into the next
+  const style = {fontFamily: `'${plan.look.display}'`, fontWeight: pg.weight, letterSpacing: `${pg.tracking}em`,
+    fontOpticalSizing: 'none' as const};
   if (pg.enter === 'slam' || pg.enter === 'rise') {
     return (
       <g>

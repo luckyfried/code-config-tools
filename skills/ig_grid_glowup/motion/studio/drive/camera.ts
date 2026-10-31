@@ -4,11 +4,13 @@
 // the move into it; over a beat whose words the board did not lay against the camera (the wall, a post the frame does
 // not hold) the card's move for the beat turns the framing, and the beat's move and cut add to the travel pass.
 import * as THREE from 'three';
+import {staticFile} from 'remotion';
 import {beatAt, fxAt, nudgeAt, type Timeline} from '../../system/moves/layer';
+import type {BeatOn} from '../../system/moves/types';
 import type {Pose} from '../../system/three/Stage';
 import {bezier, clamp01, lerp, mixPt} from '../../system/three/motion';
 import type {Travel} from '../../system/three/travel';
-import {toWorld, type Framing, type Plan} from './plan';
+import {heldUv, toWorld, type Framing, type Plan} from './plan';
 import {cornersOf} from './quad';
 
 /** Beats of the music at board beat `t`. */
@@ -127,21 +129,38 @@ const boxOn = (plan: Plan, pose: Pose, pts: THREE.Vector3[]): [number, number, n
 
 /** The film's beats as the card's moves read them: a photo beat (a post the frame holds) carries where its photograph
  * stands on the screen while the camera holds on it (`box`, the page's picture box) and the music's beats of the hold,
- * from the frame locking on the crop to the crop drawing back (`held`). A photo beat starts as the frame locks on the
+ * from the frame locking on the crop to the crop drawing back (`held`); a clip beat (a post made from their own clip) is
+ * read the same way. A photo beat starts as the frame locks on the
  * crop, so its move draws on the photograph where the camera holds it and never on the way in; the beat before it runs
  * until then. The caption stands on the post's page, so a photo beat's move is handed no words and moves the picture
  * alone. */
 export const timelineOf = (plan: Plan): Timeline => {
   const beats = plan.timeline.beats.map((b) => {
-    if (b.form !== 'photo') return b;
+    if (b.form !== 'photo' && b.form !== 'clip') return b;
     const p = plan.posts.find((q) => q.beat === b.id);
     if (!p) return {...b, words: '', label: ''};
     const from = p.times.close[0] + p.times.close[1], to = p.times.drop[0];
-    const mid = (from + to) / 2;
-    const pose = shotAt(plan, mid).pose;
-    const box = boxOn(plan, pose, cornersOf(p.crop).map((q) => new THREE.Vector3(...toWorld(plan, q, p.z))));
+    // a trailer move hands the frame back `hand` seconds after the lock (drive.py writes it on a beat whose move takes
+    // the frame), so its picture box is where the held crop stands at that moment; any other move reads the hold's
+    // middle
+    const hand = (b as typeof b & {hand?: number}).hand ?? 0;
+    const at = hand > 0 ? Math.min(to, from + (hand * plan.look.fps) / plan.pulse) : (from + to) / 2;
+    const pose = shotAt(plan, at).pose;
+    const crop = boxOn(plan, pose, cornersOf(p.crop).map((q) => new THREE.Vector3(...toWorld(plan, q, p.z))));
+    // the picture shows through the page's window when the post has a page, which stands inside the crop
+    const box = p.page ? p.page.pic : crop;
     const held: [number, number] = [musicAt(plan, from), musicAt(plan, to)];
-    return {...b, at: Math.max(b.at, held[0]), words: '', label: '', box, held};
+    // the post's own photograph, laid where the held crop shows it at the handback, so the move's last frame is the
+    // picture it gives way to
+    const [u0, v0, u1, v1] = heldUv(p, clamp01((at - from) / Math.max(1e-3, to - from)));
+    const pw = (crop[2] - crop[0]) / (u1 - u0), ph = (crop[3] - crop[1]) / (v1 - v0);
+    const place: [number, number, number, number] = [crop[0] - u0 * pw, crop[1] - (1 - v1) * ph, pw, ph];
+    return {...b, at: Math.max(b.at, held[0]), words: '', label: '', box, held, photo: staticFile(p.file), place};
   });
-  return {...plan.timeline, beats, cuts: beats.map((b, i) => (b.held ? b.at : plan.timeline.cuts[i]))};
+  const cuts = beats.map((b, i) => (b.held ? b.at : plan.timeline.cuts[i]));
+  // the film opens on their grid before its first beat: a beat with no move holds those moments, so the first beat's
+  // move never draws before it starts
+  if (!(cuts[0] > 0)) return {...plan.timeline, beats, cuts};
+  const opening: BeatOn = {id: 'opening', form: 'wall', at: 0, end: beats[0].at, move: undefined, transition: null, words: '', label: '', peak: false};
+  return {...plan.timeline, beats: [opening, ...beats], cuts: [0, ...cuts]};
 };

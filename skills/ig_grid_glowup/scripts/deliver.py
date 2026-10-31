@@ -20,6 +20,8 @@ without it, and on a failed gate that section names each failing check. Every fi
 deliver that was stopped leaves no half-written file there and no page that looks delivered. On a passing gate its
 last line is the reel's path from the project's root (build/<run>/out/film.mp4), the path the reply names first; on a
 failed gate it is "not ready: the gate failed on" and the failing checks, and no path.
+deliver.py delivers the full-size films only: it refuses a run whose newest render is the half-size proof
+(out/proof.mp4) and names the full-size render, qa.py check and vote.py cut to run before it.
 """
 import html
 import os
@@ -28,6 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import studio  # noqa: E402
 import vote  # noqa: E402
@@ -177,6 +180,8 @@ def main():
     # the gate reads pictures with Pillow: its re-exec happens here, before the lock, since an exec drops the lock's file
     _env.need("PIL")
     with studio.lock("deliver") as run:
+        if proof.scale(OUT / "film.mp4") != 1:
+            sys.exit(proof.refusal(OUT / "film.mp4"))
         return delivered(run)
 
 

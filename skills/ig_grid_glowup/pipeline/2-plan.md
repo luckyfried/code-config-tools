@@ -45,7 +45,9 @@ level, soft north window light"). The film holds on the first post, the middle o
 passes the others in a beat; on a passed post the shot is the texture between chapters, a close look at a surface
 that photograph shows ("the foam's cocoa dusting, 100 mm from above, raking window light"), and two posts passed one
 after the other never share a lens (the steam over the cup at 60 mm, then the crust's flour at 35 mm). `clips.py list`
-turns each shot into the clip request for its beat.
+turns each shot into the clip request for its beat. A clip they recorded (an mp4 or mov in their photo folder) is
+always one of the posts: the draft puts it on the peak, the held post in the middle, and the film plays the
+recording there from its strongest second with its sound off; its shot is still written, for the post's still.
 
 The film's own words go in `film`, in their voice and their case, never a date or a number:
 - `hook`, two to seven words that state the glow-up, set letter by letter on the hook's band in the first second;

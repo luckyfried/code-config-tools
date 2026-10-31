@@ -104,6 +104,9 @@ ROLES = ("bg", "ink", "paper", "accent", "accent2", "muted")
 # the least saturation a two-inks field prints at: a muted feed's hue lifted to a flat ink without turning neon, a
 # vivid feed's hue kept at its own strength
 INK = 0.62
+# the paper a black-and-white card prints a warm feed on (hue, lightness, saturation): an off-white of the warm light
+# their photographs carry, light enough that black reads on it as on white
+WARM_PAPER = (0.1, 0.95, 0.5)
 
 
 def swatches_of(taste, palette=None):
@@ -145,7 +148,7 @@ def palette_of(rule, swatches):
     photos: the swatches desaturated; paper the lightest of them lifted, bg the paper, ink the darkest, one muted
     accent. photos-plus-accent: pastel tints of the swatches; paper from their highlights, the most vivid tint the
     accent. two-inks: the most saturated hue (at INK saturation or its own, whichever is more) and its complement as
-    two flat fields that read against each other at the rule's contrast. mono-plus-one: black, white, and the swatches' most saturated hue. fixed: the card's warm or cool
+    two flat fields that read against each other at the rule's contrast. mono-plus-one: black, white (a warm paper for a warm feed), and the swatches' most saturated hue. fixed: the card's warm or cool
     roles, chosen by the swatches' warmth."""
     rgbs = [hex_rgb(h) for h in swatches]
     vivid = sorted(rgbs, key=lambda c: -hls(c)[2] * (1 - abs(hls(c)[1] - 0.5)))
@@ -186,9 +189,10 @@ def palette_of(rule, swatches):
         roles = {"bg": a, "ink": dark, "paper": light, "accent": b, "accent2": a, "muted": _mix(a, b, 0.5)}
     elif kind == "mono-plus-one":
         h, l, s = hls(vivid[0])
-        white, black = (255, 255, 255), (10, 10, 10)
+        # the white takes the feed's temperature: a warm feed's photographs sit on a warm paper, a cool feed's on white
+        white, black = (from_hls(*WARM_PAPER) if warmth(swatches) >= 0 else (255, 255, 255)), (10, 10, 10)
         accent = _toward(from_hls(h, 0.5, max(s, 0.8)), white, 3.0)
-        roles = {"bg": white, "ink": black, "paper": white, "accent": accent, "accent2": accent, "muted": (138, 138, 138)}
+        roles = {"bg": white, "ink": black, "paper": white, "accent": accent, "accent2": accent, "muted": _mix(black, white, 0.53)}
     else:
         raise SystemExit(f"no palette rule named {kind!r}")
     roles = {k: (v if isinstance(v, str) else _hex(v)).lower() for k, v in roles.items()}

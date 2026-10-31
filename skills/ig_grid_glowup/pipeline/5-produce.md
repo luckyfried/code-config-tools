@@ -22,12 +22,14 @@ brought to life on each post the frame holds and the texture between chapters on
 post's `shot`), each naming the camera move of its beat, its seconds and a seamless loop. Read every prompt it prints:
 a prompt that does not read as a shot a cinematographer would ask for is fixed in the plan (`plan.py check`, then
 `storyboard.py draft`, `sheets` and `pick` and the steps after it), never in the requests file. With a video model, generate each clip from the
-photograph it names and save it where it says (`clips/NN.mp4`). Then:
+photograph it names and save it where it says (`clips/NN.mp4`). A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests <run>/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks. Then:
 
 ```
 python3 S/scripts/clips.py normalize --why "no video model in this session"
 ```
 
+A post made from a clip they recorded asks for nothing: `list` names it as their own clip, and `normalize`
+conforms the recording itself, one shot the length of its beat from its strongest second, sound off.
 `normalize` conforms each clip that arrived and records the rest as stand-ins (`clips.json`); `--why` says, in plain
 words, why the missing ones did not arrive, and leave it off when every clip arrived. A stand-in is the move the board
 names for it on the still photograph: on a held post the crop forward of its own photograph, which recedes and dims
@@ -52,18 +54,27 @@ python3 S/scripts/music.py master
 ```
 
 `analyze` reads a track they brought (its tempo, beat grid and downbeats); a composed bed needs no reading. `master`
-lays the music on the cut's tempo from its first downbeat and puts the board's sound cues under it (`hit`, `riser`,
-`impact`, `stop`, played in the recipe's own instruments, each where its beat lands), the effects `FX_UNDER_BED_LU` (8)
-LU under the bed. It stops the music on the board's stop cue with the picture and brings the mix to -14 LUFS
-integrated with a true peak under -1.5 dB. It prints both loudness numbers and writes them to `music.json` and to the
+lays the music on the cut's tempo from its first downbeat, stops it on the board's stop with the picture, and brings
+the music alone to -14 LUFS integrated by one gain, written in 32-bit float so its peaks are kept whole; the film's
+mux lays the board's effects (`sfx.py`) under the picture and limits the music and the effects together, once. master
+lays those effects alone to measure them, `FX_UNDER_BED_LU` (8) LU or more under the music. It prints both loudness
+numbers and writes them to `music.json` and to the
 storyboard's `Mixed:` line (its `Music:` line takes the origin); the gate's audio row is red when the effects sit less
 than 7 LU under.
 
-## Render
+## Render the proof
 
 ```
-python3 S/scripts/film.py render
+python3 S/scripts/film.py render --proof
 ```
+
+Every round before deliver renders the proof: the three films at half size, `out/proof.mp4`,
+`out/proof-landscape.mp4` and `out/proof-square.mp4`, with the posts, the Story card, the caption file, the grid
+after and the frames exactly as the full render makes them. It never writes over `out/film.mp4`. `qa.py check` and
+`vote.py cut` read the proof while it is the newest render, and every size and place they measure on it is in the
+full-size film's numbers. The full-size render, `film.py render` without `--proof`, comes once the critics' verdict
+on the proof is in (`pipeline/6-deliver.md`); it is the render deliver takes, and it takes the proof's films out of
+`out/`.
 
 `render` refuses a board that is not the one picked (`winner.json`) and runs the swap test, which `plan.py check`
 already ran on the cells as planned, on the nine as placed (`critic/swap.json`). It renders the three films from the
@@ -84,7 +95,7 @@ says `render <name>: N chunks kept, M rendered, K to go`. Never start over and n
 cut, photograph or kit renders into chunks of its own by itself. Only one render runs in a run at a time; a second
 one exits and names the log of the one running.
 
-Run the preview and the render each in the foreground in one tool call, and ask for a 40-minute timeout on that call, which the session allows; never start either in the background. Its progress is in `render/<name>.log`
+Run the preview, the proof and the full-size render each in the foreground in one tool call, and ask for a 40-minute timeout on that call, which the session allows; never start either in the background. Its progress is in `render/<name>.log`
 (`render/preview.log`, `render/film.log`). Once the first chunks have landed, the seconds one chunk took times the
 chunks still to go is the estimate to tell the person.
 

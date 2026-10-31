@@ -49,6 +49,7 @@ import compose  # noqa: E402
 import drive  # noqa: E402
 import grade  # noqa: E402
 import music_engine  # noqa: E402
+import sfx  # noqa: E402
 import studio  # noqa: E402
 from plan import bare, cell_words  # noqa: E402
 
@@ -137,7 +138,8 @@ def breaks_of(before):
 def next_posts(plan):
     """The new posts as the film shows them: each page carries the words its photograph came with (`said`) whole, else
     the post's caption as the plan wrote it in their voice; the plan's caption is also the moment, for the storyboard,
-    and its shot is the clip it asks for."""
+    and its shot is the clip it asks for. A post made from a clip they recorded carries it (`clip`: the file and the
+    second it is shown from)."""
     files = [s["photo"] for s in plan["slots"]]
     grade.grade_photos(files)
     out = []
@@ -147,6 +149,8 @@ def next_posts(plan):
              "moment": s.get("caption") or "", "shot": s.get("shot") or "", "follows": s["follows"], "place": s["place"]}
         if s.get("lesson"):
             p["lesson"] = s["lesson"]
+        if s.get("clip"):
+            p["clip"] = s["clip"]
         out.append(p)
     return out
 
@@ -198,11 +202,17 @@ def tempo_of(card, brief, seed):
 
 
 def boards_of(style, tempo, before, nine, plan, audit, breaks, taste, palette, handle, bio):
-    """One style's board in every format: the reel's first, and every other format on the reel's beat frames."""
+    """One style's board in every format: the reel's first, and every other format on the reel's beat frames. A reel
+    that runs past the length band gives up the trailer moves besides the peak's, the last held post's first, until it
+    fits."""
     args = (before, nine, plan, audit, breaks, taste, palette, handle, bio)
-    reel = drive.build("reel", *args, style=style, tempo=tempo)
+    for extra in (None, 1, 0):
+        reel = drive.build("reel", *args, style=style, tempo=tempo, extra=extra)
+        if reel["seconds"] <= LENGTH[1]:
+            break
     frames = [b["frames"] for b in reel["beats"][:-1]]
-    return {fmt: reel if fmt == "reel" else drive.build(fmt, *args, frames, style=style, tempo=tempo) for fmt in FORMATS}
+    return {fmt: reel if fmt == "reel" else drive.build(fmt, *args, frames, style=style, tempo=tempo, extra=extra)
+            for fmt in FORMATS}
 
 
 def board_of(letter, style, inputs, first_day, handle):
@@ -309,8 +319,35 @@ def cmd_check(a):
     return 1 if bad else 0
 
 
+# what each effect is on, by the kind of the beat it falls in
+EFFECT_ON = {"Title": "the line lands", "Wall": "the frame lands on the wall", "Photo": "the photograph comes in",
+             "Closer": "the frame locks round the first screen"}
+
+
+def effects_of(reel):
+    """The reel's sound effects as (seconds, effect, what it is on), on the grid at the board's tempo."""
+    fx = reel.get("fx") or {"bpm": reel["tempo"], "beats": []}
+    sec = 60 / fx["bpm"]
+    beats = sfx.beats_of(fx)
+    out = []
+    for t, kind in sfx.events(fx)[0]:
+        b = max((b for b in beats if b["start"] * sec <= t + 0.2), key=lambda b: b["start"], default=None)
+        if not b:
+            what = ""
+        elif kind == "shutter":
+            what = f"the photograph lands on its picture by {b['move']}" if b["move"] in drive.ARRIVES else "the post seats in the grid"
+        elif kind == "impact" and b["move"] == "slam-words":
+            what = "a word of the line slams home"
+        else:
+            what = "the closing card lands" if b["id"] == "closing-card" else EFFECT_ON.get(b["kind"], b["kind"])
+        what = f"{b['id'].removesuffix('-seat')}: {what}" if b else what
+        out.append((t, kind, what))
+    return out
+
+
 def storyboard_md(board):
     reel = board["boards"]["reel"]
+    effects = effects_of(reel)
     at, out = 0, [f"# Storyboard {board['letter']}: {board['name']}, reel", "",
                   f"Cut at {board['tempo']:g} bpm, the tempo its music is composed at.", "",
                   "| beat | from (s) | move | what the move reveals | what it carries across the cut |", "|---|---|---|---|---|"]
@@ -321,13 +358,16 @@ def storyboard_md(board):
         at += b["frames"]
     out += ["", "## Sound", "", "Music: not yet; music.py master names it here.",
             "Mixed: not yet; music.py master writes the bed's and the effects' loudness here.", "",
-            f"One cue where each beat lands ({len(reel['sound'])} cues over {len(reel['beats'])} beats), under the music:", "",
-            "| at (s) | cue | what it is on |", "|---|---|---|"]
-    for c in reel["sound"]:
-        out.append(f"| {c['at'] * 60 / reel['bpm']:.2f} | {c['kind']} | {c['what']} |")
+            f"The sound effects (sfx.py) on the beats they land on, on the music's grid ({len(effects)} effects over "
+            f"{len(reel['beats'])} beats), over the music, which stops at {reel['stop_seconds']:.2f} s on the closing card:", "",
+            "| at (s) | effect | what it is on |", "|---|---|---|"]
+    for t, kind, what in effects:
+        out.append(f"| {t:.2f} | {kind} | {what} |")
     out += ["", "## Clips", ""]
     for c in reel["clips"]:
-        out.append(f"- {c['id']} ({c['beat']}, {c['seconds']} s, {c['image']}): {c['prompt']}. Stands in: {c['stand_in']}.")
+        out.append(f"- {c['id']} ({c['beat']}, {c['seconds']} s): their own clip, {Path(c['source']).name} from "
+                   f"{c['from']:.2f} s, sound off." if c["role"] == "their own clip" else
+                   f"- {c['id']} ({c['beat']}, {c['seconds']} s, {c['image']}): {c['prompt']}. Stands in: {c['stand_in']}.")
     return "\n".join(out) + "\n"
 
 

@@ -2,7 +2,9 @@
 """The measured checks and the gate that refuses delivery.
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/qa.py check     # the board and the rendered films, posts and grid images (before the critics watch)
+    python3 S/scripts/qa.py check     # the board and the newest render's films, posts and grid images (before the critics
+                                      # watch): the half-size proof while out/proof.mp4 is there, which its first line
+                                      # says, else the full-size films
     python3 S/scripts/qa.py gate      # check and the run's records; exit 0 only when every check passes
 
 Two figures are printed and written beside the checks and are never a pass or a fail: the critic reads them with the
@@ -18,16 +20,20 @@ board (board.json, the board storyboard.py pick made):
             format
   length    the reel runs inside the length band: 15-30 s for nine posts, the floor scaled down for fewer
   hook      the hook event (the frame landing on the first post that breaks the grid) lands inside the first 30 frames
-check (the rendered out/, for the formats render/film.json names; qa/check.json names the reel it measured):
+check (the rendered out/, for the formats render/film.json names; qa/check.json names the reel it measured). On the
+proof (out/proof.mp4, out/proof-landscape.mp4, out/proof-square.mp4) every size and place is measured in board units:
+the size read is divided by the proof's scale before it is held to the format's, and the held pages' frames are read
+at the board's size, so a proof passes or fails each row exactly where the full-size film would. The gate reads the
+full-size films only.
   format    out/film.mp4 1080x1920, out/film-landscape.mp4 1920x1080 and out/film-square.mp4 1080x1080: H.264, yuv420p,
             30 fps, inside the length band
-  audio     with music, an AAC track near 192 kbps at -14 LUFS integrated, within 1 LU, and the effects stem
-            music.py master measured sitting FX_UNDER_BED_LU - 1 LU or more under the bed; the row prints both
-            loudness numbers, the cue and beat counts, the second each cue falls on, and the second the music stops
-            as the ask lands, and refuses nothing on the count
+  audio     with music, an AAC track near 192 kbps at -14 LUFS integrated, within 1 LU, and the board's sound effects
+            music.py master measured sitting FX_UNDER_BED_LU - 1 LU or more under the music; the row prints both
+            loudness numbers, the effect and beat counts, the second each effect falls on, and the second the music
+            stops as the ask lands, and refuses nothing on the count
   black     no black frame anywhere, not even one between two pictures (blackdetect, one frame long)
-  frozen    no frozen stretch of 1.0 s or more (freezedetect at -80 dB) starting before the board's stop: frames
-            that repeat, as a stalled render's do; the still the board holds from its stop to the end is the ending
+  frozen    no frozen stretch of 1.0 s or more (freezedetect at -80 dB) anywhere in the film, its ending too: frames
+            that repeat, as a stalled render's do; the closer keeps its slow push from the stop to the last frame
   cards     every held post's page with words read from the film's own frames over its hold (three frames, from its
             last word in to the frame before its words leave): its caption's ink, in the caption's color, found and
             inside the format's safe width; every held post whose photograph came with words shows them on its page
@@ -64,9 +70,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import drive  # noqa: E402
 import plan as plan_check  # noqa: E402
+import proof  # noqa: E402
 import storyboard as SB  # noqa: E402
 import studio  # noqa: E402
 import music  # noqa: E402
+import sfx  # noqa: E402
 import vote  # noqa: E402
 
 PLACEHOLDER = re.compile(r"\bTODO\b|\bTBD\b|\blorem\b|\bipsum\b|\{\{|\}\}|\bXXX\b|\bPLACEHOLDER\b|@handle\b|your_handle|\bundefined\b|\bNaN\b|\bNone\b")
@@ -100,13 +108,6 @@ def png_size(p):
 
 def detect(film, flt, key, run=None):
     return [ln for ln in studio.ff(["-i", str(film), "-vf", flt, "-an", "-f", "null", "-"], run).splitlines() if key in ln]
-
-
-def held_from(board):
-    """Where the board holds its picture still to the end (its `stop` sound cue), in seconds; never, without one."""
-    reel = board["boards"]["reel"]
-    stop = next((c["at"] for c in reel.get("sound") or [] if c["kind"] == "stop"), None)
-    return stop * 60 / reel["bpm"] if stop is not None else float("inf")
 
 
 def loudness(film, run=None):
@@ -152,25 +153,26 @@ def board_checks():
 
 
 def mix(track, reel):
-    """The mix music.py master measured (music.json `track`): whether the effects sit far enough under the bed, and the
-    line that says where they sit, how many cues play over the reel board's beats, the second each cue falls on, and
-    where the music stops: on the stop cue, as the ask lands, with the picture held in silence after it."""
-    cues = track.get("sound_cues") or 0
+    """The mix music.py master measured (music.json `track`): whether the effects sit far enough under the music, and
+    the line that says where they sit, how many effects play over the reel board's beats, the second each falls on,
+    and where the music stops: on the closing card, as the ask lands, with the picture held in silence after it."""
     under = track["bed_lufs"] - track["fx_lufs"] if "fx_lufs" in track and "bed_lufs" in track else None
-    said = (f"bed {track['bed_lufs']} LUFS, effects {track['fx_lufs']} LUFS, {under:.1f} LU under (at least {music.FX_UNDER_BED_LU - 1})"
-            if under is not None else "no effects stem measured")
-    sec = lambda c: c["at"] * 60 / reel["bpm"]
-    sound = reel.get("sound") or []
-    placed = ", ".join(f"{c['kind']} {sec(c):.2f} s" for c in sound)
-    stop = next((c for c in sound if c["kind"] == "stop"), None)
-    ends = (f"the music stops at {sec(stop):.2f} s as the ask lands and the profile holds in silence to "
-            f"{reel['seconds']:.2f} s" if stop else "no stop cue: the music tails out over the last seconds")
-    return ((not cues or (under is not None and under >= music.FX_UNDER_BED_LU - 1)),
-            f"{said}; {cues} sound cues over {len(reel.get('beats') or [])} beats at {placed or 'none'}; {ends}")
+    said = (f"music {track['bed_lufs']} LUFS, effects {track['fx_lufs']} LUFS, {under:.1f} LU under (at least {music.FX_UNDER_BED_LU - 1})"
+            if under is not None else "no effects measured")
+    fx = reel.get("fx") or {"beats": []}
+    record = dict(track, bpm=reel.get("tempo")) if track.get("on_cut_tempo") and reel.get("tempo") else track
+    ev = sfx.events(fx, sfx.music_of(fx, record)[0])[0]
+    placed = ", ".join(f"{k} {t:.2f} s" for t, k in ev)
+    stop = reel.get("stop_seconds")
+    ends = (f"the music stops at {stop:.2f} s as the ask lands and the profile holds in silence to {reel['seconds']:.2f} s"
+            if stop else "no stop: the music tails out over the last seconds")
+    return ((not ev or (under is not None and under >= music.FX_UNDER_BED_LU - 1)),
+            f"{said}; {len(ev)} effects over {len(reel.get('beats') or [])} beats at {placed or 'none'}; {ends}")
 
 
-def film_checks(run=None):
-    """The rendered films, posts and grid images; under a command's lock (`run`) every probe starts through run.spawn."""
+def film_checks(run=None, scale=1):
+    """The rendered films, posts and grid images: the full-size films, or the proof's at `scale` (proof.SCALE), measured
+    in board units; under a command's lock (`run`) every probe starts through run.spawn."""
     res = Checks()
     board = board_of()
     lo, hi = SB.length_band(len(board["nine"]))
@@ -180,10 +182,10 @@ def film_checks(run=None):
         return res, board, None
     with_music = done.get("music")
     placed, mixed = mix(_env.read_json("music.json") or {}, board["boards"]["reel"])
-    held = held_from(board)
     measured = None
     for fmt in done["formats"]:
         film, size = FILMS[fmt]
+        film = proof.of(film) if scale != 1 else film
         if not film.exists():
             res("format", False, f"{film} is missing")
             continue
@@ -191,9 +193,11 @@ def film_checks(run=None):
         v = next((s for s in p.get("streams", []) if s.get("codec_type") == "video"), {})
         a = next((s for s in p.get("streams", []) if s.get("codec_type") == "audio"), None)
         secs = float(p.get("format", {}).get("duration") or 0)
-        ok = (v.get("width"), v.get("height")) == size and v.get("codec_name") == "h264" and v.get("pix_fmt") == "yuv420p" \
+        got = proof.board((v.get("width") or 0, v.get("height") or 0), scale)
+        ok = got == size and v.get("codec_name") == "h264" and v.get("pix_fmt") == "yuv420p" \
             and v.get("r_frame_rate") == "30/1" and lo <= secs <= hi
-        res("format", ok, f"{film}: {v.get('width')}x{v.get('height')} {v.get('codec_name')} {v.get('profile')} {v.get('pix_fmt')} "
+        res("format", ok, f"{film}: " + (f"{got[0]}x{got[1]} in board units, rendered at " if scale != 1 else "")
+                          + f"{v.get('width')}x{v.get('height')} {v.get('codec_name')} {v.get('profile')} {v.get('pix_fmt')} "
                           f"{v.get('r_frame_rate')} fps, {secs:.2f} s, {film.stat().st_size / 1e6:.1f} MB, {film.stat().st_size * 8e-6 / max(secs, 0.001):.1f} Mbit/s")
         if with_music:
             lu = loudness(film, run) if a else None
@@ -203,10 +207,9 @@ def film_checks(run=None):
         black = detect(film, "blackdetect=d=0.01:pix_th=0.10", "black_start", run)
         res("black", not black, f"{film}: {len(black)} black stretches of a frame or more"
             + (f" (the first {black[0].split('black_start:')[-1].split()[0]} s)" if black else ""))
-        frozen = [ln for ln in detect(film, "freezedetect=n=-80dB:d=1.0", "freeze_start", run) if float(ln.split(":")[-1]) < held - 0.04]
-        res("frozen", not frozen, f"{film}: {len(frozen)} frozen stretches of 1.0 s or more before the stop at {held:.2f} s"
-            + (f" ({frozen[0][-40:]})" if frozen else ""))
-        bad, n, widest = cards_check(board["boards"][fmt], fmt, film, run)
+        frozen = detect(film, "freezedetect=n=-80dB:d=1.0", "freeze_start", run)
+        res("frozen", not frozen, f"{film}: {len(frozen)} frozen stretches of 1.0 s or more" + (f" ({frozen[0][-40:]})" if frozen else ""))
+        bad, n, widest = cards_check(board["boards"][fmt], fmt, film, run, scale)
         bad += [f"{k} came with words and its page shows none" for k in words_lost(board["boards"][fmt], board["nine"])]
         res("cards", not bad, f"{film}: " + ("; ".join(bad[:3]) + (f" (and {len(bad) - 3} more)" if len(bad) > 3 else "") if bad else
                                              f"{n} held page frames, caption inside the safe width: "
@@ -214,7 +217,8 @@ def film_checks(run=None):
                                              "no photograph of the posts came with words, so no card to measure"))
         if fmt == "reel":
             Path("qa").mkdir(exist_ok=True)
-            measured = studio.measure(film, board["cuts_at"], board["hook_frame"], strips="qa", run=run)
+            # the strips are the newest render's, qa/film-strip*.png, for the proof as for the film
+            measured = studio.measure(film, board["cuts_at"], board["hook_frame"], strips="qa", run=run, name="film")
             _env.write_json("qa/film.check.json", measured)
             figures(res, measured)
     rep = _env.read_json("render/film-report.json") or {}
@@ -225,7 +229,7 @@ def film_checks(run=None):
     res("swap", sw.get("pass"), f"{len(sw.get('swap') or {})} photographs placed by detail" + "".join(f"; {o['at']}: {o['text']}" for o in sw.get("objections", []))
         if sw else "critic/swap.json is missing: run film.py render")
     res("posts", *posts_check(len(board["nine"])))
-    res("out", *out_check(board, done["formats"]))
+    res("out", *out_check(board, done["formats"], scale))
     if board.get("before"):
         res("grid", BEFORE.exists() and AFTER.exists(), f"grid-before.png {'there' if BEFORE.exists() else 'missing'}, "
             f"grid-after.png {'at %dx%d' % png_size(AFTER) if AFTER.exists() else 'missing'}")
@@ -241,10 +245,12 @@ def hold_reads(times, pg):
     return sorted({round(t0, 3), round((t0 + t1) / 2, 3), round(t1, 3)} if t1 > t0 else {round(t1, 3)})
 
 
-def card_frames(fb, fmt, film, out=Path("qa/cards"), run=None):
+def card_frames(fb, fmt, film, out=Path("qa/cards"), run=None, scale=1):
     """Each held post's page read from the rendered film over its hold, from its last word in to the frame before its
     words leave: on three frames, the left and right edges of the ink of its caption in the caption's own color, read
-    along the rows its lines stand on, px. Returns [(post, frame, {caption})]."""
+    along the rows its lines stand on, px of the board. A film rendered at `scale` (the proof) has its frames read at
+    the board's size, each of its px standing for 1 / scale of the board's, so every edge is in board units. Returns
+    [(post, frame, {caption})]."""
     _env.need("PIL")
     from PIL import Image
     W, H = fb["format"]["width"], fb["format"]["height"]
@@ -262,7 +268,8 @@ def card_frames(fb, fmt, film, out=Path("qa/cards"), run=None):
     for old in out.glob(f"{fmt}-*.png"):
         old.unlink()
     (run.spawn if run else subprocess.run)([_env.ffmpeg(), "-hide_banner", "-loglevel", "error", "-nostdin", "-i", str(film), "-vf",
-                                            "select='" + "+".join(f"eq(n,{n})" for n in ns) + "'", "-vsync", "0",
+                                            "select='" + "+".join(f"eq(n,{n})" for n in ns) + "'"
+                                            + (f",scale={W}:{H}:flags=neighbor" if scale != 1 else ""), "-vsync", "0",
                                             str(out / f"{fmt}-%02d.png")], check=True)
     shots = {n: Image.open(out / f"{fmt}-{i + 1:02d}.png").convert("RGB") for i, n in enumerate(ns)}
     found = []
@@ -291,12 +298,13 @@ def words_lost(fb, nine):
     return sorted(came & lost, key=lambda k: int(k.split("-")[1]))
 
 
-def cards_check(fb, fmt, film, run=None):
-    """Every held page frame of one format's film: its caption found, inside the safe width."""
+def cards_check(fb, fmt, film, run=None, scale=1):
+    """Every held page frame of one format's film (rendered at `scale`): its caption found, inside the safe width, in
+    board units."""
     safe = fb["system"]["safe"][fmt]
     W = fb["format"]["width"]
     lo, hi = safe["left"] - 1, W - safe["right"] + 1
-    seen = card_frames(fb, fmt, film, run=run)
+    seen = card_frames(fb, fmt, film, run=run, scale=scale)
     bad = [f"{name} at frame {n}: " + (f"no {what} ink found on the page" if e is None else
                                         f"the {what} runs {e[0]} to {e[1]}, the safe width {safe['left']} to {W - safe['right']}")
            for name, n, s in seen for what, e in s.items() if e is None or e[0] < lo or e[1] > hi]
@@ -321,10 +329,13 @@ def posts_check(m):
                                                    f"least difference between two posts {least:.1f}")
 
 
-def out_check(board, formats):
-    """out/ holds every deliverable of this render and nothing else."""
-    extra = sorted(p.name for p in Path("out").iterdir() if p.name not in OUT) if Path("out").exists() else []
-    need = [FILMS[f][0] for f in formats] + [STORY, CAPTION, AFTER]
+def out_check(board, formats, scale=1):
+    """out/ holds every deliverable of this render and nothing else; while the newest render is the proof (`scale`),
+    its films are in out/ in the films' place, and a proof is never a deliverable of the full-size render."""
+    films = [proof.of(FILMS[f][0]) if scale != 1 else FILMS[f][0] for f in formats]
+    allowed = OUT | {f.name for f in films}
+    extra = sorted(p.name for p in Path("out").iterdir() if p.name not in allowed) if Path("out").exists() else []
+    need = films + [STORY, CAPTION, AFTER]
     missing = [str(f) for f in need if not f.exists()]
     if STORY.exists() and png_size(STORY) != (1080, 1920):
         missing.append(f"{STORY} at 1080x1920 (it is {'%dx%d' % png_size(STORY)})")
@@ -401,12 +412,12 @@ def gate_checks(run=None):
     return res, board
 
 
-def report(res, path, board, label):
+def report(res, path, board, label, reel=FILMS["reel"][0]):
+    """The rows printed and written to `path`, naming the reel they measured (`reel`: the proof's on a proof)."""
     bad = [r for r in res if r[1] is False]
     for name, ok, detail, *_ in res:
         print(f"{'' if ok is None else 'PASS' if ok else 'FAIL':4s}  {name:9s} {detail}")
     Path(path).parent.mkdir(exist_ok=True)
-    reel = FILMS["reel"][0]
     _env.write_json(path, {"pass": not bad, "hash": board["hash"], "film": sha(reel) if reel.exists() else None,
                            "checks": [{"check": r[0], "pass": r[1], "detail": r[2]} for r in res if r[1] is not None],
                            "figures": {r[0]: dict(r[3], detail=r[2]) for r in res if r[1] is None}})
@@ -420,8 +431,12 @@ def main():
     a = ap.parse_args()
     _env.enter_run()
     if a.cmd == "check":
-        res, board, _ = film_checks()
-        return report(res, "qa/check.json", board, "CHECKS")
+        reel = FILMS["reel"][0]
+        scale = proof.scale(reel)
+        if scale != 1:
+            print(proof.reading(proof.of(reel)))
+        res, board, _ = film_checks(scale=scale)
+        return report(res, "qa/check.json", board, "CHECKS", proof.newest(reel))
     res, board = gate_checks()
     return report(res, "qa/gate.json", board, "GATE")
 

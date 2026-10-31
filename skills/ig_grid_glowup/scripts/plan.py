@@ -237,6 +237,10 @@ class Pool:
                     continue
                 out.append(r)
                 parents.add(parent(r["src"]))
+        # a clip they recorded is always one of the posts: their best clip takes the place of the last photograph
+        clip = next((r for r in ranked if r.get("from") is not None), None)
+        if clip and out and not any(r.get("from") is not None for r in out):
+            out[-1] = clip
         return out
 
     def words_for(self, row, taken):
@@ -301,6 +305,14 @@ def cmd_draft(a):
     calm, busy = rows[:len(calm_slots)], rows[len(calm_slots):]
     calm.sort(key=lambda r: -r.get("bright", 0))
     at = {s: (r, "calm") for s, r in zip(calm_slots, calm)} | {s: (r, "busy") for s, r in zip(busy_slots, busy)}
+    # a clip goes on the peak, the held post read longest (the first post when there are fewer than five), so it plays
+    # whole on the frame; the photograph there takes the clip's slot, and each keeps its own place, calm or busy, so
+    # the swap test reads every post by its own detail
+    there = m - 1 - (m // 2 if m >= 5 else 0)
+    for s_ in list(at):
+        if at[s_][0].get("from") is not None and s_ != there:
+            at[s_], at[there] = at[there], at[s_]
+            break
     cad = cadence()
     days = dates(cad, m)
     lower = bool((pool.taste.get("register") or {}).get("lowercase"))
@@ -326,7 +338,8 @@ def cmd_draft(a):
                       "place": place, "slot": m - n, "grid_spot": grid_spot(n, m),
                       "focal": r["focal"], "crop45": r["crop45"], "crop34": r["crop34"],
                       "follows": near[0]["pos"] + 1 if near else None, "caption": short(cap, 120) if cap else "",
-                      "said": pool.captions.get(str(r.get("src")), ""), "shot": "", "lesson": None})
+                      "said": pool.captions.get(str(r.get("src")), ""), "shot": "", "lesson": None,
+                      **({"clip": {"src": r["src"], "from": r["from"]}} if r.get("from") is not None else {})})
     plan = {"handle": pool.lib.get("handle") or pool.taste.get("handle") or "you", "cadence": cad, "drafted": True,
             "lessons": lessons, "film": {"hook": "", "ask": "", "world": ""}, "slots": slots}
     publish(plan)

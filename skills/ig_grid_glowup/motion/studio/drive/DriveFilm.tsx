@@ -23,6 +23,8 @@ import {cellBox, planOf, toWorld, type Plan} from './plan';
 import {PostView} from './post';
 import {Wall} from './wall';
 
+// how long their header takes to sink before the closing card takes the frame
+const SINK = 0.35;
 // how far the closer pushes in, as a share of the frame, between their header's entrance and the stop
 const CLOSER_PUSH = 0.025;
 // how far the hook's title page pushes in, as a share of the frame, from the first frame to the paper opening out:
@@ -87,19 +89,30 @@ const useClipFrame = (src: string | null) => {
   return tex;
 };
 
+/** A clip's last frame, which its photograph keeps once the clip has played. */
+const lastOf = (c: Clip) => `${c.dir}/${String(c.frames).padStart(4, '0')}.jpg`;
+
 const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, Font>; clips: Clip[]}> = ({plan, t, frame, fonts, clips}) => {
-  const files = useMemo(() => [...new Set([...plan.cells.map((c) => c.file), ...plan.posts.map((p) => p.file)])], [plan]);
+  const files = useMemo(
+    () => [...new Set([...plan.cells.map((c) => c.file), ...plan.posts.map((p) => p.file), ...clips.map(lastOf)])],
+    [plan, clips],
+  );
   const textures = useLoader(SteadyTextureLoader, files.map((f) => staticFile(f))) as THREE.Texture[];
   useMemo(() => textures.forEach((tx) => {
     tx.colorSpace = THREE.SRGBColorSpace;
     tx.anisotropy = 8;
     tx.needsUpdate = true;
   }), [textures]);
-  // a generated clip plays on its photograph over its beat; with none, the photograph holds
+  // a clip plays on its photograph over its beat and leaves its last frame there, so the post the camera pulls back
+  // from shows the moment the clip ended on; with no clip, the photograph holds
   const clip = clips.find((c) => frame >= c.from && frame < c.from + c.frames);
   const clipSrc = clip ? `${clip.dir}/${String(frame - clip.from + 1).padStart(4, '0')}.jpg` : null;
   const clipTex = useClipFrame(clipSrc);
-  const texOf = (f: string) => (clip && clip.image === f ? clipTex : textures[files.indexOf(f)]);
+  const texOf = (f: string) => {
+    if (clip && clip.image === f) return clipTex;
+    const played = clips.filter((c) => c.image === f && frame >= c.from + c.frames).sort((a, b) => b.from - a.from)[0];
+    return textures[files.indexOf(played ? lastOf(played) : f)];
+  };
   const light = useMemo(() => {
     const d = new THREE.DirectionalLight(plan.light, 1.6);
     d.position.set(-900, 1500, 2600);
@@ -159,22 +172,22 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, 
 /**
  * The closer's header, set as type a browser sets over the band's paper as the frame locks on it: their
  * handle in the card's display face, their bio in its text face as they wrote it, emoji and all, never recased; each
- * line rises out of its baseline on the card's entrance as it appears, and sinks as the card's closing card takes the
- * frame.
+ * line rises out of its baseline on the card's entrance as it appears, and sinks back into it in the SINK seconds before
+ * the card's closing card takes the frame, so the closing card's first ink never lands on their words.
  */
 const Header: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
   const {header, look} = plan;
   const enter = bezier(plan.ease.enter);
   const until = (plan.closerShape.at * plan.look.pulse) / plan.pulse;
-  if (!header.lines.length || t < header.at || t >= until + 0.4) return null;
-  const out = clamp01((t - until) / 0.4);
+  if (!header.lines.length || t < header.at || t >= until) return null;
+  const out = enter(clamp01((t - (until - SINK)) / SINK));
   return (
     <svg width={plan.W} height={plan.H} style={{position: 'absolute', inset: 0}}>
       {header.lines.map((ln) => {
         const u = enter(clamp01((t - ln.at) / 0.45));
         const shown = Math.min(clamp01((t - ln.at) / 0.2), 1 - out);
         return (
-          <text key={ln.name} x={ln.x} y={ln.y + (1 - u) * ln.size * 0.35} fontSize={ln.size} opacity={shown}
+          <text key={ln.name} x={ln.x} y={ln.y + (1 - u + out) * ln.size * 0.35} fontSize={ln.size} opacity={shown}
             fontFamily={`'${ln.face === 'display' ? look.display : look.text}', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif`}
             fontWeight={ln.bold ? 700 : 500} fill={plan.colors.ink}>
             {ln.text}
@@ -213,7 +226,7 @@ export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
     <>
       <Header plan={plan} t={t} />
       <Pages plan={plan} t={t} />
-      <MoveLayer line={line} look={plan.look} t={tm} closer={plan.closerShape} bars={plan.finish.bars} />
+      <MoveLayer line={line} look={plan.look} t={tm} now={musicAt(plan, t)} closer={plan.closerShape} bars={plan.finish.bars} />
     </>
   );
   return (

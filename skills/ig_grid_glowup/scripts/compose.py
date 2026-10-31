@@ -14,6 +14,14 @@ STYLES = SKILL / "styles"
 # the three boards a run drafts by default, A, B and C: a grid of hard cuts and one accent, type that slams on the
 # beat, and a quiet editorial page; a named style takes A and the two of these that differ most from it take B and C
 TRIO = ("swiss-grid", "kinetic-type", "editorial-quiet")
+# the trailer moves a glow-up adds to the cards of the looks that want energy, whose cards name them nowhere else: a
+# photograph the frame holds arrives down a tunnel of the other photographs, on a wall of prints that swings square,
+# or coming apart into its printed planes and closing back to one
+MORE_MOVES = {"swiss-grid": [{"id": "picture-tunnel", "fits": ["photo", "peak"]},
+                             {"id": "exploded-layers", "fits": ["photo", "portrait", "people"]}],
+              "kinetic-type": [{"id": "exploded-layers", "fits": ["photo", "peak"]},
+                               {"id": "picture-tunnel", "fits": ["photo", "landscape"]},
+                               {"id": "tilted-wall", "fits": ["photo", "landscape", "people"]}]}
 AXES = ("family", "palette", "camera", "transition", "finish", "music")
 LETTERS = "ABC"
 
@@ -84,7 +92,8 @@ _CARDS = {}
 
 
 def card(style):
-    """The style card `style`, validated, or SystemExit naming the styles there are and what the card breaks."""
+    """The style card `style`, validated, with the moves MORE_MOVES adds to it, or SystemExit naming the styles there are
+    and what the card breaks."""
     if style not in _CARDS:
         f = STYLES / f"{style}.json"
         if not f.is_file():
@@ -93,7 +102,8 @@ def card(style):
         bad = validate(c)
         if bad:
             raise SystemExit(f"styles/{style}.json is not a style card: " + "; ".join(bad))
-        _CARDS[style] = c
+        have = {m["id"] for m in c["moves"]}
+        _CARDS[style] = {**c, "moves": c["moves"] + [m for m in MORE_MOVES.get(style, []) if m["id"] not in have]}
     return _CARDS[style]
 
 
