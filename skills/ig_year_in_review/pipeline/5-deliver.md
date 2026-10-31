@@ -11,8 +11,12 @@ looks), `boards.png`, `caption.md`, `review.html`. The record of the run, `brief
 python3 S/scripts/qa.py check
 ```
 
+Every round before deliver reads the half-size proof from `film.py render --proof`: while `out/proof.mp4` is the
+newest render, `check` and `cut` read it and their first line says "reading the half-size proof". Every size they
+report is in board units, the full-size reel's numbers, so a proof passes or fails exactly where the film would.
+
 `check` measures the film and the cards: size, codec, fps, length, audio and loudness, black and frozen stretches
-(the still after the stop is the ending, not a freeze), the render report, card sizes. Fix anything it fails before
+(over the whole film, the ending too: the closer keeps its slow push to the last frame), the render report, card sizes. Fix anything it fails before
 the critics watch. Then:
 
 ```
@@ -20,7 +24,7 @@ python3 S/scripts/vote.py cut
 ```
 
 Read `S/critic/critic.md`, "The cut". As the motion designer, then as the person, open every `build/frames/*.png`,
-a 12 frames a second strip of `out/film.mp4`, the cards in `out/carousel/` and `out/stories/`, and fill in the round
+a 12 frames a second strip of the newest reel (`out/proof.mp4` while it is there), the cards in `out/carousel/` and `out/stories/`, and fill in the round
 file it names (`build/critic/cut-1.json`): a score 1 to 5 per criterion and a paragraph each.
 
 ```
@@ -30,9 +34,25 @@ python3 S/scripts/vote.py verdict
 - `SHIP`: the cut is at the bar; go on.
 - `FIX ONCE`: it names every criterion at the lowest score. Read the critics' paragraphs and fix the one cause behind
   them at its cause (the words, a line or a scene, the music),
-  run from `storyboard.py draft` through the vote and `film.py render` again, then `vote.py cut` for round 2 (say in `fixed` what
+  run from `storyboard.py draft` through the vote and `film.py render --proof` again, then `vote.py cut` for round 2 (say in `fixed` what
   changed) and score again. After round 2 the fix is spent: deliver the cut as it stands, and
   `brief.md` carries its scores against the bar and says that it is under it. The person's page never shows a score.
+
+## Render the full-size reel and read the type on it
+
+Once the verdict on the proof is `SHIP` (or the fix is spent), render the reel at full size and score it once more:
+
+```
+python3 S/scripts/film.py render
+python3 S/scripts/qa.py check
+python3 S/scripts/vote.py cut
+python3 S/scripts/vote.py verdict
+```
+
+`cut` moves the round to the full-size `out/film.mp4` and empties each critic's `type` score; the other scores stand.
+As each critic, open the full-size reel's strip (`build/qa/film-strip2.png`) and the frames, read the type at the size
+a phone shows it (`S/design/standards.md`, R3), and score `type` again. A `type` score that takes the round under the
+bar here is a `FIX ONCE` like any other: fix it, render the proof again, and score round 2.
 
 ## Caption
 
@@ -56,6 +76,9 @@ another look? Say 'make the second one'", and how the film was made in plain wor
 stand-in, the music's origin, the render, and the critics' scores of the cut against the bar), then runs `qa.py
 gate`. `out/` holds only what is posted, that page with its strip and the looks, and `out/boards.png`; the gate
 refuses an `out/` that holds anything else, and the storyboards and the brief stay in `build/`. On a red gate it names each failing check: fix the cause, then run `deliver.py` again.
+`deliver.py` delivers only the full-size reel: when the newest render is the half-size proof it refuses with `not
+delivered: the newest render is the half-size proof` and names the full-size render, `qa.py check` and `vote.py cut`
+to run before it.
 
 ## Tell the person
 

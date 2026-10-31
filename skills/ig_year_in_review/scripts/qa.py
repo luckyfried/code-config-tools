@@ -3,7 +3,8 @@
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/qa.py timed   # the cut, before the film renders (film.py render refuses without it)
-    python3 S/scripts/qa.py check   # the rendered film and cards (run before the critics watch the cut)
+    python3 S/scripts/qa.py check   # the newest render, the half-size proof or the film, and the cards (run before
+                                    # the critics watch the cut)
     python3 S/scripts/qa.py gate    # timed, check and the run's records; exit 0 only when every check passes
 
 Two figures are printed and written beside the checks and are never a pass or a fail: the critic reads them with the
@@ -19,16 +20,17 @@ timed (from build/film.json, build/preview/preview.json and build/critic/timed.j
   hook      the hook event lands inside the first 30 frames
   preview   build/preview/preview.json is for this cut
   reads     the critic's four reads of the timed cut (vote.py timed) passed, for this cut
-check (the rendered out/):
-  format    out/film.mp4 1080x1920, H.264, yuv420p, 30 fps, inside the length band
-  audio     with music, an AAC track near 192 kbps at -14 LUFS integrated, within 1 LU, and with sound cues the effects
-            stem at least music.FX_LEAST_LU LU under the bed (both integrated, from music.json); the row
-            names the two numbers and the cue and beat counts, and refuses nothing on count
+check (the newest render in out/: the half-size proof while out/proof.mp4 is there, which its first line says, else
+the full-size film; the gate reads the full-size film alone):
+  format    out/film.mp4 1080x1920, H.264, yuv420p, 30 fps, inside the length band. The proof (out/proof.mp4) is
+            measured in board units: its size is divided by the proof's scale before it is held to 1080x1920
+  audio     with music, an AAC track near 192 kbps at -14 LUFS integrated, within 1 LU, and its true peak at
+            PEAK dBTP or under (the music and the effects mastered together by the mux); the row names both
+            numbers and the cue and beat counts, and refuses nothing on count
   black     no black stretch of 0.4 s or more (blackdetect)
-  frozen    no frozen stretch of 1.0 s or more (freezedetect at -80 dB) before the board's stop: frames that
-            repeat, as a stalled render's do; the film grain moving under a held composition is change, and the still
-            the board holds from its stop to the end is the ending, so a stretch that runs into the stop counts only
-            its part before the stop
+  frozen    no frozen stretch of 1.0 s or more (freezedetect at -80 dB) anywhere in the film, its ending too: frames
+            that repeat, as a stalled render's do; the film grain moving under a held composition is change, and the
+            closer keeps its slow push from the stop to the last frame
   safe      no render job failed, and no font or photograph failed to load (build/render/film-report.json)
   cards     out/carousel/ is 10 PNGs at 1080x1350, out/stories/ is 3 PNGs at 1080x1920
 gate adds:
@@ -53,7 +55,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
-import music  # noqa: E402
+import proof  # noqa: E402
 import storyboard  # noqa: E402
 import studio  # noqa: E402
 import vote  # noqa: E402
@@ -87,28 +89,19 @@ def detect(film, flt, key, run=None):
     return [ln for ln in studio.ff(["-i", str(film), "-vf", flt, "-an", "-f", "null", "-"], run).splitlines() if key in ln]
 
 
-def still_before(lines, held):
-    """Each frozen stretch freezedetect reports, as (start, end) in seconds, cut at the board's stop: the part from the
-    stop on is the ending's still, so a closer that settles just before the stop and holds into it stands still only
-    for the part before the stop. A stretch that runs to the end of the film has no end line and ends at the stop."""
-    out, start = [], None
-    for ln in lines:
-        v = float(ln.split(":")[-1])
-        if "freeze_start" in ln:
-            start = v
-        elif "freeze_end" in ln and start is not None:
-            out.append((start, min(v, held)))
-            start = None
-    if start is not None:
-        out.append((start, held))
-    return [(a, b) for a, b in out if a < held - 0.04]
+def frozen_in(film, run=None):
+    """Every frozen stretch of 1.0 s or more in the film (freezedetect at -80 dB), its ending included."""
+    return detect(film, "freezedetect=n=-80dB:d=1.0", "freeze_start", run)
 
 
-def held_from(f):
-    """Where the board holds its picture still to the end (its `stop` sound cue), in seconds; never, without one."""
-    board = _env.read_json((f.get("boards") or {}).get("reel", "")) if (f.get("boards") or {}).get("reel") else {}
-    stop = next((c["at"] for c in (board or {}).get("sound") or [] if c["kind"] == "stop"), None)
-    return stop * 60 / board["bpm"] if stop is not None else float("inf")
+PEAK = -1.5  # dBTP: the mux limits 4 dB under full scale and encodes AAC without noise substitution
+
+
+def true_peak(film, run=None):
+    """The film's true peak, dBTP (ebur128 reads it oversampled), or None when it has no sound."""
+    m = re.findall(r"Peak:\s+(-?[\d.]+|-inf) dBFS", studio.ff(["-i", str(film), "-af", "ebur128=peak=true:framelog=quiet", "-vn",
+                                                               "-f", "null", "-"], run))
+    return float(m[-1]) if m else None
 
 
 def loudness(film, run=None):
@@ -164,16 +157,18 @@ def timed_checks():
     return res, f
 
 
-def film_checks(run=None):
-    """The rendered out/; under a command's lock (`run`, deliver's) every process starts through run.spawn."""
+def film_checks(run=None, scale=1):
+    """The rendered out/: the full-size film, or the proof's at `scale` (proof.SCALE), measured in board units; under a
+    command's lock (`run`, deliver's) every process starts through run.spawn."""
     res = Checks()
     f = cut()
     lo, hi = storyboard.LENGTH
     track = _env.read_json("music.json") or {}
-    beats = len((_env.read_json(f["boards"]["reel"]) or {}).get("beats") or [])
-    held = held_from(f)
+    reel = _env.read_json(f["boards"]["reel"]) or {}
+    beats, cues = len(reel.get("beats") or []), len(reel.get("sound") or [])
     measured = None
     for fmt, (film, size) in FILMS.items():
+        film = proof.of(film) if scale != 1 else film
         if not film.exists():
             res("format", False, f"{film} is missing")
             continue
@@ -181,28 +176,29 @@ def film_checks(run=None):
         v = next((s for s in p.get("streams", []) if s.get("codec_type") == "video"), {})
         a = next((s for s in p.get("streams", []) if s.get("codec_type") == "audio"), None)
         secs = float(p.get("format", {}).get("duration") or 0)
-        ok = (v.get("width"), v.get("height")) == size and v.get("codec_name") == "h264" and v.get("pix_fmt") == "yuv420p" \
+        got = proof.board((v.get("width") or 0, v.get("height") or 0), scale)
+        ok = got == size and v.get("codec_name") == "h264" and v.get("pix_fmt") == "yuv420p" \
             and v.get("r_frame_rate") == "30/1" and lo <= secs <= hi
-        res("format", ok, f"{film}: {v.get('width')}x{v.get('height')} {v.get('codec_name')} {v.get('profile')} {v.get('pix_fmt')} "
+        res("format", ok, f"{film}: " + (f"{got[0]}x{got[1]} in board units, rendered at " if scale != 1 else "")
+                          + f"{v.get('width')}x{v.get('height')} {v.get('codec_name')} {v.get('profile')} {v.get('pix_fmt')} "
                           f"{v.get('r_frame_rate')} fps, {secs:.2f} s, {film.stat().st_size / 1e6:.1f} MB, {film.stat().st_size * 8e-6 / max(secs, 0.001):.1f} Mbit/s")
         if track.get("file"):
             lu = loudness(film, run) if a else None
+            tp = true_peak(film, run) if a else None
             br = int((a or {}).get("bit_rate") or 0)
-            cues = track.get("sound_cues") or 0
-            under = track["bed_lufs"] - track["fx_lufs"] if "fx_lufs" in track else None
-            mix = (f"bed {track['bed_lufs']} LUFS, effects {track['fx_lufs']} LUFS, {under:.1f} LU under (at least {music.FX_LEAST_LU})"
-                   if under is not None else "no effects stem measured")
             res("audio", a and a.get("codec_name") == "aac" and br >= 150000 and lu is not None and abs(lu + 14) <= 1.0
-                and (not cues or (under is not None and under >= music.FX_LEAST_LU)),
-                f"{film}: " + (f"{a.get('codec_name')} {br // 1000} kbps, {lu} LUFS integrated" if a else "no audio track")
-                + f"; {mix}; {cues} sound cues over {beats} beats")
+                and tp is not None and tp <= PEAK,
+                f"{film}: " + (f"{a.get('codec_name')} {br // 1000} kbps, {lu} LUFS integrated, true peak {tp} dBTP (at most {PEAK})"
+                               if a else "no audio track")
+                + f"; the music and the effects mastered together; {cues} sound cues over {beats} beats")
         black = detect(film, "blackdetect=d=0.4:pix_th=0.10", "black_start", run)
         res("black", not black, f"{film}: {len(black)} black stretches of 0.4 s or more")
-        frozen = [f"{a:.2f} s for {b - a:.2f} s" for a, b in still_before(detect(film, "freezedetect=n=-80dB:d=1.0", "freeze_", run), held) if b - a >= 1.0]
-        res("frozen", not frozen, f"{film}: {len(frozen)} frozen stretches of 1.0 s or more before the stop" + (f" (from {frozen[0]})" if frozen else ""))
+        frozen = frozen_in(film, run)
+        res("frozen", not frozen, f"{film}: {len(frozen)} frozen stretches of 1.0 s or more" + (f" ({frozen[0][-40:]})" if frozen else ""))
         if fmt == "reel":
-            measured = studio.measure(film, f["cuts"], f["hook_frame"], strips="qa", run=run)
-            _env.write_json("qa/film.check.json", dict(measured, frozen_end=held))
+            # the strips are the newest render's, qa/film-strip.png and qa/film-strip2.png, for the proof as for the film
+            measured = studio.measure(film, f["cuts"], f["hook_frame"], strips="qa", run=run, name="film")
+            _env.write_json("qa/film.check.json", measured)
             figures(res, measured)
     rep = _env.read_json("render/film-report.json") or {}
     bad = [x["text"][:160] for x in rep.get("findings", []) if x["text"].startswith(("FONT_ERROR", "RENDER_ERROR", "IMAGE_ERROR"))]
@@ -300,7 +296,10 @@ def main():
         res, f = timed_checks()
         return report(res, "qa/timed.json", f, "TIMED")
     if a.cmd == "check":
-        res, f, _ = film_checks()
+        scale = proof.scale(FILMS["reel"][0])
+        if scale != 1:
+            print(proof.reading(Path("out") / proof.of(FILMS["reel"][0]).name))
+        res, f, _ = film_checks(scale=scale)
         return report(res, "qa/check.json", f, "CHECKS")
     res, f = gate_checks()
     return report(res, "qa/gate.json", f, "GATE")

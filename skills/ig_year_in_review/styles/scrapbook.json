@@ -60,6 +60,14 @@
         "clip",
         "screen"
       ]
+    },
+    {
+      "id": "exploded-layers",
+      "fits": [
+        "photo",
+        "peak"
+      ],
+      "once": true
     }
   ],
   "transitions": [

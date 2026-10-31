@@ -22,6 +22,8 @@ when the gate passes; on a failed gate the page carries a red banner naming what
 passed it carries one saying so. Every file reaches out/ whole, by rename. On a passing gate the last line printed
 is the reel's path from the workspace root (out/film.mp4), the path the reply to the person names first; on a
 failed gate it is "the gate failed: " and the failing checks' names, and no path.
+deliver.py refuses a run whose newest render is the half-size proof (out/proof.mp4) and names the full-size render to
+run, with qa.py check and vote.py cut, where the critics read the type at full size, before it.
 """
 import html
 import os
@@ -31,6 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import palette  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import style  # noqa: E402
 import studio  # noqa: E402
@@ -106,7 +109,7 @@ def brief(lib, taste, win, clips, music, report, cuts):
         L.append(f"- {music.get('origin')}.")
         L.append(f"- {music.get('bpm')} bpm; the cuts land on its beats; mastered to {music.get('master_lufs', -14)} LUFS.")
     else:
-        L.append("- No music was found, so the film is silent. Add a sound when you post.")
+        L.append("- No music was found, so the film carries only its sound effects. Add a song when you post.")
     film = _env.read_json("film.json") or {}
     L += ["", "## how the film was made", "",
           f"- The {film.get('style')} storyboard, {film.get('seconds')} s, {len(film.get('cuts') or [])} cuts, rendered by the kit's "
@@ -232,6 +235,8 @@ def main():
         return 0
     _env.enter_build()
     with studio.lock("deliver") as run:
+        if proof.scale(OUT / "film.mp4") != 1:
+            sys.exit(proof.refusal("out/film.mp4"))
         return _deliver(run)
 
 

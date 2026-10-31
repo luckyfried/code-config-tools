@@ -10,6 +10,7 @@ import argparse
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -300,7 +301,7 @@ class Inputs(Base):
         """music_engine.compose standing in: the bed written whole under music/bed.wav, the call recorded."""
         import music
 
-        def compose(style, styles, avoid, seconds, edges, hue, seed, bpm=None, out=None):
+        def compose(style, styles, avoid, seconds, edges, hue, seed, bpm=None, out=None, peak=None):
             if calls is not None:
                 calls.append({"style": style, "styles": styles, "avoid": avoid, "seed": seed, "bpm": bpm})
             (out / "bed.wav").write_bytes(b"the new bed")
@@ -407,31 +408,107 @@ class Gate(Base):
 
 
 class AudioRow(Base):
-    def audio_row(self, fx_lufs):
-        """The gate's audio row over a film at -14 LUFS whose master measured the bed at -21.4 LUFS and the effects at
-        `fx_lufs`."""
+    def audio_row(self, tp):
+        """The gate's audio row over a film at -14 LUFS whose true peak measures `tp` dBTP."""
         import qa
         self.cut()
         _env.write_json("board.json", {"bpm": 120, "beats": [{"id": "hook"}, {"id": "m01"}, {"id": "closer"}],
                                        "sound": [{"kind": "impact", "at": 1.0, "beat": "hook", "what": "the year lands"},
                                                  {"kind": "hit", "at": 4.0, "beat": "m01", "what": "january lands"}]})
-        _env.write_json("music.json", {"file": "music/source.wav", "bed_lufs": -21.4, "fx_lufs": fx_lufs, "sound_cues": 2})
+        _env.write_json("music.json", {"file": "music/source.wav", "master": "music/master.wav", "bed_lufs": -21.4})
         probed = {"streams": [{"codec_type": "audio", "codec_name": "aac", "bit_rate": "192000"}], "format": {"duration": "40"}}
         with mock.patch.object(_env, "_TOOLS", {"ffmpeg": "ffmpeg", "ffprobe": "ffprobe"}), mock.patch.object(qa, "probe", lambda film, run=None: probed), \
-                mock.patch.object(qa, "loudness", lambda film, run=None: -14.0):
+                mock.patch.object(qa, "loudness", lambda film, run=None: -14.0), mock.patch.object(qa, "true_peak", lambda film, run=None: tp):
             res = qa.film_checks(spawn_probe([]))[0]
         return next(r for r in res if r[0] == "audio")
 
-    def test_an_effects_stem_peak_normalized_over_a_quiet_bed_turns_the_audio_row_red(self):
-        _, ok, detail = self.audio_row(-16.3)
-        self.assertFalse(ok)
-        self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS", detail)
+    def test_a_film_at_minus_14_lufs_under_minus_1_5_dbtp_turns_the_audio_row_green(self):
+        _, ok, detail = self.audio_row(-2.1)
+        self.assertTrue(ok, detail)
+        self.assertIn("-14.0 LUFS integrated, true peak -2.1 dBTP (at most -1.5)", detail)
         self.assertIn("2 sound cues over 3 beats", detail)
 
-    def test_effects_eight_lu_under_the_bed_turn_the_audio_row_green(self):
-        _, ok, detail = self.audio_row(-29.4)
-        self.assertTrue(ok, detail)
-        self.assertIn("8.0 LU under", detail)
+    def test_a_true_peak_over_minus_1_5_dbtp_turns_the_audio_row_red(self):
+        _, ok, detail = self.audio_row(-1.2)
+        self.assertFalse(ok, detail)
+        self.assertIn("true peak -1.2 dBTP", detail)
+
+
+def ffmpeg_err(*args):
+    return subprocess.run(["ffmpeg", "-hide_banner", "-nostats", *map(str, args)], capture_output=True, text=True).stderr
+
+
+def peaky_bed(path, seconds, noise=0.01, click=0.9):
+    """Pink noise of amplitude `noise` with sharp clicks of amplitude `click` four times a second: with the defaults,
+    music whose peaks stand far over its loudness."""
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", f"anoisesrc=d={seconds}:c=pink:a={noise}:seed=3", "-f", "lavfi",
+                    "-i", f"aevalsrc='if(lt(mod(t,0.25),0.004),{click},0)':d={seconds}:s=48000", "-filter_complex",
+                    "[0:a][1:a]amix=inputs=2:normalize=0", "-ar", "48000", "-ac", "2", str(path)], check=True)
+
+
+class Sound(Base):
+    """The music mastered alone by one gain and kept whole in float; the film's sound laid and mastered once, by the
+    shared mux, under -1.5 dBTP."""
+
+    def snapped(self, seconds, stop_beat=None):
+        """film.json and the reel's board for a cut of `seconds` at 120 bpm, its stop on `stop_beat` when given."""
+        sound = [{"kind": "stop", "at": stop_beat, "beat": "wall", "what": "the stop"}] if stop_beat else []
+        _env.write_json("film.json", {"hash": "h", "seconds": seconds, "boards": {"reel": "board.json"}})
+        board = {"bpm": 120, "sound": sound, "year": {"months": []},
+                 "beats": [{"id": "wall", "form": "wall", "move": "hold", "transition": None, "at": 0, "end": seconds * 2}]}
+        _env.write_json("board.json", board)
+        Path("storyboard.md").write_text("Mixed: not yet.\n")
+        return board
+
+    def test_master_is_the_music_alone_at_minus_14_by_one_gain_kept_whole_in_float(self):
+        import music
+        Path("music").mkdir()
+        peaky_bed("music/source.wav", 8)
+        _env.write_json("music.json", {"file": "music/source.wav"})
+        self.snapped(6.0, stop_beat=11)
+        with redirect_stdout(io.StringIO()):
+            music.cmd_master(argparse.Namespace(seconds=None))
+        info = _env.read_json("music.json")
+        out = Path(info["master"])
+        self.assertAlmostEqual(info["master_lufs"], -14.0, delta=0.3)
+        codec = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_name", "-of", "csv=p=0", str(out)],
+                               capture_output=True, text=True, check=True).stdout.strip()
+        self.assertEqual(codec, "pcm_f32le")
+        peak = float(re.findall(r"Peak level dB: (-?[\d.]+)", ffmpeg_err("-i", out, "-af", "astats=measure_perchannel=none", "-f", "null", "-"))[-1])
+        self.assertGreater(peak, 0.0, "the clicks stand past full scale in the float master, unclipped: the mux limits them")
+        self.assertIn("Peak level dB: -inf", ffmpeg_err("-i", out, "-af", "atrim=5.6,astats=measure_perchannel=none", "-f", "null", "-"),
+                      "the music has cut at the stop")
+        self.assertFalse(Path("music/fx.wav").exists())
+        self.assertNotIn("fx_lufs", info)
+        self.assertIn(f"Mixed: the music {info['bed_lufs']} LUFS before mastering;", Path("storyboard.md").read_text())
+
+    def test_the_film_is_laid_and_mastered_by_the_shared_mux_alone_under_minus_1_5_dbtp(self):
+        import ast
+        import music
+        import qa
+        here = Path(film.__file__)
+        encodes = [n.lineno for n in ast.walk(ast.parse(here.read_text())) if isinstance(n, ast.Constant) and n.value in ("aac", "-c:a")]
+        self.assertEqual(encodes, [], f"film.py encodes the sound itself on lines {encodes}: every film path goes through sfx.mux")
+        Path("music").mkdir()
+        # noise, the band the AAC encoder's noise substitution would swap and overshoot the limiter on
+        peaky_bed("music/source.wav", 12, noise=0.2, click=0)
+        _env.write_json("music.json", {"file": "music/source.wav"})
+        board = self.snapped(10.0)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=gray:s=64x64:r=30:d=10", "-pix_fmt", "yuv420p",
+                        "silent.mp4"], check=True)
+        with redirect_stdout(io.StringIO()):
+            music.cmd_master(argparse.Namespace(seconds=None))
+        spawned = []
+
+        def spawn(argv, **kw):
+            spawned.append([str(x) for x in argv])
+            return subprocess.run(argv, **kw)
+        self.assertTrue(film.mux(types.SimpleNamespace(spawn=spawn), Path("silent.mp4"), Path("film.mp4"), 10.0, board))
+        aac = [a for a in spawned if "aac" in a]
+        self.assertEqual(len(aac), 1, aac)
+        self.assertEqual(aac[0][aac[0].index("-aac_pns") + 1], "0")
+        self.assertAlmostEqual(qa.loudness(Path("film.mp4")), -14.0, delta=1.0)
+        self.assertLessEqual(qa.true_peak(Path("film.mp4")), qa.PEAK)
 
 
 class CriticRow(Base):

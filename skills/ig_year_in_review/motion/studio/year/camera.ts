@@ -14,7 +14,7 @@ import type {Pose} from '../../system/three/Stage';
 import {bezier, clamp01, lerp, mixPt, span, type Pt} from '../../system/three/motion';
 import type {Travel} from '../../system/three/travel';
 import {openingOf} from './month';
-import {HOLD_FOV, layerOf, liftOf, onWall, world, type Box, type Month, type Plan} from './plan';
+import {HOLD_FOV, layerOf, liftOf, monthAt, onWall, world, type Box, type Month, type Plan} from './plan';
 
 /** What the camera frames: a wall point at the middle of the picture, `h` wall px tall at depth `z`, and how it is turned. */
 export type Framing = {c: Pt; h: number; z: number; fov: number; yaw: number; pitch: number; roll: number};
@@ -75,6 +75,36 @@ const windowOf = (plan: Plan): Framing => {
 
 const closerOf = (plan: Plan): Framing => still([plan.W / 2, plan.H / 2], plan.H, 0, CLOSER_FOV);
 
+/** The pull back from the last month to the whole wall, in beats: from the last month's pull to the camera's arrival on
+ * the wall, where the dot's hops begin. */
+export const pullBackOf = (plan: Plan): [number, number] => [plan.months[plan.months.length - 1].at.pull[0], plan.closer.at + 0.6];
+
+/** The share of the tunnel's flight still ahead when the pull back cuts to the wall: the corridor stands clear of its
+ * fog there and the print is sharp at its far end. */
+export const LEFT = 0.4;
+
+/** How far the pull back eases out: the camera leaves the print fast and the flight slows into the cut. */
+const EASE = 0.6;
+
+/**
+ * The pull back's place in the picture tunnel's own arrival (arrival.tsx, over a beat as long as the pull back), in
+ * seconds, played backward: it cuts in where the tunnel's ground is whole (`land - give`), so the corridor already
+ * stands in the frame on its first frame and nothing of the tunnel fades in over the last month's cropped photograph,
+ * then the camera flies back down the corridor to LEFT of its landing time, eased out by EASE, where the picture cuts
+ * to the wall on the closer's beat. Null before the last month's pull and from the cut on.
+ */
+export const tunnelAt = (plan: Plan, t: number): number | null => {
+  const [a, b] = pullBackOf(plan);
+  const cut = plan.closer.at;
+  if (t < a || t >= cut) return null;
+  const sec = (x: number) => (x * plan.pulse) / plan.fps;
+  const room = sec(b - a);
+  const land = Math.min(1.1, room * 0.55);
+  const from = land - Math.min(0.3, land * 0.4);
+  const u = (t - a) / (cut - a);
+  return from - (from - LEFT * land) * (u + EASE * u * (1 - u));
+};
+
 const mixF = (a: Framing, b: Framing, u: number): Framing => ({
   c: mixPt(a.c, b.c, u), h: a.h * Math.pow(b.h / a.h, u), z: lerp(a.z, b.z, u), fov: lerp(a.fov, b.fov, u),
   yaw: lerp(a.yaw, b.yaw, u), pitch: lerp(a.pitch, b.pitch, u), roll: lerp(a.roll, b.roll, u),
@@ -131,7 +161,25 @@ export const jumpsInto = (plan: Plan, i: number) => i === 0 || Boolean(cutOf(pla
  * travel pass. */
 export const framingAt = (plan: Plan, t: number): Shot => {
   const base = baseAt(plan, t);
-  return {framing: nudged(base.framing, nudgeAt(plan.line, plan.look, t)), travel: {...base.travel, ...fxAt(plan.line, plan.look, t)}};
+  return {framing: nudged(base.framing, reined(plan, t, base.framing, nudgeAt(plan.line, plan.look, t))), travel: {...base.travel, ...fxAt(plan.line, plan.look, t)}};
+};
+
+
+/** The most the camera closes in on a month while its words stand, its own push and its move's nudge together, over
+ * its station (year.py HOLD_REACH, which sets every month's words inside the type area drawn in by it). */
+export const HOLD_REACH = 1.12;
+
+/** A move's nudge while the camera is on a month. A push in is eased so its steps keep their order and their sizes and,
+ * with the camera's own push, it closes in on the month no more than HOLD_REACH, so the month's words never leave the
+ * type area. A full frame takes no draw back: its photograph's halves run only REACH past its piece frame and its near
+ * layer stands off, so any wider picture shows their edge; a boxed print opens onto its field as the move asks. */
+const reined = (plan: Plan, t: number, base: Framing, n: Nudge): Nudge => {
+  const m = monthAt(plan, t);
+  if (!m || t < m.start || t >= m.at.pull[0] || n.scale === undefined || n.scale === 1) return n;
+  if (n.scale > 1) return m.full ? {...n, scale: 1} : n;
+  const station = stationOf(plan, m).h;
+  const room = Math.max(1e-6, (HOLD_REACH * base.h) / station - 1);
+  return {...n, scale: 1 / (1 + room * Math.tanh((1 / n.scale - 1) / room))};
 };
 
 /** The camera's framing at beat `t`, before the beat's move turns it. */
@@ -176,11 +224,13 @@ const baseAt = (plan: Plan, t: number): Shot => {
       continue;
     }
     // the last month: the camera pulls back from it to the whole wall as its halves close and its line slides into its
-    // row, square to the wall so the year's names stay in the picture
+    // row, square to the wall so the year's names stay in the picture. The picture tunnel covers the pull to the cut on
+    // the closer's beat (tunnelAt), so the camera holds the month under it, and whatever the tunnel lets through is the
+    // month's own photograph, and is on its way to the wall from the cut on
     const end = closerOf(plan);
-    const C = plan.closer.at + 0.6;
+    const C = pullBackOf(plan)[1];
     if (t < C) {
-      const u = glide(clamp01((t - p0) / (C - p0)));
+      const u = t < plan.closer.at ? 0 : glide(clamp01((t - p0) / (C - p0)));
       return {framing: mixF(held(plan, m, p0), end, u), travel: {}};
     }
     // the whole wall keeps pushing in over the dot's hops and comes to rest at its stop
@@ -232,7 +282,8 @@ export const shotAt = (plan: Plan, t: number): {pose: Pose; travel: Travel} => {
   setCam(pose, aspect);
   const b = p.clone().project(cam);
   const cap = (v: number, m: number) => Math.max(-m, Math.min(m, v));
-  const cut = plan.months.some((m, i) => jumpsInto(plan, i) && m.start > t - half && m.start <= t);
+  const cut = plan.months.some((m, i) => jumpsInto(plan, i) && m.start > t - half && m.start <= t)
+    || (plan.closer.at > t - half && plan.closer.at <= t);
   const smear: [number, number] = cut ? [0, 0] : [cap((b.x - a.x) * 0.5, 0.03), cap((b.y - a.y) * 0.5, 0.03)];
   return {
     pose,

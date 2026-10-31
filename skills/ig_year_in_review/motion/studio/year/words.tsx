@@ -96,8 +96,9 @@ const plateOf = (m: Month): Pt[] =>
   corners(m.plate.box).map(([x, y]) => baseline({text: '', x, y, size: 0, rotate: m.plate.rotate, pivot: m.plate.pivot}).at);
 
 /** The plates under the wall's type: the year's as it slams in, the rows' names' as the dot reaches the rows, the handle's
- * and the sign-off's as the closer's lines come up. */
-export const WallPlates: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
+ * and the sign-off's as the closer's lines come up, where the wall lands them (`lines`); under a card's closer, which
+ * lands the sign-off itself, the wall has no such lines and no plates for them. */
+export const WallPlates: React.FC<{plan: Plan; t: number; lines: boolean}> = ({plan, t, lines}) => {
   const when: Record<string, {z: number; shown: number}> = {
     title: {z: 0.9, shown: span(t, plan.hook.slam[0], plan.hook.slam[1]) * headingSeen(plan, t)},
     labels: {z: 0.7, shown: rising(plan, t, plan.closer.hops[0] - 0.2, 0.25)},
@@ -106,7 +107,7 @@ export const WallPlates: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
   };
   return (
     <group>
-      {plan.plates.map((p, i) => (
+      {plan.plates.filter((p) => lines || (p.of !== 'handle' && p.of !== 'signoff')).map((p, i) => (
         <PlateView key={p.of} plan={plan} pts={corners(p.box)} w={p.box[2] - p.box[0]} h={p.box[3] - p.box[1]} T={WALL}
           z={when[p.of].z} color={p.color} alpha={p.alpha} shown={t < plan.hook.slam[0] ? 0 : when[p.of].shown} renderOrder={990 + i} />
       ))}

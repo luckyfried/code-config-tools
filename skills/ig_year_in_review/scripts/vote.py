@@ -9,8 +9,8 @@ USAGE (from the workspace root; S = this skill's folder):
                                         # the person's look (1, 2, 3 in out/boards.png's order, or the style's id) ->
                                         # build/winner.json; everything made from another look goes
     python3 S/scripts/vote.py timed     # build/critic/timed.json to fill in: the four reads of the timed cut
-    python3 S/scripts/vote.py cut       # build/critic/cut-N.json to fill in for the rendered film (next round N; the
-                                        # newest round again while out/film.mp4 is the reel it scores)
+    python3 S/scripts/vote.py cut       # build/critic/cut-N.json to fill in for the newest render (next round N; the
+                                        # newest round again while the reel in out/ is the one it scores)
     python3 S/scripts/vote.py verdict   # SHIP at the bar (the mean of the latest round's scores 4.5 or more and none
                                         # under 4), else the worst thing
 
@@ -28,6 +28,11 @@ another person's year would sit in it unchanged. A board with a composition that
 Before the film renders, the editor watches the timed cut (build/preview/film.mp4 and its strip) and makes the four
 reads below from what it shows and plays; film.py render waits for all four to pass. The finished cut is scored by the
 motion designer and the person on the same criteria.
+
+Every round before deliver scores the half-size proof (film.py render --proof, out/proof.mp4): `cut` reads the newest
+render and its first line says when that is the proof. Once the full-size film of the same cut is rendered, `cut` moves
+the latest round to it and empties its `type` scores: the critics read the type again on the full-size film, at the
+size a phone shows it, and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -37,6 +42,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
 BAR = (4.5, 4)  # the film ships when its scores' mean is at least the first and no score is under the second
 RESTS = ("hook", "month", "closer")
@@ -242,29 +248,47 @@ def cmd_timed(a):
 
 
 def cmd_cut(a):
-    """A round for the reel in out/, once the render report names the current cut: the newest round when it scores this
-    same reel, a new one only when the reel changed."""
+    """A round for the newest reel in out/ (the proof while out/proof.mp4 is there), once the render report names the
+    current cut: the newest round when it scores this same reel, the same round with its type read again when the reel
+    is the full-size film of the cut that round scored on its proof, a new one only when the reel changed."""
     d = Path("critic")
     d.mkdir(parents=True, exist_ok=True)
+    reel = Path("../out/film.mp4")
+    scale = proof.scale(reel)
+    film = proof.newest(reel)
+    shown = Path("out") / film.name
+    if scale != 1:
+        print(proof.reading(shown))
     f = _env.read_json("film.json") or {}
     if not f or (_env.read_json("render/film-report.json") or {}).get("hash") != f.get("hash"):
-        sys.exit("out/ holds no whole render of the current cut (build/render/film-report.json names it): run film.py render first")
-    film = Path("../out/film.mp4")
+        sys.exit("out/ holds no whole render of the current cut (build/render/film-report.json names it): run film.py render --proof first")
     digest = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
     mine = rounds()
     last = _env.read_json(mine[-1]) if mine else {}
     if last.get("film") == digest:
         print(f"round {last.get('round')} ({mine[-1].resolve()}) already scores this reel: fill it in after watching "
-              "out/film.mp4 and the frames in build/frames/")
+              f"{shown} and the frames in build/frames/")
+        return 0
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == f.get("hash"):
+        # the full-size film of the cut the round scored on its proof: the same round, with the type read at full size
+        last.update(film=digest, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+        _env.write_json(mine[-1], last)
+        print(f"round {last.get('round')} moves to the full-size {shown}: as each critic, read the type again on it and on "
+              f"the frames in build/frames/, at the size a phone shows it, and score type in {mine[-1].resolve()}; the "
+              "other scores stand")
         return 0
     n = len(mine) + 1
-    f = d / f"cut-{n}.json"
+    out = d / f"cut-{n}.json"
     data = blank(CUT_PANEL, ["film"])
     data["round"] = n
     data["film"] = digest
+    data["scale"] = scale
+    data["cut"] = f.get("hash")
     data["fixed"] = "" if n > 1 else None
-    _env.write_json(f, data)
-    print(f"round {n}: fill in {f.resolve()} after watching out/film.mp4 and the frames in build/frames/"
+    _env.write_json(out, data)
+    print(f"round {n}: fill in {out.resolve()} after watching {shown} and the frames in build/frames/"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 
@@ -288,17 +312,20 @@ def cmd_verdict(a):
     scores = [(data["critics"][c]["boards"]["film"]["scores"][k], k, c) for c in CUT_PANEL for k in CRITERIA]
     values = [x[0] for x in scores]
     mean = round(sum(values) / len(values), 2)
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    full = ("; render the full-size film (film.py render), run qa.py check, then vote.py cut: the critics read the type "
+            "again at full size" if data.get("scale") == proof.SCALE else "")
     if at_bar(values):
-        print(f"SHIP: round {data.get('round')}, mean {mean}, none under {BAR[1]}")
+        print(f"SHIP: round {data.get('round')}, mean {mean}, none under {BAR[1]}" + full)
         return 0
     low = min(values)
     worst = "; ".join(f"{k} ({CRITERIA[k]}), {c}" for v, k, c in scores if v == low)
     if len(rs) >= 2:
         print(f"round {data.get('round')}: mean {mean}, lowest {low} on {worst}, under the bar ({BAR[0]} mean, none under "
-              f"{BAR[1]}). The one fix is spent: deliver this cut; deliver.py writes its scores into build/brief.md")
+              f"{BAR[1]}). The one fix is spent: deliver this cut; deliver.py writes its scores into build/brief.md" + full)
         return 2
-    print(f"FIX ONCE: mean {mean}, lowest {low} on {worst}. Read the paragraphs, fix the one cause behind them, "
-          "re-render, then run vote.py cut for round 2")
+    print(f"FIX ONCE: mean {mean}, lowest {low} on {worst}. Read the paragraphs, fix the one cause behind them, render "
+          "the proof again (film.py render --proof), then run vote.py cut for round 2")
     return 2
 
 

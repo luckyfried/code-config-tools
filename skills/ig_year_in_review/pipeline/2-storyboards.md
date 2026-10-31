@@ -23,7 +23,7 @@ that one and the two that differ from it most. Each board is the kit's one story
   photograph's subject, inside the type area through the whole hold, and the camera gathers before each jump cut and
   lands on the next month's mark.
 - **The ending.** Every month closes into its row of the year's chapters, a dot joins the rows, and the card's own
-  closer lands the sign-off on the music's stop, then two silent seconds.
+  closer lands the sign-off on the music's stop, then two seconds with the music gone and only the room under the held frame.
 
 Every beat's move and cut is one of the card's own, picked from what that beat shows (a title, a wall, a photograph,
 the peak, the ending), never by position. The colors are the ones the card's palette rule makes from their year's

@@ -21,7 +21,8 @@ python3 S/scripts/music.py find
 python3 S/scripts/music.py analyze
 ```
 
-`analyze` finds onsets, tempo, beats and downbeats and writes them to `build/music.json`.
+`analyze` finds a placed track's onsets, tempo, beats and downbeats and writes them to `build/music.json`; a bed
+composed here keeps the grid it was made on, so its bars start on the film's first frame.
 
 ## Cut to the music
 
@@ -36,6 +37,7 @@ python3 S/scripts/film.py preview
   at the music's tempo (or half or double it, whichever runs nearest the look's own tempo), so every cut and every sound lands on a beat, and writes `build/film.json`.
 - `list` prints every clip the storyboard asks for, with its prompt, length, photograph and the file to save.
   Generate each with the platform's image-to-video model from the named photograph and save it where `list` says.
+  A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests build/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks.
   `normalize` conforms what arrived to its photograph and its beat. A clip that did not arrive stands in: the film
   makes the look's own move on the still photograph, and `clips.json` and `brief.md` say which and why.
 - `preview` renders the reel at half size into `build/preview/film.mp4` with its strips and measures it: the cuts as
@@ -61,15 +63,23 @@ of this cut, and the four reads passed. It prints `TIMED GREEN`; `film.py render
 
 ```
 python3 S/scripts/music.py master
-python3 S/scripts/film.py render
+python3 S/scripts/film.py render --proof
 ```
 
-- `master` lays the storyboard's sound cues under the music (`hit`, `riser`, `impact`, each played in the bed's own
-  instruments where its beat lands), the effects scaled by loudness to `FX_UNDER_BED_LU` (8.5) LU under the bed, and brings the mix to -14 LUFS
-  integrated, true peak about -1.5 dB. It prints both loudness numbers, writes them to `music.json` and to
-  `storyboard.md`'s `Mixed:` line, and the gate's audio row is red when the effects sit less than `FX_LEAST_LU` (8) LU under. The board's `stop` cue cuts the music where the sign-off lands: the ending's impact
-  rings out over the held frame and the last two seconds are silent. `music/bed.wav` is the music trimmed to the film, `music/fx.wav` the cues alone.
-- `render` renders the reel, lays the master under it, and takes the stills from the film's own frames at rest:
+- `master` writes the music alone: trimmed to the film from its first downbeat, cut where the board's `stop` cue lands
+  (the sign-off) or, without a stop, faded over its last bar, and brought to -14 LUFS integrated by one gain from one
+  loudness read, with no limiter, in 32-bit float so a peak past full scale is kept whole. It writes the music's
+  loudness before the gain to `music.json` and to `storyboard.md`'s `Mixed:` line. `music/bed-cut.wav` is the music
+  trimmed to the film.
+- `render --proof` is the render of every round before deliver. It renders the reel at half size as `out/proof.mp4`,
+  with the cards, the stories, the strip and `build/frames/` exactly as the full render makes them, and never writes
+  over `out/film.mp4`. `qa.py check` and `vote.py cut` read the proof while it is the newest render, and every size
+  they report is in board units, the same numbers the full-size reel gives. Without `--proof`, `render` is the
+  full-size render that goes to deliver (movement 5), and it takes the proof out of `out/`.
+- `render` renders the reel, lays the storyboard's sound cues (sfx.py: `hit`, `riser`, `impact`, on the music's grid and in
+  its key) over the master and masters the two together once (one gain onto -14 LUFS, one limiter 4 dB under full
+  scale, AAC without noise substitution, so the gate's audio row reads the true peak at -1.5 dBTP or under; after the
+  stop the ending's impact rings out over the held frame and the room plays to the end), and takes the stills from the film's own frames at rest:
   stories 01 the hook, 02 the story's peak open, 03 the ending; carousel 01 the hook, 02 to 09 eight months
   spread across the year in calendar order, the peak among them, 10 the ending. `build/frames/` holds the hook, a month,
   the peak and the closer at half size for the critics; `build/render/film-report.json` lists every failed job and
@@ -90,8 +100,8 @@ or anything in `out/` by hand.
 ## Look before the critics do
 
 Open every `build/frames/*.png`, the first and last carousel cards and the three stories with the Read tool, and cut a
-12 frames a second strip of `out/film.mp4` (`ffmpeg -i out/film.mp4 -vf "fps=12,scale=-2:300,tile=12x3" s-%02d.png`)
-and read it. Text cut off, type fading into what is under it, a month with no words on screen, a frame with nothing on it,
-a hold over a second before the stop: fix the cause and render again now.
+12 frames a second strip of the newest reel, `out/proof.mp4` while the proof is there and `out/film.mp4` after the
+full-size render (`ffmpeg -i out/proof.mp4 -vf "fps=12,scale=-2:300,tile=12x3" s-%02d.png`), and read it. Text cut off, type fading into what is under it, a month with no words on screen, a frame with nothing on it,
+a hold over a second anywhere, the ending included: fix the cause and render again now.
 No cut round starts while one of these is still on screen or on a card: fix its cause and look at that passage or
 card again first.

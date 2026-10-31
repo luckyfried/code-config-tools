@@ -9,6 +9,7 @@ are in build/brief.md, which says so when the delivered cut is under it.
 
     python3 -I -m unittest discover -s S/tests -p test_deliver.py
 """
+import argparse
 import json
 import os
 import re
@@ -118,8 +119,8 @@ class Deliver(unittest.TestCase):
                 mock.patch.object(studio, "video", lambda b, out, n, **k: {"out": str(out)}), \
                 mock.patch.object(studio, "still", lambda b, fr, out, **k: {"out": str(out)}), \
                 mock.patch.object(studio, "render", render), \
-                mock.patch.object(film, "mux", lambda run, silent, out, s: shutil.copyfile(silent, out)):
-            film.cmd_render(None, None)
+                mock.patch.object(film, "mux", lambda run, silent, out, s, board=None: shutil.copyfile(silent, out)):
+            film.cmd_render(argparse.Namespace(proof=False), None)
 
     def test_every_styles_page_text_contrasts_with_its_ground(self):
         for name in style.styles():
@@ -275,28 +276,26 @@ class Deliver(unittest.TestCase):
         self.assertIn("out/ holds what is not posted: ['storyboards']", row[2])
 
 
-class StillBefore(unittest.TestCase):
-    """The frozen check counts only the part of a still stretch before the board's stop: a closer that settles half a
-    second before the stop and holds into the ending's still passes, a stall in the middle of the film fails."""
+class FrozenIn(unittest.TestCase):
+    """The frozen check reads the whole film, its ending too: the closer keeps its slow push to the last frame, so a
+    picture that stands still for a second or more past the stop is a frozen stretch like a stall in the middle."""
 
-    def lines(self, *pairs):
-        out = []
-        for kind, v in pairs:
-            out.append(f"[freezedetect @ 0x1] lavfi.freezedetect.freeze_{kind}: {v}")
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR")))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+
+    def film(self, hold):
+        """Two moving seconds, then `hold` seconds of the last frame repeated, as a picture held from its stop."""
+        out = self.dir / f"film-{hold}.mp4"
+        studio.ff(["-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=2", "-vf", f"tpad=stop_mode=clone:stop_duration={hold}",
+                   "-c:v", "libx264", "-pix_fmt", "yuv420p", str(out)])
         return out
 
-    def test_a_closer_settling_just_before_the_stop_stands_still_only_until_the_stop(self):
-        got = qa.still_before(self.lines(("start", 39.7)), 40.33)
-        self.assertEqual(len(got), 1)
-        self.assertLess(got[0][1] - got[0][0], 1.0)
+    def test_an_ending_that_stands_still_past_the_stop_is_a_frozen_stretch(self):
+        self.assertEqual(len(qa.frozen_in(self.film(1.5))), 1)
 
-    def test_a_stall_in_the_middle_and_one_long_before_the_stop_are_both_kept_whole(self):
-        got = qa.still_before(self.lines(("start", 10.0), ("duration", 1.5), ("end", 11.5), ("start", 38.0)), 40.33)
-        self.assertEqual([(a, round(b, 2)) for a, b in got], [(10.0, 11.5), (38.0, 40.33)])
-        self.assertTrue(all(b - a >= 1.0 for a, b in got))
-
-    def test_the_still_from_the_stop_on_is_the_ending(self):
-        self.assertEqual(qa.still_before(self.lines(("start", 40.33)), 40.33), [])
+    def test_an_ending_that_keeps_moving_to_the_last_frame_has_none(self):
+        self.assertEqual(qa.frozen_in(self.film(0.5)), [])
 
 
 if __name__ == "__main__":

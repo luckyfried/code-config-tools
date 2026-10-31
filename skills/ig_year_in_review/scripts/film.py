@@ -3,17 +3,21 @@
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/film.py preview   # the reel at half size, measured: build/preview/film.mp4, preview.json, strips
-    python3 S/scripts/film.py render    # out/film.mp4 (1080x1920), out/carousel/01..10.png (1080x1350),
-                                        # out/stories/01..03.png (1080x1920), out/strip/01..08.jpg (540x960),
-                                        # build/frames/*.png
+    python3 S/scripts/film.py render --proof
+                                        # the proof, every round before deliver: the reel at half size as
+                                        # out/proof.mp4 (540x960), with the cards, the strip and build/frames/
+    python3 S/scripts/film.py render    # the deliver render, full size: out/film.mp4 (1080x1920),
+                                        # out/carousel/01..10.png (1080x1350), out/stories/01..03.png (1080x1920),
+                                        # out/strip/01..08.jpg (540x960), build/frames/*.png
 
 preview is what the critic's timed read and qa.py timed look at before the film renders: the cuts as planned and as
 the picture shows them, cuts per minute, the luma line and its quiet seconds, and the hook event's frame. It prints
 every cut the picture shows that the storyboard does not plan, beside the board's sound cue nearest it: each one is a
 move that reads as a cut, answered before the critic reads.
 render refuses until qa.py timed has passed this cut (build/qa/timed.json names film.json's hash). It renders the
-reel, lays the mastered music (the master build/music.json names) under it at AAC 192 kbps, and takes every still from the
-film's own frames at rest, so the cards carry the film's grade and type:
+reel, lays the film's sound effects (sfx.py, on the music's grid and in its key) over the mastered music
+(the master build/music.json names) and masters the two together through the shared mux (sfx.mux: one gain onto -14
+LUFS, one limiter, AAC 192 kbps without noise substitution, so the true peak stays under -1.5 dBTP), and takes every still from the film's own frames at rest, so the cards carry the film's grade and type:
 
   stories   01 the hook's window over the months' photographs, 02 the story's peak open with its line (the middle
             month's when the year has no peak), 03 the closer's wall at its stop
@@ -33,6 +37,10 @@ own report under a staging name until then. A render stopped between two files, 
 file moves, leaves a set the gate refuses. build/frames/ holds the hook, an
 ordinary month, the story's peak and the closer at half size for the critics. preview.json names the cut its film
 shows, so it goes before the preview renders and comes back after the measure.
+--proof renders the reel at half size (proof.py) as out/proof.mp4, beside out/film.mp4 and never over it, and the
+cards, the stories, the strip and build/frames/ as the full render makes them, since each is one frame; the render
+report's `scale` says which render it was. A full render takes the proof out of out/, so out/proof.mp4 is there only
+while the newest render is the proof, which qa.py check and vote.py cut read and deliver.py refuses.
 """
 import argparse
 import os
@@ -42,6 +50,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
+import sfx  # noqa: E402
 import studio  # noqa: E402
 
 OUT = Path("../out")
@@ -86,15 +96,38 @@ def cmd_preview(a, run):
     return 0
 
 
-def mux(run, silent, out, seconds):
-    master = (_env.read_json("music.json") or {}).get("master")
-    if master:
-        run.spawn([_env.ffmpeg(), "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a",
-                   "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{seconds:.3f}", "-movflags", "+faststart",
-                   str(out)], check=True)
-    else:
-        shutil.copyfile(silent, out)
-    return bool(master)
+# the year board's forms as the effects name a beat's layer
+KINDS = {"title": "Title", "wall": "Wall", "photo": "Photo", "closer": "Closer"}
+
+
+def sound_board(board):
+    """The year's board as the effects read a board (sfx.beats_of): each beat starting on its cut with its form, move
+    and cut, the hook's year slamming onto its line, each month's photograph arriving and its line said until the pull
+    back to the wall, and the closer arriving on the cut from the pull back to the wall, on the closer's beat
+    (camera.ts tunnelAt)."""
+    y = board["year"]
+    months = {m["id"]: m for m in y["months"]}
+    beats = []
+    for b in board["beats"]:
+        ly = {"kind": KINDS[b["form"]]}
+        start = b["at"]
+        if b["form"] == "title":
+            ly.update(title={"text": b["words"]}, slam=y["hook"]["slam"])
+        elif b["form"] == "photo":
+            m = months[b["id"]]
+            ly.update(text=m["text"], at={"arrive": m["at"]["arrive"], "pull": m["at"]["pull"][0], "end": b["end"]})
+        elif b["form"] == "closer":
+            ly.update(signoff={"text": y["signoff"]["text"]})
+        beats.append({"id": b["id"], "form": b["form"], "move": b["move"], "transition": b["transition"], "start": start,
+                      "layers": [dict(ly, end=b["end"]) if "at" not in ly else ly]})
+    return {"id": board.get("id"), "bpm": board["bpm"], "beats": beats}
+
+
+def mux(run, silent, out, seconds, board):
+    """The film at `out`: the silent picture, the board's sound effects (sfx.py) on the music's grid and in its key, and
+    the mastered music music.json names under them, mastered together by the shared mux (alone when there is no music).
+    Returns whether music is in it."""
+    return sfx.mux(run.spawn, silent, out, seconds, sound_board(board), _env.read_json("music.json") or {}, _env.ffmpeg())
 
 
 def card(src, dst):
@@ -119,15 +152,18 @@ def spread(ms, n, peak):
     return sorted(pick, key=lambda m: m["month"])
 
 
-def publish(part, rep):
-    """Moves every file made in `part` into out/ by rename, the reel last, with the review page and the render report
-    (`rep`) gone while they move; then the report comes back and the cards and frames of out/ the new set does not
-    make leave."""
+def publish(part, rep, reel="film.mp4"):
+    """Moves every file made in `part` into out/ by rename, the reel (`reel`: film.mp4, or the proof's proof.mp4) last,
+    with the review page and the render report (`rep`) gone while they move, and the proof gone before a full-size reel
+    moves in; then the report comes back and the cards and frames of out/ the new set does not make leave."""
     made = {p.relative_to(part) for p in part.rglob("*") if p.is_file()}
     report = Path("render/film-report.json")
     (OUT / "review.html").unlink(missing_ok=True)
     report.unlink(missing_ok=True)
-    for rel in sorted(made, key=lambda r: (r == Path("film.mp4"), str(r))):
+    # the full-size reel takes the proof's place: out/proof.mp4 stays only while the newest render is the proof
+    for old in (proof.films(OUT) if reel == "film.mp4" else []):
+        old.unlink()
+    for rel in sorted(made, key=lambda r: (r == Path(reel), str(r))):
         (OUT / rel).parent.mkdir(parents=True, exist_ok=True)
         os.replace(part / rel, OUT / rel)
     _env.write_json(report, rep)
@@ -154,13 +190,15 @@ def cmd_render(a, run):
     for d in (part / "carousel", part / "stories", part / "strip", Path("render/silent"), Path("render/stills"), Path("frames")):
         d.mkdir(parents=True, exist_ok=True)
     stills = {"hook": rests["hook"], "closer": rests["closer"], **months}
-    jobs = [studio.video(board, Path("render/silent/film.mp4"), f["frames"])]
+    scale = proof.SCALE if a.proof else 1
+    reel = proof.of("film.mp4").name if a.proof else "film.mp4"
+    jobs = [studio.video(board, Path("render/silent") / reel, f["frames"], scale=scale)]
     jobs += [studio.still(board, fr, Path("render/stills") / f"{k}.png") for k, fr in stills.items()]
     jobs += [studio.still(board, fr, Path("frames") / f"{k}.png", scale=0.5) for k, fr in rests.items()]
     rep = studio.render(jobs, "film", run)
     if rep["failed"]:
         sys.exit("a render job failed; see build/render/film.log and build/render/film-report.part.json")
-    music = mux(run, Path("render/silent/film.mp4"), part / "film.mp4", f["seconds"])
+    music = mux(run, Path("render/silent") / reel, part / reel, f["seconds"], board)
     S = Path("render/stills")
     for i, k in enumerate(("hook", peak["id"], "closer"), 1):
         shutil.copyfile(S / f"{k}.png", part / "stories" / f"{i:02d}-{k}.png")
@@ -168,15 +206,18 @@ def cmd_render(a, run):
         card(S / f"{k}.png", part / "carousel" / f"{i:02d}-{k}.png")
     for i, k in enumerate(["hook", *[m["id"] for m in spread(ms, 6, peak)], "closer"], 1):
         strip_frame(S / f"{k}.png", part / "strip" / f"{i:02d}-{k}.jpg")
-    publish(part, dict(rep, hash=f["hash"]))
-    print("wrote out/film.mp4, out/carousel/ (10 cards), out/stories/ (3 cards), out/strip/ (8 frames) and build/frames/"
-          + ("" if music else " (music.json names no master: the film is silent)"))
+    publish(part, dict(rep, hash=f["hash"], scale=scale), reel)
+    print(f"wrote out/{reel}" + (" (the half-size proof)" if a.proof else "")
+          + ", out/carousel/ (10 cards), out/stories/ (3 cards), out/strip/ (8 frames) and build/frames/"
+          + ("" if music else " (music.json names no master: the film carries its sound effects alone)"))
     return 0
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["preview", "render"])
+    ap.add_argument("--proof", action="store_true",
+                    help="render: the reel at half size as out/proof.mp4, for every round before deliver")
     a = ap.parse_args()
     _env.need("PIL")
     _env.enter_build()

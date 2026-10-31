@@ -197,11 +197,15 @@ def set_lines(lines):
                 set_lines(v)
 
 
-def pick(options, tags, form, used, avoid):
+def pick(options, tags, form, used, avoid, held=()):
     """The option whose `fits` matches the beat best (its form counts twice, each other tag once); between equals the
     one used least so far, then the card's order. The option `avoid` (the previous beat's) is never picked while
-    another exists."""
-    pool = [o for o in options if o["id"] != avoid] or options
+    another exists. A move the card marks `once` plays at most once a film and wins the story's peak: on the peak the
+    unplayed `once` moves that fit its form are the only ones picked from, and the ids in `held` (the `once` moves a
+    peak still to come will take) are never picked before it."""
+    pool = [o for o in options if o["id"] != avoid and not (o.get("once") and (used.get(o["id"]) or o["id"] in held))] or options
+    if "peak" in tags:
+        pool = [o for o in pool if o.get("once") and form in o["fits"] and not used.get(o["id"])] or pool
     score = lambda o: 2 * (form in o["fits"]) + len((tags - {form}) & set(o["fits"]))
     best = max(pool, key=lambda o: (score(o), -used.get(o["id"], 0), -options.index(o)))
     used[best["id"]] = used.get(best["id"], 0) + 1

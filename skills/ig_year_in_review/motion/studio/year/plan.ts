@@ -154,19 +154,21 @@ export const planOf = (board: Board): Plan => {
   const frames = board.beats.reduce((n, b) => n + (b.frames ?? 0), 0);
   const pulse = (fps * 60) / board.bpm;
   const sys = board.system;
-  // the board's beats as the moves read them, each cut on its beat's start; a photo beat hands its move no words, since
-  // the card's photo layout sets them, and names where its photograph and its words stand and when the camera holds on it
+  // the board's beats as the moves read them, each cut on its beat's start; a photo beat hands its move no words of its
+  // own, since the card's photo layout sets them, and names where its photograph and its words stand, when the camera
+  // holds on it, its photograph and where that lies, and the month's line as the words its form sets
   const byId = new Map(y.months.map((m) => [m.id, m]));
   const whole: Box = [-0.06 * W, -0.06 * H, 1.06 * W, 1.06 * H];
   const beats: BeatOn[] = (board.beats as YearBeat[]).map((b) => {
     const m = b.form === 'photo' ? byId.get(b.id) : undefined;
     return {id: b.id, form: b.form ?? 'photo', at: b.at, end: b.end, move: b.move, transition: b.transition,
       words: b.form === 'photo' ? '' : b.words, label: b.form === 'photo' ? '' : b.label, peak: b.peak,
-      ...(m ? {box: m.picture ?? whole, type: m.box, held: [m.at.arrive, m.at.pull[0]] as Pt} : {})};
+      ...(m ? {box: m.picture ?? whole, type: m.box, held: [m.at.arrive, m.at.pull[0]] as Pt, photo: staticFile(m.file),
+        place: m.place, say: m.text} : {})};
   });
   const plan = {...y, W, H, fps, pulse, ease: {enter: sys.ease.enter, move: sys.ease.move}, frames, photo: sys.photo, finish: sys.finish,
     closerShape: sys.closer, line: {beats, cuts: beats.map((b) => b.at)}};
-  return {...plan, look: lookOf(plan, sys)};
+  return {...plan, look: lookOf(plan, sys, board.format.name)};
 };
 
 /** A card's color, a role or a hex, as a hex. */
@@ -176,16 +178,16 @@ const toneOf = (colors: Record<string, string>, v: string) => {
   return hex;
 };
 
-/** The film around every move, cut, and closer: the frame, the card's colors, tones, grid and faces, and the year's own
- * words. */
-const lookOf = (plan: Omit<Plan, 'look'>, sys: Board['system']): Look => {
+/** The film around every move, cut, and closer: the frame, the profile's safe area (`format`'s), the card's colors,
+ * tones, grid and faces, and the year's own words. */
+const lookOf = (plan: Omit<Plan, 'look'>, sys: Board['system'], format?: string): Look => {
   const {W, H, photo, finish, colors} = plan;
   const g = photo.grid;
   const pic = photo.picture;
   const m = g.margin * W;
   const ground = plan.months.find((x) => x.id === plan.ground.month) ?? plan.months[0];
   return {
-    W, H, fps: plan.fps, pulse: plan.pulse, colors, display: sys.display.family, text: sys.text.family, italic: Boolean(sys.display.italic),
+    W, H, fps: plan.fps, pulse: plan.pulse, safe: format ? sys.safe[format] : undefined, colors, display: sys.display.family, text: sys.text.family, italic: Boolean(sys.display.italic),
     title: plan.title.text, handle: plan.handle?.text ?? '', signoff: plan.signoff.text,
     tone: {
       ground: toneOf(colors, photo.ground), dip: finish.dip === 'none' ? null : toneOf(colors, finish.dip),
@@ -199,6 +201,7 @@ const lookOf = (plan: Omit<Plan, 'look'>, sys: Board['system']): Look => {
     },
     finished: finish.words !== 'clean',
     photo: ground ? staticFile(ground.file) : undefined,
+    photos: plan.months.map((x) => staticFile(x.file)),
     print: {
       box: [Math.max(0, pic.box[0]) * W, Math.max(0, pic.box[1]) * H,
         (Math.min(1, pic.box[0] + pic.box[2]) - Math.max(0, pic.box[0])) * W, (Math.min(1, pic.box[1] + pic.box[3]) - Math.max(0, pic.box[1])) * H],

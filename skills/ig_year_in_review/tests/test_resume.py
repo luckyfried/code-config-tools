@@ -4,6 +4,7 @@ film.py takes the run's lock before its first write. The module itself is tested
 
     python3 -I -m unittest discover -s S/tests -p test_resume.py
 """
+import argparse
 import json
 import os
 import shutil
@@ -163,7 +164,7 @@ class Deliverables(unittest.TestCase):
                       mock.patch.object(studio, "video", lambda b, out, n, **k: {"out": str(out)}),
                       mock.patch.object(studio, "still", lambda b, fr, out, **k: {"out": str(out)}),
                       mock.patch.object(studio, "render", render),
-                      mock.patch.object(film, "mux", lambda run, silent, out, s: shutil.copyfile(silent, out)),
+                      mock.patch.object(film, "mux", lambda run, silent, out, s, board=None: shutil.copyfile(silent, out)),
                       mock.patch.object(film, "card", lambda src, dst: shutil.copyfile(src, dst)),
                       mock.patch.object(film, "strip_frame", lambda src, dst: shutil.copyfile(src, dst))):
             patch.start()
@@ -183,11 +184,11 @@ class Deliverables(unittest.TestCase):
 
         before = self.files()
         with mock.patch.object(self.film, "card", card), self.assertRaises(OSError):
-            self.film.cmd_render(None, None)
+            self.film.cmd_render(argparse.Namespace(proof=False), None)
         self.assertEqual(self.files(), before)
 
     def test_a_whole_set_moves_in_and_the_cards_it_no_longer_makes_leave(self):
-        self.film.cmd_render(None, None)
+        self.film.cmd_render(argparse.Namespace(proof=False), None)
         got = self.files()
         self.assertEqual(len([k for k in got if k.startswith("carousel/")]), 10)
         self.assertEqual(len([k for k in got if k.startswith("stories/")]), 3)
@@ -229,10 +230,15 @@ class UnderTheLock(unittest.TestCase):
         self.addCleanup(refuse.stop)
 
     def test_the_mux_and_the_measure_start_through_run_spawn(self):
-        self.assertTrue(self.film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1))
+        board = {"bpm": 120, "beats": [{"id": "wall", "form": "wall", "move": "hold", "transition": None, "at": 0, "end": 2}],
+                 "year": {"months": []}}
+        self.assertTrue(self.film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1, board))
+        mixed = list(self.started)
         m = studio.measure(Path("film.mp4"), [], run=self.run_)
         self.assertEqual(m["frames"], 30)
-        self.assertEqual(len(self.started), 6)
+        # the shared mux: the mix measured, measured again through the limiter, then encoded once
+        self.assertEqual(mixed, ["ffmpeg"] * 3)
+        self.assertEqual(len(self.started), 8)
 
 
 if __name__ == "__main__":

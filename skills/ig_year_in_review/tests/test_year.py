@@ -31,10 +31,19 @@ from PIL import Image, ImageDraw
 
 KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
-import music  # noqa: E402
 import style  # noqa: E402
 import year as yr  # noqa: E402
-LOOK = style.TRIO[0]  # the board these tests read: the trio's first look
+
+
+def full_frame(look):
+    """Whether style card `look` lays a month's photograph full frame."""
+    box = yr.picture_box(style.card(look)["photo"])
+    return box is not None and box[2] - box[0] > yr.W
+
+
+# the board these tests read: the trio's first look that lays its photographs full frame, where a month's photograph is
+# the whole picture, splits into its two layers and takes the camera's push, and the wall stands on a photograph
+LOOK = next(filter(full_frame, style.TRIO))
 ENV = dict(os.environ, CSC_DISABLE_KEYCHAIN="1")
 # (month, posts, light of the photograph 0-255): June posted most, May bright, December a night photograph
 YEAR = [(1, 5, 120), (2, 6, 110), (3, 7, 130), (4, 6, 100), (5, 8, 235), (6, 14, 140), (7, 9, 125), (8, 7, 115),
@@ -228,6 +237,25 @@ console.log(JSON.stringify(plan.months.map((m) => {
 })));
 """
 
+# the pull back's place in the tunnel's arrival, frame by frame from the last month's pull to past the closer's beat, with
+# the beats it is read against and the tunnel's landing time over a beat as long as the pull back
+PULLBACK = """import {readFileSync} from 'node:fs';
+import {planOf} from %(plan)s;
+import * as camera from %(camera)s;
+const plan = planOf(JSON.parse(readFileSync(process.argv[2], 'utf8')));
+const [a, b] = camera.pullBackOf(plan);
+const land = Math.min(1.1, ((b - a) * plan.pulse / plan.fps) * 0.55);
+const frames = [];
+for (let f = Math.floor(a * plan.pulse) - 2; f <= Math.ceil(b * plan.pulse) + 2; f++) frames.push({f, t: f / plan.pulse, back: camera.tunnelAt(plan, f / plan.pulse)});
+console.log(JSON.stringify({a, b, cut: plan.closer.at, pulse: plan.pulse, land, left: camera.LEFT, frames}));
+"""
+
+LOOKSAFE = """import {readFileSync} from 'node:fs';
+import {planOf} from %(plan)s;
+const plan = planOf(JSON.parse(readFileSync(process.argv[2], 'utf8')));
+console.log(JSON.stringify({safe: plan.look.safe ?? null}));
+"""
+
 # the reel's type area [x0, y0, x1, y1], and the farthest a month's nearest word stands off its line, px
 AREA = [72, 270, 930, 1250]
 
@@ -393,7 +421,10 @@ class Year(unittest.TestCase):
     def test_the_hooks_window_opens_on_the_looks_lead_and_flashes_every_month_once(self):
         h = self.year["hook"]
         self.assertEqual(sorted(h["order"]), list(range(len(self.year["months"]))))
-        self.assertEqual(h["order"][0], yr.leads(self.year["months"], h["window"])[0])
+        # each look's window opens on its own lead, the look's place among the drafted looks picking it
+        looks = list(style.trio_for(json.loads((self.ws / "build/taste.json").read_text()).get("style") or None))
+        leads = yr.leads(self.year["months"], h["window"])
+        self.assertEqual(h["order"][0], leads[looks.index(LOOK) % len(leads)])
         self.assertNotEqual(h["order"][0], 0)
 
     def test_each_look_leads_with_its_own_photograph_and_a_read_focus_first(self):
@@ -492,6 +523,17 @@ class Year(unittest.TestCase):
         # the peak takes the move the card fits to a peak
         self.assertIn(next(m for m in ms if m["peak"])["move"], [mv["id"] for mv in card["moves"] if "peak" in mv["fits"]])
 
+    def test_a_move_the_card_marks_once_plays_once_and_wins_the_peak(self):
+        for look in style.TRIO:
+            card = style.card(look)
+            once = {mv["id"] for mv in card["moves"] if mv.get("once")}
+            board = json.loads((self.ws / f"build/storyboards/{look}/board-reel.json").read_text())
+            moves = [b["move"] for b in board["beats"]]
+            for mv in once:
+                self.assertLessEqual(moves.count(mv), 1, (look, mv, moves))
+            if any("peak" in mv["fits"] for mv in card["moves"] if mv["id"] in once):
+                self.assertIn(next(b for b in board["beats"] if b.get("peak"))["move"], once, (look, moves))
+
     def test_their_line_is_set_in_the_cards_line_face_under_its_label_inside_the_type_area(self):
         photo = style.card(LOOK)["photo"]
         for m in self.year["months"]:
@@ -505,8 +547,10 @@ class Year(unittest.TestCase):
     def test_each_cards_photograph_stands_in_its_own_box(self):
         got = {c: yr.picture_box(style.card(c)["photo"]) for c in style.TRIO}
         analog, kinetic, swiss = (got[c] for c in style.TRIO)
-        self.assertTrue(analog[0] < 0 and analog[2] > yr.W, analog)
-        self.assertTrue(kinetic[0] < 0 and kinetic[2] > yr.W, kinetic)
+        # analog's home movie and kinetic's type run the photograph full frame, past every edge
+        for box in (analog, kinetic):
+            self.assertTrue(box[0] < 0 and box[1] < 0 and box[2] > yr.W and box[3] > yr.H, box)
+        # swiss stands it in its grid's box: exactly the card's own box
         bx = style.card(style.TRIO[2])["photo"]["picture"]["box"]
         self.assertEqual([round(v) for v in swiss], [round(bx[0] * yr.W), round(bx[1] * yr.H), round((bx[0] + bx[2]) * yr.W), round((bx[1] + bx[3]) * yr.H)])
         self.assertEqual(style.system(style.card(LOOK), {}, {})["photo"], style.card(LOOK)["photo"])
@@ -723,6 +767,46 @@ class Year(unittest.TestCase):
             cos = (a["rel"][0] * b["rel"][0] + a["rel"][1] * b["rel"][1]) / (math.hypot(*a["rel"]) * math.hypot(*b["rel"]))
             self.assertLess(cos, 0.87, (a, b))
 
+    def test_the_pull_back_cuts_to_the_wall_on_the_closers_beat_from_a_clear_corridor(self):
+        # the tunnel flown backward plays from the last month's pull to the closer's beat and is gone on the frame of
+        # that beat, a cut with no dissolve; on its last frame the camera is still LEFT of the landing time down the
+        # corridor, clear of its fog, never at its mouth; the closer's impact and riser land on the same beat
+        board = json.loads((self.ws / f"build/storyboards/{LOOK}/board-reel.json").read_text())
+        got = self.bundle(PULLBACK, board)
+        closer = next(b for b in board["beats"] if b["form"] == "closer")
+        self.assertEqual(got["cut"], closer["at"])
+        self.assertLess(got["a"], got["cut"])
+        self.assertLess(got["cut"], got["b"])
+        shown = [fr for fr in got["frames"] if fr["back"] is not None]
+        self.assertTrue(shown)
+        self.assertEqual([fr["f"] for fr in shown], list(range(shown[0]["f"], shown[-1]["f"] + 1)), "the pull back plays unbroken")
+        self.assertGreaterEqual(shown[0]["t"], got["a"])
+        self.assertLess(shown[-1]["t"], got["cut"])
+        self.assertGreaterEqual(shown[-1]["t"], got["cut"] - 1 / got["pulse"], "the pull back ends on the frame before the cut")
+        self.assertGreater(shown[-1]["back"], 0.35 * got["land"], "the cut lands from inside the corridor, clear of its fog")
+        self.assertEqual([fr["f"] for fr in got["frames"] if fr["t"] >= got["cut"] and fr["back"] is not None], [])
+        backs = [fr["back"] for fr in shown]
+        self.assertTrue(all(x > y for x, y in zip(backs, backs[1:])), "the camera flies back the whole way")
+        import film
+        sound = next(b for b in film.sound_board(board)["beats"] if b["form"] == "closer")
+        self.assertEqual(sound["start"], got["cut"], "the closer's impact and riser land on the cut")
+
+    def test_the_pull_back_cuts_into_the_corridor_with_its_ground_already_up(self):
+        # the last month's move leaves its photograph cropped, never as the tunnel's print lays it, so the pull back
+        # never fades the print in over it: on its first frame the tunnel's ground covers the frame and the corridor
+        # stands in it (arrival.tsx's `bare` is whole from `land - give` down)
+        board = json.loads((self.ws / f"build/storyboards/{LOOK}/board-reel.json").read_text())
+        got = self.bundle(PULLBACK, board)
+        shown = [fr for fr in got["frames"] if fr["back"] is not None]
+        give = min(0.3, got["land"] * 0.4)
+        self.assertLessEqual(shown[0]["back"], got["land"] - give + 1e-9, shown[0])
+
+    def test_the_look_the_moves_take_carries_the_profiles_safe_area(self):
+        # the moves stand every word at rest inside the profile's safe area; a look without it falls back to the grid
+        board = json.loads((self.ws / f"build/storyboards/{LOOK}/board-reel.json").read_text())
+        got = self.bundle(LOOKSAFE, board)
+        self.assertEqual(got["safe"], board["system"]["safe"][board["format"]["name"]])
+
     def test_the_camera_gathers_before_each_cut_and_settles_on_the_next_months_mark(self):
         # the anticipation: the camera gathers itself before the cut, drawing back off the month (the whole print onto
         # its field where the cut dissolves, a little where it jumps); the overshoot: the next month comes in tighter
@@ -749,14 +833,17 @@ class Year(unittest.TestCase):
 
     def test_a_months_words_stay_inside_the_type_area_through_its_hold(self):
         # from the moment the line stands whole to the camera leaving the month, the name and their line, moved by the
-        # month's own camera on the near layer, never leave the reel's type area
-        import storyboard
-        whole = {m["id"]: sum(m["at"]["say"]) + yr.LAND for m in self.year["months"]}
-        boxes = {m["id"]: [style.box_of(ln) for ln in [m["name"], *m["said"]]] for m in self.year["months"]}
-        got = self.bundle(HOLDWORDS, json.loads((self.ws / f"build/storyboards/{LOOK}/board-reel.json").read_text()),
-                          json.dumps(boxes), json.dumps(whole))
-        out = [g for g in got if not (AREA[0] - 1 <= g["reach"][0] and g["reach"][2] <= AREA[2] + 1 and AREA[1] - 1 <= g["reach"][1] and g["reach"][3] <= AREA[3] + 1)]
-        self.assertEqual(out, [], "months whose words leave the type area during their hold")
+        # month's own camera on the near layer, never leave the reel's type area, in every look
+        self.addCleanup(style.use, LOOK)
+        for look in style.TRIO:
+            style.use(look)
+            board = json.loads((self.ws / f"build/storyboards/{look}/board-reel.json").read_text())
+            months = board["year"]["months"]
+            whole = {m["id"]: sum(m["at"]["say"]) + yr.LAND for m in months}
+            boxes = {m["id"]: [style.box_of(ln) for ln in [m["name"], *m["said"]]] for m in months}
+            got = self.bundle(HOLDWORDS, board, json.dumps(boxes), json.dumps(whole))
+            out = [g for g in got if not (AREA[0] - 1 <= g["reach"][0] and g["reach"][2] <= AREA[2] + 1 and AREA[1] - 1 <= g["reach"][1] and g["reach"][3] <= AREA[3] + 1)]
+            self.assertEqual(out, [], f"{look}: months whose words leave the type area during their hold")
 
     def test_a_bright_band_sits_in_the_years_rows_like_the_rest(self):
         # a white slit is dimmed to the light the year's rows carry, never under BAND_LEAST of its own; a dark one keeps
@@ -780,11 +867,6 @@ class Year(unittest.TestCase):
         self.assertAlmostEqual(light * yr.light_mean("light.png", place, [0, 930, 1080, 990]), yr.BAND_LIGHT, delta=0.01)
         for m in self.year["months"]:
             self.assertTrue(yr.BAND_LEAST <= m["gain"] <= 1.0, m["id"])
-
-    def test_the_effects_sit_at_least_eight_lu_under_the_music(self):
-        # the mix aims past the gate's floor, so a measured mix lands on it or over it
-        self.assertEqual(music.FX_LEAST_LU, 8)
-        self.assertGreater(music.FX_UNDER_BED_LU, music.FX_LEAST_LU)
 
     def board(self):
         d = self.ws / f"build/storyboards/{LOOK}"
@@ -844,6 +926,29 @@ class Year(unittest.TestCase):
         self.assertTrue(s[1] < cell[3] and s[3] > cell[1], (s, cell))
         self.assertEqual(m["on_subject"], 0)
         self.assertTrue(b[3] <= s[1] or b[1] >= s[3], (b, s))
+
+    def test_a_boxed_cards_words_end_inside_their_line_box_above_the_picture(self):
+        # the swiss card stands January's photograph in its box right under the line box; four lines of their line,
+        # descenders and all, end inside the line box, so no letter stands on the photograph's top edge
+        import palette
+        swiss = style.TRIO[2]
+        card = style.card(swiss)
+        self.addCleanup(style.use, LOOK)
+        style.use(swiss)
+        lay = yr.layout_of(card["photo"], [720, 1080])
+        pic, cell = yr.picture_box(lay), yr.area_box(lay["line"]["box"])
+        self.assertLess(cell[3], pic[1])
+        colors = style.colors_of(card, palette.swatches_of({}))
+        lead = {f: card["faces"][f].get("lineHeight", 1.0) for f in ("display", "text")}
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as tmp:
+            photo(Path(tmp) / "jan.jpg", 140, 0)
+            m = {"id": "m01", "short": "jan", "said": "first tram of the year with rui, all the way up to graça.",
+                 "file": str(Path(tmp) / "jan.jpg"), "focus": [0.5, 0.5], "size": [720, 1080]}
+            typed = yr.set_month(m, yr.laid_in(m["size"], m["focus"], pic), pic, lay, style.measure, style.box_of,
+                                 yr.grade([], card["finish"]["grade"], colors), colors, lead, "cell-reveal")
+        self.assertGreaterEqual(len(typed["said"]), 4)
+        foot = max(style.box_of(w)[3] for w in typed["said"])
+        self.assertLessEqual(foot, cell[3] + 0.5, (foot, cell, pic))
 
     def busy(self):
         """The first look's board drafted from a copy of the year, January's and September's photographs a black and white
@@ -967,7 +1072,8 @@ class Year(unittest.TestCase):
     def test_the_closer_lands_the_sign_off_on_the_stop_and_holds_two_seconds(self):
         c = self.year["closer"]
         beat = 60 / self.bpm
-        self.assertAlmostEqual((c["end"] - c["still"]) * beat - music.RING, 2.0, delta=0.05)
+        # the picture holds year.HOLD past the stop: the impact's ring, then two seconds of the room alone
+        self.assertAlmostEqual((c["end"] - c["still"]) * beat, 2.2, delta=0.05)
         self.assertLess(c["hops"][-1], c["still"])
         self.assertEqual(len(c["hops"]), 12)
 
@@ -1004,6 +1110,26 @@ class Selection(unittest.TestCase):
         got = {m["month"]: m for m in _env.read_json("build/picks.json")["months"]}
         self.assertEqual({n: m["src"] for n, m in got.items()}, {3: str(d / "walk.png"), 5: str(d / "named.png")})
         self.assertEqual((got[3]["said"], got[3]["people"], got[3]["place"]), ("the long walk up to the castle.", ["marta.sousa"], "sintra"))
+
+
+class CloserPush(unittest.TestCase):
+    """The end card grows to the last frame about the safe area's middle, words and dot alike: the dot is drawn in the
+    closer's push and in the look the closer lays its words out in, and the sign-off's full stop it lands on is read in
+    that look, so on every frame from the stop on the dot stands just past the last letter and both end inside the safe
+    area."""
+
+    def test_the_dot_grows_with_the_closer_and_lands_where_the_pushed_sign_off_ends(self):
+        src = (KIT / "motion/studio/year/YearFilm.tsx").read_text()
+        self.assertIn("const push = usePush(plan.look, plan.closer.still, time);", src)
+        self.assertIn("routeOf({...plan, look: push.look}, fonts)", src)
+        self.assertRegex(src, r"<div style=\{push\.style\}>\s*<CardDot plan=\{\{\.\.\.plan, look: push\.look\}\}")
+
+    def test_the_poster_sign_off_is_laid_inside_the_looks_safe_area(self):
+        src = (KIT / "motion/studio/year/card.tsx").read_text()
+        poster = src[src.index("if (shape === 'poster')"):src.index("return null;\n};")]
+        self.assertIn("const [sl, st, sr, sb] = safeOf(look);", poster)
+        self.assertIn("const measureW = sr - sl;", poster)
+        self.assertNotIn("look.W -", poster)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@
 // card the dot is drawn over the picture, above the card, and flies on to that full stop, so the sign-off's full stop is
 // the dot that travelled the whole film.
 import * as THREE from 'three';
-import {balance, fitTo, measure, OUT, px, smoothNoise, SNAP, span} from '../../system/moves/kit';
+import {balance, fitTo, measure, OUT, px, safeOf, smoothNoise, SNAP, span} from '../../system/moves/kit';
 import type {Look} from '../../system/moves/types';
 import type {Pt} from '../../system/three/motion';
 import {screenOf, wallUnder} from './camera';
@@ -63,25 +63,29 @@ export const cardStop = (look: Look, shape: string, local: number, u: number): S
     return {p: [cx + (s.p[0] - cx) * k, cy + (s.p[1] - cy) * k], r: s.r * k};
   }
   if (shape === 'poster') {
+    // laid on the grid inside the look's safe area, as the poster lays it
     const g = look.grid;
-    const measureW = look.W - 2 * g.m;
+    const [sl, st, sr, sb] = safeOf(look);
+    const measureW = sr - sl;
     const row = (i: number) => g.rows[Math.min(g.rows.length - 1, i)];
+    const last = g.rows.length - 1;
     const title = look.title || look.signoff;
     const lines = balance(title, title.length > 12 ? 2 : 1);
     const said = look.title ? balance(look.signoff, look.signoff.length > 24 ? 2 : 1) : [];
     const saidSize = said.length ? Math.min(px(look, 66), fitTo(said, look.text, measureW * 0.75)) : 0;
-    const top = row(1) + px(look, 60);
-    const room = row(g.rows.length - 2) - top - (said.length ? said.length * saidSize * 1.2 + px(look, 50) : 0) - px(look, 30);
+    const top = Math.max(row(1), st) + px(look, 60);
+    const blockT = Math.min(row(last), sb) - (row(last) - row(last - 1));
+    const room = blockT - top - (said.length ? said.length * saidSize * 1.2 + px(look, 50) : 0) - px(look, 30);
     const size = Math.min(fitTo(lines, look.display, measureW, {weight: 700, tracking: -0.035, most: px(look, 300)}), room / (lines.length * 0.95));
     if (said.length) {
       // the closing line under the title, in the text face
       const y0 = top + lines.length * size * 0.95 + px(look, 50);
-      return after(g.m + measure(said[said.length - 1], look.text, saidSize),
+      return after(sl + measure(said[said.length - 1], look.text, saidSize),
         y0 + (said.length - 1) * 1.2 * saidSize + baseline(look.text, saidSize, 400, 1.2), saidSize);
     }
     // the sign-off is the title, rising onto its place over the closer's first third
     const rise = (1 - span(u, 0, 0.3, SNAP)) * px(look, 30);
-    return after(g.m - size * 0.04 + measure(lines[lines.length - 1], look.display, size, 700, -0.035),
+    return after(sl - size * 0.04 + measure(lines[lines.length - 1], look.display, size, 700, -0.035),
       top + rise + (lines.length - 1) * 0.95 * size + baseline(look.display, size, 700, 0.95), size);
   }
   return null;

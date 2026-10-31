@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 """The film's music: the person's track, or a bed composed from the winning board's style and their music brief, with
-its beat grid and its sound effects, mastered to -14 LUFS.
+its beat grid, mastered to -14 LUFS.
 
 USAGE (from the workspace root; S = this skill's folder; the files named here are in build/):
     python3 S/scripts/music.py find [--origin "..."]  # music.json: the track to use and where it came from
     python3 S/scripts/music.py make [--bpm N] [--seconds S]  # a bed composed here on real instruments (music_engine.py)
     python3 S/scripts/music.py analyze               # a track they brought: onsets, tempo, beat grid and downbeats
-    python3 S/scripts/music.py master [--seconds S]  # from the first downbeat, the board's sound cues mixed under the bed,
-                                                     # -14 LUFS (true peak -1.5 dB), trimmed, the last bar faded
+    python3 S/scripts/music.py master [--seconds S]  # from the first downbeat, the music alone cut at the board's stop
+                                                     # (else its last bar faded), -14 LUFS by one gain, 32-bit float
 
 find takes a track the person or the agent placed as build/music/source.<ext> (any audio ffmpeg reads); else `make`
 composes music/bed.wav with music_engine.py: the recipe is the winning board's style card's (`music` in
 styles/<id>.json), unless the brief's `styles` words (taste.json `music`) name another; its `avoid` words take out an
 instrument, the drums or a groove; the key comes from the palette's leading color, the tempo from the brief's or the
-board's, the sections turn on the board's impacts, and the seed is the board's style. make writes the bed's own beat
+board's, the sections turn on the board's impacts, the bed lifts into the story's peak (from where the peak month's
+photograph opens to where its beat ends), and the seed is the board's style. make writes the bed's own beat
 grid (bpm, beats, downbeats, sections, key) into music.json, so analyze leaves it as it is; analyze is for a track
 they brought: it reads the energy envelope (ffmpeg decodes to mono PCM), picks onsets as peaks of its rise, takes the
 tempo by autocorrelation and lays a beat grid on the strongest phase. storyboard.py snap cuts the film on the grid.
 
-The sound effects are the engine's too, played in the recipe's own instruments: music/fx/riser.wav (a build that cuts
-off into the moment it leads to), hit.wav, bright.wav (the ring a `bright` hit adds) and impact.wav (the landing); a
-track they brought gets its set rendered at master. The board's `sound` cues place them where a beat lands; `stop` is
-where the bed cuts and the last hit rings out into silence. master writes the trimmed bed (music/bed-cut.wav) and the
-effects (music/fx.wav) scaled by loudness to FX_UNDER_BED_LU under the bed, mixes them (music/mix.wav) and brings the
-whole to -14 LUFS; music.json and storyboard.md carry both loudness numbers.
+The sound effects are scripts/sfx.py's: film.py render lays them where the board's `sound` cues land, over the
+master, and the shared mux masters the music and the effects together once (one gain onto -14 LUFS, one limiter, AAC
+without noise substitution). So master writes the music alone: the trimmed bed (music/bed-cut.wav, 32-bit float) cut on
+the board's `stop`, brought to -14 LUFS by one gain from one loudness read, with no limiter and no trim, and written in
+32-bit float so a peak past full scale is kept whole for the mux's limiter. music.json and storyboard.md's `Mixed:` line
+carry the music's loudness before the gain.
 """
 import argparse
 import array
@@ -40,9 +41,6 @@ import music_engine  # noqa: E402
 
 AUDIO = (".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus")
 MUSIC = Path("music")
-RING = 0.2  # seconds the stop's hit rings past the stop before the silence
-FX_LEAST_LU = 8  # the effects stem's integrated loudness sits at least this far under the bed's
-FX_UNDER_BED_LU = 8.5  # where the mix sets it, so the measured mix holds FX_LEAST_LU
 
 
 def duration(f):
@@ -108,6 +106,19 @@ def edges(won, bpm):
     return [q["at"] * 60 / (bpm * k) for q in board.get("sound") or [] if q["kind"] == "impact"]
 
 
+def peak(won, bpm):
+    """The story's peak in seconds at the bed's tempo (the half, whole or double nearest the board's): where the peak
+    month's photograph opens and where its beat ends; None when the board marks no peak."""
+    board = _env.read_json(f"storyboards/{won}/board-reel.json") if won else None
+    if not (board and board.get("bpm")):
+        return None
+    k = min((0.5, 1, 2), key=lambda k: abs(bpm * k - board["bpm"]))
+    m = next((m for m in (board.get("year") or {}).get("months") or [] if m.get("peak")), None)
+    if not m:
+        return None
+    return m["at"]["open"][0] * 60 / (bpm * k), m["at"]["end"] * 60 / (bpm * k)
+
+
 def cmd_make(a):
     MUSIC.mkdir(parents=True, exist_ok=True)
     won, recipe_id = card()
@@ -125,7 +136,7 @@ def cmd_make(a):
     rid, recipe, _ = music_engine.resolve(book, recipe_id, m.get("styles") or [], m.get("avoid") or [])
     bpm = music_engine.tempo(recipe, a.bpm, target, seed)
     info = music_engine.compose(recipe_id, m.get("styles") or [], m.get("avoid") or [], seconds, edges(won, bpm), hue(),
-                                seed, bpm=bpm, out=MUSIC)
+                                seed, bpm=bpm, out=MUSIC, peak=peak(won, bpm))
     default = recipe_id if recipe_id in book["recipes"] else book["default"]
     chose = "their brief" if rid != default else "the card" if default == recipe_id else "the default"
     origin = (f"made by music.py from the {rid} recipe ({book['recipes'][rid]['name']}, chosen by {chose}) in {info['key']} "
@@ -144,6 +155,10 @@ def cmd_analyze(a):
     info = _env.read_json("music.json") or {}
     if not info.get("file"):
         sys.exit("no music: run music.py find (or make) first")
+    if info.get("recipe"):
+        print(f"music: {info['file']} was composed here, and its grid is its own: {info['bpm']:g} bpm, "
+              f"{len(info['downbeats'])} downbeats")
+        return 0
     sr, hop = 11025, 256
     raw = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", info["file"], "-ac", "1", "-ar", str(sr), "-f", "s16le", "-"],
                          capture_output=True, check=True).stdout
@@ -201,59 +216,11 @@ def cmd_analyze(a):
 
 # ------------------------------------------------------------------ master
 TARGET_LUFS = -14.0
-RISER_GAIN = 0.6  # the build sits under the hits and the landing it leads to
 
 
-def effects(info, bpm):
-    """The four effect files music.json names, or, for a track they brought, the winning card's set rendered now."""
-    fx = info.get("fx") or {}
-    if all(Path(fx.get(c) or "").is_file() for c in music_engine.CUES):
-        return fx
-    book = music_engine.recipes()
-    rid, recipe, _ = music_engine.resolve(book, card()[1])
-    h = hue()
-    tonic = music_engine.tonic_of(h) if h is not None else music_engine.pick(music_engine.rng(card()[0] or "", "key"), range(12))
-    music_engine.place(music_engine.render_fx(book, recipe, tonic, bpm, MUSIC))
-    info.update(fx={c: str(MUSIC / "fx" / f"{c}.wav") for c in music_engine.CUES}, fx_recipe=rid)
-    return info["fx"]
-
-
-def cue_legs(cues, bpm, fps, fx):
-    """Each cue as [(file, from, at, gain)]: the file from `from` seconds, placed at `at` in the film. `at` and `beats`
-    are read at `bpm`; with the board's `fps`, a cue starts on its own `frame`. A riser is the end of riser.wav, as long
-    as the cue's beats, ending on the moment it leads to."""
-    sec, legs = 60 / bpm, []
-    for c in cues:
-        at = c["frame"] / fps if fps and "frame" in c else c["at"] * sec
-        if c["kind"] == "hit":
-            legs.append((fx["hit"], 0.0, at, c.get("weight", 0.6)))
-            if c.get("bright"):
-                legs.append((fx["bright"], 0.0, at, c["bright"]))
-        elif c["kind"] == "riser":
-            want, have = c["beats"] * sec, duration(fx["riser"])
-            use = min(want, have)
-            legs.append((fx["riser"], have - use, at + want - use, RISER_GAIN))
-        elif c["kind"] == "impact":
-            legs.append((fx["impact"], 0.0, at, 1.0))
-    return legs
-
-
-def fx_stem(legs, seconds, scale, dst):
-    """The legs summed over `seconds` of silence and scaled by `scale`, as a float stereo stem."""
-    inputs = ["-f", "lavfi", "-t", f"{seconds:.3f}", "-i", "anullsrc=r=48000:cl=stereo"]
-    graph = []
-    for i, (f, f0, at, gain) in enumerate(legs, 1):
-        inputs += ["-i", str(f)]
-        graph.append(f"[{i}:a]atrim=start={f0:.4f},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,"
-                     f"volume={gain:.4f},adelay={round(at * 1000)}:all=1[c{i}]")
-    mixed = "[0:a]" + "".join(f"[c{i}]" for i in range(1, len(legs) + 1))
-    graph.append(f"{mixed}amix=inputs={len(legs) + 1}:normalize=0:duration=first,volume={scale:.6f}[out]")
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *inputs, "-filter_complex", ";".join(graph), "-map", "[out]",
-                    "-ar", "48000", "-c:a", "pcm_f32le", str(dst)], check=True)
-
-
-def integrated_file(path):
-    r = subprocess.run([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(path), "-af", "ebur128=framelog=quiet",
+def integrated_file(path, chain="anull"):
+    """The integrated loudness, LUFS, of `path` through the filter chain `chain`; nan when it cannot be read."""
+    r = subprocess.run([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(path), "-af", f"{chain},ebur128=framelog=quiet",
                         "-f", "null", "-"], capture_output=True, text=True)
     found = re.findall(r"I:\s+(-?[\d.]+) LUFS", r.stderr)
     return float(found[-1]) if found else float("nan")
@@ -269,65 +236,42 @@ def cmd_master(a):
         sys.exit("pass --seconds (the film length), or run storyboard.py snap first")
     start = float(film.get("music_start") or 0)
     ff = _env.ffmpeg()
-    source = info["file"]
     reel = _env.read_json((film.get("boards") or {}).get("reel", "")) if (film.get("boards") or {}).get("reel") else None
     cues = (reel or {}).get("sound") or []
-    # the board's stop: the bed cuts there, the last hit rings out over the held picture, then the film is silent
+    # the board's stop: the music cuts there and the film holds its picture to the end
     stop = next((c["at"] * 60 / reel["bpm"] for c in cues if c["kind"] == "stop"), None)
-    mixed = {}
-    if cues:
-        # the board's sound cues under the bed: the effects stem scaled so its integrated loudness is FX_UNDER_BED_LU
-        # under the trimmed bed's, then the two summed as they are
-        bed, fxw, mix = MUSIC / "bed-cut.wav", MUSIC / "fx.wav", MUSIC / "mix.wav"
-        cut = f",afade=t=out:st={stop:.3f}:d=0.04" if stop else ""
-        subprocess.run([ff, "-y", "-v", "error", "-i", source, "-af", f"atrim={start:.3f}:{start + seconds:.3f},asetpts=PTS-STARTPTS{cut},"
-                        "aformat=sample_rates=48000:channel_layouts=stereo", "-ar", "48000", str(bed)], check=True)
-        bed_lufs = integrated_file(bed)
-        legs = cue_legs(cues, reel["bpm"], None, effects(info, reel["bpm"]))
-        # measured and scaled twice: the meter is not linear in the gain (its gates drop the quiet tails as the stem
-        # turns down), so one scaling lands it up to a few tenths louder than asked
-        scale = 1.0
-        for _ in range(2 if legs else 0):
-            fx_stem(legs, seconds, scale, fxw)
-            scale *= 10 ** ((bed_lufs - FX_UNDER_BED_LU - integrated_file(fxw)) / 20)
-        fx_stem(legs, seconds, scale, fxw)
-        mixed = {"bed_lufs": round(bed_lufs, 2), "fx_lufs": round(integrated_file(fxw), 2)}
-        subprocess.run([ff, "-y", "-v", "error", "-i", str(bed), "-i", str(fxw), "-filter_complex",
-                        "[0:a][1:a]amix=inputs=2:normalize=0:weights=1 1[out]", "-map", "[out]", "-ar", "48000", str(mix)], check=True)
-        source, start = str(mix), 0.0
-    # With a stop, the last hit rings for RING seconds over the held picture and the rest is silence. Without one, the music
-    # tails out over the film's last bar: the fade starts on the last downbeat at least a second before the end, so the
-    # closer holds while the track lets go, never on a hard stop.
+    bed = MUSIC / "bed-cut.wav"
+    cut = f",afade=t=out:st={stop:.3f}:d=0.04" if stop else ""
+    subprocess.run([ff, "-y", "-v", "error", "-i", info["file"], "-af", f"atrim={start:.3f}:{start + seconds:.3f},asetpts=PTS-STARTPTS{cut},"
+                    "aformat=sample_rates=48000:channel_layouts=stereo", "-ar", "48000", "-c:a", "pcm_f32le", str(bed)], check=True)
+    for old in (MUSIC / "fx.wav", MUSIC / "mix.wav"):
+        old.unlink(missing_ok=True)
+    # With a stop, the music has cut on it and the rest is silence. Without one, the music tails out over the film's last
+    # bar: the fade starts on the last downbeat at least a second before the end, so the closer holds while the track lets
+    # go, never on a hard stop.
     bars = [d - start for d in info.get("downbeats") or [] if 0 < d - start <= seconds - 1.0]
     fade = seconds - bars[-1] if bars else min(2.0, seconds * 0.05)
-    st, d = (stop + RING / 4, RING * 3 / 4) if stop and stop + RING <= seconds else (seconds - fade, fade)
-    pre = f"atrim={start:.3f}:{start + seconds:.3f},asetpts=PTS-STARTPTS,afade=t=out:st={st:.3f}:d={d:.3f}"
-    def integrated(chain):
-        r = subprocess.run([ff, "-hide_banner", "-nostats", "-i", source, "-af", f"{chain},ebur128=framelog=quiet",
-                            "-f", "null", "-"], capture_output=True, text=True)
-        found = re.findall(r"I:\s+(-?[\d.]+) LUFS", r.stderr)
-        if not found:
-            sys.exit(f"could not measure the loudness of {source}")
-        return float(found[-1])
-
-    # Gain past the target, a fast peak limiter at about -2 dBFS, then a trim down onto -14 LUFS, so a track with
-    # sharp drum peaks still reaches the target without clipping.
-    gain = TARGET_LUFS - integrated(pre) + 1.5
-    limited = f"{pre},volume={gain:.2f}dB,alimiter=limit=0.79:attack=1:release=60:level=false"
-    trim = TARGET_LUFS - integrated(limited)
-    flt = f"{limited},volume={trim:.2f}dB,aformat=sample_rates=48000:channel_layouts=stereo"
+    pre = "anull" if stop and stop < seconds else f"afade=t=out:st={seconds - fade:.3f}:d={fade:.3f}"
+    bed_lufs = integrated_file(bed, pre)
+    if math.isnan(bed_lufs):
+        sys.exit(f"could not measure the loudness of {bed}")
+    # One gain onto -14 LUFS and nothing else: the master is written in 32-bit float, so a peak over full scale is kept
+    # whole, and the film's mux (sfx.py) lays the effects over it and limits the two together, once.
+    gain = TARGET_LUFS - bed_lufs
     out = MUSIC / f"master.{_env.stamp()}.wav"
     part = MUSIC / f".{out.stem}.part.wav"
-    subprocess.run([ff, "-y", "-v", "error", "-i", source, "-af", flt, "-ar", "48000", str(part)], check=True)
+    subprocess.run([ff, "-y", "-v", "error", "-i", str(bed), "-af", f"{pre},volume={gain:.2f}dB", "-ar", "48000", "-c:a", "pcm_f32le",
+                    str(part)], check=True)
     os.replace(part, out)
-    info.update(master=str(out), master_seconds=round(seconds, 3), sound_cues=len(cues), master_lufs=round(integrated_file(out), 2), **mixed)
+    for k in ("fx_lufs", "sound_cues"):
+        info.pop(k, None)
+    info.update(master=str(out), master_seconds=round(seconds, 3), master_lufs=round(integrated_file(out), 2), bed_lufs=round(bed_lufs, 2))
     _env.write_json("music.json", info)
-    if mixed:
-        said = (f"bed {mixed['bed_lufs']} LUFS, effects {mixed['fx_lufs']} LUFS, "
-                f"{mixed['bed_lufs'] - mixed['fx_lufs']:.1f} LU under; {len(cues)} sound cues over {len(reel['beats'])} beats")
+    if reel:
+        import storyboard  # the reel's storyboard.md carries the music's loudness on its Mixed line
         md = Path(film["boards"]["reel"]).with_name("storyboard.md")
-        _env.write_text(md, re.sub(r"(?m)^Mixed: .*$", lambda _: f"Mixed: {said}.", md.read_text()))
-        print(f"mixed: {said}")
+        if md.exists():
+            _env.write_text(md, re.sub(r"(?m)^Mixed: .*$", lambda _: f"Mixed: {storyboard.mixed(info)}.", md.read_text()))
     for p in MUSIC.glob("master*.wav"):  # the master files music.json does not name
         if p != out:
             p.unlink()

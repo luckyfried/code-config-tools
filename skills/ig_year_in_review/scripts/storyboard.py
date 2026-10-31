@@ -239,6 +239,14 @@ def board_hash(board):
     return hashlib.sha256(json.dumps(board, sort_keys=True).encode()).hexdigest()[:16]
 
 
+def mixed(music):
+    """storyboard.md's `Mixed:` line from music.json."""
+    if "bed_lufs" not in music:
+        return "not yet; music.py master writes the music's loudness here"
+    return (f"the music {music['bed_lufs']} LUFS before mastering; film.py render lays the effects over it and masters the two "
+            "together to -14 LUFS")
+
+
 def write_md(run, s, p):
     b = p["board"]
     y = b["year"]
@@ -273,12 +281,10 @@ def write_md(run, s, p):
     lines += ["", "What each move reveals, and what it carries across the cut:", "", "| beat | reveals | carries |", "|---|---|---|"]
     lines += [f"| {r['id']} | {r['reveals']} | {r['carries']} |" for r in p["story"]]
     music = _env.read_json("music.json") or {}
-    mixed = (f"bed {music['bed_lufs']} LUFS, effects {music['fx_lufs']} LUFS" if "bed_lufs" in music else
-             "not yet; music.py master writes the bed's and the effects' loudness here")
     lines += ["", "Music: " + (music.get("origin") or f"none yet (music.py find composes the {s} recipe)") + ".",
               "The music brief (taste.json `music`): " + json.dumps(run.taste.get("music"), ensure_ascii=False) + ".",
-              f"Mixed: {mixed}.",
-              "", f"Sound, where each beat lands (the bed's own effects, mixed under it; {len(b['sound'])} cues):", "",
+              f"Mixed: {mixed(music)}.",
+              "", f"Sound, where each beat lands (the stop cuts the music; film.py render lays the effects, scripts/sfx.py; {len(b['sound'])} cues):", "",
               "| at | beat | cue | what |", "|---|---|---|---|"]
     lines += [f"| {c['at'] * sec:.2f} s | {c['beat']} | {c['kind']} | {c['what']} |" for c in b["sound"]]
     lines += ["", "Generated clips (clips.py list asks the video model for them; clips.py normalize places what arrives):", "",

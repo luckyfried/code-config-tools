@@ -39,8 +39,8 @@ each missing piece and stop.
 | 1 | research | `S/pipeline/1-research.md` | `research.py`, read the lines on `picks-sheet.jpg`, then you write `taste.md` and fix `taste.json` | taste.md with its five headings |
 | 2 | three looks | `S/pipeline/2-storyboards.md` | `storyboard.py draft`, `check`, `sheets`, look at `out/boards.png` | three boards, zero findings |
 | 3 | the pick | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill the scores and the swap test, `vote.py tally`, then ask which look (or pick by taste), `vote.py pick N --why "..."` | `build/winner.json` |
-| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `music.py analyze`, `storyboard.py snap`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed` and the four reads, `qa.py timed`, `music.py master`, `film.py render` | `out/film.mp4` and the cards |
-| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told), write `build/caption.md`, `deliver.py` | `GATE GREEN` |
+| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `music.py analyze`, `storyboard.py snap`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed` and the four reads, `qa.py timed`, `music.py master`, `film.py render --proof` | `out/proof.mp4`, the half-size proof every round before deliver reads, and the cards |
+| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told) on the proof; the full-size `film.py render`, `qa.py check`, `vote.py cut` and the type read at full size; write `build/caption.md`, `deliver.py` | `GATE GREEN` |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
 
@@ -57,7 +57,7 @@ The review page shows the other two looks under "Prefer another look? Say 'make 
 says that, run `vote.py pick 2 --why "they asked for it"` (the number they name, in `out/boards.png`'s order), then
 the produce sequence again in the same workspace: `music.py find`, `music.py analyze`, `storyboard.py snap`,
 `clips.py normalize`, `film.py preview`, `vote.py timed` and the reads, `qa.py timed`, `music.py master`,
-`film.py render`, then movement 5. The pick clears the cut, music, preview, reads and scores of the look before it,
+`film.py render --proof`, then movement 5. The pick clears the cut, music, preview, reads and scores of the look before it,
 so nothing of it is reused.
 
 ## Rules that win
@@ -80,6 +80,8 @@ so nothing of it is reused.
 - Look at what you make: the photographs' lines, `out/boards.png`, the timed cut's strip, the frames and the cards,
   with the Read tool, before any score or read.
 - A clip that did not arrive stands in as the look's own move on the still photograph; `brief.md` says which.
+- Every round before deliver renders the half-size proof (`film.py render --proof`); the render deliver takes is full
+  size (`film.py render`), where the critics read the type once more.
 - A render that stops partway resumes: run the same command again, and never delete `build/render/chunks/`. Run
   `film.py preview` and `film.py render` each in the foreground in one tool call with a 40-minute timeout on that
   call, and read `build/render/<name>.log` for where it stands.

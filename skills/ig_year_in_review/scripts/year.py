@@ -79,7 +79,7 @@ DIVE = (2.6, 0.8)      # the camera dives into the hook's window: from this beat
                        # window for a second before it, and the hook card rests just before
 CLOSER = 6.0           # beats from the closer's start to the stop
 CHAPTERS = 3.5         # beats the year's rows hold whole before the card's closer takes the frame for the stop
-HOLD = 2.2             # seconds the picture holds still after the stop: the stop's ring, then two seconds of silence
+HOLD = 2.2             # seconds after the stop: the stop's ring, then two seconds of the room alone under the closer's slow push
 SUBJECT = 0.15         # half the subject box around a photograph's focus, as a fraction of the frame
 # the bands a move draws across the whole frame for its whole beat, each [top, height] as fractions of the frame's height,
 # where motion/system/moves/move/<id>.tsx draws them; a month's words stand clear of its move's bands by BAND_CLEAR
@@ -87,6 +87,10 @@ MOVE_BANDS = {"marquee": [(0.1, 200 / 1920), (0.74, 200 / 1920)]}
 # the bands a move draws at a picture in the card's box ([x0, y0, x1, y1], frame px), each [top, bottom] in frame px: the
 # heavy rule over the picture's head and the hairline under its foot
 PICTURE_BANDS = {"rule-draw": lambda pic: [(pic[1] - 36, pic[1] - 18), (pic[3] + 14, pic[3] + 17)]}
+
+# the cut a move never takes into its own month: cell-reveal lifts the card's cells off its box as it opens, and a
+# grid-wipe into it shuts the grid's other cells at the same moment
+SHUTS_GRID = {"cell-reveal": "grid-wipe"}
 BAND_CLEAR = 32
 # a boxed photograph's accent line keeps LINE_IN[1] of the box's height inside its edges, or LINE_IN[0] where it runs
 # level past the subject, and stands LINE_CLEAR px clear of the subject box
@@ -476,7 +480,7 @@ def set_month(m, place, pic, photo, measure, box_of, g, colors, lead, move=None)
 
     def inside():
         ink = [box_of(t) for t in set_at(box[1])[1]]
-        return max(b[2] for b in ink) <= box[2] and min(b[0] for b in ink) >= box[0]
+        return max(b[2] for b in ink) <= box[2] and min(b[0] for b in ink) >= box[0] and max(b[3] for b in ink) <= box[3]
 
     def smaller():
         nonlocal size, said, scap, pitch, space
@@ -486,8 +490,9 @@ def set_month(m, place, pic, photo, measure, box_of, g, colors, lead, move=None)
         space = measure("a b", size, spec["face"])[0] - measure("ab", size, spec["face"])[0]
 
     if said:
-        # a line breaks by its words' advance widths; where the words' ink, set one by one, reaches past the card's
-        # line box, the line is set a step smaller until every word's ink stays inside it
+        # a line breaks by its words' advance widths and stands from cap to baseline; where the words' ink, set one by
+        # one from the box's top, reaches past the card's line box at a side or, with its descenders, at its foot, the
+        # line is set a step smaller until every word's ink stays inside it
         while size > least and not inside():
             smaller()
 
@@ -584,15 +589,26 @@ def build(run, measure, box_of, bpm, card, colors, stretch=1.0, rank=0):
     turns = pb is not None and pb[2] - pb[0] > W
     g = grade((run.taste.get("palette") or {}).get("year") or [] if turns else [], card["finish"]["grade"], colors)
     used, cuts_used = {}, {}
-    prev = {"move": None, "cut": None}
+    prev = {"move": None, "cut": None, "peaked": False}
 
     # the story's peak takes a move the card made for a peak wherever it has one
     peak_moves = lambda: [o for o in card["moves"] if "peak" in o["fits"]] or card["moves"]
 
+    def cut_for(mv, tags, form, avoid):
+        # a move that opens its picture through the card's grid takes no cut that shuts the grid over it: the cut's
+        # checker and the move's can be each other's complement, and together they shut the whole frame in the ground
+        pool = [o for o in card["transitions"] if o["id"] != SHUTS_GRID.get(mv)] or card["transitions"]
+        return style.pick(pool, tags, form, cuts_used, avoid)
+
+    # the card's `once` moves the story's peak takes, held from every beat before it
+    peak_once = {o["id"] for o in card["moves"] if o.get("once") and "peak" in o["fits"]}
+    for_peak = lambda form: () if prev["peaked"] or form == "peak" else peak_once
+
     def choose(tags, form, cut=True, spare=None):
         pool = peak_moves() if form == "peak" else [o for o in card["moves"] if o["id"] != spare] or card["moves"]
-        mv = style.pick(pool, tags, form, used, prev["move"])
-        ct = style.pick(card["transitions"], tags, form, cuts_used, prev["cut"]) if cut else None
+        mv = style.pick(pool, tags, form, used, prev["move"], for_peak(form))
+        prev["peaked"] = prev["peaked"] or form == "peak"
+        ct = cut_for(mv, tags, form, prev["cut"]) if cut else None
         prev.update(move=mv, cut=ct)
         return mv, ct
     # the window opens under the title in one shot: the flashes come on with no cut over them
@@ -654,7 +670,7 @@ def build(run, measure, box_of, bpm, card, colors, stretch=1.0, rank=0):
         # it leaves alone so the peak's is never its own move twice running
         nxt = months[i + 1] if i + 1 < len(months) else None
         spare = style.pick(peak_moves(), tags_of(nxt, True), "peak", {}, None) if nxt and nxt["id"] == run.peak else None
-        before = prev["move"]
+        before, before_cut = prev["move"], prev["cut"]
         tags, form = tags_of(m, m["id"] == run.peak), "peak" if m["id"] == run.peak else "photo"
         move, cut = choose(tags, form, spare=spare)
         lay = layout_of(photo, m["size"])
@@ -672,8 +688,11 @@ def build(run, measure, box_of, bpm, card, colors, stretch=1.0, rank=0):
             # a move whose bands leave the words no place clear of the photograph's subject gives way to the card's
             # next pick for the month
             used[move] -= 1
-            move = style.pick(others, tags, form, used, before)
-            prev["move"] = move
+            move = style.pick(others, tags, form, used, before, for_peak(form))
+            if cut == SHUTS_GRID.get(move):
+                cuts_used[cut] -= 1
+                cut = cut_for(move, tags, form, before_cut)
+            prev.update(move=move, cut=cut)
             typed = set_month(m, place, pic, lay, measure, box_of, g, colors, lead, move)
         if pic is None:
             # no photograph on the month: the accent line is the rule its words stand on
@@ -689,8 +708,10 @@ def build(run, measure, box_of, bpm, card, colors, stretch=1.0, rank=0):
             "start": t, "beats": L,
         })
         t += L
-    closing = choose({"closer"}, "closer")
-    closer = {"at": t, "card": t + CHAPTERS, "still": t + CLOSER, "end": t + CLOSER + round(HOLD * bpm / 60, 3), "move": closing[0], "transition": closing[1],
+    # the closer comes in on the pull back to the wall, the picture tunnel flown backward and cut to the wall on the
+    # closer's beat (YearFilm.tsx), so the card's cut draws no transition over it
+    closing = choose({"closer"}, "closer", cut=False)[0]
+    closer = {"at": t, "card": t + CHAPTERS, "still": t + CLOSER, "end": t + CLOSER + round(HOLD * bpm / 60, 3), "move": closing, "transition": None,
               "shape": card["closer"]}
     close = [3.8, 0.6]
     say = round(max(SAY_IN[1], TYPED * bpm / 60 - SAY_IN[0] - LAND), 3) if card["photo"]["line"].get("enter") == "type" else SAY_IN[1]
@@ -857,7 +878,7 @@ def sound(y):
     c = y["closer"]
     add("hit", c["card"], "closer", "the card's closer takes the frame", weight=0.8, bright=1.0)
     add("impact", c["still"], "closer", "the sign-off lands")
-    add("stop", c["still"], "closer", "picture and music stop together; the frame holds silent")
+    add("stop", c["still"], "closer", "the music stops; the closer keeps its slow push to the last frame")
     return sorted(cues, key=lambda q: q["at"])
 
 

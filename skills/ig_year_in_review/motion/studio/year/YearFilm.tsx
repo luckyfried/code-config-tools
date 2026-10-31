@@ -2,9 +2,10 @@
 // opens into a window where the months flash and the camera dives in, then each month in calendar order, where the
 // card stands its photograph, splits on its line into two layers that slide against each other under the month's move,
 // with its name and their own line from the post where the card sets them; the next month comes in on the card's cut
-// as this one closes onto its line and slides into its row. The closer is the year's chapters whole, the dot drawing one
-// spine down the rows' ends, then the card's closer takes the frame and lands the sign-off, where the film holds still
-// and silent. Every move, cut and closer the card names draws over the picture; one grade, the card's turned by the
+// as this one closes onto its line and slides into its row. The camera pulls back from the last month onto the wall
+// through the picture tunnel flown backward, cut to the wall on the closer's beat, and the closer is the year's chapters whole, the dot drawing one
+// spine down the rows' ends, then the card's closer takes the frame and lands the sign-off, where the music stops and
+// the closer keeps its slow push to the last frame over the room's quiet bed. Every move, cut and closer the card names draws over the picture; one grade, the card's turned by the
 // person's palette, covers every frame, and the card's finish (its grain, vignette, bloom and cadence) with it.
 import {useLoader, useThree} from '@react-three/fiber';
 import {useLayoutEffect, useMemo} from 'react';
@@ -14,10 +15,10 @@ import {Burst, Dust} from '../../system/three/Dust';
 import {clamp01, span} from '../../system/three/motion';
 import {Stage} from '../../system/three/Stage';
 import {fileOf, useFonts, type Font} from '../../system/three/type';
-import {closerOf} from '../../system/moves';
-import {MoveLayer} from '../../system/moves/layer';
+import {closerOf, moveOf} from '../../system/moves';
+import {MoveLayer, usePush} from '../../system/moves/layer';
 import type {Board, Clip} from '../../system/types';
-import {shotAt} from './camera';
+import {pullBackOf, shotAt, tunnelAt} from './camera';
 import {CardDot, signoffStop} from './card';
 import {DotView, dotAt, endsOf, type Route} from './dot';
 import {Ground} from './ground';
@@ -141,7 +142,7 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, 
         <shadowMaterial opacity={0.6} transparent depthWrite={false} />
       </mesh>
       <Ground plan={plan} t={t} textures={photo} />
-      <WallPlates plan={plan} t={t} />
+      <WallPlates plan={plan} t={t} lines={!closerOf(plan.closerShape)} />
       <HookWindow plan={plan} t={t} textures={photo} />
       {plan.months.map((m, i) => <MonthView key={m.id} plan={plan} month={m} index={i} t={t} texture={texOf(m)} />)}
       <HookWords plan={plan} fonts={fonts} t={t} />
@@ -162,6 +163,26 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, 
   );
 };
 
+/**
+ * The pull back from the last month to the wall: the card's picture tunnel flown backward. The last month's photograph
+ * stands square at the corridor's far end exactly where the camera held it, the corridor of the year's photographs
+ * comes up over the picture around it, and the camera flies back down the corridor as the photograph falls away into
+ * the card's ground, until the picture cuts to the wall on the closer's beat (camera.ts tunnelAt).
+ */
+const PullBack: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
+  const tunnel = moveOf('picture-tunnel');
+  const beat = plan.line.beats.filter((b) => b.form === 'photo').at(-1);
+  const back = tunnelAt(plan, t);
+  if (!tunnel?.Overlay || !beat || back === null) return null;
+  const {look} = plan;
+  const [a, b] = pullBackOf(plan);
+  const local = (back * look.fps) / look.pulse;
+  return (
+    <tunnel.Overlay beat={{...beat, at: 0, end: b - a, held: undefined}} look={look} u={local / (b - a)} local={local} t={local}
+      seed={plan.months.length} />
+  );
+};
+
 export const YearFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips}) => {
   const plan = useMemo(() => planOf(board), [board]);
   // a card with a cadence steps the picture at that many frames a second, as a camera that shoots fewer frames does
@@ -171,17 +192,26 @@ export const YearFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips}
   const files = useMemo(() => [...new Set(linesOf(plan).map(fileOf))], [plan]);
   const fonts = useFonts(files);
   const still = Math.round(plan.closer.still * plan.pulse);
-  // from the full stop on, the picture is the still frame
+  // from the full stop on, the picture holds the stop's frame and the closer keeps its slow push to the last frame
+  // (`time`, the film's own time); the dot stands on the sign-off as its full stop, so it grows with the closer
   const t = Math.min(frame, still) / plan.pulse;
+  const time = frame / plan.pulse;
   const shot = shotAt(plan, t);
-  const route = useMemo(() => (fonts ? routeOf(plan, fonts) : null), [plan, fonts]);
+  const push = usePush(plan.look, plan.closer.still, time);
+  // the closer lays its words out in the push's look, the same on every frame, so the sign-off's full stop is read there
+  const safe = push.look.safe;
+  const route = useMemo(() => (fonts ? routeOf({...plan, look: push.look}, fonts) : null),
+    [plan, fonts, safe?.left, safe?.top, safe?.right, safe?.bottom]);
   return (
     <AbsoluteFill style={{background: plan.colors.bg}}>
       {fonts && route ? (
         <Stage pose={shot.pose} travel={shot.travel} background={plan.colors.bg} grade={plan.grade}
-          over={<MoveLayer line={plan.line} look={plan.look} t={t} bars={plan.finish.bars}
+          over={<MoveLayer line={plan.line} look={plan.look} t={t} now={time} bars={plan.finish.bars}
             closer={{name: plan.closerShape, at: plan.closer.card, still: plan.closer.still}}>
-            <CardDot plan={plan} t={t} route={route} />
+            <PullBack plan={plan} t={t} />
+            <div style={push.style}>
+              <CardDot plan={{...plan, look: push.look}} t={t} route={route} />
+            </div>
           </MoveLayer>}>
           <Scene plan={plan} t={t} frame={Math.min(frame, still)} fonts={fonts} clips={clips} still={still} route={route} />
         </Stage>
