@@ -14,7 +14,10 @@ python3 S/scripts/qa.py check
 ```
 
 `check` measures every film and card in `RUN/cut/` (`RUN/qa/check.json`, and `RUN/qa/strip.png` at 2 fps); `film.py
-render` runs it on every new cut, and running it again measures the cut as it is. It fails a film in `cut/` nobody
+render` runs it on every new cut, and running it again measures the cut as it is. Every round before deliver reads the
+half-size proof (`film.py render --proof`): while `RUN/cut/proof.mp4` is the newest render, `check` and `vote.py cut`
+read it, their first line says "reading the half-size proof", and every size they report is in board units, so a
+proof passes or fails exactly where the full-size film would. It fails a film in `cut/` nobody
 asked for, and measures: size, H.264 High at
 30 fps, length, audio and loudness, cuts per minute against the tone's range, the locked seconds on the rest line (the lowest second reported)
 (the mean luma difference a second apart at 1/8 size, so grain does not count), the hook frame, black stretches,
@@ -25,7 +28,8 @@ fails is a fault to fix before the critics watch. Then:
 python3 S/scripts/vote.py cut
 ```
 
-Read `S/critic/critic.md` section "The cut". As the motion designer, then as the person, watch `cut/film.mp4`, open
+Read `S/critic/critic.md` section "The cut". As the motion designer, then as the person, watch the film it names
+(`cut/proof.mp4` while the proof is the newest render), open
 `RUN/qa/strip.png`, `cut/then-now.png`, the story cards and `RUN/clips/requests.json`, and fill in the round file it names
 (`RUN/critic/cut-<tone>-1.json`): a score 1-5 per criterion and a paragraph each. Running `vote.py cut` again on the
 same film names the same round file; it opens the next round only once the film has changed, and it refuses a cut
@@ -38,10 +42,27 @@ python3 S/scripts/vote.py verdict
 - `SHIP`: the cut meets the bar; go on.
 - `FIX ONCE`: round 1 is under the bar and a lever inside the run reaches a rule under it. Take the fix: it names
   the rule and the lever in `critic.md` (the music, the research the builder read); run the movements it touches
-  again through `film.py render`, then `vote.py cut` for round 2 (say in `fixed` what changed) and score again. The
-  gate's critic row stays red while the verdict is `FIX ONCE`.
+  again through `film.py render --proof`, then `vote.py cut` for round 2 (say in `fixed` what changed) and score
+  again. The gate's critic row stays red while the verdict is `FIX ONCE`.
 - `DELIVER WITH SCORES`: the fix is spent, or no lever inside a run reaches the rules under the bar. Go on: the cut
   is delivered as the run's best, and brief.md states every score against the bar.
+
+## Render the full-size film and read the type on it
+
+Once the verdict on the proof says `SHIP` or `DELIVER WITH SCORES`, render the film at full size and score it once
+more:
+
+```
+python3 S/scripts/film.py render                  # with --also as the proof had it
+python3 S/scripts/vote.py cut
+python3 S/scripts/vote.py verdict
+```
+
+`render` runs `qa.py check` on the full-size cut itself. `cut` moves the round to the full-size film and empties each
+critic's `type` score; the other scores stand. As each critic, watch `cut/film.mp4`, open `RUN/qa/strip.png` and the
+story cards, read the type at the size a phone shows it (`S/motion/system/standards.md`, R3), and score `type` again.
+A `type` score that takes round 1 under the bar is a `FIX ONCE` like any other: fix it, render the proof again, and
+score round 2.
 
 ## Caption
 
@@ -66,7 +87,9 @@ poster, the caption to copy, the story cards and the then/now card, any asked-fo
 to ask for one, and how the film was made in plain words; the page carries no score), then runs `qa.py gate`. A cut
 under the bar is delivered with its scores stated in `brief.md`; the gate never refuses on a score. On a pass
 it publishes `RUN/cut/` to `RUN/out/` in one rename, so `out/` holds the deliverables and nothing else. On a red gate
-it names each failing check and leaves no `RUN/out/`: fix the cause, then run deliver.py again. A deliver stopped
+it names each failing check and leaves no `RUN/out/`: fix the cause, then run deliver.py again. deliver.py delivers
+only the full-size film: while the newest render is the half-size proof it refuses with `not delivered: the newest
+render is the half-size proof` and names the full-size render, `qa.py check` and `vote.py cut` to run first. A deliver stopped
 partway leaves no `RUN/out/` either. deliver holds the run's lock while it works and runs the gate inside itself, so every
 probe the gate makes holds the lock too; it refuses while a draft or a render is running in the run, and names it.
 

@@ -1,9 +1,10 @@
 // counter: the beat's number counts up from nothing, fast and then slowing onto its value, and on the stop four rings
 // open out from it one after another in the card's accents while a burst of sparks flies off it and falls. The rest of
 // the beat's words stand under the number in the text face. On a photo beat the count plays over the photograph dimmed
-// into the card's ground, then the frame goes back to the picture; on a words beat it holds to the end of the beat.
+// into the card's ground, on a clip beat over the clip dimmed the same way, then the frame goes back to the picture; on
+// a words beat it holds to the end of the beat.
 import React from 'react';
-import {alpha, clamp01, fitTo, hash, inkOn, px, SINE, wordsOf} from '../kit';
+import {alpha, clamp01, fitTo, hash, inkOn, OPTICAL, PICTURED, px, SINE, wordsOf} from '../kit';
 import {Face, landingOf} from '../arrival';
 import {secondsOf, spring} from '../spring';
 import type {Move, MoveProps} from '../types';
@@ -27,24 +28,24 @@ const COUNT = 0.85, RING = 0.7, SPARK = 0.8;
 
 const Overlay: React.FC<MoveProps> = (p) => {
   const {look, beat, seed} = p;
-  const photoBeat = beat.form === 'photo';
+  const over = PICTURED.has(beat.form);
   const {box: [x, y, w, h], src, place} = landingOf(p);
   const {value, rest, grouped} = numberOf(beat.words || beat.say || beat.label, seed);
   const s = secondsOf(look, p.local);
   const until = secondsOf(look, (beat.held ? beat.held[1] : beat.end) - (p.t - p.local));
   const count = Math.min(COUNT, until * 0.45);
-  // a photo beat hands the frame back after the count has held a moment: the number goes first, then the dimmed
-  // photograph clears onto the picture, so the number never crosses the words the photo form sets
+  // a photo or clip beat hands the frame back after the count has held a moment: the number goes first, then the
+  // dimmed picture clears, so the number never crosses the words the beat's form sets
   const hand = s - Math.min(count + 0.9, until - 0.5);
-  const shows = photoBeat ? 1 - SINE(clamp01((hand - 0.14) / 0.3)) : 1;
-  const inked = photoBeat ? 1 - SINE(clamp01(hand / 0.18)) : 1;
+  const shows = over ? 1 - SINE(clamp01((hand - 0.14) / 0.3)) : 1;
+  const inked = over ? 1 - SINE(clamp01(hand / 0.18)) : 1;
   if (shows <= 0) return null;
   const k = clamp01(s / count);
   // fast and then slowing: the value follows an exponential ease that lands exactly on it
   const shown = k >= 1 ? value : Math.floor(value * (1 - Math.pow(2, -10 * k)) / (1 - Math.pow(2, -10)));
   const digits = value % 1 ? shown.toFixed(1) : grouped ? shown.toLocaleString('en-US') : String(shown);
   const final = value % 1 ? value.toFixed(1) : grouped ? value.toLocaleString('en-US') : String(value);
-  const field = photoBeat ? look.tone.ground : look.colors.bg;
+  const field = over ? look.tone.ground : look.colors.bg;
   const ink = inkOn(field, [look.colors.ink, look.colors.accent, look.colors.paper, look.tone.pen]);
   const m = look.grid.m || px(look, 72);
   // the size the final value is set at decides the number's size, so the count never grows wider than its stop
@@ -77,8 +78,8 @@ const Overlay: React.FC<MoveProps> = (p) => {
       background: color, opacity: 1 - after / SPARK}} />;
   }) : null;
   return (
-    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', opacity: shows, background: field}}>
-      {photoBeat && src ? (
+    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', opacity: shows, background: beat.form === 'clip' ? alpha(field, 0.76) : field, ...OPTICAL}}>
+      {beat.form === 'photo' && src ? (
         <div style={{position: 'absolute', left: x, top: y, width: w, height: h}}>
           <Face src={src} w={w} h={h} place={place}>
             <div style={{position: 'absolute', inset: 0, background: alpha(field, 0.76)}} />

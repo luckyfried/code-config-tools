@@ -1,6 +1,6 @@
-"""The generated clips (scripts/clips.py): a clip that arrived is conformed to its photograph's size and its beat's
-length and placed on that photograph's card from the beat's first frame; a clip that did not arrive stands in, named in
-clips.json.
+"""The clips (scripts/clips.py): a clip that arrived, or their own recording, is conformed to its photograph's size and
+its beat's length and placed on that photograph's card from the beat's first frame; a clip that did not arrive stands
+in, named in clips.json.
 
     python3 -m unittest discover -s S/tests        (S = this skill's folder)
 """
@@ -8,6 +8,7 @@ import argparse
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -15,6 +16,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
@@ -65,6 +67,45 @@ class Clips(unittest.TestCase):
                                   capture_output=True, text=True).stdout.strip()
             self.assertEqual(size, "1200,1600")
 
+    def test_their_own_recording_is_one_shot_the_length_of_its_beat_from_its_strongest_second(self):
+        import clips
+        tram = KIT / "tests" / "fixtures" / "clip-tram.mp4"
+        start = clips.strongest(tram)
+        # the recording is 4 s: its strongest second is a whole second it can run on from
+        self.assertIn(start, (0.0, 1.0, 2.0))
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
+            run = Path(d) / "build" / "run"
+            (run / "public" / "photos").mkdir(parents=True)
+            (run / "storyboards" / STYLE).mkdir(parents=True)
+            (Path(d) / "build" / "RUN").write_text("run\n")
+            ff("-f", "lavfi", "-i", "color=c=0x996633:s=720x1280", "-frames:v", "1", str(run / "public/photos/p02.jpg"))
+            own = {"id": "own-p02", "beat": "p02", "role": "their own clip", "seconds": 3.0, "image": "photos/p02.jpg",
+                   "source": str(tram), "from": start, "prompt": None}
+            board = {"style": STYLE, "beats": [{"id": "hook", "frames": 60}, {"id": "p02", "frames": 90}, {"id": "p03", "frames": 45}],
+                     "clips": [own]}
+            (run / "storyboards" / STYLE / "storyboard.json").write_text(json.dumps(board))
+            (run / "film.json").write_text(json.dumps({"board": STYLE}))
+            for cmd in ("normalize", "list"):
+                r = subprocess.run([sys.executable, str(KIT / "scripts/clips.py"), cmd], cwd=d, capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+            got = json.loads((run / "clips.json").read_text())["clips"]
+            self.assertEqual(list(got), ["own-p02"])
+            rec = got["own-p02"]
+            self.assertEqual((rec["status"], rec["start"], rec["from_frame"], rec["frames"]), ("recorded", start, 60, 90))
+            # one shot as long as its beat, its last frame held past the recording's end, at the photograph's size
+            frames = sorted((run / "public" / rec["dir"]).glob("*.jpg"))
+            self.assertEqual(len(frames), 90)
+            self.assertEqual(frames[-1].read_bytes(), frames[-2].read_bytes())
+            size = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "stream=width,height", "-of", "csv=p=0", str(frames[0])],
+                                  capture_output=True, text=True).stdout.strip()
+            self.assertEqual(size, "720,1280")
+            # nothing is asked of a video model for it
+            self.assertEqual(json.loads((run / "clips" / "requests.json").read_text())["clips"], [])
+            old = _env.B
+            self.addCleanup(setattr, _env, "B", old)
+            _env.B = run
+            self.assertEqual(clips.placed(), [{"id": "own-p02", "beat": "p02", "image": "photos/p02.jpg", "from": 60, "frames": 90,
+                                               "step": 1, "dir": rec["dir"]}])
 
 
 class Killed(unittest.TestCase):
@@ -163,6 +204,34 @@ class Killed(unittest.TestCase):
         self.assertEqual(music.cmd_find(argparse.Namespace(origin="their own track")), 0)
         self.assertEqual(_env.read_json(self.run / "music.json")["file"], str(placed))
 
+    def test_a_peaky_track_reaches_the_target_by_one_gain_and_keeps_its_peaks_whole(self):
+        """Sharp clicks over a quiet bed need peaks past full scale to reach -14 LUFS. master reads the loudness once and
+        sets one gain, with no limiter, and writes the master in 32-bit float, so the clicks stand past full scale
+        unclipped and the film's mux (sfx.py) is the only thing that limits them."""
+        music = self.music_here()
+        src = music.MUSIC / "source.wav"
+        ff("-f", "lavfi", "-i", "anoisesrc=d=6:c=pink:a=0.01", "-f", "lavfi", "-i", "aevalsrc='if(lt(mod(t,0.25),0.004),0.9,0)':d=6:s=48000",
+           "-filter_complex", "[0:a][1:a]amix=inputs=2:normalize=0", "-ar", "48000", str(src))
+        _env.write_json(self.run / "music.json", {"file": str(src)})
+        _env.write_json(self.run / "film.json", {"seconds": 6.0})
+        calls, real = [], subprocess.run
+
+        def run(argv, **kw):
+            calls.append([str(x) for x in argv])
+            return real(argv, **kw)
+        with mock.patch.object(music.subprocess, "run", run), redirect_stdout(io.StringIO()):
+            self.assertEqual(music.cmd_master(argparse.Namespace(seconds=None)), 0)
+        info = _env.read_json(self.run / "music.json")
+        self.assertAlmostEqual(info["master_lufs"], music.TARGET_LUFS, delta=0.2)
+        self.assertFalse([c for c in calls if any("alimiter" in x for x in c)], "no limiter in the master")
+        written = next(i for i, c in enumerate(calls) if "master" in Path(c[-1]).name)
+        self.assertEqual(sum("ebur128" in " ".join(c) for c in calls[:written]), 1, "one loudness read, then one gain")
+        self.assertEqual(calls[written][-3:-1], ["-c:a", "pcm_f32le"])
+        said = real([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(music.MUSIC / info["master"]), "-af", "astats=measure_perchannel=none",
+                     "-f", "null", "-"], capture_output=True, text=True).stderr
+        self.assertGreater(float(re.findall(r"Peak level dB: (-?[\d.]+)", said)[-1]), 0.0,
+                           "the clicks stand past full scale in the float master, unclipped")
+
     def test_a_master_killed_before_its_index_leaves_the_mux_the_master_the_index_names(self):
         import film
         music = self.music_here()
@@ -180,10 +249,14 @@ class Killed(unittest.TestCase):
         class Run:
             def spawn(self, cmd, **kw):
                 seen.append(cmd)
-        film.mux(Run(), self.run / "silent.mp4", self.run / "film.mp4", 2.0)
+                # the mux reads the mix's loudness before it encodes
+                return subprocess.CompletedProcess(cmd, 0, "", "    I:         -14.0 LUFS\n")
+        board = {"id": "reel", "bpm": 120.0, "film": {"cards": [], "closer": {"span": "x"}, "timeline": {"beats": []}}}
+        film.mux(Run(), self.run / "silent.mp4", self.run / "film.mp4", 2.0, board)
+        # the picture, the effects, and the master the index names
         inputs = [seen[0][i + 1] for i, x in enumerate(seen[0]) if x == "-i"]
-        self.assertEqual(len(inputs), 2, seen[0])
-        self.assertEqual(Path(inputs[1]).read_bytes(), first)
+        self.assertEqual(len(inputs), 3, seen[0])
+        self.assertEqual(Path(inputs[2]).read_bytes(), first)
 
     def test_a_music_make_killed_before_its_index_keeps_the_track_the_index_names(self):
         import music
@@ -240,6 +313,23 @@ class Music(unittest.TestCase):
         self.assertIn("chosen by the kinetic-type look", b_origin)
         self.assertNotEqual(a_bed, b_bed)
 
+    def test_the_bed_lifts_into_the_peak_print_from_its_landing_to_its_beats_end(self):
+        board = {"bpm": 120, "film": {"timeline": {"beats": [
+            {"id": "p04", "form": "photo", "at": 4.0, "end": 8.0, "peak": False, "held": [5.0, 7.5]},
+            {"id": "p22", "form": "photo", "at": 10.0, "end": 16.0, "peak": True, "held": [11.0, 15.0]}]}}}
+        self.assertEqual(self.music.peak(board), (5.5, 8.0))
+        board["film"]["timeline"]["beats"][1].pop("held")
+        self.assertEqual(self.music.peak(board), (5.0, 8.0))
+        board["film"]["timeline"]["beats"][1]["peak"] = False
+        self.assertIsNone(self.music.peak(board))
+        self.assertIsNone(self.music.peak({"bpm": 120, "beats": []}))
+        _env.write_json(self.run / "storyboards" / STYLE / "storyboard.json",
+                        {"style": STYLE, "bpm": 120, "beats": [{"id": "b0", "frames": 300}], "sound": [], "facts": {},
+                         "film": {"timeline": {"beats": [{"id": "p22", "at": 2.0, "end": 6.0, "peak": True, "held": [3.0, 5.0]}]}}})
+        self.brief()
+        self.assertEqual(self.music.cmd_make(argparse.Namespace(bpm=None, seconds=4.0)), 0)
+        self.assertEqual(_env.read_json(self.run / "music.json")["peak"], [1.5, 3.0])
+
     def test_find_with_no_placed_track_composes_a_bed_as_long_as_the_board_needs(self):
         self.brief({"styles": ["felt piano arpeggios"], "avoid": []})
         with redirect_stdout(io.StringIO()):
@@ -251,8 +341,10 @@ class Music(unittest.TestCase):
         self.assertRegex(info["file"], r"/bed\.[0-9-]+/bed\.wav$")
 
     def test_master_states_the_cut_s_length_at_the_tempo_the_music_plays_in_the_film(self):
-        board = {"style": STYLE, "bpm": 112.5, "beats": [{"id": "hook", "frames": 150}, {"id": "closer", "frames": 150}],
-                 "sound": [{"kind": "hit", "at": 0.3, "beat": "hook", "what": "day one lands"},
+        film = {"cards": [], "closer": {"span": "fourteen months in"},
+                "timeline": {"beats": [{"id": "closer", "form": "closer", "move": None, "transition": "fade", "at": 4.0, "end": 22.5}]}}
+        board = {"style": STYLE, "bpm": 112.5, "beats": [{"id": "hook", "frames": 150}, {"id": "closer", "frames": 150}], "film": film,
+                 "sound": [{"kind": "impact", "at": 4.0, "beat": "closer", "what": "the closer lands"},
                            {"kind": "stop", "at": 20.0, "beat": "closer", "what": "picture and music stop together"}]}
         _env.write_json(self.run / "storyboards" / STYLE / "storyboard.json", board)
         md = self.run / "storyboards" / STYLE / "storyboard.md"
@@ -270,7 +362,11 @@ class Music(unittest.TestCase):
             lines = md.read_text().splitlines()
             self.assertTrue(lines[2].startswith(head), lines[2])
             self.assertEqual(lines[4], "Music: made by the test.")
-            self.assertTrue(lines[5].startswith("Mixed: bed "), lines[5])
+            self.assertTrue(lines[5].startswith("Mixed: music "), lines[5])
+            self.assertTrue((self.music.MUSIC / "fx.wav").is_file())
+            energy = _env.read_json(self.music.MUSIC / "energy.json")
+            self.assertEqual(energy["fps"], 30)
+            self.assertAlmostEqual(len(energy["rms"]) / 30, 12.0, delta=0.1)
 
     def test_a_track_the_person_placed_wins_over_the_brief(self):
         self.brief({"mood": "calm", "tempo": 96})

@@ -4,6 +4,10 @@ Each style is one card, `styles/<id>.json`: its two faces, its palette rule, the
 easing, its finish, its music recipe, and its closer. A person names a look in their own words; find the words below
 and use the style's id. A board is the person's story told in one of these styles.
 
+Every card lists at least one move that takes the whole frame to land a photograph (picture-tunnel, exploded-layers,
+tilted-wall). A move a card marks `once` plays at most once a film and wins the story's peak, on every card and in
+every kit.
+
 | id | in one sentence, for the person | what a person might call it |
 |---|---|---|
 | editorial-quiet | Your photos, softened a touch, set in a serif with wide white space around them, like a quiet magazine spread. | editorial, magazine, minimal, calm, clean and elegant, Kinfolk, serif, airy, understated, slow |

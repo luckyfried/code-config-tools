@@ -36,7 +36,10 @@ enters as the look's type enters, and is read before it leaves. When the
 camera moves on, the words leave letter by letter, the print drops into its tile, and the camera travels along the
 wall to the next post, winding back before it goes and landing past its mark. Each move is one the look allows, chosen by what the beat holds (a portrait or a landscape photograph,
 a chapter, the step it crosses on the wall), never the same move twice running, and the cut into each beat is one of
-the look's own cuts. Day one, every milestone and the latest are the chapters: their line lands harder and their next
+the look's own cuts. A move that ends on the photograph alone (the corridor of their prints, the print coming apart
+into its layers, the wall of prints swinging flat) plays on a print with no line whose photograph is no wider than
+tall, so the frame it lands on is the picture, never a band of it across empty ground. A title never leaves a short
+word alone on its last line: it takes one line fewer at a smaller size. Day one, every milestone and the latest are the chapters: their line lands harder and their next
 line rises under it (their own words for the moment, under the date), and they hold longest, the peak (the
 last milestone, else the latest) longest of all. Every beat holds as long as its photograph carries: longer for more
 words, a wider or busier scene, or a bigger change from the photograph before, shorter for a photograph that repeats
@@ -57,7 +60,7 @@ their line left off, and draft prints one plain line naming them; day one, the m
 word. Curate fewer lines in `RUN/taste.json` to choose which posts keep theirs.
 
 `storyboard.md` says, per beat, its photograph, their line on it, what the move reveals and what it carries across the cut, carries the music brief,
-lists the sound cues where each beat lands, and lists the clips an image-to-video model would make with the camera move that stands in for each. The
+lists every sound effect under the picture, and lists the clips: their own videos, each on its post's beat, and the shots an image-to-video model would make with the camera move that stands in for each. The
 board is laid out for the reel (9:16) and again for square and wide from the same posts, each format's wall and
 type solved for its own frame.
 

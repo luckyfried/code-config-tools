@@ -72,8 +72,8 @@ two") in `RUN/taste.json` `call_to_action`, and the closer sets them under the d
 | 1 | research | `S/pipeline/1-research.md` | `research.py [--subject "their words"]`, then you write `RUN/taste.md` and fix `RUN/taste.json` | taste.md with its five headings |
 | 2 | storyboards | `S/pipeline/2-storyboards.md` | `storyboard.py draft`, `storyboard.py sheets`, look at each look's styleframes | check 0 findings, `out/boards.png` |
 | 3 | vote and the look | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores and the swap test, `vote.py tally`, show `out/boards.png` and ask which look, `vote.py pick <style>` | `RUN/winner.json` names the look |
-| 4 | film | `S/pipeline/4-film.md` | `music.py find`, `storyboard.py snap`, `music.py master`, `film.py draft`, `vote.py timing` (read, fill, again), make the clips `RUN/clips/requests.json` asks for, `film.py render` | `cut/film.mp4`, `cut/cover.png`, `cut/stories/`, `cut/then-now.png` (and the formats they asked for) |
-| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told), write `RUN/caption.md`, `deliver.py` | `GATE GREEN` |
+| 4 | film | `S/pipeline/4-film.md` | `music.py find`, `storyboard.py snap`, `music.py master`, `film.py draft`, `vote.py timing` (read, fill, again), make the clips `RUN/clips/requests.json` asks for, `film.py render --proof` | `cut/proof.mp4`, the half-size proof every round before deliver reads, with `cut/cover.png`, `cut/stories/`, `cut/then-now.png` (and the formats they asked for) |
+| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told) on the proof; the full-size `film.py render`, `vote.py cut` and the type read at full size; write `RUN/caption.md`, `deliver.py` | `GATE GREEN` |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
 
@@ -122,6 +122,8 @@ first time.
   `film.py render` refuses until the timing round passes.
 - Do not hand-edit `RUN/storyboards/*/storyboard.json`, `RUN/film.json` or anything in `cut/` or `out/`; the builder decides
   the layout from the posts. Change the posts' subject or taste and run the movement again.
+- Every critic round before deliver renders the half-size proof (`film.py render --proof`, `cut/proof.mp4`); the
+  render deliver takes is full size (`film.py render`), and the critics read the type on it before deliver.
 - A film renders in chunks saved in the run, and an interrupted render (the machine restarted, the session died) is
   resumed by running the same command again: `film.py draft` and `film.py render` keep every finished chunk and
   render only the missing ones. Never start over, and never delete `RUN/render/chunks/`; a changed cut gets chunks
@@ -130,8 +132,9 @@ first time.
   first chunks land, their time times the chunks still to go is the estimate to tell the person.
 - Generated clips: `film.py draft` writes the shots the film asks for to `RUN/clips/requests.json`. When this session
   can make video, make each one from its photograph and prompt and save it at its `save_as` path before `film.py
-  render`, which conforms every saved clip and plays it on its photograph's card. A beat with no clip plays its
-  photograph; never call a photograph a clip, to the person or in a caption.
+  render`, which conforms every saved clip and plays it on its photograph's card. A post they posted as a video plays
+  that video on its beat (nothing to make for it). A beat with no clip plays its photograph; never call a photograph a
+  clip, to the person or in a caption.
 - Done means `deliver.py` printed `GATE GREEN`. Then tell the person, in three or four plain lines, first where the
   reel is, its full path from the workspace root copied from the last line `deliver.py` printed ("Your reel is at
   build/20261026-014049/out/film.mp4", never the bare `film.mp4`), then that `out/review.html` opens everything, the

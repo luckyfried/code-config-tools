@@ -139,16 +139,56 @@ class Pottery(unittest.TestCase):
         for f, b in self.boards.items():
             with self.subTest(format=f):
                 cues = b["sound"]
-                self.assertLessEqual(len(cues), len(b["beats"]) + 4)
-                self.assertLessEqual({c["kind"] for c in cues}, {"hit", "riser", "impact", "stop"})
-                self.assertEqual([(c["kind"], c["beat"]) for c in cues if c["kind"] in ("riser", "impact", "stop")],
-                                 [("riser", "closer"), ("impact", "closer"), ("stop", "closer")])
-                hits = [c["beat"] for c in cues if c["kind"] == "hit"]
-                self.assertEqual(sorted(set(hits), key=hits.index), [bt["id"] for bt in b["beats"][:-1]])
-                self.assertLessEqual(hits.count("hook"), 2)
-                self.assertTrue(all(hits.count(bt["id"]) == 1 for bt in b["beats"][1:-1]), hits)
+                self.assertLessEqual({c["kind"] for c in cues}, {"air", "sweep", "bright", "shutter", "pop", "impact", "riser", "stop"})
+                # the closer takes the riser into it and its impact; the stop ends the picture
+                self.assertEqual([c["kind"] for c in cues if c["beat"] == "closer"][-3:], ["riser", "impact", "stop"])
+                self.assertEqual([c["kind"] for c in cues if c["kind"] in ("riser", "stop")], ["riser", "stop"])
+                # every print lands on its shutter (or its mark's pop), once
+                cards = b["film"]["cards"]
+                lands = [c for c in cues if c["kind"] in ("shutter", "pop")]
+                self.assertEqual(len(lands), len(cards))
+                per = 60 / b["bpm"]
+                for cd, c in zip(cards, lands):
+                    arrive = cd["arrive"] if not cd["mask"] else next(x["at"] for x in b["film"]["timeline"]["beats"] if x["id"] == f"{cd['id']}-print")
+                    self.assertAlmostEqual(c["at"], arrive, delta=0.125 + 1e-6)
+                # the one bright whoosh is the film's accent, never repeated
+                self.assertLessEqual(sum(1 for c in cues if c["kind"] == "bright"), 1)
+                # every effect sits on a quarter of a beat of the music's grid from frame 0 (the riser ends on one)
+                for c in cues:
+                    if c["kind"] != "stop":
+                        end = c["at"] + c.get("beats", 0.0)
+                        self.assertAlmostEqual(end * 4, round(end * 4), delta=1e-3, msg=c)
                 self.assertEqual(set(qa.sound_of(b)), {"cues", "last", "stop"})
                 self.assertEqual(qa.sound_of(b)["cues"], sum(1 for c in b["sound"] if c["kind"] != "stop"))
+
+    def test_a_post_they_posted_as_a_recording_plays_it_and_every_other_beat_is_unchanged(self):
+        tram = str(KIT / "tests" / "fixtures" / "clip-tram.mp4")
+        k = next(k for k, r in enumerate(self.rows) if not r["milestone"] and 0 < k < len(self.rows) - 1)
+        rows = [dict(r, video=tram, **{"from": 1.0}) if i == k else r for i, r in enumerate(self.rows)]
+        b = compose.board(STYLE, rows, self.fx, WHO, "reel")
+        a = self.boards["reel"]
+        # the film, its beats and its sound are the photographs' film: the recording plays on the print's own arrival and move
+        self.assertEqual((b["film"], b["beats"], b["sound"]), (a["film"], a["beats"], a["sound"]))
+        rid = rows[k]["id"]
+        own = [c for c in b["clips"] if c["role"] == "their own clip"]
+        frames = next(bt["frames"] for bt in b["beats"] if bt["id"] == rid)
+        self.assertEqual(own, [{"id": f"own-{rid}", "beat": rid, "role": "their own clip", "seconds": round(frames / compose.FPS, 2),
+                                "image": rows[k]["photo"], "source": tram, "from": 1.0, "prompt": None}])
+        # no shot is asked of a video model for the beat their recording plays
+        self.assertEqual([c for c in b["clips"] if c["prompt"] and c["beat"] == rid], [])
+
+    def test_the_sound_effects_are_the_shared_layer_s_and_play_once(self):
+        # the board's cues are what the shared layer lays under the picture, and the music master lays none of them
+        import sfx
+        b = self.boards["reel"]
+        ev, _ = sfx.events(drive.fx_board(b["film"], b["bpm"], b["id"]), b["bpm"])
+        self.assertEqual(sorted(k for _, k in ev), sorted(c["kind"] for c in b["sound"] if c["kind"] != "stop"))
+        # a chapter's line landing on its label is an impact
+        per = 60 / b["bpm"]
+        impacts = [t / per for t, k in ev if k == "impact"]
+        for cd in b["film"]["cards"]:
+            if cd["kind"] != "ordinary" and cd["title"] and not cd["mask"]:
+                self.assertTrue(any(abs(t - cd["land"]) <= 0.125 + 1e-6 for t in impacts), cd["id"])
 
     def test_every_board_keeps_every_rule_in_every_format(self):
         for f, b in self.boards.items():
@@ -194,6 +234,40 @@ class Pottery(unittest.TestCase):
                 self.assertFalse([k for k in range(1, len(moves)) if moves[k] and moves[k] == moves[k - 1]], moves)
                 self.assertLessEqual({m for m in moves if m}, set(compose.ids(compose.card(STYLE), "moves")))
                 self.assertTrue(any(moves), moves)
+
+    def test_a_move_that_lands_on_the_photograph_plays_on_a_quiet_print_before_the_peak(self):
+        # the tunnel and the layers close onto the photograph's own box and draw only the card's ground around it, so
+        # they play where the photograph fills the station: an ordinary print whose card sets no line, no wider than tall
+        from tones import drive
+        for style in storyboard.styles_of({}):
+            compose.use(style)
+            b = compose.board(style, self.rows, self.fx, WHO, "reel")
+            beats = b["film"]["timeline"]["beats"]
+            peak = next(x["at"] for x in beats if x.get("peak"))
+            lands = [x for x in beats if x.get("move") in drive.LANDS_ON_THE_PHOTO]
+            with self.subTest(style=style):
+                for x in lands:
+                    row = next(r for r in self.rows if r["id"] == x["id"])
+                    self.assertFalse(row["milestone"] or x.get("say"), x["id"])
+                    self.assertLessEqual(row["aspect"], drive.FILLS, x["id"])
+                if style != "kinetic-type":
+                    self.assertEqual(len(lands), 1, [x["id"] for x in lands])
+                    self.assertLess(lands[0]["at"], peak)
+
+    def test_no_card_leaves_a_short_word_alone_on_a_line(self):
+        # a title of four words in three lines leaves its last word alone; it takes two lines at a smaller size
+        from tones import drive
+        self.assertEqual([ln.upper() for ln in drive.fit("my first matching set", 112, "display", 600, 3, drive.least_size())[0]],
+                         ["MY FIRST", "MATCHING SET"])
+        for style in storyboard.styles_of({}):
+            compose.use(style)
+            b = compose.board(style, self.rows, self.fx, WHO, "reel")
+            for c in b["film"]["cards"]:
+                for part in ("title", "rest"):
+                    lines = c.get(part) or []
+                    with self.subTest(style=style, card=c["id"], part=part):
+                        self.assertFalse(lines and drive.runt([ln["text"] for ln in lines], lines[0]["size"], lines[0]["face"]),
+                                         [ln["text"] for ln in lines])
 
     def test_the_closer_shape_runs_three_beats_and_at_a_slow_tempo_under_two_seconds_so_it_never_stalls_before_the_stop(self):
         shape = lambda bpm: drive.seconds_of(drive.to_stop(bpm) - drive.CLOSER_MOVE - drive.WALL_READ, bpm)
@@ -326,7 +400,9 @@ class Pottery(unittest.TestCase):
         self.assertEqual(by["p04"]["line"].lower(), "the first pot that survived / lumpy, and i love it")
         self.assertEqual(by["p04"]["photo"], Path(self.rows[3]["photo"]).name)
         self.assertEqual(by["hook"]["line"].lower(), "day one / dry clay crumbs all over the studio floor and no idea what i'm doing")
-        self.assertEqual(by["p05"]["line"].lower(), "a mug")
+        # an ordinary print the film keeps the words of carries their line as written
+        said = next(k for k, r in enumerate(self.rows[1:-1], 1) if not r["milestone"] and r["id"] not in b["film"]["unsaid"])
+        self.assertEqual(by[self.rows[said]["id"]]["line"].lower(), POTTERY_LINES[said])
         self.assertEqual(by["closer"]["line"], "fourteen months in")
         with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
             md = Path(d) / "storyboard.md"
@@ -408,7 +484,7 @@ class Pottery(unittest.TestCase):
         self.assertLessEqual(s["last"], s["stop"])
         beats = {c["beat"] for c in b["sound"]}
         self.assertLessEqual({bt["id"] for bt in b["beats"]}, beats)
-        lands = {c["beat"] for c in b["sound"] if c["kind"] in ("hit", "impact")}
+        lands = {c["beat"] for c in b["sound"] if c["kind"] in ("shutter", "pop", "impact")}
         self.assertEqual(lands, {bt["id"] for bt in b["beats"]})
         self.assertEqual(sum(bt["frames"] for bt in b["beats"]), round(cl["end"] * b["film"]["pulse"]))
 
@@ -448,6 +524,44 @@ class Pottery(unittest.TestCase):
         self.assertEqual([bt["frames"] for bt in reel["beats"]], [bt["frames"] for bt in land["beats"]])
         self.assertNotEqual(reel["film"]["course"], land["film"]["course"])
         self.assertNotEqual([c["tile"] for c in reel["film"]["cards"]], [c["tile"] for c in land["film"]["cards"]])
+
+
+class Once(unittest.TestCase):
+    """A move the card marks `once` plays at most once a film and wins the story's peak where the peak may take it."""
+
+    TRANSITIONS = [{"id": "dissolve", "fits": ["photo", "closer"]}, {"id": "hard-cut", "fits": ["wall", "landscape"]}]
+
+    @staticmethod
+    def rows(n, milestones, aspect=0.8):
+        days = [f"2025-{1 + k // 28:02d}-{1 + k % 28:02d}" for k in range(n + 2)]
+        return [{"id": f"p{k:02d}", "date": days[k], "aspect": aspect, "milestone": k in milestones,
+                 "line": "a line of theirs" if k in milestones else ""} for k in range(n + 2)]
+
+    def test_a_once_move_plays_once_and_takes_the_peak_in_every_kind_of_look(self):
+        moves = [{"id": "white-space-crop", "fits": ["title"]}, {"id": "slow-push", "fits": ["photo", "landscape", "wall"]},
+                 {"id": "breath-hold", "fits": ["photo", "peak", "wordless"]},
+                 {"id": "anamorphic-push", "fits": ["photo", "portrait"], "once": True}]
+        rows = self.rows(8, {3, 6})
+        for camera in ("slow", "slam", "glide"):
+            c = {"moves": moves, "transitions": self.TRANSITIONS, "axes": {"camera": camera}}
+            ch = drive.choose(rows, c, "two years")
+            played = [mv for mv, _ in ch["prints"]]
+            with self.subTest(camera=camera):
+                self.assertEqual(ch["peak"], 6)
+                self.assertEqual(played.count("anamorphic-push"), 1, played)
+                self.assertEqual(played[6], "anamorphic-push", played)
+
+    def test_a_once_move_the_peak_cannot_take_plays_at_most_once(self):
+        # the tunnel lands on the photograph, so it plays only on a quiet print; the peak sets their line, so the tunnel
+        # never reaches it and plays on one quiet print alone, however many the film has
+        moves = [{"id": "word-per-beat-slam", "fits": ["title", "words"]}, {"id": "marquee", "fits": ["photo", "landscape", "wall"]},
+                 {"id": "stack-and-split", "fits": ["photo", "people", "wordless"]},
+                 {"id": "picture-tunnel", "fits": ["photo", "portrait"], "once": True}]
+        rows = self.rows(14, {12})
+        quiet = {r["id"] for r in rows[1:-1] if not r["milestone"]}
+        c = {"moves": moves, "transitions": self.TRANSITIONS, "axes": {"camera": "slam"}}
+        played = [mv for mv, _ in drive.choose(rows, c, "two years", quiet)["prints"]]
+        self.assertEqual(played.count("picture-tunnel"), 1, played)
 
 
 class Words(unittest.TestCase):
@@ -746,6 +860,43 @@ class Photographs(unittest.TestCase):
             self.assertLess(max(tiles) - min(tiles), (max(before) - min(before)) * 0.75)
             for t, p in zip(tiles, photos):
                 self.assertLess(abs(t - p), 2)
+
+
+class Depth(unittest.TestCase):
+    """A dark or murky photograph keeps its depth: before the grade moves its light, its tones are stretched toward the
+    full range from black to white, so a print brought up to the set's light has a black and a white of its own."""
+
+    @staticmethod
+    def spread(f):
+        from PIL import Image
+        with Image.open(f) as im:
+            h = im.convert("L").histogram()
+        n, run, at = sum(h), 0, {}
+        for v, c in enumerate(h):
+            run += c
+            for q in (0.005, 0.995):
+                if q not in at and run >= q * n:
+                    at[q] = v
+        return at[0.995] - at[0.005]
+
+    def test_a_dark_flat_photograph_comes_up_with_a_black_and_a_white_and_a_full_one_keeps_its_range(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
+            noise = Image.effect_noise((900, 1200), 40).convert("RGB")
+            murky = Path(d) / "murky.jpg"
+            Image.blend(Image.new("RGB", (900, 1200), (40, 34, 30)), noise, 0.45).save(murky, quality=95)
+            full = Path(d) / "full.jpg"
+            Image.linear_gradient("L").resize((900, 1200)).convert("RGB").save(full, quality=95)
+            posts = [{"id": "p01", "date": "2026-01-01", "photo": str(murky)}]
+            for i in (2, 3):
+                p = Path(d) / f"s{i}.jpg"
+                Image.blend(Image.new("RGB", (900, 1200), (150, 140, 128)), noise, 0.45).save(p, quality=95)
+                posts.append({"id": f"p0{i}", "date": f"2026-0{i}-01", "photo": str(p)})
+            posts.append({"id": "p04", "date": "2026-04-01", "photo": str(full)})
+            rows = framing.frame(posts, Path(d) / "public")["posts"]
+            pub = Path(d) / "public"
+            self.assertGreater(self.spread(pub / rows[0]["photo"]), 1.3 * self.spread(murky))
+            self.assertGreater(self.spread(pub / rows[3]["photo"]), self.spread(full) - 8)
 
 
 class Short(unittest.TestCase):

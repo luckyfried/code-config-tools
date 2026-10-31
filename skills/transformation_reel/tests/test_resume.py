@@ -119,14 +119,15 @@ class Commands(Run):
         film.props = lambda b: {"board": b["id"]}
         film.timeline = lambda b: {"seconds": 23 / 30, "frames": 23}
         film.board_sha = lambda b: "sha"
-        storyboard.lay_out = lambda style, f="reel": {"id": f, "stills": {"hook": 1, "dense": 2, "closer": 3}}
+        storyboard.lay_out = lambda style, f="reel": {"id": f, "bpm": 120.0, "stills": {"hook": 1, "dense": 2, "closer": 3},
+                                                      "film": {"cards": [], "closer": {"span": "x"}, "timeline": {"beats": []}}}
         storyboard.starts = lambda b: ([0], 26 if b["id"] == "square" else 23)
         storyboard.measured = lambda: []
         film.then_now = lambda board, rows, dst: (dst.parent.mkdir(parents=True, exist_ok=True), dst.write_bytes(b"png"))
         clips.write_requests = lambda b: []
         clips.normalize = lambda b, why=None: 0
         self.film_checks, self.checked = saved[(qa, "film_checks")], []
-        qa.film_checks = lambda res, run=None: self.checked.append(sorted(p.name for p in _env.cut().iterdir()))
+        qa.film_checks = lambda res, run=None, scale=1: self.checked.append(sorted(p.name for p in _env.cut().iterdir()))
         _env.write_json(self.run_dir / "critic" / "timing.json", {"pass": True, "board_sha": "sha"})
         self.out = self.run_dir / "cut"
 
@@ -156,11 +157,11 @@ class Commands(Run):
     def test_a_render_killed_during_the_mux_delivers_nothing(self):
         mux = film.mux
 
-        def killed(run, silent, out, seconds):
+        def killed(run, silent, out, seconds, board):
             if "square" in out.name:
                 Path(out).write_bytes(b"half a film")
                 raise KeyboardInterrupt
-            return mux(run, silent, out, seconds)
+            return mux(run, silent, out, seconds, board)
         film.mux = killed
         with self.assertRaises(KeyboardInterrupt):
             self.main("render", "--also", "square")
@@ -246,7 +247,7 @@ class Commands(Run):
         self.assertFalse(report.exists())
         mux = film.mux
 
-        def killed(run, silent, out, seconds):
+        def killed(run, silent, out, seconds, board):
             raise KeyboardInterrupt
         film.mux = killed
         with self.assertRaises(KeyboardInterrupt):

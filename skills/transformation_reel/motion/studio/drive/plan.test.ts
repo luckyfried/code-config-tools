@@ -2,7 +2,7 @@
 // its tile over the last of the camera's move to it, and drops back into its tile over the first of the move out.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {DROP, RISE, planOf, timesOf, type Card} from './plan.ts';
+import {DROP, RISE, lookOf, planOf, timesOf, type Card} from './plan.ts';
 
 /** A board as the board builder writes it, on the kinetic card's tones, with `cards` and the peak at `peak`. */
 const boardOf = (cards: unknown[], peak = 0) => ({
@@ -14,7 +14,7 @@ const boardOf = (cards: unknown[], peak = 0) => ({
     photo: {ground: 'bg', grid: {cols: 2, rows: 4, margin: 0.04, rules: 'none'},
       picture: {show: true, box: [0, 0, 1, 1], rim: 0, rimColor: 'paper', tilt: 0, tape: 0, tapeColor: 'accent2', penColor: 'accent'}},
   },
-  film: {W: 1080, H: 1920, pulse: 1, cards, peak, look: {}, closer: {move: 2}},
+  film: {W: 1080, H: 1920, pulse: 1, cards, peak, look: {}, closer: {move: 2}, timeline: {beats: [], cuts: []}},
 }) as any;
 
 const card = (kind: Card['kind'], arrive: number, leave: number, travel: number, out: number) => ({kind, arrive, leave, travel, out}) as Card;
@@ -73,4 +73,29 @@ test('a card that names a color its palette lacks stops the film with the name',
   const board = boardOf([]);
   board.system.finish.matte = 'smoke';
   assert.throws(() => planOf(board), /MOVE_ERROR the card names no color smoke/);
+});
+
+test("a print's beat hands the move its photograph and the look carries every print's, each once", () => {
+  const line = (text: string) => ({text, x: 0, y: 0, size: 40});
+  const at = (id: string, file: string) => ({id, kind: 'ordinary', file, title: [line('a')], rest: [], dateLine: line('d'), path: null, arrive: 9, leave: 12, travel: 3});
+  const board = boardOf([at('p01', 'tiles/a.jpg'), at('p02', 'tiles/b.jpg'), at('p03', 'tiles/a.jpg')], 1);
+  board.film.timeline = {cuts: [0, 4], beats: [
+    {id: 'wall', form: 'wall', move: null, transition: null, at: 0, end: 4},
+    {id: 'p02', form: 'photo', move: 'picture-tunnel', transition: null, at: 4, end: 8, photo: 'tiles/b.jpg', place: [10, 20, 300, 400]},
+  ]};
+  const plan = planOf(board);
+  assert.equal(plan.line.beats[0].photo, undefined);
+  assert.ok(plan.line.beats[1].photo?.endsWith('tiles/b.jpg'), String(plan.line.beats[1].photo));
+  assert.notEqual(plan.line.beats[1].photo, 'tiles/b.jpg');
+  assert.deepEqual(plan.line.beats[1].place, [10, 20, 300, 400]);
+  assert.equal(plan.look.photos?.length, 2);
+  assert.ok(plan.look.photos?.[1].endsWith('tiles/b.jpg'));
+});
+
+test("the look carries the board's profile's safe area, and none when the board names no profile", () => {
+  const b = boardOf([]);
+  const safe = {top: 270, bottom: 670, left: 72, right: 150};
+  const named = {...b, format: {fps: 30, name: 'reel'}, system: {...b.system, safe: {reel: safe, square: {top: 1, bottom: 1, left: 1, right: 1}}}};
+  assert.deepEqual(lookOf(named, b.film).safe, safe);
+  assert.equal(lookOf({...named, format: {fps: 30}}, b.film).safe, undefined);
 });

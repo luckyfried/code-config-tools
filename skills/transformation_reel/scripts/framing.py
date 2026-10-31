@@ -9,7 +9,8 @@ matched/measure.json, photos/<post id>.jpg (the photograph alone, upright, at th
 a station: it covers STATION px, never enlarged past the original), tiles/<post id>.jpg (the same at TILE px on its
 long side, which the wall shows), and the fonts and grain the compositions load.
 
-Every photograph, day one included, takes the one grade of the set before any copy is made: its exposure moves
+Every photograph, day one included, has its tones spread toward the full range (at most STRETCH, so a dark or murky
+photograph keeps a black and a white of its own), then takes the one grade of the set before any copy is made: its exposure moves
 GRADE of the way toward the set's median lightness (a gamma on all three channels, never past GAMMA), its white balance
 BALANCE of the way toward the set's median color (a gain per channel inside GAIN that leaves its lightness where the
 exposure put it), and its saturation SATURATE of the way toward the set's median chroma (inside CHROMA), so a dark
@@ -40,6 +41,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import clips  # noqa: E402
 
 W = 1080
 FRAME_W, FRAME_H = 1080, 840
@@ -47,6 +49,8 @@ STATION = (1240, 2200)  # the reel frame at a station with its overfill and its 
 TILE = 800
 LOOK = (12, 20)  # the look grid's columns and rows
 PLATE_H, PLATE_TABLE = 5200, 2600
+STRETCH = 1.4      # the most a photograph's tones are spread toward the full range before the grade
+TAILS = 0.005      # the share of its darkest and of its lightest pixels the stretch may push to black and to white
 GRADE = 0.6        # how far each photograph's lightness moves toward the set's median
 GAMMA = (0.5, 1.8)  # the least and the most gamma the grade applies
 BALANCE = 0.7      # how far each photograph's color moves toward the set's median color
@@ -81,13 +85,13 @@ def framed_plate(im):
 
 
 def still_of(p, work):
-    """The post's picture: the original still when it is one Pillow reads, else the prepared copy; a reel's middle frame."""
+    """The post's picture: the original still when it is one Pillow reads, else the prepared copy; a recording's frame
+    at its strongest second (clips.strongest), the second its clip plays from."""
     from PIL import Image
     if p.get("video"):
         dest = work / f"{p['id']}-frame.jpg"
-        r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(p["video"])], capture_output=True, text=True)
-        mid = max(0.0, float(r.stdout.strip() or 0) / 2)
-        subprocess.run([_env.ffmpeg(), "-v", "error", "-y", "-ss", f"{mid:.2f}", "-i", str(p["video"]), "-frames:v", "1", "-q:v", "2", str(dest)], check=True)
+        subprocess.run([_env.ffmpeg(), "-v", "error", "-y", "-ss", f"{clips.strongest(p['video']):.2f}", "-i", str(p["video"]),
+                        "-frames:v", "1", "-q:v", "2", str(dest)], check=True)
         return Image.open(dest)
     for f in (p.get("src"), p.get("photo")):
         if f and Path(f).suffix.lower() in STILLS and Path(f).exists():
@@ -99,6 +103,27 @@ def lightness(im):
     """The photograph's mean lightness, 0-1."""
     from PIL import Image
     return sum(im.convert("L").resize((64, 64), Image.BOX).tobytes()) / (64 * 64 * 255)
+
+
+def stretched(im):
+    """The photograph with its tones spread toward the full range: the span between its TAILS darkest and lightest
+    pixels widened by at most STRETCH, about its mean where the range allows, so a murky or dark photograph has a black
+    and a white of its own before the grade moves its light, and one that already spans the range is left as it is."""
+    h = im.convert("L").histogram()
+    n, run, lo, hi = sum(h), 0, None, 255
+    for v, c in enumerate(h):
+        run += c
+        if lo is None and run >= TAILS * n:
+            lo = v
+        if run >= (1 - TAILS) * n:
+            hi = v
+            break
+    mean = sum(v * c for v, c in enumerate(h)) / n
+    gain = min(STRETCH, 255 / max(1, hi - lo))
+    if gain <= 1:
+        return im
+    at = min(255 - (hi - lo) * gain, max(0.0, mean - (mean - lo) * gain))
+    return im.point([max(0, min(255, round(at + (v - lo) * gain))) for v in range(256)] * 3)
 
 
 def graded(im, mean, target):
@@ -160,6 +185,7 @@ def frame(posts, public):
         im = ImageOps.exif_transpose(still_of(p, out)).convert("RGB")
         k = min(1.0, max(STATION[0] / im.width, STATION[1] / im.height))
         ims.append(im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS) if k < 1 else im)
+    ims = [stretched(im) for im in ims]
     means = [lightness(im) for im in ims]
     target = sorted(means)[len(means) // 2]
     ims = [graded(im, mean, target) for im, mean in zip(ims, means)]
@@ -182,6 +208,7 @@ def frame(posts, public):
             "id": p["id"], "date": p["date"], "day": (date.fromisoformat(p["date"]) - first).days + 1, "kind": p.get("kind", "post"),
             "file": f"matched/{name}", "photo": f"photos/{name}", "tile": f"tiles/{name}", "aspect": round(im.width / im.height, 5), "focal": p.get("focal") or [0.5, 0.5], "src": p.get("src"), "caption": caption,
             "line": p.get("line") or "", "next": p.get("next") or "", "milestone": bool(p.get("milestone")), "words": len(caption.split()), "look": look_of(im),
+            **({"video": str(p["video"]), "from": clips.strongest(p["video"])} if p.get("video") else {}),
             "table": FRAME_H, "extent": extent, "tallest_px": extent[3] - extent[1], "sharp": edge_contrast(shown),
             "wall": hex_of(pl.crop((0, PLATE_TABLE - FRAME_H - 24, W, PLATE_TABLE - FRAME_H))),
             "wood": hex_of(pl.crop((0, PLATE_TABLE + 24, W, PLATE_TABLE + 48))),

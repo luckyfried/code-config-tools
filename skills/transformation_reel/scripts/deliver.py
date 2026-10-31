@@ -28,6 +28,9 @@ names first; on a failed gate it is "not delivered: the gate failed on " and the
 RUN/out/. deliver holds the run's lock (scripts/chunks.py, named deliver) from its first write to its last. The gate
 runs inside deliver with that lock, so every probe and detector it starts holds it too; while another command holds
 it, deliver exits nonzero and names that command.
+deliver delivers only the full-size film: while the newest render is the half-size proof (RUN/cut/proof.mp4, film.py
+render --proof) it refuses before it writes anything and names the full-size render, qa.py check and vote.py cut to
+run first, where the critics read the type at full size.
 """
 import html
 import os
@@ -39,6 +42,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import chunks  # noqa: E402
+import proof  # noqa: E402
 import vote  # noqa: E402
 import qa  # noqa: E402
 
@@ -207,6 +211,8 @@ def main():
     _env.need("PIL")
     _env.tools()
     with chunks.lock(_env.b("render"), "deliver") as run:
+        if proof.scale(_env.cut("film.mp4")) != 1:
+            sys.exit(proof.refusal(_env.cut("film.mp4")))
         return deliver(run)
 
 
@@ -273,6 +279,9 @@ def made_said(sub, fx, board, music, clips):
     said = [f"The film walks your posts about {sub.get('subject')} from the first, {fx.get('first')}, to the latest, "
             f"{fx.get('latest')}: {n} of your photographs in the order you posted them, each with your own words on it, "
             "and every photograph stays on the wall the film ends on."]
+    own = sum(1 for r in (clips.get("clips") or {}).values() if r.get("status") == "recorded")
+    if own:
+        said.append(f"{own} of those moments play the video you posted, from its liveliest second.")
     g = sum(1 for r in (clips.get("clips") or {}).values() if r.get("status") == "generated")
     if g:
         said.append(f"{g} of those moments move as short clips made from your own photographs.")

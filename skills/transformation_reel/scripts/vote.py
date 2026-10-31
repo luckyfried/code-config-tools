@@ -9,8 +9,9 @@ USAGE (from the workspace root; S = this skill's folder; RUN = build/<run stamp>
                                          # RUN/winner.json names it; a different look than the run's film clears the cut
                                          # made for the other look, in this same run folder
     python3 S/scripts/vote.py timing     # the four reads on the timed cut's frames: RUN/critic/timing.json to fill in, then again to record it
-    python3 S/scripts/vote.py cut        # RUN/critic/cut-<board>-N.json to fill in for the rendered cut, RUN/cut/film.mp4
-                                         # (a new round N only when the cut changed since the newest round)
+    python3 S/scripts/vote.py cut        # RUN/critic/cut-<board>-N.json to fill in for the newest render: the half-size
+                                         # proof RUN/cut/proof.mp4 while it is there, else RUN/cut/film.mp4 (a new
+                                         # round N only when the cut changed since the newest round)
     python3 S/scripts/vote.py verdict    # the latest round against the bar: SHIP, FIX ONCE (the rule and its lever),
                                          # or DELIVER WITH SCORES
 
@@ -30,6 +31,10 @@ the first 30 frames; a read in its `not_read` is recorded as not read. The rende
 designer and the person on the seven rules, only once RUN/qa/check.json is the check of that cut. The verdict never
 stops a delivery: the one fix is taken when a rule under the bar has a lever (LEVERS), and a cut still under the bar
 after it, or with no lever for the rules under it, is delivered with its scores stated.
+Every round before deliver scores the half-size proof (film.py render --proof, RUN/cut/proof.mp4): cut reads the newest
+render and its first line says when that is the proof. Once the full-size film of the same cut is rendered (the render
+report's `cut`), cut moves the latest round to it and empties each critic's `type` score: the critics read the type
+again on the full-size film, at the size a phone shows it, and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -38,6 +43,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
 CRITERIA = {
     "concept": "R1 one idea, and every transition is motivated by it",
@@ -59,9 +65,9 @@ LEVERS = {
             "(vote.py pick <style>; a look the person chose stays), then storyboard.py draft and movements 2 to 5 again",
     "motion": None,
     "sound": "the music: music.py find or music.py make, then music.py analyze, storyboard.py snap, music.py master, film.py draft, "
-             "vote.py timing, film.py render",
+             "vote.py timing, film.py render --proof",
     "shots": "the generated clips: make each clip RUN/clips/requests.json asks for with the session's video model, save it at "
-             "its save_as path, then film.py render, qa.py check and vote.py cut",
+             "its save_as path, then film.py render --proof, qa.py check and vote.py cut",
     "deliverable": "the words around the film: RUN/caption.md, then deliver.py",
 }
 PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "person": "the person (from taste.md)"}
@@ -242,7 +248,8 @@ def cmd_pick(a):
     if gone:
         said += f"; cleared what was made for {was}: {', '.join(gone)}"
     print(f"{said} -> {_env.b('winner.json')}. Next: music.py, storyboard.py snap, film.py draft, vote.py timing, "
-          "music.py master, film.py render, qa.py check, vote.py cut and verdict, deliver.py")
+          "music.py master, film.py render --proof, qa.py check, vote.py cut and verdict, then the full-size film.py render, "
+          "qa.py check and vote.py cut for the type at full size, deliver.py")
     return 0
 
 
@@ -286,7 +293,7 @@ def cmd_timing(a):
     _env.write_json(f, data)
     if data["pass"]:
         print(f"timing passes for {m['board']}: {qa.summary(m)}" + "".join(f"; {k} was not read in this session" for k in sorted(unread))
-              + "; next: film.py render")
+              + "; next: film.py render --proof")
         return 0
     why = hook + ([f"beats that repeat: {', '.join(r['repeats'])}"] if r.get("repeats") else []) + (["the read says fix"] if r["verdict"] == "fix" else [])
     print(f"timing does not pass for {m['board']}: {'; '.join(why)}. The builder decides the beats from the posts: fix the cause in the "
@@ -313,9 +320,12 @@ def cmd_cut(a):
     d = _env.b("critic")
     d.mkdir(parents=True, exist_ok=True)
     board = (_env.read_json(_env.b("film.json")) or {}).get("board")
-    film = _env.cut("film.mp4")
+    scale = proof.scale(_env.cut("film.mp4"))
+    film = proof.newest(_env.cut("film.mp4"))
+    if scale != 1:
+        print(proof.reading(film))
     if not film.exists():
-        sys.exit("cut/film.mp4 is missing: run film.py render first")
+        sys.exit(f"cut/{film.name} is missing: run film.py render first")
     sha = digest(film)
     # the critic reads this cut's strip and checks, so the round waits for the check of this cut
     if (_env.read_json(_env.b("qa", "check.json")) or {}).get("film") != sha:
@@ -323,14 +333,26 @@ def cmd_cut(a):
     rs = rounds()
     look = f"{film}, RUN/qa/strip.png, RUN/cut/then-now.png, the story cards in RUN/cut/stories/ and RUN/clips/requests.json"
     # a round scores one reel, so the newest round stands while the reel is the one it scores
-    if rs and (_env.read_json(rs[-1]) or {}).get("film") == sha:
+    last = (_env.read_json(rs[-1]) or {}) if rs else {}
+    if last.get("film") == sha:
         print(f"round {len(rs)} is for this cut already: fill in {rs[-1]} after watching {look}")
+        return 0
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == rep.get("cut"):
+        # the full-size film of the cut the round scored on its proof: the same round, with the type read at full size
+        last.update(film=sha, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+        _env.write_json(rs[-1], last)
+        print(f"round {len(rs)} moves to the full-size {film}: as each critic, read the type again on it, RUN/qa/strip.png and "
+              f"the story cards, at the size a phone shows it, and score type in {rs[-1]}; the other scores stand")
         return 0
     n = len(rs) + 1
     f = d / f"cut-{board}-{n}.json"
     data = blank(CUT_PANEL, ["film"])
     data["round"] = n
     data["film"] = sha
+    data["scale"] = scale
+    data["cut"] = rep.get("cut")
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
     print(f"round {n}: fill in {f} after watching {look}" + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
@@ -388,9 +410,9 @@ def cmd_verdict(a):
     if not rs:
         sys.exit("no cut scores: run vote.py cut and fill it in")
     data = _env.read_json(rs[-1])
-    film = _env.cut("film.mp4")
+    film = proof.newest(_env.cut("film.mp4"))
     if not film.exists() or data.get("film") != digest(film):
-        sys.exit(f"{rs[-1]} is not for the current cut/film.mp4: run qa.py check and vote.py cut, and score the cut you see")
+        sys.exit(f"{rs[-1]} is not for the current cut/{film.name}: run qa.py check and vote.py cut, and score the cut you see")
     bad = problems(data, CUT_PANEL, ["film"])
     if bad:
         print(f"{rs[-1]} is not complete:")
@@ -402,15 +424,18 @@ def cmd_verdict(a):
     for k in unread:
         print(f"  {k} was not read in this session; the brief says so")
     what, rule, why = outcome(rs)
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    nxt = ("Render the full-size film (film.py render), run qa.py check, then vote.py cut: the critics read the type again "
+           "at full size, then deliver.py" if data.get("scale") == proof.SCALE else "deliver.py")
     if what == "SHIP":
-        print(f"SHIP: {why}. Next: deliver.py")
+        print(f"SHIP: {why}. Next: {nxt}")
         return 0
     if what == "DELIVER WITH SCORES":
-        print(f"DELIVER WITH SCORES: {why}. Deliver this cut as the run's best; brief.md states every score. Next: deliver.py")
+        print(f"DELIVER WITH SCORES: {why}. Deliver this cut as the run's best; brief.md states every score. Next: {nxt}")
         return 0
     by, _, _ = standing(data)
-    print(f"FIX ONCE: {rule} ({CRITERIA[rule]}) is at {by[rule]}. The lever: {why}. Take it, follow it through to film.py render, "
-          "qa.py check, then vote.py cut for round 2, saying in 'fixed' what changed")
+    print(f"FIX ONCE: {rule} ({CRITERIA[rule]}) is at {by[rule]}. The lever: {why}. Take it, follow it through to the proof "
+          "(film.py render --proof), qa.py check, then vote.py cut for round 2, saying in 'fixed' what changed")
     return 2
 
 

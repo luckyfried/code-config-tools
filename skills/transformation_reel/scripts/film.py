@@ -4,24 +4,30 @@ with its cover and story cards, and in the other formats only when the person as
 
 USAGE (from the workspace root; S = this skill's folder; RUN = build/<run stamp>/, named in build/RUN):
     python3 S/scripts/film.py draft              # the timed cut at half size with its sound, its strips and its figures
-    python3 S/scripts/film.py render             # the film in 9:16, its cover, story cards and then/now, into RUN/cut/
+    python3 S/scripts/film.py render --proof     # the proof, every critic round before deliver: each film at half size
+                                                 # as RUN/cut/proof.mp4 (proof-square.mp4, proof-16x9.mp4), beside the
+                                                 # film and never over it, with the cover, story cards and then/now
+    python3 S/scripts/film.py render             # the deliver render, full size: the film in 9:16, its cover, story
+                                                 # cards and then/now, into RUN/cut/
     python3 S/scripts/film.py render --also landscape square
                                                  # and, each only when the person asked for it: the film in 16:9, the
-                                                 # film square
+                                                 # film square (with --proof as well)
 
 Both refuse a board drafted from another taste.json than the one in the run (the board's facts `taste`): a change
 to the taste reaches the film only through storyboard.py draft.
 
-draft renders RUN/film.json's board (storyboard.py snap) at half size to RUN/draft/film.mp4 with the mastered music
-under it, and writes what the critic's timing round reads beside the storyboard: RUN/frames/strip-<beat>.png (12
+draft renders RUN/film.json's board (storyboard.py snap) at half size to RUN/draft/film.mp4 with the board's sound
+effects and the mastered music under them (sfx.py: a shutter as each print lands, air under the camera's travel, a
+whoosh on each cut, an impact as a chapter's line lands, the riser and impact into the closer, all in the music's key
+and on its grid from frame 0), and writes what the critic's timing round reads beside the storyboard: RUN/frames/strip-<beat>.png (12
 frames across each beat), RUN/frames/film-strip.png (one frame a second), RUN/timeline.json (each beat's start and
 length, every move from one card to the next, the stop, the rest moments) and RUN/draft/check.json (qa.py's figures
 for the cut: its length, its cuts, the rest line, the hook, the sound cues and the last one). It also writes the
 board's six shot requests to RUN/clips/requests.json (clips.py), so they are there for the agent before the render.
 
 render refuses until RUN/critic/timing.json passes for this board. It renders the board laid out for the reel, cut/film.mp4 (1080x1920), and for each format
---also names, cut/film-square.mp4 (1080x1080) and cut/film-16x9.mp4 (1920x1080), 30 fps, H.264 High, with the mastered
-music (the master RUN/music.json names, AAC 192 kbps) under each; cut/then-now.png (then_now: day one and the latest
+--also names, cut/film-square.mp4 (1080x1080) and cut/film-16x9.mp4 (1920x1080), 30 fps, H.264 High, with the board's sound effects
+and the mastered music (the master RUN/music.json names) under each, AAC 192 kbps; cut/then-now.png (then_now: day one and the latest
 as two prints side by side on the film's wall, their words for the span over them, each date under its print, set in
 the style's faces and colors); cut/cover.png, the reel's frame at the closer's rest moment (the poster the review page and the
 post use); and the story cards cut/stories/01-hook.png, 02-dense.png and 03-closer.png, the reel's own frames at the
@@ -32,6 +38,11 @@ normalize), and each plays on its photograph's card. Once the run's film is deli
 draft and render start the next run first and carry this one's inputs into it, so no render overwrites a delivered
 film; before that a render, the one fix's included, replaces the run's cut, and a render stopped before its report is
 finished in the same run.
+--proof renders every film at half size (scripts/proof.py) and the cover, story cards and then/now as the full render
+makes them, and moves them into cut/ beside cut/film.mp4, which it never touches; the last proof's films and the review
+page go first. A full render replaces cut/ whole, so cut/proof.mp4 is there only while the newest render is the proof,
+which qa.py check and vote.py cut read and deliver.py refuses. RUN/render/report.json's `scale` says which render it
+was, and its `cut` names what the render drew, the same for a proof and the full-size film of one cut.
 RUN/render/report.json, which qa.py and deliver.py read, is the report of the films in cut/: render removes it
 before cut/ changes and writes it after the last file, so a render stopped between two files leaves no report and
 the gate refuses. A failed render prints every FONT_ERROR, IMAGE_ERROR and render error and leaves cut/ and its
@@ -61,6 +72,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import chunks  # noqa: E402
+import proof  # noqa: E402
 
 FPS = 30
 FORMATS = {"reel": "film.mp4", "square": "film-square.mp4", "landscape": "film-16x9.mp4"}
@@ -239,7 +251,7 @@ def cmd_draft(a, run):
     if rep.get("failed"):
         print("the draft did not render: " + "; ".join(f["text"][:200] for f in rep.get("findings", [])[:3]))
         return 1
-    mux(run, silent, out, tl["seconds"])
+    mux(run, silent, out, tl["seconds"], board)
     t1 = time.time()
     sheets = [([b["start"] + min(b["frames"] - 1, round((i + 0.5) * b["frames"] / 12)) for i in range(12)], _env.b("frames", f"strip-{b['id']}.png"), 12, "180:320")
               for b in tl["beats"]]
@@ -254,23 +266,31 @@ def cmd_draft(a, run):
     return 0
 
 
-def mux(run, silent, out, seconds):
-    """The silent film with the master RUN/music.json names under it, at `out`, under the run's lock `run`."""
-    ff = _env.ffmpeg()
-    name = (_env.read_json(_env.b("music.json")) or {}).get("master")
-    master = _env.b("music", name) if name else None
-    if master:
-        cmd = [ff, "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-               "-ar", "48000", "-t", f"{seconds:.3f}", "-movflags", "+faststart", str(out)]
-    else:
-        cmd = [ff, "-y", "-v", "error", "-i", str(silent), "-c:v", "copy", "-movflags", "+faststart", str(out)]
-    run.spawn(cmd, check=True)
-    return bool(master)
+def mux(run, silent, out, seconds, board):
+    """The silent film at `out` with the board's sound effects (sfx.py, from the board's film: tones/drive.fx_board)
+    and, under them, the master RUN/music.json names, keyed and on the grid of that music, under the run's lock `run`.
+    Returns whether music is in it."""
+    import sfx
+    from tones import drive
+    record = _env.read_json(_env.b("music.json")) or {}
+    name = record.get("master")
+    record = {**record, "master": str(_env.b("music", name)) if name else None, "bpm": record.get("bpm") or board["bpm"]}
+    fx = drive.fx_board(board["film"], board["bpm"], board.get("id", ""))
+    return sfx.mux(run.spawn, silent, out, seconds, fx, record, _env.ffmpeg())
+
+
+def cut_hash(jobs):
+    """What a render draws, the same for its proof and its full-size film: every job but where it lands and its scale,
+    and the music under it."""
+    import json
+    drawn = [{k: v for k, v in j.items() if k not in ("out", "scale")} for j in jobs]
+    return hashlib.sha256(json.dumps([drawn, _env.read_json(_env.b("music.json"))], sort_keys=True, default=str).encode()).hexdigest()[:16]
 
 
 def cmd_render(a, run):
     import qa
     import storyboard
+    scale = proof.SCALE if getattr(a, "proof", False) else 1
     film = chosen()
     style = film["board"]
     reel = storyboard.lay_out(style)
@@ -287,7 +307,7 @@ def cmd_render(a, run):
     render = _env.b("render")
     render.mkdir(parents=True, exist_ok=True)
     jobs = [{"type": "video", "composition": "Film", "props": props(boards[f]), "frames": storyboard.starts(boards[f])[1],
-             "out": str((render / f"silent-{f}.mp4").resolve())} for f in fmts]
+             "out": str((render / f"silent-{f}.mp4").resolve()), **({"scale": scale} if scale != 1 else {})} for f in fmts]
     # the cover is the reel's own frame at the closer's rest moment, the whole wall with their words on it
     stills = [(reel, reel["stills"]["closer"], "cover.png")]
     stills += [(reel, reel["stills"][key], f"stories/{name}") for key, name in STORIES]
@@ -302,23 +322,33 @@ def cmd_render(a, run):
     print(f"rendered {len(jobs) - rep.get('failed', 0)} of {len(jobs)} jobs in {time.time() - t0:.0f} s{where(rep)}")
     if rep.get("failed"):
         return 1
+    named = {f: proof.of(FORMATS[f]).name if scale != 1 else FORMATS[f] for f in fmts}
     staged = []
     for f in fmts:
-        staged.append((render / f"film-{f}.mp4", FORMATS[f]))
-        music = mux(run, render / f"silent-{f}.mp4", staged[-1][0], secs)
+        staged.append((render / f"film-{f}.mp4", named[f]))
+        music = mux(run, render / f"silent-{f}.mp4", staged[-1][0], secs, boards[f])
     staged += [(render / "stills" / rel, rel) for _, _, rel in stills]
     then_now(boards.get("square") or storyboard.lay_out(style, "square"), storyboard.measured(), render / "stills" / "then-now.png")
     staged.append((render / "stills" / "then-now.png", "then-now.png"))
     report = render / "report.json"
     report.unlink(missing_ok=True)
-    shutil.rmtree(_env.cut(), ignore_errors=True)
-    for src, rel in sorted(staged, key=lambda m: m[1] == FORMATS["reel"]):
+    if scale == 1:
+        shutil.rmtree(_env.cut(), ignore_errors=True)
+    else:
+        # the proof moves in beside cut/film.mp4: the last proof's films and the review page go, the film stays
+        for old in proof.films(_env.cut()) + [_env.cut("review.html")]:
+            old.unlink(missing_ok=True)
+    for src, rel in sorted(staged, key=lambda m: m[1] == named["reel"]):
         _env.cut(rel).parent.mkdir(parents=True, exist_ok=True)
         os.replace(src, _env.cut(rel))
-    _env.write_json(report, {**rep, "made": {"formats": fmts}})
-    print(f"the cut, {secs:.1f} s{' with music' if music else ' without music'} -> {_env.cut()}/; checking it (qa.py check):")
+    _env.write_json(report, {**rep, "made": {"formats": fmts}, "scale": scale, "cut": cut_hash(jobs)})
+    reel = _env.cut("film.mp4")
+    print(f"the cut, {secs:.1f} s{' with music' if music else ' without music'} -> {_env.cut()}/"
+          + (f" as the half-size proof {proof.of(reel)}" if scale != 1 else "") + "; checking it (qa.py check):")
+    if scale != 1:
+        print(proof.reading(proof.of(reel)))
     res = qa.Checks()
-    return qa.report(res, "check.json", qa.film_checks(res, run))
+    return qa.report(res, "check.json", qa.film_checks(res, run, scale), proof.newest(reel))
 
 
 def main():
@@ -326,6 +356,8 @@ def main():
     ap.add_argument("cmd", choices=["draft", "render"])
     ap.add_argument("--also", nargs="*", choices=ALSO, default=[],
                     help="render: what the person asked for beyond the reel (the 16:9 film, the square film, the story cards)")
+    ap.add_argument("--proof", action="store_true",
+                    help="render: every film at half size as RUN/cut/proof.mp4, for every critic round before deliver")
     a = ap.parse_args()
     _env.open_run()
     with held({"draft": "draft", "render": "report"}[a.cmd]) as run:

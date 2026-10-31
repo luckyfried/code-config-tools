@@ -36,14 +36,17 @@ python3 S/scripts/film.py draft
 - `snap` lines the board's bars up with the music's grid and writes `RUN/film.json`: the board, its
   seconds, and the track's start and tempo (the track is brought to the board's tempo when its own is within a
   quarter of it, and starts on its first downbeat).
-- `master` lays the board's sound cues (a hit where each beat lands, the riser into the closer, the impact its words
-  land on) under the bed: the effects stem sits at least 8 LU under the bed by integrated loudness
-  (`music.FX_UNDER_BED_LU`), never by its peak. It stops everything on the board's stop, brings the mix to -14 LUFS
-  integrated, true peak -1.5 dB, and writes both loudness numbers to `RUN/music.json` and the `Mixed:` line of
-  `storyboard.md`; the gate's audio row is red when the effects sit less than 8 LU under the bed.
+- `master` cuts the music to the film's length, stops it on the board's stop, and brings it to -14 LUFS integrated by
+  one gain, written in 32-bit float so its peaks are kept whole, with no effect in it; the film's mux limits the music
+  and the effects together, once. It measures the effects layer the film carries (`sfx.py`, laid by `film.py`
+  at the mux: air or a sweep on each cut, the shutter as each print lands, an impact as a chapter's line lands, the
+  riser into the closer and its impact, all in the music's key and on its grid from frame 0), which sits at least
+  8 LU under the music by integrated loudness (`music.FX_UNDER_BED_LU`), never by its peak, writes both numbers to
+  `RUN/music.json` and the `Mixed:` line of `storyboard.md`, and writes the music's energy a frame to
+  `RUN/music/energy.json`; the gate's audio row is red when the effects sit less than 8 LU under the music.
 - `draft` renders the timed cut at half size with its sound (`RUN/draft/film.mp4`) and writes what the timing
   round reads: `RUN/frames/strip-<beat>.png` (12 frames across each beat), `RUN/frames/film-strip.png` (one frame a
-  second) and `RUN/draft/check.json` (the figures: length, cuts, the rest line, the hook frame, the sound cues and the
+  second) and `RUN/draft/check.json` (the figures: length, cuts, the rest line, the hook frame, the sound effects and the
   last one before the stop). It also writes the board's six shot requests to `RUN/clips/requests.json` (the hook's
   world, the stills brought to life, the texture between chapters, each naming its lens, light, move, length and a
   seamless loop).
@@ -51,9 +54,11 @@ python3 S/scripts/film.py draft
 ## The clips
 
 When this session can make video, make each shot in `RUN/clips/requests.json` from its `image` and `prompt` with the
-session's video model and save it at its `save_as` path (`RUN/clips/<id>.mp4`). `film.py render` conforms every clip
+session's video model and save it at its `save_as` path (`RUN/clips/<id>.mp4`). A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests RUN/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks. `film.py render` conforms every clip
 saved there (`clips.py normalize`) and plays it on its photograph's card over its beat; `RUN/clips.json` records each
-request as generated or as the photograph. A beat with no clip plays its photograph with the card's own move, and a
+request as generated or as the photograph. A post they posted as a video plays that video on its own beat, from its
+liveliest second, without its sound, with the arrival and move its print has; nothing is asked of a video model for
+it. A beat with no clip plays its photograph with the card's own move, and a
 photograph is never called a clip: not in `brief.md`, not on the review page, not in your reply. A render that
 played no clip was made by a session with no video model, so the verdict counts no lever for the shots in that run.
 
@@ -75,9 +80,17 @@ read (the posts, the captions, the music): fix it there, run movements 2 to 4 ag
 ## Render
 
 ```
-python3 S/scripts/film.py render
-python3 S/scripts/film.py render --also landscape square    # naming only what they asked for
+python3 S/scripts/film.py render --proof
+python3 S/scripts/film.py render --proof --also landscape square    # naming only what they asked for
 ```
+
+Every critic round before deliver renders the proof: `--proof` renders each film at half size, `RUN/cut/proof.mp4`
+(and `proof-square.mp4`, `proof-16x9.mp4`), with the cover, the story cards and the then/now card exactly as the full
+render makes them, and never writes over `RUN/cut/film.mp4`.
+`qa.py check` and `vote.py cut` read the proof while it is the newest render, and every size they report is in board
+units, the same numbers the full-size film gives. The render deliver takes is full size: `film.py render` without
+`--proof` (movement 5, once the verdict on the proof says to), which replaces `RUN/cut/` whole and so takes the
+proof's films out.
 
 `render` refuses until the timing round passes for this board. It lays the board out for each format from the same
 posts (a photograph box that fits 9:16 is placed again for square and wide, never scaled to fit), renders the reel,
@@ -89,7 +102,8 @@ feed; `landscape` when they say wide, landscape, horizontal, 16:9, or a film for
 the cards are made, so a failed or killed render leaves `cut/` as it was. `RUN/render/report.json`, which the gate
 reads, is the report of the films in `cut/`: it goes before the first of them changes and comes back after the last,
 so a render stopped between two files leaves no report, and the gate refuses until a render finishes. Last, render
-runs `qa.py check` on the new cut, so the figures the critics read are always the cut's own.
+runs `qa.py check` on the new cut, so the figures the critics read are always the cut's own. Everything in this
+section holds for the proof and for the full-size render alike.
 
 It renders on the graphics card when the machine has an NVIDIA one and on the processor otherwise; `render.py`
 decides both, and how many browser pages draw at once, from the machine. An attempt that loses its graphics context or

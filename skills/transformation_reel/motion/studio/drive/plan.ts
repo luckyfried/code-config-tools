@@ -110,11 +110,16 @@ export const planOf = (board: Board): Plan => {
   const look = lookOf(board, f, peak?.file);
   return {
     W: f.W, H: f.H, pulse: f.pulse, colors: f.colors, finish: sys.finish, enter: sys.photo?.line?.enter ?? 'rise',
-    line: f.timeline, look, shape: {name: f.shape, at: cl.shape},
+    line: lineOf(f.timeline), look, shape: {name: f.shape, at: cl.shape},
     letters: f.letters, exit: f.exit, ease: f.ease, course: f.course, cards,
     closer: {at: cl.at, move: cl.move, still: cl.still, end: cl.end, frame: cl.frame, lines: cl.lines},
   };
 };
+
+/** The board's timeline as the moves read it: a print's beat names its photograph as the film serves it. */
+export const lineOf = (line: Timeline): Timeline => ({
+  ...line, beats: line.beats.map((b) => (b.photo ? {...b, photo: staticFile(b.photo)} : b)),
+});
 
 /** A card's color, a role or a hex, as a hex. */
 const toneOf = (colors: Record<string, string>, v: string) => {
@@ -124,7 +129,8 @@ const toneOf = (colors: Record<string, string>, v: string) => {
 };
 
 /** The film around every move, cut, and closer: the frame, the card's colors, tones, grid, print and faces, the
- * board's own words, and the peak's photograph, the one a move that draws the photograph itself shows. */
+ * profile's safe area every word at rest stands inside, the board's own words, the peak's photograph, the one a move that draws the photograph itself shows, and every print's
+ * photograph in the film's order, the ones a move that draws many (a tunnel, a wall) shows. */
 export const lookOf = (board: Board, f: any, photo?: string): Look => {
   const sys = board.system;
   const colors = sys.colors as unknown as Record<string, string>;
@@ -151,7 +157,9 @@ export const lookOf = (board: Board, f: any, photo?: string): Look => {
       rim: pic.rim * W, tilt: pic.tilt, tape: pic.tape,
     },
     finished: sys.finish.words !== 'clean',
+    safe: board.format.name ? sys.safe[board.format.name] : undefined,
     photo: photo ? staticFile(photo) : undefined,
+    photos: f.cards.map((c: any) => c.file).filter((x: unknown, i: number, all: unknown[]) => x && all.indexOf(x) === i).map((x: string) => staticFile(x)),
   };
 };
 

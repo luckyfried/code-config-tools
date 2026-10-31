@@ -318,17 +318,22 @@ def write_md(board, fx, left_out, path, passed=()):
                      f"{bt['transition'] or '(none)'} | {sc['reveals']} | {sc['carries']} |")
     lines += ["", "## Music", "", "Music: not yet; music.py make writes where the track came from here.",
               "The music brief (taste.json `music`): " + json.dumps(fx.get("music"), ensure_ascii=False) + ".",
-              "Mixed: not yet; music.py master writes the bed's and the effects' loudness here.",
-              "", "## Sound cues", "", f"Where each beat lands (the music engine makes each effect in the style's recipe and "
-              f"music.py master mixes it under the bed; {sum(1 for c in board['sound'] if c['kind'] != 'stop')} cues, then the stop):", "",
+              "Mixed: not yet; music.py master writes the music's and the effects' loudness here.",
+              "", "## Sound cues", "", f"Every effect under the picture (film.py lays them at the mux, sfx.py: in the music's key, "
+              f"on its grid from frame 0; {sum(1 for c in board['sound'] if c['kind'] != 'stop')} effects, then the stop):", "",
               "| beat | at (beats) | cue | what |", "|---|---|---|---|"]
     for c in board["sound"]:
         lines.append(f"| {c['beat']} | {c['at']:.2f} | {c['kind']} | {c['what']} |")
-    lines += ["", "## Clips", "", "The six shots an image-to-video model would make (clips.py list writes them as requests for the agent; "
-              "until a clip comes back, the still print stands in with its own move):", "",
+    lines += ["", "## Clips", "", "Their own recordings, each playing its beat from its strongest second, and the shots an image-to-video "
+              "model would make (clips.py list writes those as requests for the agent; until a clip comes back, the still print "
+              "stands in with its own move):", "",
               "| clip | beat | role | seconds | lens | light | move | prompt |", "|---|---|---|---|---|---|---|---|"]
     for c in board["clips"]:
-        lines.append(f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | {c['lens']} | {c['light']} | {c['move']} | {c['prompt']} |")
+        if c["prompt"]:
+            lines.append(f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | {c['lens']} | {c['light']} | {c['move']} | {c['prompt']} |")
+        else:
+            lines.append(f"| {c['id']} | {c['beat']} | {c['role']} | {c['seconds']} | their own | their own | their own | "
+                         f"{Path(c['source']).name} from {c['from']:g} s |")
     lines += ["", "Rest moments (styleframes and story cards): " + ", ".join(f"{k} frame {v}" for k, v in board["stills"].items()) + "."]
     _env.write_text(path, "\n".join(lines) + "\n")
 

@@ -29,8 +29,8 @@ scores.
 | `concept` | R1 one idea, and every transition is motivated by it | the wall of what they made from the first frame to the last; each card lands in its tile and the camera follows the wall to the next | a slideshow: photographs sliding, whipping or fading in, an idea that appears only at the end |
 | `image` | R2 depth, light and one grade | a card standing off the wall with its shadow, lit, the wall and its neighbors around it, every photograph under the look's one finish | a full-bleed photograph with nothing behind it; a bright shot beside a dark one with no shared finish |
 | `type` | R3 type in motion, designed as a system | letters that enter and leave by design with tracking that resolves, a clear hierarchy, every word inside the safe lines | type that fades in and out, a word past the safe line, a trail crossing a settled line |
-| `motion` | R4 motion with weight and a rhythm that varies | one continuous camera that winds up, travels and lands past its mark; moves that change from beat to beat; the peak holds longest; the closer holds still on the ask | one move repeated, blur that hides the frame, holds that wait, an ending that just stops |
-| `sound` | R5 sound designed to the picture | a cue where each card lands, a riser into the closer, an impact on their words, the stop on the ask | a bed under pictures with no relation to them, a cue on nothing |
+| `motion` | R4 motion with weight and a rhythm that varies | one continuous camera that winds up, travels and lands past its mark; moves that change from beat to beat; the peak holds longest; the closer settles on the ask and keeps its slow push to the last frame | one move repeated, blur that hides the frame, holds that wait, an ending that just stops |
+| `sound` | R5 sound designed to the picture | air or a sweep on each cut, the shutter where each print lands, an impact on their words, a riser into the closer, all in the music's key and on its beat, the stop on the ask | a bed under pictures with no relation to them, a cue on nothing |
 | `shots` | R6 the generated shots are the spectacle | six requests a cinematographer would write, each naming subject, move, lens, light, length and a seamless loop; the clips that arrived play on their cards | one template prompt per card, or requests nothing ever plays |
 | `deliverable` | R7 the deliverable is unmistakable | `out/` holds the films, the then/now pair, the caption, the brief and a review page that opens on the film, with the caption, the other two looks and how it was made in plain words; nothing else | a page that opens on a warning, a then/now that is one picture, an empty table, stray files |
 
@@ -78,9 +78,11 @@ recorded as not read, never as a pass.
 
 ## The cut (movement 5)
 
-The motion designer and the person score the rendered cut. Look, actually look, at this cut, never the last one:
+The motion designer and the person score the rendered cut. Every round before deliver scores the half-size proof,
+`RUN/cut/proof.mp4` from `film.py render --proof`; its cover, story cards and then/now card are the ones the full
+render makes. Look, actually look, at this cut, never the last one:
 
-- `RUN/cut/film.mp4`, and `RUN/qa/strip.png` (the cut at 2 fps) with the Read tool; `vote.py cut` refuses until
+- the film `vote.py cut` names (`RUN/cut/proof.mp4`, or `RUN/cut/film.mp4` once the full-size film is rendered), and `RUN/qa/strip.png` (the cut at 2 fps) with the Read tool; `vote.py cut` refuses until
   `RUN/qa/check.json` is the check of this cut, so the strip is this cut's;
 - `RUN/cut/then-now.png` (day one beside the latest, the span between them) and the story cards
   `RUN/cut/stories/*.png` when they were asked for;
@@ -92,13 +94,18 @@ Score `image` and `motion` from these frames and strips alone, never from a desc
 cut; the cut is what ships. Fill in
 `RUN/critic/cut-<tone>-N.json` and run `vote.py verdict`. In each paragraph, name the worst thing you see.
 
+Type is read last on the full-size film: once the verdict on the proof lets the cut go on, `film.py render` renders it
+full size and `vote.py cut` empties each critic's `type` score in the same round. Read the type on `RUN/cut/film.mp4`,
+its strip and the story cards at the size a phone shows it, and score `type` again.
+
 ## The verdict and the one fix
 
 `vote.py verdict` states the round against the bar and answers one of three ways:
 
-- `SHIP`: the cut meets the bar on every rule read. Deliver.
+- `SHIP`: the cut meets the bar on every rule read. On the proof, render the full-size film and read the type on it;
+  on the full-size film, deliver.
 - `FIX ONCE`: a rule under the bar has a lever a run can pull, and the round is the first. The verdict names the
-  rule and its lever. Take it: pull the lever, follow it through to `film.py render`, run `vote.py cut`, score the
+  rule and its lever. Take it: pull the lever, follow it through to `film.py render --proof`, run `vote.py cut`, score the
   new cut, and run `vote.py verdict` again. Say in `fixed` what changed.
 - `DELIVER WITH SCORES`: the one fix is spent, or no lever reaches the rules under the bar. Deliver this cut as the
   best the run made; the brief states every score against the bar, and the review page states none.
@@ -115,8 +122,8 @@ The builder lays every film out from the posts, so the levers are its inputs, ne
 | `image` | the colors: `palette` in `RUN/taste.json` (the look's palette rule makes the film's colors from it) | movements 2 to 5 again, from `storyboard.py draft` (a new draft starts a new vote) |
 | `type` | the look's type: the words' colors through `palette` in `RUN/taste.json`, or, when taste picked the look, another of the three looks (`vote.py pick <style>`, its faces and its type); a look the person chose stays | movements 2 to 5 again, from `storyboard.py draft` (a new draft starts a new vote) |
 | `motion` | none inside a run: the camera, the holds and the rhythm are the board builder's, laid out from the posts | |
-| `sound` | the music: another track at `RUN/music/source.<ext>` (`music.py find --origin "..."`), or the brief's `styles` and `avoid` in `RUN/taste.json` and `music.py make` | `music.py analyze` (a placed track only), `storyboard.py snap`, `music.py master`, `film.py draft`, `vote.py timing`, `film.py render` |
-| `shots` | the generated clips: make each shot `RUN/clips/requests.json` asks for with the session's video model and save it at its `save_as` path | `film.py render`, `qa.py check`, `vote.py cut` |
+| `sound` | the music: another track at `RUN/music/source.<ext>` (`music.py find --origin "..."`), or the brief's `styles` and `avoid` in `RUN/taste.json` and `music.py make` | `music.py analyze` (a placed track only), `storyboard.py snap`, `music.py master`, `film.py draft`, `vote.py timing`, `film.py render --proof` |
+| `shots` | the generated clips: make each shot `RUN/clips/requests.json` asks for with the session's video model and save it at its `save_as` path | `film.py render --proof`, `qa.py check`, `vote.py cut` |
 | `deliverable` | the words around the film: `RUN/caption.md` | `deliver.py` |
 
 A change to `RUN/taste.json` reaches the film only through a new draft: `film.py draft` and `film.py render` refuse

@@ -168,9 +168,9 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, 
     tx.anisotropy = 8;
     tx.needsUpdate = true;
   }), [textures]);
-  // a generated clip plays on its photograph's card over its beat; with none, the card holds the photograph
+  // a clip (their own recording, or a generated one) plays on its photograph's card over its beat; with none, the card holds the photograph
   const clip = clips.find((c) => frame >= c.from && frame < c.from + c.frames);
-  const clipSrc = clip ? `${clip.dir}/${String(frame - clip.from + 1).padStart(4, '0')}.jpg` : null;
+  const clipSrc = clip ? `${clip.dir}/${String(Math.floor((frame - clip.from) * (clip.step ?? 1)) + 1).padStart(4, '0')}.jpg` : null;
   const clipTex = useClipFrame(clipSrc);
   const station = useStationTextures(plan, t);
   const texOf = (c: Card) => (clip && clip.image === c.file ? clipTex : station.get(c.file) ?? textures[files.indexOf(c.tileFile)]);
@@ -209,10 +209,12 @@ export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
   const plan = useMemo(() => planOf(board), [board]);
   const files = useMemo(() => [...new Set(linesOf(plan).map(fileOf))], [plan]);
   const fonts = useFonts(files);
-  // the picture steps at the card's cadence, and from the stop on every part of it is held at the stop's instant
+  // the picture steps at the card's cadence, and from the stop on every part of it is held at the stop's instant but
+  // the closer, which keeps its slow push on the stepped frame to the last frame
   const still = Math.round(plan.closer.still * plan.pulse);
   const step = plan.finish.cadence > 0 ? board.format.fps / plan.finish.cadence : 1;
-  const f = Math.min(Math.floor(frame / step) * step, still);
+  const stepped = Math.floor(frame / step) * step;
+  const f = Math.min(stepped, still);
   const t = f / plan.pulse;
   const shot = shotAt(plan, t);
   const travel = {...shot.travel, ...fxAt(plan.line, plan.look, t)};
@@ -221,7 +223,7 @@ export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
     <AbsoluteFill style={{background: ground}}>
       {fonts ? (
         <Stage pose={shot.pose} travel={travel} background={ground} near={NEAR} far={FAR}
-          over={<MoveLayer line={plan.line} look={plan.look} t={t} bars={plan.finish.bars}
+          over={<MoveLayer line={plan.line} look={plan.look} t={t} now={stepped / plan.pulse} bars={plan.finish.bars}
             closer={closerOf(plan.shape.name) ? {name: plan.shape.name, at: plan.shape.at, still: plan.closer.still} : undefined} />}>
           <Scene plan={plan} t={t} frame={f} fonts={fonts} clips={clips} />
         </Stage>

@@ -450,36 +450,45 @@ class Gate(unittest.TestCase):
         qa.film_checks(qa.Checks())
         self.assertEqual(sorted(p.name for p in _env.b("qa").iterdir()), ["numbers.json"])
 
-    def frozen_row(self, start, end):
-        """The check's frozen row over a 60 s reel whose music stops at 57.1 s, with one frozen stretch from `start`
-        to `end`."""
+    def frozen_row(self, hold):
+        """The check's frozen row over a reel of two moving seconds and then `hold` seconds of one repeated frame, its
+        music stopping on the first held frame (2.0 s)."""
         import storyboard
-        _env.write_json(_env.b("timeline.json"), {"seconds": 60.0})
+        real = qa.ff
+        _env.write_json(_env.b("timeline.json"), {"seconds": 2.0 + hold})
         _env.write_json(_env.b("film.json"), {"board": STYLE})
         for name in qa.FILES.values():
             _env.cut().mkdir(parents=True, exist_ok=True)
             _env.cut(name).write_bytes(b"a film")
+        subprocess.run([_env.ffmpeg(), "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=s=320x240:r=30:d=2", "-vf",
+                        f"tpad=stop_mode=clone:stop_duration={hold}", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(_env.cut("film.mp4"))], check=True)
         qa.probe = lambda p, run=None: {}
-        qa.measure = lambda *a: {"hook_frame": 0, "hook_difference": 5, "sound": {"stop": 57.1}, "duration": 60.0}
+        qa.measure = lambda *a: {"hook_frame": 0, "hook_difference": 5, "sound": {"stop": 2.0}, "duration": 2.0 + hold}
         qa.summary = lambda m: ""
         qa.cards_check = lambda: (True, "")
         qa.order_check = lambda b, rows: (True, "")
         storyboard.lay_out = lambda style, f="reel": {"facts": {}}
         storyboard.measured = lambda: []
         storyboard.check_board = lambda b, rows, fx: []
-        said = (f"[freezedetect @ 0x1] lavfi.freezedetect.freeze_start: {start}\n"
-                f"[freezedetect @ 0x1] lavfi.freezedetect.freeze_duration: {end - start}\n"
-                f"[freezedetect @ 0x1] lavfi.freezedetect.freeze_end: {end}\n")
-        qa.ff = lambda *args, run=None: subprocess.CompletedProcess(args, 0, "", said if any("freezedetect" in str(a) for a in args) else "")
+        qa.ff = lambda *args, run=None: real(*args, run=run) if any("freezedetect" in str(a) for a in args) else subprocess.CompletedProcess(args, 0, "", "")
         res = qa.Checks()
         with contextlib.redirect_stdout(io.StringIO()):
             qa.film_checks(res)
         return next(r for r in res if r[0] == "frozen")
 
-    def test_a_closer_that_settles_under_a_second_before_the_stop_is_not_frozen_and_a_stall_is(self):
-        self.assertTrue(self.frozen_row(56.17, 60.0)[1])
-        self.assertFalse(self.frozen_row(56.0, 60.0)[1])
-        self.assertFalse(self.frozen_row(20.0, 21.2)[1])
+    def test_an_ending_that_stands_still_past_the_stop_turns_the_frozen_row_red(self):
+        _, ok, detail = self.frozen_row(1.5)
+        self.assertFalse(ok, "the closer keeps a living element to the last frame, past the stop too")
+        self.assertIn("1 frozen stretches", detail)
+
+    def test_a_film_that_moves_to_its_last_frame_keeps_the_frozen_row_green(self):
+        _, ok, detail = self.frozen_row(0)
+        self.assertTrue(ok, detail)
+        self.assertIn("0 frozen stretches", detail)
+
+    def test_an_ending_held_under_a_second_keeps_the_frozen_row_green(self):
+        _, ok, detail = self.frozen_row(0.5)
+        self.assertTrue(ok, detail)
 
     def test_the_check_measures_the_films_type_in_the_picked_looks_faces(self):
         import compose
@@ -506,8 +515,8 @@ class Gate(unittest.TestCase):
 
 
     def audio_row(self, fx_lufs):
-        """The gate's audio row over three films at -14 LUFS whose master measured the bed at -21.4 LUFS and the
-        effects at `fx_lufs`, with two sound cues over three beats."""
+        """The gate's audio row over three films at -14 LUFS whose master measured the music at -21.4 LUFS and
+        the effects at `fx_lufs`, with two sound effects over three beats."""
         import storyboard
         _env.write_json(_env.b("timeline.json"), {"seconds": 40.0})
         _env.write_json(_env.b("film.json"), {"board": STYLE})
@@ -540,14 +549,14 @@ class Gate(unittest.TestCase):
     def test_effects_peak_normalized_over_a_quiet_bed_turn_the_audio_row_red(self):
         _, ok, detail = self.audio_row(-16.3)
         self.assertFalse(ok, detail)
-        self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS", detail)
-        self.assertIn("2 sound cues over 3 beats", detail)
+        self.assertIn("music -21.4 LUFS, effects -16.3 LUFS", detail)
+        self.assertIn("2 sound effects over 3 beats", detail)
 
     def test_effects_eight_lu_under_the_bed_turn_the_audio_row_green(self):
         _, ok, detail = self.audio_row(-29.4)
         self.assertTrue(ok, detail)
         self.assertIn("8.0 LU under", detail)
-        self.assertIn("2 sound cues over 3 beats", detail)
+        self.assertIn("2 sound effects over 3 beats", detail)
 
     def test_effects_less_than_eight_lu_under_the_bed_turn_the_audio_row_red(self):
         _, ok, detail = self.audio_row(-28.9)

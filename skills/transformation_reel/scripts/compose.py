@@ -33,6 +33,11 @@ FORMATS = ("reel", "square", "landscape")
 # the three styles a run's boards take by default, in board order A, B, C
 TRIO = ("cinematic-letterbox", "editorial-quiet", "kinetic-type")
 AXES = ("family", "palette", "camera", "transition", "finish", "music")
+# the shared moves this kit adds to a card's own, or the beats a card's own move fits here as well: the kinetic look
+# takes the moves that take the frame as its grammar, the camera flying down a tunnel of their photographs and a wall
+# of prints swinging flat on its prints
+MORE_MOVES = {"kinetic-type": [{"id": "picture-tunnel", "fits": ["photo", "portrait"]},
+                               {"id": "tilted-wall", "fits": ["photo", "portrait"]}]}
 # the colors a run with no photograph colors yet is colored from: a dark, a warm white, a gray and a yellow
 NEUTRAL = ("#14161c", "#f3eee4", "#8f94a1", "#ffc93c")
 
@@ -107,7 +112,8 @@ _CARDS = {}
 
 
 def card(style):
-    """The style card `style`, validated, or SystemExit naming the styles there are and what the card breaks."""
+    """The style card `style`, validated, with the moves MORE_MOVES adds to it (a move the card has takes the added
+    fits beside its own), or SystemExit naming the styles there are and what the card breaks."""
     if style not in _CARDS:
         f = STYLES / f"{style}.json"
         if not f.is_file():
@@ -116,7 +122,9 @@ def card(style):
         bad = validate(c)
         if bad:
             raise SystemExit(f"styles/{style}.json is not a style card: " + "; ".join(bad))
-        _CARDS[style] = c
+        more = {m["id"]: m["fits"] for m in MORE_MOVES.get(style, [])}
+        moves = [{**m, "fits": m["fits"] + [f for f in more.pop(m["id"], []) if f not in m["fits"]]} for m in c["moves"]]
+        _CARDS[style] = {**c, "moves": moves + [{"id": k, "fits": v} for k, v in more.items()]}
     return _CARDS[style]
 
 

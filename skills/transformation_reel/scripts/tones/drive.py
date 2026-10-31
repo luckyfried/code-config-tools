@@ -35,7 +35,8 @@ decides everything; the film only draws it. The board carries:
            the dates and the ask, the closer shape with the span, the colors and the easing.
   beats    the opening, one per post, the wall and the closer, each with the move and the cut into it the card allows:
            the timeline, the strips and the critic read these.
-  sound    every cue at the beat of the event it belongs to, with what it is for.
+  sound    every effect the shared sound layer lays under the film (sfx.py), at the beat it lands on, with what it
+           is for, and the stop.
   clips    the six shots an image-to-video model would make for the film (the hook's world, the stills brought to
            life, the texture between chapters), each written from what its photograph measures as a request the agent
            sends; until a clip comes back, the print stands in with its own move and is never called a clip.
@@ -50,6 +51,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import compose
+import sfx
 
 FPS = 30
 SIZES = {"reel": (1080, 1920), "square": (1080, 1080), "landscape": (1920, 1080)}
@@ -151,6 +153,35 @@ NOT_ON_A_PRINT = {"diptych", "long-fade-title", "white-space-crop", "line-by-lin
 # a move that closes fields of the card's inks over the whole frame opens a chapter: it plays into day one, a milestone
 # or the latest, and an ordinary print is reached by the camera alone, so the walk along the wall stays one shot
 OVER_THE_FRAME = {"stack-and-split"}
+# moves that take the whole frame over a print and hand it back to the picture once they land (the camera flying down a
+# tunnel of their photographs, a wall of prints swinging flat, the photograph coming apart into its layers, their line
+# slamming in word by word, a number in their line counting up): the least seconds from the cut into the print until
+# the frame is the picture again, the flight at the pace it still reads at and its hand back (slam-words: after its
+# last word; a move lands at 55% of the room it is given, motion/system/moves/arrival.tsx). A print that takes one
+# holds until its line has been read after the hand back.
+TAKES_THE_FRAME = {"picture-tunnel": 1.0, "exploded-layers": 1.05, "tilted-wall": 1.1, "counter": 1.6, "slam-words": 1.0}
+# moves that set the print's own line, so they land only on a chapter's print (day one, a milestone, the latest) that
+# has one, where the line is the story's; counter only on a line holding a number
+SETS_THE_LINE = {"slam-words", "counter"}
+# moves handed the print's line: the two that set it, and the photograph's layers, whose front plane carries it
+SAYS = SETS_THE_LINE | {"exploded-layers"}
+# moves that close onto the photograph's own box on the print (the corridor's far end, the stack's photograph plane, the
+# one lit photograph as the rest of the wall dims away) and draw nothing around it but the card's ground: they play on a quiet print, one whose card sets no line, where the
+# photograph fills the station, so the frame is never a field of ground with a small picture in its middle; a wide
+# photograph's box is a band across a tall frame, so they take a print no wider than FILLS (width over height)
+LANDS_ON_THE_PHOTO = {"picture-tunnel", "exploded-layers", "tilted-wall"}
+FILLS = 1.05
+# the camera's travel into a print the card cuts into with nothing sounds as a soft cut does: air under the travel
+TRAVEL_SOUND = "dissolve"
+NUMBER = re.compile(r"\b(\d[\d,.]*|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b", re.I)
+# how often a style's prints take a move that takes the frame, by the camera its card names: a calm camera takes one,
+# on the run-up to the peak (the last quiet print before it, else the peak); a camera that slams or snaps takes one
+# every SPACED prints, on a quiet print when the film has some; any other camera takes one on a milestone or the latest,
+# and a move that lands on the photograph once, on the run-up, never on two prints in a row. Day one comes out of the
+# dive and takes none
+CALM = {"slow", "drift", "handheld"}
+GRAMMAR = {"slam", "snap"}
+SPACED = 3
 MONTHS = "jan feb mar apr may jun jul aug sep oct nov dec".split()
 
 
@@ -194,6 +225,11 @@ def leading(face):
     return compose.face_of(face)["lineHeight"]
 
 
+# a line holding one word under RUNT[0] of the widest line's width is a word left alone; the line takes a size down to
+# RUNT[1] of its own to set the text a line fewer
+RUNT = (0.55, 0.72)
+
+
 def wrap(text, size, face, most):
     """`text` in lines no wider than `most` px at `size`, broken at spaces, as evenly as that many lines allow."""
     def lines_at(most):
@@ -226,7 +262,22 @@ def fit(text, size, face, most, top, least=0.0):
     while (len(lines) > top or any(compose.width(ln, size, face) > most for ln in lines)) and size > least:
         size = max(least, size * 0.88)
         lines = wrap(text, size, face, most)
+    # a word left alone on a line much narrower than the rest takes one line fewer at a smaller size, when the text
+    # still reads large there
+    if runt(lines, size, face):
+        s, fewer = size, lines
+        while len(fewer) >= len(lines) and s > max(least, size * RUNT[1]):
+            s = max(least, s * 0.94)
+            fewer = wrap(text, s, face, most)
+        if len(fewer) < len(lines) and not runt(fewer, s, face) and all(compose.width(ln, s, face) <= most for ln in fewer):
+            lines, size = fewer, s
     return [compose.cased(ln, face) for ln in lines], size
+
+
+def runt(lines, size, face):
+    """Whether one of `lines` is a word alone, under RUNT[0] of the widest line's width."""
+    wide = max((compose.width(ln, size, face) for ln in lines), default=0)
+    return len(lines) > 1 and any(len(ln.split()) == 1 and compose.width(ln, size, face) < RUNT[0] * wide for ln in lines)
 
 
 def set_line(face, **kw):
@@ -566,12 +617,13 @@ def travels(rows, kinds):
     return out
 
 
-def timing(rows, bpm, opening=0.0, floors=None):
+def timing(rows, bpm, opening=0.0, floors=None, takes=None):
     """The rows' kinds, words and moves, and per hold (each card's, then the closer's held picture after the stop) its
     least, its pace and its most, in beats of `bpm`. A card's least is SEEN and as long as its words take to read once
     they have landed: their line, and their next line from its entering, plus the move out. `opening` is the beats the
     film holds the whole wall before the dive; `floors` the least move into each print, the window of the cut that
-    plays over it (choose)."""
+    plays over it (choose); `takes` the move that takes the frame over each print, if any: its print holds as much
+    longer as the hand back comes after its line has landed."""
     n = len(rows)
     kinds = ["hook"] + ["milestone" if r["milestone"] else "ordinary" for r in rows[1:-1]] + ["latest"]
     titles = [(r.get("line") or "").strip() for r in rows]
@@ -589,10 +641,15 @@ def timing(rows, bpm, opening=0.0, floors=None):
             need = dive_of(bpm) + HOOK_LINE + max(reading(words[0], bpm), NEXT + reading(nexts[0], bpm) if nexts[0] else 0.0) + EXIT + go
         else:
             land = LETTERS if kind == "chapter" else LAND
-            need = go + EXIT + max(HELD, land + reading(words[k], bpm), land + NEXT + reading(nexts[k], bpm) if nexts[k] else 0.0)
+            base = go + EXIT + max(HELD, land + reading(words[k], bpm), land + NEXT + reading(nexts[k], bpm) if nexts[k] else 0.0)
+            # a move that takes the frame hands the print back `after` beats past its arrival: its line lands only
+            # then, and a print with no line holds its picture as the move lands it
+            after = taken_for((takes or [None] * n)[k], words[k], bpm) - travel[k] / 2
+            later = max(0.0, after - land) if words[k] else max(0.0, after + go + EXIT - base)
+            need = later + base
         least.append(max(SEEN[kind], need))
         pace.append(PACE["hook" if k == 0 else kind] * weight[k])
-        most.append(max(least[-1], MOST[kind]))
+        most.append(max(least[-1], MOST[kind] + (later if k else 0.0)))
     # the peak, the last milestone (the latest when there is none), holds on screen longest
     peak = max((k for k in range(1, n - 1) if kinds[k] == "milestone"), default=n - 1)
     return {"kinds": kinds, "titles": titles, "rests": rests, "travel": travel, "peak": peak, "bpm": bpm, "opening": opening,
@@ -634,27 +691,28 @@ def least_of(t):
     return length_of(t, peaked(t["least"], t))
 
 
-def told(rows, said="", bpm=96.0, opening=0.0, floors=None):
+def told(rows, said="", bpm=96.0, opening=0.0, floors=None, takes=None):
     """The rows the film tells, and the posts whose line it leaves off: a line that only repeats their span gives way
     (`spoken`), and while the film with every hold at its least runs past LONGEST, an ordinary post's line is left off
-    (its print passes over its date alone), first where the posts on both sides keep theirs, then the longest line,
-    then the earliest. Day one, the milestones and the latest keep every word."""
+    (its print passes over its date alone), first where a move takes the frame (`takes`), then where the posts on both
+    sides keep theirs, then the longest line, then the earliest. Day one, the milestones and the latest keep every word."""
     rows, left = spoken(rows, said), []
     has = lambda r: bool((r.get("line") or "").strip())
-    while least_of(timing(rows, bpm, opening, floors)) > LONGEST:
+    while least_of(timing(rows, bpm, opening, floors, takes)) > LONGEST:
         can = [k for k in range(1, len(rows) - 1) if not rows[k]["milestone"] and has(rows[k])]
         if not can:
             break
-        k = max(can, key=lambda k: (has(rows[k - 1]) and has(rows[k + 1]), len(rows[k]["line"].split()), -k))
+        k = max(can, key=lambda k: (bool((takes or [None] * len(rows))[k]), has(rows[k - 1]) and has(rows[k + 1]),
+                                    len(rows[k]["line"].split()), -k))
         rows = rows[:k] + [dict(rows[k], line="", next="")] + rows[k + 1:]
         left.append(rows[k]["id"])
     return rows, left
 
 
-def lengths(rows, said="", bpm=96.0, opening=0.0, floors=None):
+def lengths(rows, said="", bpm=96.0, opening=0.0, floors=None, takes=None):
     """The shortest and the longest reel these rows make well at `bpm`, in seconds to the tenth: every hold at its
     least, and every hold at its most but never past LONGEST."""
-    t = timing(told(rows, said, bpm, opening, floors)[0], bpm, opening, floors)
+    t = timing(told(rows, said, bpm, opening, floors, takes)[0], bpm, opening, floors, takes)
     lo, hi = least_of(t), min(LONGEST, length_of(t, peaked(t["most"], t)))
     return math.ceil(lo * 10) / 10, math.floor(hi * 10) / 10
 
@@ -699,7 +757,16 @@ def span_text(rows, said):
     return said or f"{short(rows[0]['date'])} – {short(rows[-1]['date'])}"
 
 
-def choose(rows, c, said):
+def chosen(rows, c, said, bpm):
+    """choose for `rows` at `bpm`, with the moves that take the frame put on the quiet prints, the ordinary prints whose
+    card sets no line once the film has left off the lines it has to (told), so the picture plays alone where no line
+    waits to be read and a move that lands on the photograph lands on one that fills the station."""
+    ch = choose(rows, c, said)
+    rows_ = told(rows, said, bpm, ch["opening"], ch["floors"])[0]
+    return choose(rows, c, said, {r["id"] for r in rows_[1:-1] if not r["milestone"] and not (r.get("line") or "").strip()})
+
+
+def choose(rows, c, said, quiet=frozenset()):
     """The card's moves and cuts for this film, each chosen from the beat's content within the card's allowlists (pick):
     the opening as a title (holding the whole wall OPEN_WORD a word when its move sets words), each print as a photo
     (portrait or landscape, the peak), and the cuts into the whole wall and the closer; the whole wall and the closer take
@@ -707,7 +774,11 @@ def choose(rows, c, said):
     travels plays only into a milestone or the latest; an ordinary print is reached by the camera alone. A print whose only move is the previous
     print's takes none (the print and the camera alone), so no move plays on two beats in a row. Day one comes out of the opening's dive
     with no cut. Returns {"opening", "open", "prints" [(move, cut)], "wall" cut, "closer" cut, "floors", "peak"}: a print's
-    floor is its cut's window, so the camera's move into it is never shorter than the cut that plays over it."""
+    floor is its cut's window, so the camera's move into it is never shorter than the cut that plays over it. A move that
+    takes the frame plays in a calm look once, on the run-up to the peak (the last print in `quiet`, the prints whose card
+    sets no line, before it, and of those the last no wider than FILLS when there is one; else the peak); in a grammar look every SPACED prints, on a print in `quiet` when there are
+    any; in any other look on a chapter's print, and a move that lands on the photograph once, on the run-up. A move
+    that lands on the photograph plays only on a print in `quiet` no wider than FILLS."""
     used_m, used_c = {}, {}
     words = opening_words(rows, said)
     om = pick(c["moves"], {"title", "words"}, "title", used_m, None)
@@ -718,16 +789,48 @@ def choose(rows, c, said):
     mask = "type-mask-reveal" if any(m["id"] == "type-mask-reveal" for m in c["moves"]) else None
     kinds = ["hook"] + ["milestone" if r["milestone"] else "ordinary" for r in rows[1:-1]] + ["latest"]
     peak = max((k for k in range(1, len(rows) - 1) if kinds[k] == "milestone"), default=len(rows) - 1)
-    prints, prev = [], om
+    camera = c.get("axes", {}).get("camera")
+    calm, grammar = camera in CALM, camera in GRAMMAR
+    before = [k for k in range(1, peak) if rows[k]["id"] in quiet]
+    fills = [k for k in before if rows[k]["aspect"] <= FILLS]
+    lead = (fills or before)[-1] if before else None
+    # a move the card marks `once` plays at most once a film and wins the peak: the ones the peak may take (a photo's
+    # move, one that sets the line where the peak's line allows it, one that lands on the photograph where the peak is a
+    # quiet print that fills the station) are held for it and play there, whatever the look's spacing; the rest play
+    # once wherever they fit
+    peak_line = (rows[peak].get("line") or "").strip()
+    once = {m["id"] for m in on_print if m.get("once")}
+    held = {m["id"] for m in on_print if m.get("once") and "photo" in m["fits"] and sets_ok(m["id"], peak_line, kinds[peak])
+            and (m["id"] not in LANDS_ON_THE_PHOTO or rows[peak]["id"] in quiet and rows[peak]["aspect"] <= FILLS)}
+    played = set()
+    prints, prev, since, taken = [], om, 2, 0
     for k, r in enumerate(rows):
         tags = tags_of(kinds[k], r["aspect"], k == peak, 0)
-        pool = [m for m in on_print if kinds[k] != "ordinary" or m["id"] not in OVER_THE_FRAME]
-        if k == peak and mask and (r.get("line") or "").strip():
+        line = (r.get("line") or "").strip()
+        may = k > 0 and (k == (peak if lead is None else lead) and not taken if calm
+                         else since >= SPACED and (not quiet or r["id"] in quiet) if grammar
+                         else (kinds[k] != "ordinary" or k == lead) and since >= 1)
+        lands = r["id"] in quiet and r["aspect"] <= FILLS and (calm or grammar or k == lead)
+        wins = lambda m: k == peak and m["id"] in held
+        pool = [m for m in on_print if (kinds[k] != "ordinary" or m["id"] not in OVER_THE_FRAME)
+                and (m["id"] not in TAKES_THE_FRAME or (may or wins(m)) and sets_ok(m["id"], line, kinds[k]))
+                and (m["id"] not in LANDS_ON_THE_PHOTO or lands or wins(m))
+                and m["id"] not in played and not (k < peak and m["id"] in held)]
+        if k == peak:
+            pool = [m for m in pool if m["id"] in held] or pool
+        big = [m["id"] for m in pool if m["id"] in TAKES_THE_FRAME]
+        if k == peak and mask and line:
             mv = mask
+        elif big and (calm or not grammar and k == lead):
+            # the calm style's one move that takes the frame, and any other style's move on the run-up, plays where it may
+            mv = big[0]
         else:
             mv = pick(pool, tags, "photo", used_m, prev) if pool else None
         # with one move left for this print and it the last print's, the print and the camera play alone
         mv = None if mv == prev else mv
+        if mv in once:
+            played.add(mv)
+        taken, since = (taken + 1, 0) if mv in TAKES_THE_FRAME else (taken, since + 1)
         cut = None if k == 0 else pick(c["transitions"], tags, "photo", used_c, None)
         # a cut that dips the whole frame while the camera travels lets a chapter go: it plays into a milestone or the
         # latest, and an ordinary print is reached by the camera's travel alone, so the walk along the wall stays one shot
@@ -739,7 +842,27 @@ def choose(rows, c, said):
     cc = pick(c["transitions"], {"closer"}, "closer", used_c, None)
     wc = pick([t for t in c["transitions"] if t["id"] != cc] or c["transitions"], {"wall", "landscape"}, "wall", used_c, None)
     return {"opening": OPEN_WORD * len(words.split()) if sets_words else 0.0, "open": (om, words), "prints": prints,
-            "wall": wc, "closer": cc, "floors": [cut_of(cut)["beats"] for _, cut in prints], "peak": peak}
+            "wall": wc, "closer": cc, "floors": [cut_of(cut)["beats"] for _, cut in prints], "peak": peak,
+            "takes": [mv if mv in TAKES_THE_FRAME else None for mv, _ in prints]}
+
+
+def sets_ok(move, line, kind):
+    """Whether a print of `kind` whose line is `line` can take `move`: a move that sets the line needs a chapter's print
+    with one, a counter one holding a number."""
+    if move not in SETS_THE_LINE:
+        return True
+    return kind != "ordinary" and bool(line) and (move != "counter" or bool(NUMBER.search(line)))
+
+
+def taken_for(move, words, bpm):
+    """The beats from the cut into a print until a move that takes the frame has handed it back to the picture (none
+    for any other move): its flight, or its words landing one a beat after the first and holding."""
+    if move not in TAKES_THE_FRAME:
+        return 0.0
+    per = 60 / bpm
+    if move == "slam-words":
+        return 0.25 + max(0, words - 1) + TAKES_THE_FRAME[move] / per
+    return TAKES_THE_FRAME[move] / per
 
 
 def fitting(rows, said, c, bpm):
@@ -762,8 +885,8 @@ def fitting(rows, said, c, bpm):
 def lengths_for(rows, said, c, bpm):
     """The shortest and the longest reel these rows make in the style `c` at `bpm` (lengths, with the card's opening and
     cuts)."""
-    ch = choose(rows, c, said)
-    return lengths(rows, said, bpm, ch["opening"], ch["floors"])
+    ch = chosen(rows, c, said, bpm)
+    return lengths(rows, said, bpm, ch["opening"], ch["floors"], ch["takes"])
 
 
 def build(rows, fx, who, fmt="reel", sizes=None, style=None, colors=None, bpm=None):
@@ -774,11 +897,11 @@ def build(rows, fx, who, fmt="reel", sizes=None, style=None, colors=None, bpm=No
     W, H = (sizes or SIZES)[fmt]
     pulse = FPS * 60 / bpm
     said = (fx.get("said") or "").strip()
-    ch = choose(rows, c, said)
-    opening, floors = ch["opening"], ch["floors"]
-    rows, unsaid = told(rows, said, bpm, opening, floors)
+    ch = chosen(rows, c, said, bpm)
+    opening, floors, takes = ch["opening"], ch["floors"], ch["takes"]
+    rows, unsaid = told(rows, said, bpm, opening, floors, takes)
     n = len(rows)
-    tm = timing(rows, bpm, opening, floors)
+    tm = timing(rows, bpm, opening, floors, takes)
     kinds, titles, rests, travel = tm["kinds"], tm["titles"], tm["rests"], tm["travel"]
     dur = holds(tm, fx.get("seconds"))
     hook, hold = dur[0], dur[-1]
@@ -893,7 +1016,8 @@ def build(rows, fx, who, fmt="reel", sizes=None, style=None, colors=None, bpm=No
     line_beats = [{"id": "open", "form": "title", "at": 0.0, "end": cut_at[0], "move": om, "transition": None, "words": owords, "label": owords, "peak": False}]
     for k, cd in enumerate(cards):
         end = cards[k + 1]["cut"] if k + 1 < n else C + CLOSER_MOVE / 2
-        held = {"box": cd["box"], **({"type": cd["type"]} if cd["type"] else {}), "held": [round(cd["arrive"], 4), round(cd["leave"], 4)]}
+        held = {"box": cd["box"], **({"type": cd["type"]} if cd["type"] else {}), "held": [round(cd["arrive"], 4), round(cd["leave"], 4)],
+                "photo": cd["file"], "place": laid(cd["box"], cd["uv0"])}
         # a type mask sets the peak's own line across a frame of the ground, the photograph inside its letters, while
         # the camera reaches the print; then the frame cuts to the print standing whole with its date and their next
         # line already set, so the peak's line is on screen once
@@ -904,9 +1028,11 @@ def build(rows, fx, who, fmt="reel", sizes=None, style=None, colors=None, bpm=No
             line_beats.append({"id": f"{cd['id']}-print", "form": "photo", "at": mask_end, "end": end, "move": None, "transition": None,
                                "words": "", "label": "", "peak": k == tm["peak"], **held})
             continue
-        # the print's label sets its date and line, so a move on it is handed no words
+        # the print's label sets its date and line, so a move on it is handed no words; a move that sets the line, or
+        # flies it with the photograph, is handed their line to say
+        say = compose.cased(titles[k], "display") if titles[k] and cd["move"] in SAYS else ""
         line_beats.append({"id": cd["id"], "form": "photo", "at": cd["cut"], "end": end, "move": cd["move"], "transition": cd["transition"],
-                           "words": "", "label": "", "peak": k == tm["peak"], **held})
+                           "words": "", "label": "", "peak": k == tm["peak"], **held, **({"say": say} if say else {})})
     # the cut into the closer opens as the closer shape starts, so what it reveals is the shape and never the wall again
     into = K + cut_of(ch["closer"])["beats"] / 2
     line_beats.append({"id": "wall", "form": "wall", "at": C + CLOSER_MOVE / 2, "end": into, "move": None, "transition": wc, "words": "", "label": "", "peak": False})
@@ -935,7 +1061,7 @@ def build(rows, fx, who, fmt="reel", sizes=None, style=None, colors=None, bpm=No
 
     board = {"id": c["id"], "style": c["id"], "name": who.get("name", ""), "handle": who.get("handle", ""), "bpm": bpm,
              "format": {"name": fmt, "width": W, "height": H, "fps": FPS}, "beats": beats, "film": film,
-             "sound": sound(film, kinds), "clips": clips(rows, film, kinds, tm["peak"], beats), "scenes": scenes(rows, film, kinds)}
+             "sound": sound(film, bpm, c["id"], bounds, ids), "clips": clips(rows, film, kinds, tm["peak"], beats), "scenes": scenes(rows, film, kinds)}
     dense = next((cd for cd in cards if cd["kind"] == "milestone"), cards[-1])
     board["stills"] = {
         # day one's photograph with their first line landed and their next line risen
@@ -949,6 +1075,13 @@ def build(rows, fx, who, fmt="reel", sizes=None, style=None, colors=None, bpm=No
         "end": round((S - 0.2) * pulse),
     }
     return board
+
+
+def laid(box, uv):
+    """Where the whole photograph lies on the screen while the camera holds a print whose photograph shows the window
+    `uv` ([u0, v0, u1, v1], v up) in `box` ([x0, y0, x1, y1] px): [x, y, w, h] px."""
+    w, h = (box[2] - box[0]) / (uv[2] - uv[0]), (box[3] - box[1]) / (uv[3] - uv[1])
+    return [round(box[0] - uv[0] * w, 2), round(box[1] - (1 - uv[3]) * h, 2), round(w, 2), round(h, 2)]
 
 
 def type_box(lines):
@@ -973,33 +1106,57 @@ def closer_look(shape, span, call, handle):
     return {"title": "", "signoff": span, "handle": handle if not call else call}
 
 
-def sound(film, kinds):
-    """The board's sound cues: one where each beat lands (day one's photograph, each card after it, a run speeding up
-    landing lighter on every other card, a milestone and the latest landing harder with a bright ring), their first line
-    landing on day one, the build as the camera pulls back to the whole wall, the impact of the closer shape landing,
-    and the stop. Words rise and the camera moves without a sound of their own."""
-    cards, cl = film["cards"], film["closer"]
-    h = cards[0]
-    cues = [{"kind": "hit", "at": h["arrive"], "weight": 0.7, "bright": 0.2, "beat": "hook", "what": "day one's photograph lands"}]
-    if h["title"]:
-        cues.append({"kind": "hit", "at": h["land"], "weight": 1.0, "bright": 0.6, "beat": "hook", "what": "their first line lands on day one"})
-    run = 0
-    for k in range(1, len(cards)):
-        c, kind = cards[k], kinds[k]
-        run = run + 1 if kind == "ordinary" and kinds[k - 1] == "ordinary" else 0
-        if kind == "ordinary":
-            cues.append({"kind": "hit", "at": c["arrive"], "weight": 0.45 if run % 2 == 0 else 0.35, "bright": 0.12 if run % 2 == 0 else 0.0,
-                         "beat": c["id"], "what": f"{c['id']} lands" + (" with their line under it" if c["title"] else "")})
+def fx_board(film, bpm, sid=""):
+    """The film as the shared sound effects read a board (sfx.py): each beat of its timeline with its form, its move,
+    the cut into it, and its start, arrival and end in musical beats. A print lands on the shutter (a mark's pop where
+    its move lays one) and the camera's travel into a print the card cuts into with nothing sounds as a soft cut does
+    (TRAVEL_SOUND); a chapter's line landing on its label, and a type mask's line as the camera reaches its print, land
+    on an impact; the closer takes the riser into it and its impact."""
+    cards = {c["id"]: c for c in film["cards"]}
+    out = []
+    for b in film["timeline"]["beats"]:
+        c = cards.get(b["id"].removesuffix("-print"))
+        layer = {"at": {"arrive": b["at"], "end": b["end"]}}
+        cut = b["transition"]
+        if b["form"] == "photo" and b["id"].endswith("-print"):
+            layer["kind"] = "Photo"
+        elif b["form"] == "photo":
+            layer.update(kind="Photo", label=b.get("say", "") if b["move"] == "slam-words" else "",
+                         at={"arrive": c["arrive"], "end": b["end"], "pull": c["leave"]})
+            cut = cut or TRAVEL_SOUND
+        elif b["form"] == "title":
+            layer.update(kind="Title", title={"text": b["words"]}, **({"slam": [c["arrive"], 0]} if c else {}))
+        elif b["form"] == "closer":
+            layer.update(kind="Closer", signoff={"text": film["closer"]["span"]})
         else:
-            cues.append({"kind": "hit", "at": c["arrive"], "weight": 0.9 if kind == "milestone" else 1.0, "bright": 0.55 if kind == "milestone" else 0.4,
-                         "beat": c["id"], "what": f"the {kind} lands" + (" and their line rises under it" if c["title"] else "")})
-    C, text = cl["at"], cl["span"]
-    cues += [
-        {"kind": "riser", "at": C, "beats": cl["shape"] - C - 0.1, "beat": "closer",
-         "what": "the camera pulls back to the whole wall and the dates land on its course"},
-        {"kind": "impact", "at": cl["shape"] + 0.25, "beat": "closer", "what": f"the closer lands on \"{text}\""},
-        {"kind": "stop", "at": cl["still"], "beat": "closer", "what": "picture and music stop together; the closer holds silent"},
-    ]
+            layer["kind"] = b["form"].title()
+        out.append({"id": b["id"], "form": b["form"], "move": b["move"], "transition": cut, "start": b["at"], "layers": [layer]})
+        if b["form"] == "photo" and c and not b["id"].endswith("-print") and c["kind"] != "ordinary" and c["title"] and not c["mask"]:
+            words = " ".join(ln["text"] for ln in c["title"])
+            out.append({"id": f"{b['id']}-line", "form": "line", "move": None, "transition": None, "start": c["land"],
+                        "layers": [{"kind": "Title", "title": {"text": words}, "at": {"arrive": c["land"], "end": b["end"]}, "slam": [c["land"], 0]}]})
+    return {"id": sid, "bpm": bpm, "beats": out}
+
+
+# what each effect is for, as the board's sound cues say it
+SOUNDS = {"air": "air under the camera's travel into the print", "sweep": "a warm sweep on the cut",
+          "bright": "the film's one bright whoosh, on its first hard cut", "shutter": "the shutter as the print lands",
+          "pop": "a pop as the mark lands", "impact": "an impact as their line lands", "riser": "the riser into the closer"}
+
+
+def sound(film, bpm, sid, bounds, ids):
+    """The board's sound cues: every effect the shared sound layer lays under the film (sfx.events on fx_board), at the
+    beat it lands on the music's grid, under the board beat it falls in (`ids`, starting at `bounds`), and the stop,
+    where picture and music stop together. A riser is placed from the beat it starts on, over its beats."""
+    per = 60 / bpm
+    cl = film["closer"]
+    cues = []
+    for sec, kind in sfx.events(fx_board(film, bpm, sid), bpm)[0]:
+        at = sec / per - (sfx.RISER / per if kind == "riser" else 0.0)
+        beat = ids[max(i for i in range(len(ids)) if i == 0 or bounds[i] <= at + 1e-6)]
+        what = f"the closer lands on \"{cl['span']}\"" if kind == "impact" and beat == "closer" else SOUNDS[kind]
+        cues.append({"kind": kind, "at": round(at, 4), "beat": beat, "what": what, **({"beats": round(sfx.RISER / per, 4)} if kind == "riser" else {})})
+    cues.append({"kind": "stop", "at": cl["still"], "beat": "closer", "what": "picture and music stop together; the closer holds silent"})
     return sorted(cues, key=lambda c: c["at"])
 
 
@@ -1084,20 +1241,29 @@ def clips(rows, film, kinds, peak, beats):
     peak and the latest), and the texture between chapters (the two busiest ordinary posts, a chapter or more apart).
     Each is written from what its own photograph measures (`measured`): a lens, a light and a move no other shot of the
     six takes, their words for the photograph as its subject, a length that is its beat's, and a seamless loop. Until a
-    clip comes back, the print stands in with its own move (`stand_in`), which is never called a clip."""
+    clip comes back, the print stands in with its own move (`stand_in`), which is never called a clip. A post they
+    posted as a recording plays that recording on its beat instead (role "their own clip": its `source`, from its
+    strongest second `from`, no prompt), with the arrival and the move its print has; nothing is generated for it."""
     cards = film["cards"]
     n = len(rows)
+    own = [k for k in range(n) if rows[k].get("video")]
     first = next((k for k in range(1, n - 1) if kinds[k] == "milestone"), None)
-    life = list(dict.fromkeys(k for k in (first, peak, n - 1) if k is not None and k > 0))
-    busy = {k: measured(rows[k])["busy"] if rows[k].get("look") else 0.0 for k in range(1, n - 1) if kinds[k] == "ordinary"}
+    life = list(dict.fromkeys(k for k in (first, peak, n - 1) if k is not None and k > 0 and k not in own))
+    busy = {k: measured(rows[k])["busy"] if rows[k].get("look") else 0.0 for k in range(1, n - 1) if kinds[k] == "ordinary" and k not in own}
     texture = []
     for k in sorted(busy, key=lambda k: -busy[k]):
         if len(texture) < 6 - 1 - len(life) and all(abs(k - j) > 2 for j in texture):
             texture.append(k)
     used = {"lens": set(), "light": set(), "move": set()}
     out = []
-    for role, k in sorted([("world", 0)] + [("life", k) for k in life] + [("texture", k) for k in texture], key=lambda x: x[1]):
+    for role, k in sorted([("world", 0)] * (0 not in own) + [("life", k) for k in life] + [("texture", k) for k in texture] +
+                          [("own", k) for k in own], key=lambda x: x[1]):
         r, c = rows[k], cards[k]
+        if role == "own":
+            out.append({"id": f"own-{r['id']}", "beat": "hook" if k == 0 else r["id"], "role": "their own clip",
+                        "seconds": round(beats[k]["frames"] / FPS, 2), "image": r["photo"], "source": r["video"],
+                        "from": r.get("from") or 0.0, "prompt": None})
+            continue
         m = measured(r) if r.get("look") else {"key": 0.5, "contrast": 0.15, "from": "evenly", "detail": "middle", "spread": 0.25, "busy": 0.0, "shape": "square", "focal": "middle"}
         seconds = round(beats[k]["frames"] / FPS, 2)
         words = (r.get("line") or r.get("caption") or "").strip()
