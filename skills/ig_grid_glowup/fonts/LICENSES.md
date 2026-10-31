@@ -1,15 +1,14 @@
 # Font licenses
 
-Every font here is licensed under the SIL Open Font License 1.1 (OFL), from the Google Fonts repository
-(github.com/google/fonts, `ofl/`). Free for commercial use. Local `.ttf` files only; nothing loads from a CDN.
+Every font the kit sets type in is in `styles/<style>/`, one folder per style card, each family licensed under the SIL
+Open Font License 1.1 (OFL) from the Google Fonts repository (github.com/google/fonts, `ofl/`). Each folder carries
+its families' license as `OFL.txt`. Free for commercial use. Local `.ttf` files only; nothing loads from a network.
 
-| Family | File | Role | Source |
-|---|---|---|---|
-| Fraunces | `Fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf` | editorial display | google/fonts/ofl/fraunces |
-| Inter | `Inter/Inter[opsz,wght].ttf` | editorial text, labels | google/fonts/ofl/inter |
-| Archivo Black | `ArchivoBlack/ArchivoBlack-Regular.ttf` | kinetic display, big numbers | google/fonts/ofl/archivoblack |
-| Archivo | `Archivo/Archivo[wdth,wght].ttf` | kinetic text, condensed lines | google/fonts/ofl/archivo |
-| Space Grotesk | `SpaceGrotesk/SpaceGrotesk[wght].ttf` | documentary display | google/fonts/ofl/spacegrotesk |
-| JetBrains Mono | `JetBrainsMono/JetBrainsMono[wght].ttf` | documentary labels and timecodes | google/fonts/ofl/jetbrainsmono |
+| Style | Families |
+|---|---|
+| editorial-quiet | Instrument Serif (display), Hanken Grotesk (text) |
+| swiss-grid | Geist (display), Geist Mono (text) |
+| kinetic-type | Bricolage Grotesque (display), Anton (text) |
+| cinematic-letterbox, scrapbook, analog-home-movie | the families in their folders, as their `OFL.txt` names them |
 
 Full OFL 1.1 text: https://openfontlicense.org/open-font-license-1-1/
