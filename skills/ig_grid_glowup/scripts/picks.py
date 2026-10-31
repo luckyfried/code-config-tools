@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Movement 1, research: read the grid and the library photo by photo. Writes build/grid.json,
-build/photo_index.json, build/picks.json and build/photos/*.jpg.
+"""Movement 1, research: read the grid and the library photo by photo. Writes grid.json,
+photo_index.json, picks.json and photos/*.jpg.
 
 USAGE (from the workspace root):
     python3 S/scripts/picks.py
 
 Measures every photo (its mean color in Lab, chroma, warmth, brightness, detail, how much of it is flat near-white,
 its focal point and five dominant colors), converts HEIC, rotates by EXIF and saves a 1600 px JPEG copy of every
-grid cover and every library photo in build/photos/. A reel's cover is its poster frame (ffmpeg, 40% of the way in).
+grid cover and every library photo in photos/. A reel's cover is its poster frame (ffmpeg, 40% of the way in).
 
-build/grid.json: the last 30 posts and reels in grid order (position 0 is the top left), each with its cover, its
+grid.json: the last 30 posts and reels in grid order (position 0 is the top left), each with its cover, its
 likes, comments and saves, and the flags the audit reads:
   clash  its color sits far from the grid's own (Lab distance over 2.2x the grid's median distance and over 18, or
          chroma over 1.8x the grid's median chroma and over 30);
@@ -17,12 +17,14 @@ likes, comments and saves, and the flags the audit reads:
   busy   much more detail than the grid median (over 1.6x);
   square posted square, so the 4:5 profile grid crops its sides.
 A close crop among wide ones is a judgment of scale no measurement makes reliably: the eye pass in
-pipeline/1-research.md adds "tight" by looking at build/grid-sheet.png, the grid drawn with each cell's position.
-build/photo_index.json: every photo measured, with its kind (grid, post, carousel, story, facebook, photo), likes
-and saves when it is a post's cover. build/picks.json: "pool", the photos the next nine are drawn from (everything
-not on the grid and not posted before: carousel slides, stories, Facebook photos, the photo folder; older posts
-only when that pool is under 18), ranked by how well they read as a post (exposure, detail, not text).
-To swap a photo into a post, run `grade.py photos FILE` and name the graded file in that post of the storyboard.json.
+pipeline/1-research.md adds "tight" by looking at grid-sheet.png, the grid drawn with each cell's position.
+photo_index.json: every photo measured, with its kind (grid, post, carousel, story, facebook, photo), likes
+and saves when it is a post's cover. picks.json: "pool", the photos the next nine are drawn from (everything
+not on the grid and not posted before: carousel slides, stories, Facebook photos; older posts only when that pool is
+under 18; the photo folder alone when gather.py read one, named with --photos or found with no feed), ranked by how well they read as a post (exposure, detail, not text).
+plan.py draft takes the next posts from the pool; storyboard.py draft grades the ones the plan names.
+It exits 0 when the pool holds a photo to post, however few posts the grid has, and 1 with one sentence saying why
+when it holds none.
 """
 import datetime as dt
 import hashlib
@@ -47,7 +49,7 @@ try:
 except Exception:
     pillow_heif = None
 
-PHOTOS = Path("build/photos")
+PHOTOS = Path("photos")
 VIDEO = {".mp4", ".mov", ".m4v"}
 
 
@@ -60,7 +62,7 @@ def open_image(path, draft=None):
 
 
 def prepare(path):
-    """A 1600 px JPEG copy in build/photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
+    """A 1600 px JPEG copy in photos/ (HEIC converted, EXIF rotation applied). Returns its path or None."""
     src = Path(path)
     dest = PHOTOS / (hashlib.sha1(str(src.resolve()).encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -73,12 +75,15 @@ def prepare(path):
         return None
     im.thumbnail((1600, 1600), Image.LANCZOS)
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    im.save(dest, "JPEG", quality=90)
+    # a copy is whole once it has its name: the exists() above trusts it
+    tmp = _env.part(dest)
+    im.save(tmp, "JPEG", quality=90)
+    os.replace(tmp, dest)
     return str(dest.resolve())
 
 
 def poster(video):
-    """A reel's poster frame as a 1600 px JPEG in build/photos/, 40% of the way in. Returns its path or None."""
+    """A reel's poster frame as a 1600 px JPEG in photos/, 40% of the way in. Returns its path or None."""
     src = Path(video)
     dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
@@ -90,9 +95,14 @@ def poster(video):
         at = float(r.stdout.strip()) * 0.4
     except ValueError:
         at = 0.5
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
-                    "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
-    return str(dest.resolve()) if dest.exists() and dest.stat().st_size > 0 else None
+    tmp = _env.part(dest)
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
+                        "-vf", "scale='min(1600,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
+    if r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0:
+        os.replace(tmp, dest)
+        return str(dest.resolve())
+    tmp.unlink(missing_ok=True)
+    return None
 
 
 def to_lab(rgb):
@@ -154,6 +164,8 @@ def flag_grid(cells):
     """Marks clash, tight, text, busy and square on the grid's cells, each against the grid's own medians."""
     photos = [c for c in cells if c.get("a")]
     if not photos:
+        for c in cells:
+            c["flags"] = []
         return {}
     for c in photos:
         c["a"]["text"] = c["a"]["flat"] > 0.5 and c["a"]["chroma"] < 12
@@ -200,10 +212,12 @@ def grid_sheet(cells, path, cell=240):
             im = ImageOps.fit(open_image(c["cover"]), (cell, ch), Image.LANCZOS)
             sheet.paste(im, (x, y))
         d.rectangle([x + 6, y + 6, x + 46, y + 34], fill=(0, 0, 0))
-        d.text((x + 12, y + 8), str(c["pos"]), font=font, fill=(255, 255, 255))
+        d.text((x + 12, y + 8), str(c["pos"] + 1), font=font, fill=(255, 255, 255))
         if c["kind"] == "reel":
             d.text((x + cell - 60, y + 8), "reel", font=font, fill=(255, 255, 255))
-    sheet.save(path)
+    tmp = _env.part(path)
+    sheet.save(tmp)
+    os.replace(tmp, path)
 
 
 def measure(job):
@@ -226,7 +240,8 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
+    _env.enter_run()
+    d = _env.read_json("library.json")
     if not d or "grid" not in d:
         sys.exit("run gather.py first")
     grid_src = {r["media"][0] for r in d["grid"] if r.get("media")}
@@ -244,8 +259,10 @@ def main():
             for m in r.get("media") or []:
                 if Path(m).suffix.lower() not in VIDEO:
                     jobs.append((m, kind, r, None))
-    if d.get("source") == "photos":
-        jobs = [(m, "grid" if m in grid_src else "photo", r, p) for m, _, r, p in jobs]
+    for r in d.get("photos") or []:
+        for m in r.get("media") or []:
+            if m not in grid_src and Path(m).suffix.lower() not in VIDEO:
+                jobs.append((m, "photo", r, None))
     jobs = [(m, k, {x: r.get(x) for x in ("ts", "likes", "saves", "comments")}, p) for m, k, r, p in jobs]
 
     with ProcessPoolExecutor(min(8, os.cpu_count() or 2)) as ex:
@@ -265,11 +282,13 @@ def main():
     for c in cells:
         if c["pos"] in by_pos:
             by_pos[c["pos"]]["flags"] = c["flags"]
-    _env.write_json("build/grid.json", {"cells": cells, **medians})
-    grid_sheet(cells, "build/grid-sheet.png")
-    _env.write_json("build/photo_index.json", index)
-    fresh = [e for e in index if e["kind"] in ("carousel", "story", "facebook", "photo")]
-    if len(fresh) < 18:
+    _env.write_json("grid.json", {"cells": cells, **medians})
+    if cells:
+        grid_sheet(cells, "grid-sheet.png")
+    _env.write_json("photo_index.json", index)
+    named = [e for e in index if e["kind"] == "photo"]
+    fresh = named if d.get("photos") and named else [e for e in index if e["kind"] in ("carousel", "story", "facebook", "photo")]
+    if len(fresh) < 18 and not d.get("photos"):
         fresh += [e for e in index if e["kind"] == "post"]
     pool = []
     for e in fresh:
@@ -278,7 +297,7 @@ def main():
         e = dict(e, photo=e["photo"] or prepare(e["src"]))
         if not e["photo"]:
             continue
-        e["fit"] = round(0.5 * e["expo"] + 0.3 * min(1, e["detail"] / (medians["median_detail"] or 1)) + 0.2 * min(1, e["score"]), 3)
+        e["fit"] = round(0.5 * e["expo"] + 0.3 * min(1, e["detail"] / (medians.get("median_detail") or 1)) + 0.2 * min(1, e["score"]), 3)
         pool.append(e)
     pool.sort(key=lambda e: -e["fit"])
     focal = {e["photo"]: f"{e['focal'][0] * 100:.0f}% {e['focal'][1] * 100:.0f}%" for e in pool}
@@ -287,13 +306,17 @@ def main():
                                        "focal", "w", "h", "colors")} for e in pool],
            "chapters": {"grid": [c["cover"] for c in cells if c.get("cover")], "pool": [e["photo"] for e in pool]},
            "focal": focal, "source_of": {e["photo"]: e["src"] for e in pool}}
-    _env.write_json("build/picks.json", out)
+    _env.write_json("picks.json", out)
     flagged = {f: [c["pos"] for c in cells if f in c["flags"]] for f in ("clash", "text", "busy", "square")}
     print(f"measured {len(index)} photos; grid {len(cells)} cells; pool {len(pool)} photos for the next nine")
     for f, ps in flagged.items():
         print(f"  {f:<6} at grid positions {ps}")
-    print("wrote build/grid.json, build/grid-sheet.png, build/photo_index.json and build/picks.json")
-    return 0 if len(cells) >= 9 else 1
+    print("wrote grid.json, " + ("grid-sheet.png, " if cells else "") + "photo_index.json and picks.json")
+    if not pool:
+        why = "each one reads as a screenshot or a text card" if fresh else "every photo there is already on the grid"
+        print(f"no photo in the folder can be posted: {why}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

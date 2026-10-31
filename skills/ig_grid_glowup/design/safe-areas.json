@@ -1,5 +1,5 @@
 {
- "about": "Where text may sit, per format, in px from each edge. Photos and clips run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); post is one of the next nine at 1080 by 1350, where type keeps a 96 px margin so the grid's 4:5 crop and the feed's rounded corners never touch it.",
+ "about": "Where text may sit, per format, in px from each edge. Photos run full bleed; type stays inside. reel follows the Reels interface (top 14% for the header, bottom 35% for the caption and audio bar, the right edge for the action rail); landscape is the 16:9 film for a page or a player, with a title-safe margin; square is the 1:1 film for the feed, with a 40 px margin; post is one of the next nine at 1080 by 1350, where type keeps a 96 px margin so the grid's crop and the feed's rounded corners never touch it.",
  "reel": {
   "width": 1080,
   "height": 1920,
@@ -7,6 +7,22 @@
   "bottom": 670,
   "left": 72,
   "right": 150
+ },
+ "landscape": {
+  "width": 1920,
+  "height": 1080,
+  "top": 60,
+  "bottom": 90,
+  "left": 110,
+  "right": 110
+ },
+ "square": {
+  "width": 1080,
+  "height": 1080,
+  "top": 40,
+  "bottom": 40,
+  "left": 40,
+  "right": 40
  },
  "post": {
   "width": 1080,

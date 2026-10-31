@@ -1,8 +1,10 @@
 # The grade
 
-One ffmpeg filter grades every photo and every clip in the film, so a generated clip and a photo from March sit in
-the same light. `grade.py recipe` derives it from `build/taste.json` and writes it to `build/grade.json`;
-`grade.py photos` and `clips.py normalize` apply it.
+One ffmpeg filter grades every photo of the plan, so a photo from March and one from last week sit in the same
+light. Before it, each photo is matched to the set, so the grade lands on photos that already agree. `storyboard.py draft`
+derives the recipe from `taste.json` as it is at that moment, writes it and each photo's match to `grade.json`, and
+grades the plan's photos into `public/graded/` (`grade.py photos` does it by hand); the board's hash covers
+`grade.json`, so a taste change reaches the render. Their posts already on the grid are shown as posted.
 
 | part | what it does | where the number comes from |
 |---|---|---|
@@ -12,13 +14,12 @@ the same light. `grade.py recipe` derives it from `build/taste.json` and writes 
 | saturation | follows how saturated their palette is | `0.82 + 0.55 × mean saturation`, held to 0.78–1.18 |
 | contrast | a film taste gets less, so the grain carries the texture | 1.04 with grain in taste, else 1.08 |
 | black lift, white roll | a film taste lifts the blacks and softens the whites | curves 0.05/0.95 with grain, else 0.015/0.985 |
+| blues and cyans | a warm palette pulls them down, so a cold sky gives way to the feed's warmth | `huesaturation` on c+b, 3 × (red − blue) of the palette's mean, held to 0–0.6 |
+| the match: saturation | each photo's saturation scaled toward the set's median | the median over the photo's own, held to 0.7–1.2 |
+| the match: warmth | under a warm palette, a photo colder than the set's median is warmed toward it (a cool palette cools the warmer ones) | `colorbalance rm/bm`, 0.6 of the gap, at most 0.15 |
 
-The colors the type sits on come from the same palette (`storyboard.py` builds each board's color roles from the
-taste palettes), so the grade and the type agree.
+Texture is never baked into the grade: the film's grain, vignette and bloom are the picked style's own finish, drawn
+over the whole frame.
 
-Texture is a separate pass in the renderer, never baked into the grade: grain (`build/public/fx/grain.png`, a 512 px
-tile at the opacity `taste.json` `texture.grain` names), a vignette (`texture.vignette`), light leaks only when
-`texture.leaks` is true. A taste that lists "grain" or "film" under avoid gets none.
-
-To change the look, edit `taste.json` (`palette.year`, `texture`) and run `grade.py recipe`, `grade.py photos`,
-then `clips.py normalize` again; never hand-grade a single file.
+To change the grade, edit `taste.json` (`palette`) and run `storyboard.py draft` and everything after it; never
+hand-grade a single file.

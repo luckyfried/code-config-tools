@@ -2,7 +2,16 @@
 """Build one invented person's 2026 on Instagram and Facebook, as the two "Download your information" exports.
 
 USAGE:
-    python3 make_person.py DEST [--seed 7] [--year 2026] [--end 2026-10-18]
+    python3 make_person.py DEST [--grid DIR] [--seed 7] [--year 2026] [--end 2026-10-18]
+    python3 make_person.py --photos DIR
+
+--grid DIR draws every post, reel cover and story from the photographs under DIR (searched recursively, matched to
+the scene each post shows by the words in the file name), so the before grid is a photo feed a person would post and
+the next nine have to fit it. Without --grid the scenes are drawn as flat illustrations.
+
+--photos DIR writes, beside each of the person's next photographs in DIR (the bakery set, by file name), the note they
+put with it: <name>.txt, one line in their voice on what happened, who was there and where. The photographs are not
+touched.
 
 DEST is a folder (a workspace). It receives:
     instagram-maren.okafor-2026-10-18/       the Instagram export, JSON layout:
@@ -25,14 +34,14 @@ espresso). About 120 posts (some carousels), 27 reels, 60 stories, 900 likes acr
 that taste, 70 saves, 200 comments, 412 followers (96 new this year), 180 following. July (two weeks in Sicily) is
 clearly the busiest month and February the quietest.
 
-Her nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
+Their nine most-liked of the year are unambiguous: seven posts and two reels, one in each of nine months from January
 to October, between 291 and 486 likes, while nothing else reaches 225 (the tenth sits at least 66 below the
 ninth). Each of the nine carries a caption that says why it landed (the light, the sound, the color, the table).
 
-Her last 30 posts and reels (the grid, newest first) carry plain problems for the grid glow-up to find: a run of five
-posts in a clashing palette (cold teal, magenta, cobalt and lime from a filter she tried), three tight close-up crops
-among wide scenes, and two text screenshots that break the rhythm. Her own numbers point the other way: on that grid
-the quiet, warm, wide posts get about three times the likes and eight times the saves of the problem posts, and her
+Their last 30 posts and reels (the grid, newest first) carry plain problems for the grid glow-up to find: a run of five
+posts in a clashing palette (cold teal, magenta, cobalt and lime from a filter they tried), three tight close-up crops
+among wide scenes, and two text screenshots that break the rhythm. Their own numbers point the other way: on that grid
+the quiet, warm, wide posts get about three times the likes and eight times the saves of the problem posts, and their
 likes and saves also go to quiet, tonal feeds (quiet.tones.journal, tonal.grid.club, muted.mornings and others).
 Unposted photos (stories, carousel slides, the Facebook albums) are the library the next nine come from. Strings are written the way
 Meta writes them (UTF-8 bytes escaped as latin-1). Images are drawn with Pillow; about one in ten carries a .heic
@@ -100,7 +109,50 @@ ACCOUNTS = FRIENDS + [
 assert len(ACCOUNTS) == 40, len(ACCOUNTS)
 
 
-NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked, planted clear of everything else
+NOTES = {  # the bakery set named for the next posts: the line written beside each photograph
+    "01-scored-boule-wood-plate.jpg": "first loaf from the new oven, wrapped in sunday's paper for @theo.makes",
+    "02-shop-window-buns-rack.jpg": "noses on the window at the padaria in lisbon, 7am, with @ines.walks",
+    "03-scored-boule-cutting-board.jpg": "my starter turned one this week and she made this",
+    "04-sourdough-crumb-cross-section.jpg": "cut it open at @kofi.cooks' table and everyone went quiet",
+    "05-rolls-on-oven-racks.jpg": "rosa let me work the 4am shift at her bakery in palermo",
+    "06-cinnamon-bun-cortado-sunlit.jpg": "one bun each with @ines.walks, then we split a third",
+    "07-bakery-interior-bread-racks.jpg": "the back room where @dani.reyes learned to bake",
+    "08-loaf-cooling-rack.jpg": "burned two before this one, kept this one",
+    "09-croissant-pile-close.jpg": "sixty croissants for @sam_and_june's wedding breakfast",
+    "10-dough-balls-rolling-pin.jpg": "pizza night at @liv.outside's, i brought the dough",
+    "11-baguettes-on-rack.jpg": "baguettes in lyon, ate one on the walk home",
+    "12-paris-boulangerie-facade.jpg": "beaumarchais, paris, where i had my first real croissant in 2014",
+    "13-seeded-loaves-shop-tray.jpg": "the seeded rye @theo.makes keeps asking me for",
+    "14-cinnamon-rolls-glazed-close.jpg": "mum's cinnamon rolls, off her recipe card from 1998",
+    "15-pasteis-de-nata-trays-baker.jpg": "watched him fill a hundred tins of nata in lisbon",
+    "16-torn-bread-crumb-close.jpg": "tore it open in the car, couldn't wait",
+    "17-cardamom-knot-plate.jpg": "cardamom knots in stockholm, our third bakery of the day",
+    "18-line-at-bakery-door.jpg": "forty minutes in the queue in taipei with @dani.reyes",
+    "19-rye-slices-butter.jpg": "rye and salted butter on the boat to stromboli",
+    "20-pastry-counter-warm-wood.jpg": "opening day at @kofi.cooks' counter",
+    "21-dough-under-floured-towel.jpg": "dough resting overnight while the storm came in",
+    "22-focaccia-counter-labels.jpg": "focaccia in genoa, @kofi.cooks ordered one of each",
+    "23-pain-aux-raisins-rack.jpg": "pain aux raisins for the train to marseille",
+    "24-boule-in-dutch-oven.jpg": "first bake in grandma's dutch oven",
+    "25-croissants-heap-white.jpg": "my first laminated dough, all fourteen of them",
+    "26-croissant-latte-red-cup.jpg": "breakfast in porto with @ines.walks before the rain",
+    "27-pastry-knots-tray.jpg": "morning knots at the market stall in ortigia",
+    "28-sliced-loaf-bread-knife.jpg": "sliced thin for @sam_and_june's picnic",
+}
+
+
+def write_notes(folder):
+    """Writes the person's note beside each of their photographs in folder; returns how many it wrote."""
+    wrote = 0
+    for name, line in NOTES.items():
+        photo = Path(folder) / name
+        if photo.is_file():
+            photo.with_suffix(".txt").write_text(line + "\n")
+            wrote += 1
+    return wrote
+
+
+NINE = [  # (month, kind, scene, likes, comments, caption): their nine most-liked, planted clear of everything else
     (7, "post", "sunset", 486, 41, "the light did all the work here. sicily at 8pm, no edit, just the sun going down over the harbor"),
     (5, "reel", "market", 451, 52, "forty seconds of the oaxaca market at opening time. you asked for the sound of it \U0001F33F"),
     (1, "post", "coffee", 418, 33, "first coffee of the year in lisbon, one cup by one window, all cream and espresso brown"),
@@ -112,6 +164,35 @@ NINE = [  # (month, kind, scene, likes, comments, caption): her nine most-liked,
     (4, "post", "market", 291, 22, "the porto market in april, every crate orange and ochre at once #shotonfilm"),
 ]
 OTHER_CAP = 225  # no other post or reel reaches this many likes
+
+
+SCENE_WORDS = {  # the words in a photograph's file name that place it in a scene
+    "coffee": ["coffee", "cappuccino", "latte", "cafe", "cup", "tea", "chai"],
+    "market": ["market", "stall", "spice", "mango", "cart", "fruit", "vegetable", "tomatoes", "shrimp"],
+    "table": ["table", "breakfast", "brunch", "toast", "sandwich", "platter", "plates", "oats", "pomegranate", "loaf"],
+    "oldtown": ["street", "alley", "tram", "facade", "door", "stair", "church", "houses", "wall", "bicycle", "chairs", "azulejo", "square"],
+    "beach": ["beach", "river", "quay", "waves", "douro", "pool"],
+    "sunset": ["sunset", "evening", "dusk", "night", "viewpoint"],
+    "hills": ["hill", "hillside", "cactus", "garden", "agave", "tree", "convent", "mountain"],
+}
+
+
+def grid_photos(folder):
+    """Every photograph under folder, by the scene its file name places it in, and all of them under "" for a scene
+    no file name names."""
+    files = sorted(p for p in Path(folder).rglob("*") if p.suffix.lower() in (".jpg", ".jpeg", ".png"))
+    by = {k: [p for p in files if any(w in p.stem.lower() for w in ws)] for k, ws in SCENE_WORDS.items()}
+    by[""] = files
+    return by
+
+
+def photo_for(by, scene, seed, used):
+    """The least used photograph of the scene (any photograph when the scene has none), the seed breaking ties."""
+    pool = by.get(scene.split("-")[-1]) or by[""]
+    rng = random.Random(seed)
+    best = min(pool, key=lambda p: (used.get(p, 0), rng.random()))
+    used[best] = used.get(best, 0) + 1
+    return str(best)
 
 
 def film_look(im, rng):
@@ -184,8 +265,9 @@ def draw_scene(job):
 
     kind "screenshot:N" draws text screenshot N; "clash-<scene>" draws the scene in the filter-phase look;
     "tight-<scene>" draws the scene and keeps a tight close-up of its middle."""
-    from PIL import Image, ImageDraw, ImageFilter
-    path, w, h, kind, pal, seed = job
+    from PIL import Image, ImageDraw, ImageFilter, ImageOps
+    path, w, h, kind, pal, seed = job[:6]
+    photo = job[6] if len(job) > 6 else None
     if kind.startswith("screenshot:"):
         n = int(kind.split(":")[1])
         return draw_screenshot(path, w, h, SHOT_TEXT[n % len(SHOT_TEXT)], n)
@@ -195,6 +277,16 @@ def draw_scene(job):
     if kind.startswith("tight-"):
         kind, tight = kind[6:], True
     rng = random.Random(seed)
+    if photo:
+        im = ImageOps.fit(ImageOps.exif_transpose(Image.open(photo)).convert("RGB"), (w, h), Image.LANCZOS)
+        if tight:
+            cw, ch = int(w * 0.45), int(h * 0.45)
+            x0, y0 = (w - cw) // 2, (h - ch) // 2
+            im = im.crop((x0, y0, x0 + cw, y0 + ch)).resize((w, h), Image.BICUBIC)
+        im = film_look(im, rng) if look == "film" else clash_look(im)
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        im.save(path, "JPEG", quality=86)
+        return path
     sw, sh = w // 2, h // 2
     im = Image.new("RGB", (sw, sh))
     d = ImageDraw.Draw(im)
@@ -330,7 +422,7 @@ def make_reel(job):
 
 def grid_problems(posts, reels, insights, jobs, root, nine_uris, liked, saved, end, rng):
     """Plants the grid's problems on the last 30 posts and reels: a run of five clashing posts, three tight crops, two
-    text screenshots; gives the quiet, wide posts the strong likes and saves; adds the quiet feeds she likes and saves."""
+    text screenshots; gives the quiet, wide posts the strong likes and saves; adds the quiet feeds they like and save."""
     def ts_of(p):
         return p.get("creation_timestamp") or p["media"][0]["creation_timestamp"]
     grid = sorted([("post", p) for p in posts] + [("reel", r) for r in reels], key=lambda e: -ts_of(e[1]))[:30]
@@ -390,11 +482,18 @@ def grid_problems(posts, reels, insights, jobs, root, nine_uris, liked, saved, e
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("dest")
+    ap.add_argument("dest", nargs="?")
+    ap.add_argument("--photos", help="the person's next photographs: write the note beside each and stop")
+    ap.add_argument("--grid", help="draw every post, reel cover and story from the photographs under this folder")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--year", type=int, default=2026)
     ap.add_argument("--end", default="2026-10-18", help="last day of data (the export date)")
     a = ap.parse_args()
+    if a.photos:
+        print(json.dumps({"photos": a.photos, "notes": write_notes(a.photos)}))
+        return 0
+    if not a.dest:
+        ap.error("DEST is required")
     rng = random.Random(a.seed)
     end = dt.date.fromisoformat(a.end)
     year = a.year
@@ -548,7 +647,7 @@ def main():
     write(root, "personal_information/personal_information/personal_information.json",
           {"profile_user": [{"title": "", "media_map_data": {}, "string_map_data": {
               "Username": {"value": HANDLE}, "Name": {"value": NAME},
-              "Bio": {"value": ig_text("eating my way around on 35mm \U0001F35E\U0001F39E️ lisbon / wherever the bread is")}}}]})
+              "Bio": {"value": ig_text("eating my way around on 35mm \U0001F35E\U0001F39E️\nlisbon / wherever the bread is")}}}]})
     write(root, "your_instagram_activity/content/posts_1.json", posts)
     write(root, "your_instagram_activity/content/reels.json", {"ig_reels_media": reels})
     write(root, "your_instagram_activity/content/stories.json", {"ig_stories": stories})
@@ -576,7 +675,7 @@ def main():
     for i in range(14):
         m = rng.choice(months)
         ts = ts_for(rng, year, m, end)
-        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated her status.")}
+        post = {"timestamp": ts, "data": [{"post": ig_text(caption(m))}], "title": ig_text(f"{NAME} updated their status.")}
         if rng.random() < 0.6:
             uri = f"your_facebook_activity/posts/media/timeline/{10161000000000000 + i}.jpg"
             jobs.append((str(fb / uri), 1080, 1080, rng.choice(SEASON[m][1]), pal(m), rng.random()))
@@ -586,6 +685,9 @@ def main():
     write(fb, "personal_information/profile_information/profile_information.json",
           {"profile_v2": {"name": {"full_name": NAME}}})
 
+    if a.grid:
+        by, used = grid_photos(a.grid), {}
+        jobs = [j if j[3].startswith("screenshot:") else j + (photo_for(by, j[3], j[5], used),) for j in jobs]
     with Pool(max(2, os.cpu_count() or 2)) as pool:
         pool.map(draw_scene, jobs, chunksize=4)
         pool.map(make_reel, clip_jobs)

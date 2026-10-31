@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the grid read, the audit, and the taste profile. Reads build/library.json; writes
-build/research.json, build/audit.json, out/audit.md, a machine draft of build/taste.json, and build/taste.draft.md.
+"""Movement 1, research: the grid read, the audit, and the taste profile. Reads library.json; writes
+research.json, audit.json, audit.md, a machine draft of taste.json, and taste.draft.md.
 
 USAGE (from the workspace root):
     python3 S/scripts/research.py            # runs picks.py and palette.py, then everything below
-    python3 S/scripts/research.py audit      # re-renders out/audit.md from build/audit.json after the eye pass
+    python3 S/scripts/research.py audit      # re-renders audit.md from audit.json after the eye pass
 
 It reads:
-  grid      the last 30 posts and reels as a 3-wide grid (build/grid.json from picks.py): runs of posts whose color
+  grid      the last 30 posts and reels as a 3-wide grid (grid.json from picks.py): runs of posts whose color
             clashes with the rest, screenshots and text tiles, busy photos side by side, posts the 4:5 grid crops,
             the light and dark rhythm across rows
   numbers   their best-performing visual patterns by their own likes and saves, over every post with numbers: warm
@@ -18,14 +18,15 @@ It reads:
   palette   the palette their best posts share (palette.py), against the palette of what they like
   captions  length, case, emoji, punctuation, hashtags, how they open and close, sample lines (for the plan's voice)
   cadence   posts per month and weekday, the hour they post, gaps (for the posting plan's order and days)
-build/audit.json is the audit's source: findings (each a plain title, a plain sentence, the grid positions it covers,
-and its numbers), the patterns, what their likes say they want, the recommended grid direction (tonal, blocks or
-alternate) and why. The agent looks at build/grid-sheet.png, edits audit.json (adds what only an eye sees, such as
-close crops among wide ones; corrects anything the numbers got wrong), and runs `research.py audit`.
+audit.json is the audit's source: findings (each a plain title, a plain sentence, the grid positions it covers,
+and its numbers), the patterns, and what their likes say they want. The agent looks at grid-sheet.png, edits
+audit.json (adds what only an eye sees, such as close crops among wide ones; corrects anything the numbers got
+wrong), and runs `research.py audit`.
 """
 import argparse
 import collections
 import datetime as dt
+import os
 import re
 import shutil
 import statistics
@@ -37,8 +38,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 
 S = Path(__file__).resolve().parent
-DIRECTIONS = {"tonal": "tonal and quiet", "blocks": "color-blocked", "alternate": "alternating photo and type"}
-
 COLOR_WORDS = {
     "terracotta": "#c8643f", "ochre": "#c98b2b", "olive": "#7d7a3a", "rust": "#a5482a", "linen": "#e8dcc6",
     "saffron": "#e0a030", "amber": "#d9902f", "golden": "#d8a443", "gold": "#d4a640", "lemon": "#e9d36a",
@@ -54,6 +53,9 @@ COLOR_WORDS = {
     "tonal": "#b59a7e", "beige": "#d8c7ac", "oat": "#d9ccb4", "stone": "#a39a8c", "minimal": "#e6dfd3",
 }
 SPOKEN = {"warmtones": "warm tones", "sunbaked": "sun-baked"}
+# words a caption uses for a look rather than a color: they read a liked palette, and never name a photograph's pixels
+LOOKS = {"noir", "mono", "warmtones", "sunbaked", "dusk", "salt", "bread", "crumb", "kodak", "portra", "neutral", "muted",
+         "tonal", "minimal"}
 THEMES = {
     "film photography": ["35mm", "film", "portra", "kodak", "grain", "analog", "shotonfilm", "filmphotography", "frames", "120"],
     "food": ["eats", "food", "table", "kitchen", "plate", "bread", "mezze", "crumb", "salt", "slowfood", "cook", "cooks",
@@ -208,16 +210,18 @@ def cadence(rows):
 
 
 def type_direction(themes, register, pacing):
+    """The style their feed reads as, by its card id (styles/<id>.json carries its faces): loud captions or fast reels
+    a type that slams on the beat, travel on film a Swiss grid, anything quieter the editorial page."""
     film = themes.get("film photography", 0)
     loud = register.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
     if loud:
-        return {"lead": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": "heavy emoji and fast reels read as loud: a heavy grotesk that can slam"}
+        return {"lead": "kinetic", "style": "kinetic-type",
+                "why": "heavy emoji and fast reels read as loud: a heavy type that slams on the beat"}
     if film and themes.get("travel", 0) >= film:
-        return {"lead": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono timestamps"}
-    return {"lead": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": "quiet captions and film photography: a soft serif with a plain sans for labels"}
+        return {"lead": "documentary", "style": "swiss-grid",
+                "why": "travel carried on film: a documentary grid of hard cuts and one accent"}
+    return {"lead": "editorial", "style": "editorial-quiet",
+            "why": "quiet captions and film photography: a soft serif on a quiet page"}
 
 
 
@@ -283,7 +287,7 @@ def grid_findings(grid, palette_names):
         tail, n = vs(group)
         title = f"A run of {len(r)} posts in colors your grid never uses" if len(r) > 1 else "One post in a color your grid never uses"
         out.append({"kind": "palette", "title": title, "positions": r, "numbers": n,
-                    "plain": f"{where(r).capitalize()} sit in {', '.join(names)}, far from the {palette_names} the rest of "
+                    "plain": f"{where(r).capitalize()} {'sit' if len(r) > 1 else 'sits'} in {', '.join(names)}, far from the {palette_names} the rest of "
                              f"your grid lives in, so that stretch reads as someone else's feed.{tail}"})
     text = [c["pos"] for c in cells if "text" in c["flags"]]
     if text:
@@ -330,8 +334,8 @@ def patterns(index, grid):
     med_l = statistics.median(e["lab"][0] for e in posts)
     med_c = statistics.median(e["chroma"] for e in posts)
     med_d = statistics.median(e["detail"] for e in posts)
-    centre = grid.get("median_lab") or [med_l, 0, 0]
-    dist = lambda e: sum((a - b) ** 2 for a, b in zip(e["lab"], centre)) ** 0.5
+    center = grid.get("median_lab") or [med_l, 0, 0]
+    dist = lambda e: sum((a - b) ** 2 for a, b in zip(e["lab"], center)) ** 0.5
     med_dist = statistics.median(dist(e) for e in posts)
     text = lambda e: e["flat"] > 0.5 and e["chroma"] < 12
     tests = [
@@ -365,40 +369,11 @@ def patterns(index, grid):
     return out
 
 
-def recommend(pats, liked_themes, caps):
-    """The grid direction their numbers and their likes point at."""
-    win = {p["key"]: p["ratio"] >= 1 for p in pats}
-    ratio = {p["key"]: p["ratio"] for p in pats}
-    score = {"tonal": 0.0, "blocks": 0.0, "alternate": 0.0}
-    why = {"tonal": [], "blocks": [], "alternate": []}
-    for k in ("quiet", "tonal", "calm", "warm"):
-        if win.get(k):
-            score["tonal"] += min(4, ratio[k])
-            why["tonal"].append(next(p["plain"] for p in pats if p["key"] == k))
-        elif k in win:
-            score["blocks"] += min(4, 1 / max(ratio[k], 0.25))
-            why["blocks"].append(next(p["plain"] for p in pats if p["key"] == k))
-    if "photo" in win and not win["photo"]:
-        score["alternate"] += min(4, 1 / max(ratio["photo"], 0.25)) * 2
-        why["alternate"].append(next(p["plain"] for p in pats if p["key"] == "photo"))
-    total = sum(liked_themes.values()) or 1
-    for theme, d in (("quiet tonal", "tonal"), ("bold color", "blocks"), ("type and words", "alternate")):
-        n = liked_themes.get(theme, 0)
-        if n:
-            score[d] += 4 * n / total * 3
-            why[d].append(f"{n} of the accounts they like, save and follow are about {theme}.")
-    if (caps.get("avg_words") or 0) > 25:
-        score["alternate"] += 1
-        why["alternate"].append(f"Their captions run {caps['avg_words']} words, enough to carry type posts.")
-    best = max(score, key=score.get)
-    return best, {k: round(v, 2) for k, v in score.items()}, why
-
-
 def color_name(rgb):
     def dist(h):
         c = tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
         return sum((a - b) ** 2 for a, b in zip(rgb, c))
-    w = min(COLOR_WORDS, key=lambda k: dist(COLOR_WORDS[k]))
+    w = min((k for k in COLOR_WORDS if k not in LOOKS), key=lambda k: dist(COLOR_WORDS[k]))
     return SPOKEN.get(w, w)
 
 
@@ -408,30 +383,35 @@ def hours(rows):
 
 
 def render_audit(audit, handle):
-    """out/audit.md: one page in plain words, and out/grid-before.png, the numbered grid it refers to."""
+    """audit.md: one page in plain words (the review page carries it), and grid-before.png, the numbered grid it refers to. With no feed (an
+    empty grid) there is nothing to audit and no grid before, and neither is made."""
+    if not audit["grid_size"]:
+        return
     L = [f"# Your grid, read: @{handle}", "",
          f"These are your last {audit['grid_size']} posts as your profile shows them, three across, newest at the top left "
          f"(the picture is `grid-before.png`, numbered from the top left).", "", "## What your grid is doing", ""]
     for i, f in enumerate(audit["findings"], 1):
         L.append(f"{i}. **{f['title']}.** {f['plain']}")
     L += ["", "## What your own numbers say works", ""]
-    for p in [p for p in audit["patterns"] if max(p["ratio"], 1 / max(p["ratio"], 0.01)) >= 1.2][:5]:
-        L.append(f"- {p['plain']}")
-    L += ["", "## What your likes say you want", "", audit["want"], "",
-          f"## The direction: {DIRECTIONS[audit['recommend']]}", "", audit["why"], ""]
-    Path("out").mkdir(exist_ok=True)
-    Path("out/audit.md").write_text("\n".join(L))
-    if Path("build/grid-sheet.png").exists():
-        shutil.copyfile("build/grid-sheet.png", "out/grid-before.png")
+    works = [p for p in audit["patterns"] if max(p["ratio"], 1 / max(p["ratio"], 0.01)) >= 1.2][:5]
+    L += [f"- {p['plain']}" for p in works] or ["The likes and saves on your posts are not in the data, so the findings above come "
+                                                 "from looking at the grid."]
+    L += ["", "## What your likes say you want", "", audit["want"], ""]
+    _env.unready()
+    _env.write_text("audit.md", "\n".join(L))
+    if Path("grid-sheet.png").exists():
+        tmp = _env.part(Path("grid-before.png"))
+        shutil.copyfile("grid-sheet.png", tmp)
+        os.replace(tmp, "grid-before.png")
 
 
 def cmd_audit():
-    a = _env.read_json("build/audit.json")
+    a = _env.read_json("audit.json")
     if not a:
-        sys.exit("build/audit.json is missing: run research.py first")
-    lib = _env.read_json("build/library.json") or {}
+        sys.exit("audit.json is missing: run research.py first")
+    lib = _env.read_json("library.json") or {}
     render_audit(a, lib.get("handle") or "you")
-    print(f"wrote out/audit.md ({len(a['findings'])} findings)")
+    print(f"wrote audit.md ({len(a['findings'])} findings)" if a["grid_size"] else "no feed, so no grid to audit")
     return 0
 
 
@@ -439,16 +419,17 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", nargs="?", choices=["audit"])
     a = ap.parse_args()
+    _env.enter_run()
     if a.cmd == "audit":
         return cmd_audit()
-    lib = _env.read_json("build/library.json")
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     for s in ("picks.py", "palette.py"):
         print(run(s).strip().splitlines()[-1])
-    pal = _env.read_json("build/palette.json") or {}
-    grid = _env.read_json("build/grid.json")
-    index = _env.read_json("build/photo_index.json") or []
+    pal = _env.read_json("palette.json") or {}
+    grid = _env.read_json("grid.json")
+    index = _env.read_json("photo_index.json") or []
     posts = lib["posts"]
     captioned = posts + lib["reels"] + lib.get("facebook", [])
     caps = caption_read(captioned)
@@ -473,7 +454,6 @@ def main():
     palette_names = ", ".join(names[:3]) + " tones" if names else "tones"
     findings, usual = grid_findings(grid, palette_names)
     pats = patterns(index, grid)
-    best, scores, why = recommend(pats, liked_themes, caps)
     top_saved = [a for a, _ in saved_accounts.most_common(4)]
     want_bits = []
     if liked_themes:
@@ -486,16 +466,14 @@ def main():
     good = [p for p in pats if p["ratio"] >= 1.3]
     if good:
         want_bits.append("And your own audience agrees: " + good[0]["plain"][0].lower() + good[0]["plain"][1:])
-    want = " ".join(want_bits) or "Your likes and saves are not in the data, so the direction follows your own numbers."
-    audit = {"written_by": "research.py draft; the agent looks at build/grid-sheet.png, edits this file, then runs research.py audit",
+    want = " ".join(want_bits) or "The accounts you like and save are not in the data, so the plan follows your own posts."
+    audit = {"written_by": "research.py draft; the agent looks at grid-sheet.png, edits this file, then runs research.py audit",
              "grid_size": len(grid["cells"]), "findings": findings, "usual": usual, "patterns": pats, "want": want,
-             "recommend": best, "scores": scores,
-             "why": f"The {DIRECTIONS[best]} direction: " + " ".join(why[best][:3]) if why[best] else
-                    f"The {DIRECTIONS[best]} direction fits the grid you already have."}
-    if not Path("build/audit.json").exists() or "research.py draft" in (_env.read_json("build/audit.json") or {}).get("written_by", ""):
-        _env.write_json("build/audit.json", audit)
+             }
+    if not Path("audit.json").exists() or "research.py draft" in (_env.read_json("audit.json") or {}).get("written_by", ""):
+        _env.write_json("audit.json", audit)
     else:
-        audit = _env.read_json("build/audit.json")
+        audit = _env.read_json("audit.json")
     render_audit(audit, lib["handle"])
     cad = cadence(posts + lib["reels"])
     cad["top_hour_utc"] = hours(posts + lib["reels"])
@@ -508,63 +486,76 @@ def main():
                           "saved_top": [{"account": x, "saves": n} for x, n in saved_accounts.most_common(6)],
                           "themes": dict(liked_themes.most_common()), "saved_themes": dict(saved_themes.most_common())},
                 "posts_themes": dict(own_themes.most_common()), "cadence": cad, "reels": pacing, "type": td,
-                "grid": {"findings": [f["title"] for f in findings], "usual": usual}, "patterns": pats,
-                "recommend": best, "scores": scores}
-    _env.write_json("build/research.json", research)
+                "grid": {"findings": [f["title"] for f in findings], "usual": usual}, "patterns": pats}
+    _env.write_json("research.json", research)
     film = (own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)) >= 5
     warm_light = (own_themes.get("light", 0) + liked_themes.get("light", 0)) >= 4
     shot = pacing.get("avg_shot_seconds")
+    energy = "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"
+    # the music brief: each style's own recipe plays unless the person asked for a sound (`styles`, their words only)
+    mood = "warm" if film else "calm" if energy == "calm" else "bright"
+    styles = []
     taste = {
         "written_by": "research.py draft; the agent edits this file and writes taste.md",
         "handle": lib["handle"], "year": lib["year"],
         "palette": {"year": year_palette, "likes": likes_palette, "direction": "toward their likes" if likes_palette else "their own"},
         "type": td,
+        "style": td["style"],
+        "ask": True,
         "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": shot,
                    "beat_seconds": round(max(1.6, min(4.0, (shot or 2.4) * 1.3)), 2),
-                   "energy": "high" if td["lead"] == "kinetic" else "measured" if td["lead"] == "documentary" else "calm"},
+                   "energy": energy},
         "register": {"lowercase": caps.get("lowercase_share", 0) >= 0.6, "emoji": caps.get("emoji_per_caption", 0),
                      "avg_words": caps.get("avg_words"), "hashtags": caps.get("top_hashtags", [])[:3],
                      "samples": caps.get("samples", [])[:4]},
         "pillars": [t for t, _ in (own_themes + liked_themes).most_common(4)],
-        "grid": {"recommend": best, "keep": [p["winner"] for p in pats if p["ratio"] >= 1.2][:4],
+        "grid": {"keep": [p["winner"] for p in pats if p["ratio"] >= 1.2][:4],
                  "drop": [f["title"] for f in findings][:4]},
-        "texture": {"grain": 0.16 if film else 0, "vignette": 0.32 if film else 0.0, "leaks": bool(film and warm_light)},
-        "avoid": (["cold blue grading", "neon", "screenshots on the grid"] if best == "tonal" else ["muddy grading"]),
+        "texture": {"film": film, "warm_light": warm_light},
+        "avoid": ["cold blue grading", "neon", "screenshots on the grid"],
+        "music": {"mood": mood, "styles": styles, "avoid": ["vocals", "spoken word", "harsh distortion"]},
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
+    if not Path("taste.json").exists() or "research.py draft" in (_env.read_json("taste.json") or {}).get("written_by", ""):
+        _env.write_json("taste.json", taste)
+    # the grid's lines need a feed, the caption numbers need captions, the posting time needs post dates; a line without
+    # its data is None and is left out
     lines = [f"# taste draft for @{lib['handle']}", "",
-             "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below.", "",
+             "The agent writes taste.md from this: one page, five paragraphs that start with the five headings below.", "",
              "## you are", f"- posts are about: {', '.join(f'{k} ({v})' for k, v in own_themes.most_common(5))}",
-             f"- the grid now: {'; '.join(f['title'] for f in findings)}",
-             f"- the usual grid post: {usual.get('likes')} likes, {usual.get('saves')} saves",
+             f"- the grid now: {'; '.join(f['title'] for f in findings)}" if grid["cells"] else None,
+             f"- the usual grid post: {usual.get('likes')} likes, {usual.get('saves')} saves" if grid["cells"] else None,
              "", "## you like",
              f"- {len(like_accounts)} accounts got their likes; most saved: {', '.join(top_saved)}",
              f"- what those accounts share: {', '.join(f'{k} ({v})' for k, v in liked_themes.most_common(5))}",
              f"- palette of their best posts: {', '.join((s.get('name') or '') + ' ' + s['hex'] for s in year_palette)}",
              f"- palette of their likes ({likes_palette_from}): {', '.join(s['name'] + ' ' + s['hex'] for s in likes_palette)}",
              "", "## your style is"] + [f"- {p['plain']}" for p in pats] + [
-             f"- direction scores: {scores}; recommended {best} ({DIRECTIONS[best]})",
-             f"- texture: {'film grain and warm light' if film else 'clean'}; type lead: {td['lead']} ({td['why']})",
+             f"- texture: {'film grain and warm light' if film else 'clean'}; look: {td['style']} ({td['why']})",
+             f"- music: a {mood} mood, {', '.join(taste['music']['styles'])}; "
+             f"never {', '.join(taste['music']['avoid'])}",
              "", "## your voice is",
              f"- {caps.get('avg_words')} words a caption, {int(caps.get('lowercase_share', 0) * 100)}% lowercase, "
-             f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}",
+             f"{caps.get('emoji_per_caption')} emoji a caption, endings {caps.get('endings')}" if caps["captions"] else None,
              f"- opens with: {', '.join(caps.get('opens_with', []))}; closes with: {', '.join(caps.get('closes_with', []))}",
              f"- hashtags: {', '.join(caps.get('top_hashtags', []))}",
              f"- lines: {' / '.join(caps.get('samples', [])[:4])}",
-             f"- posts most on {cad.get('top_weekday')}, around {cad.get('top_hour_utc')}:00 UTC",
+             f"- posts most on {cad.get('top_weekday')}, around {cad.get('top_hour_utc')}:00 UTC"
+             if cad["top_hour_utc"] is not None else None,
              "", "## avoid", f"- {', '.join(taste['avoid'])}", ""]
-    Path("build/taste.draft.md").write_text("\n".join(lines))
+    _env.write_text("taste.draft.md", "\n".join(x for x in lines if x is not None))
     print(f"grid findings: {len(findings)}")
     for f in findings:
         print(f"  - {f['title']} {[p + 1 for p in f['positions']]}")
     for p in pats:
         print(f"  pattern {p['key']}: {p['plain']}")
     print(f"liked themes: {dict(liked_themes.most_common(4))}")
-    print(f"direction scores {scores}; recommended {best}")
     print(f"voice: {caps.get('avg_words')} words, lowercase {caps.get('lowercase_share')}, emoji {caps.get('emoji_per_caption')}")
-    print("wrote build/research.json, build/audit.json, out/audit.md, build/taste.json (draft) and build/taste.draft.md;")
-    print("now look at build/grid-sheet.png, edit build/audit.json, run research.py audit, and write build/taste.md")
+    if grid["cells"]:
+        print("wrote research.json, audit.json, audit.md, taste.json (draft) and taste.draft.md;")
+        print("now look at grid-sheet.png, edit audit.json, run research.py audit, and write taste.md")
+    else:
+        print("wrote research.json, audit.json, taste.json (draft) and taste.draft.md; no feed, so no grid to audit;")
+        print("now write taste.md")
     return 0
 
 
