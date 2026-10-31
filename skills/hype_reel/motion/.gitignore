@@ -1,0 +1,5 @@
+node_modules/
+out/
+.remotion/
+# the built composition ships with the kit: render.py serves it, and nothing on the machine can build it
+!dist/
