@@ -575,8 +575,8 @@ def feed_board(b, closer):
     return feed
 
 
-FILMED = ["out", "film.json", "timeline.json", "film.silent.mp4", "render", "render-report.json", "cut.json", "cards.json",
-          "critic", "qa", "frames", "music", "music.json", "clips.json"]
+FILMED = ["out", "film.json", "timeline.json", "film.silent.mp4", "proof.silent.mp4", "render", "render-report.json",
+          "cut.json", "cards.json", "critic", "qa", "frames", "music", "music.json", "clips.json"]
 
 
 def new_run_if_filmed():

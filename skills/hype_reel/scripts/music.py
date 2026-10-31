@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """The film's music: the track they placed, else a bed composed here on real instruments from the chosen board's style
-and their music brief; its beat grid; and its master with the board's sound cues under it, to -14 LUFS.
+and their music brief; its beat grid; and its master, the music alone, to -14 LUFS.
 
 USAGE (in a run; S = this skill's folder):
     python3 S/scripts/music.py find [--origin "..."] # music.json: the track to use and where it came from
     python3 S/scripts/music.py make [--seconds S]    # a bed composed by music_engine.py at the chosen board's tempo
     python3 S/scripts/music.py analyze              # a track they brought: onsets, bpm, beats and downbeats
-    python3 S/scripts/music.py master [--seconds S] # from the first beat, the sound cues under the bed, -14 LUFS (true
-                                                    # peak under -1.5 dBTP), the picture and the music stopping together
+    python3 S/scripts/music.py master [--seconds S] # from the first beat, -14 LUFS by one gain, in float, the
+                                                    # picture and the music stopping together
 
 music.json names the run's music: the track (`file`), its grid and its master (`master`). make composes into a folder
 of its own name and master writes a master of its own name; each publishes music.json naming its files, then removes
@@ -23,13 +23,13 @@ brought: librosa's beat tracker when it is installed, otherwise the energy envel
 onsets as peaks of its rise, the tempo by autocorrelation and the beat grid on the strongest phase, with the downbeat on
 the strongest of the four. storyboard.py snap cuts the film on the beats.
 
-The sound effects are the engine's, played in the recipe's own instruments: riser.wav (a build that cuts off into the
-moment it leads to), hit.wav, bright.wav (the ring a bright hit adds, and the lighter cue on a cut to their photograph)
-and impact.wav (the landing); a track they brought gets its set rendered at master. The board's `sound` cues place each
-one on a whole beat of the film, so every hit starts on the beat; `stop` is where the bed cuts and the last hit rings
-out over the held picture. master writes the trimmed bed (music/bed-cut.wav) and the effects (music/fx.wav) scaled by
-loudness to FX_UNDER_BED_LU under the bed, sums them (music/mix.wav) and brings the whole to -14 LUFS; music.json carries
-both loudness numbers.
+The sound effects are the shared layer's (sfx.py), made from the film's beats and laid under the picture as film.py
+renders: a whoosh on each cut, a shutter as each photograph lands, an impact on each slammed word and on the closer, a
+riser into it, all on the music's grid and in its key. master writes the music alone: the track from the film's first
+beat for the film's length (music/mix.wav), cut on the board's `stop` (film.json `sound`), where the held picture goes
+silent, or else tailing out over the last bar, brought to -14 LUFS by one gain and written in 32-bit float so a peak
+past full scale is kept whole: the film's mux (sfx.py) masters the music and the effects together, once. music.json
+carries the music's loudness before (`bed_lufs`) and after (`master_lufs`).
 """
 import argparse
 import array
@@ -47,8 +47,6 @@ import music_engine  # noqa: E402
 
 AUDIO = (".mp3", ".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus")
 MUSIC = Path("music")
-FX_UNDER_BED_LU = 8  # the effects stem's integrated loudness sits this far under the bed's
-RISER_GAIN = 0.6  # the build sits under the hits and the landing it leads to
 
 
 def duration(f):
@@ -97,6 +95,16 @@ def hue(b):
     return music_engine.hue_of(accent) if accent else None
 
 
+def peak(b):
+    """The story's peak in seconds: where the board's peak beat starts (its photograph lands there) and where it ends;
+    None when the board marks no peak."""
+    bpm = float(b["bpm"])
+    for x in b.get("beats") or []:
+        if x.get("peak"):
+            return x["start"] * 60.0 / bpm, (x["start"] + x["len"]) * 60.0 / bpm
+    return None
+
+
 # ------------------------------------------------------------------ make
 def cmd_make(a):
     MUSIC.mkdir(parents=True, exist_ok=True)
@@ -111,7 +119,7 @@ def cmd_make(a):
     rid, _, _ = music_engine.resolve(book, recipe_id, m.get("styles") or [], m.get("avoid") or [])
     out = MUSIC / f"made-{os.urandom(4).hex()}"
     info = music_engine.compose(recipe_id, m.get("styles") or [], m.get("avoid") or [], seconds, edges, hue(b),
-                                Path.cwd().name, bpm=bpm, out=out)
+                                Path.cwd().name, bpm=bpm, out=out, peak=peak(b))
     chose = "their brief" if rid != recipe_id else "the board's style"
     origin = (f"composed by music.py from the {rid} recipe ({book['recipes'][rid]['name']}, chosen by {chose}) in "
               f"{info['key']} at {info['bpm']:g} bpm" + (f", without {', '.join(info['removed'])}" if info["removed"] else ""))
@@ -220,53 +228,6 @@ def cmd_analyze(a):
 TARGET_LUFS = -14.0
 
 
-def effects(info, b, bpm):
-    """The four effect files music.json names, or, for a track they brought, the chosen board's set rendered now."""
-    fx = info.get("fx") or {}
-    if all(Path(fx.get(c) or "").is_file() for c in music_engine.CUES):
-        return fx
-    book = music_engine.recipes()
-    rid, recipe, _ = music_engine.resolve(book, (b.get("music") or {}).get("recipe") or b.get("style"))
-    h = hue(b)
-    tonic = music_engine.tonic_of(h) if h is not None else music_engine.pick(music_engine.rng(Path.cwd().name, "key"), range(12))
-    music_engine.place(music_engine.render_fx(book, recipe, tonic, bpm, MUSIC))
-    info.update(fx={c: str(MUSIC / "fx" / f"{c}.wav") for c in music_engine.CUES}, fx_recipe=rid)
-    return info["fx"]
-
-
-def cue_legs(cues, bpm, fx):
-    """Each cue as [(file, from, at, gain)]: the file from `from` seconds, placed at `at` in the film, `at` and `beats`
-    read at `bpm`. A riser is the end of riser.wav, as long as the cue's beats, ending on the beat it leads to."""
-    sec, legs = 60 / bpm, []
-    for c in cues:
-        at = c["at"] * sec
-        if c["kind"] in ("hit", "bright"):
-            legs.append((fx[c["kind"]], 0.0, at, c.get("weight", 0.6)))
-            if c["kind"] == "hit" and c.get("bright"):
-                legs.append((fx["bright"], 0.0, at, c["bright"]))
-        elif c["kind"] == "riser":
-            want, have = c["beats"] * sec, duration(fx["riser"])
-            use = min(want, have)
-            legs.append((fx["riser"], have - use, at + want - use, RISER_GAIN))
-        elif c["kind"] == "impact":
-            legs.append((fx["impact"], 0.0, at, c.get("weight", 1.0)))
-    return legs
-
-
-def fx_stem(legs, seconds, scale, dst):
-    """The legs summed over `seconds` of silence and scaled by `scale`, as a float stereo stem."""
-    inputs = ["-f", "lavfi", "-t", f"{seconds:.3f}", "-i", "anullsrc=r=48000:cl=stereo"]
-    graph = []
-    for i, (f, f0, at, gain) in enumerate(legs, 1):
-        inputs += ["-i", str(f)]
-        graph.append(f"[{i}:a]atrim=start={f0:.4f},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,"
-                     f"volume={gain:.4f},adelay={round(at * 1000)}:all=1[c{i}]")
-    mixed = "[0:a]" + "".join(f"[c{i}]" for i in range(1, len(legs) + 1))
-    graph.append(f"{mixed}amix=inputs={len(legs) + 1}:normalize=0:duration=first,volume={scale:.6f}[out]")
-    subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *inputs, "-filter_complex", ";".join(graph), "-map", "[out]",
-                    "-ar", "48000", "-c:a", "pcm_f32le", str(dst)], check=True)
-
-
 def integrated_file(path):
     r = subprocess.run([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(path), "-af", "ebur128=framelog=quiet",
                         "-f", "null", "-"], capture_output=True, text=True)
@@ -289,32 +250,13 @@ def cmd_master(a):
     fade = max(1.0, min(3.5, bar))
     mix = MUSIC / "mix.wav"
     cues = film.get("sound") or []
-    # the board's stop: the bed cuts there, the last hit rings out over the held picture, then the film is silent
+    # the board's stop: the music cuts there on the beat and the held picture after it is silent; without one, the
+    # music tails out over the film's last bar
     stop = next((c["at"] * 60 / bpm for c in cues if c["kind"] == "stop"), None)
-    mixed = {}
-    if cues:
-        bed, fxw = MUSIC / "bed-cut.wav", MUSIC / "fx.wav"
-        cut = f",afade=t=out:st={stop:.3f}:d=0.04" if stop else f",afade=t=out:st={seconds - fade:.3f}:d={fade:.3f}"
-        subprocess.run([ff, "-y", "-v", "error", "-i", info["file"], "-af", f"atrim={offset:.3f}:{offset + seconds:.3f},asetpts=PTS-STARTPTS{cut},"
-                        "aformat=sample_rates=48000:channel_layouts=stereo", "-ar", "48000", str(bed)], check=True)
-        bed_lufs = integrated_file(bed)
-        legs = cue_legs(cues, bpm, effects(info, film, bpm))
-        # measured and scaled twice: the meter's gates drop the quiet tails as the stem turns down, so one scaling lands
-        # it a few tenths louder than asked
-        scale = 1.0
-        for _ in range(2 if legs else 0):
-            fx_stem(legs, seconds, scale, fxw)
-            scale *= 10 ** ((bed_lufs - FX_UNDER_BED_LU - integrated_file(fxw)) / 20)
-        fx_stem(legs, seconds, scale, fxw)
-        mixed = {"bed_lufs": round(bed_lufs, 2), "fx_lufs": round(integrated_file(fxw), 2)}
-        graph = (f"[0:a][1:a]amix=inputs=2:normalize=0:duration=first[mixed];"
-                 f"[mixed]afade=t=out:st={(stop + 0.3) if stop else seconds - 0.05:.3f}:d={0.6 if stop else 0.05:.3f}[out]")
-        subprocess.run([ff, "-y", "-v", "error", "-i", str(bed), "-i", str(fxw), "-filter_complex", graph, "-map", "[out]",
-                        "-ar", "48000", "-c:a", "pcm_f32le", str(mix)], check=True)
-    else:
-        pre = (f"atrim={offset:.3f}:{offset + seconds:.3f},asetpts=PTS-STARTPTS,aformat=sample_rates=48000:channel_layouts=stereo,"
-               f"afade=t=out:st={seconds - fade:.3f}:d={fade:.3f}")
-        subprocess.run([ff, "-y", "-v", "error", "-i", info["file"], "-af", pre, "-ar", "48000", str(mix)], check=True)
+    cut = f"afade=t=out:st={stop:.3f}:d=0.04" if stop else f"afade=t=out:st={seconds - fade:.3f}:d={fade:.3f}"
+    subprocess.run([ff, "-y", "-v", "error", "-i", info["file"], "-af", f"atrim={offset:.3f}:{offset + seconds:.3f},asetpts=PTS-STARTPTS,"
+                    f"aformat=sample_rates=48000:channel_layouts=stereo,{cut}", "-ar", "48000", "-c:a", "pcm_f32le", str(mix)],
+                   check=True)
 
     def integrated(chain):
         r = subprocess.run([ff, "-hide_banner", "-nostats", "-i", str(mix), "-af", f"{chain}ebur128=framelog=quiet",
@@ -324,31 +266,25 @@ def cmd_master(a):
             sys.exit(f"could not measure the loudness of {mix}")
         return float(found[-1])
 
-    # Gain past the target, a fast peak limiter at about -2 dBFS, a trim onto -14 LUFS, then a last limiter at -2.2 dBFS
-    # (sampled at 4x, so it holds the peaks between samples too) that leaves the AAC encode's overshoot under
-    # -1.5 dBTP, so a track with sharp drum peaks and the hits under it reaches the target without clipping.
-    gain = TARGET_LUFS - integrated("") + 1.5
-    limited = f"volume={gain:.2f}dB,alimiter=limit=0.79:attack=1:release=60:level=false"
-    trim = TARGET_LUFS - integrated(limited + ",")
-    ceiling = "aresample=192000,alimiter=limit=0.78:attack=1:release=60:level=false,aresample=48000"
-    for _ in range(2):
-        trim += TARGET_LUFS - integrated(f"{limited},volume={trim:.2f}dB,{ceiling},")
-    flt = f"{limited},volume={trim:.2f}dB,{ceiling},aformat=sample_rates=48000:channel_layouts=stereo"
+    # One gain onto -14 LUFS and nothing else: the master is written in 32-bit float, so a peak over full scale is kept
+    # whole, and the film's mux (sfx.py) limits everything under the picture together, once.
+    bed_lufs = integrated("")
+    gain = TARGET_LUFS - bed_lufs
+    flt = f"volume={gain:.2f}dB,aformat=sample_rates=48000:channel_layouts=stereo"
     # a master of its own name, then music.json naming it, then the old masters go
     out = MUSIC / f"master-{os.urandom(4).hex()}.wav"
-    subprocess.run([ff, "-y", "-v", "error", "-i", str(mix), "-af", flt, "-ar", "48000", str(out)], check=True)
-    info.update({"master": str(out), "master_seconds": round(seconds, 3), "offset": offset, "sound_cues": len(cues),
-                 "stop": round(stop, 3) if stop else None, "master_lufs": round(integrated_file(out), 2), **mixed})
+    subprocess.run([ff, "-y", "-v", "error", "-i", str(mix), "-af", flt, "-ar", "48000", "-c:a", "pcm_f32le", str(out)], check=True)
+    for k in ("fx_lufs", "sound_cues", "fx", "fx_recipe"):
+        info.pop(k, None)
+    info.update({"master": str(out), "master_seconds": round(seconds, 3), "offset": offset, "stop": round(stop, 3) if stop else None,
+                 "bed_lufs": round(bed_lufs, 2), "master_lufs": round(integrated_file(out), 2)})
     _env.write_json("music.json", info)
     for f in MUSIC.glob("master*"):
         if f != out:
             f.unlink()
-    if mixed:
-        print(f"mixed: bed {mixed['bed_lufs']} LUFS, effects {mixed['fx_lufs']} LUFS, "
-              f"{mixed['bed_lufs'] - mixed['fx_lufs']:.1f} LU under; {len(cues)} sound cues over {len(film.get('beats') or [])} beats")
-    print(f"mastered {seconds:.1f} s from {offset:.2f} s into the track, {len(cues)} sound cues under the bed"
+    print(f"mastered {seconds:.1f} s from {offset:.2f} s into the track, the music alone"
           + (f", the picture and the music stopping at {stop:.2f} s" if stop else f", the last {fade:.1f} s tailing out")
-          + f", to {info['master_lufs']} LUFS -> {out}")
+          + f", to {info['master_lufs']} LUFS -> {out}; the effects are laid under it as the film renders (sfx.py)")
     return 0
 
 

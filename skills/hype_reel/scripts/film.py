@@ -3,7 +3,10 @@
 (S/motion/studio).
 
 USAGE (in a run, after storyboard.py snap and music.py master; S = this skill's folder):
-    python3 S/scripts/film.py cut      # the picture: film.silent.mp4, its strips in frames/, qa/cut.json (the checks)
+    python3 S/scripts/film.py cut --proof
+                                       # the proof, every critic round before the last: the picture at half size as
+                                       # proof.silent.mp4, its strips in frames/, qa/cut.json (the checks, in board units)
+    python3 S/scripts/film.py cut      # the full-size picture: film.silent.mp4, its strips in frames/, qa/cut.json
     python3 S/scripts/film.py render   # out/film.mp4 with the music and sound effects under it and its cover as frame 0, out/cover.png
                                        # and out/feed.png (1080x1350), and for a launch out/story-1.png, story-2.png,
                                        # story-3.png and countdown.png (1080x1920)
@@ -15,8 +18,13 @@ film at 2 fps) and runs qa.py check on it (qa/cut.json: the still seconds, the c
 hook line, the board's checks; render/cut-report.json is the cut's render report). cut.json
 stamps the film.json it was cut from and is written only once the picture, its strips and its checks are made and
 pass; a cut removes it first. The critics read the cut (vote.py cut) before anything else renders.
-render refuses until the latest critic round (critic/cut-N.json) is for this film.json, is filled in, passes every
-read and ships (at the bar, vote.BAR, or with the one fix spent). It then lays the mastered music
+--proof renders the picture at half size (proof.py) as proof.silent.mp4 beside film.silent.mp4, never over it, and
+its checks measure in board units, so the proof passes or fails where the full-size cut would; cut.json and
+render/cut-report.json carry the cut's `scale`. A full-size cut takes the proof out of the run, so proof.silent.mp4 is
+there only while the newest cut is the proof, which vote.py cut reads and film.py render and deliver.py refuse: the
+render lays the music under the full-size cut, once the critics have read its type at full size.
+render refuses until the newest cut is full size and the latest critic round (critic/cut-N.json) is for this
+film.json, is filled in, passes every read and ships (at the bar, vote.BAR, or with the one fix spent). It then lays the mastered music
 (music.json `master`) under the cut into out/film.mp4 (AAC 192 kbps) with the board's sound effects over it (sfx.py: a
 whoosh on each cut, a shutter as each photograph lands, an impact on each slammed word and on the closer, a riser into
 the closer, a quiet room under it all, on the music's grid and in its key; alone when there is no music). The
@@ -46,12 +54,14 @@ import _env  # noqa: E402
 import sfx  # noqa: E402
 import chunks  # noqa: E402
 import clips  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import storyboard  # noqa: E402
 import studio  # noqa: E402
 
 FPS = 30
 SILENT = Path("film.silent.mp4")
+PROOF = proof.of(SILENT)
 FILM = Path("out/film.mp4")
 SIZES = {"reel": (1080, 1920), "story": (1080, 1920), "feed": (1080, 1350)}
 
@@ -80,23 +90,35 @@ def cmd_cut(a):
         # and cut.json comes back only once all three are made and the checks pass
         Path("cut.json").unlink(missing_ok=True)
         Path("qa/cut.json").unlink(missing_ok=True)
+        scale = proof.SCALE if a.proof else 1
+        picture = PROOF if a.proof else SILENT
         t0 = time.time()
         tl = film["timeline"]
-        rep = _env.render(run, [studio.video(film, SILENT, tl[-1]["start"] + tl[-1]["frames"])], "render/cut-report.json")
+        rep = _env.render(run, [studio.video(film, picture, tl[-1]["start"] + tl[-1]["frames"], scale=scale)],
+                          "render/cut-report.json")
+        rep = {**rep, "scale": scale}
+        _env.write_json("render/cut-report.json", rep)
         seconds = round(time.time() - t0, 1)
         for f in rep.get("findings", []):
             print("finding:", f["text"][:400])
-        if rep.get("failed") or not SILENT.exists():
+        if rep.get("failed") or not picture.exists():
             return 1
-        n = strips(SILENT, film["timeline"], Path("frames"), run.spawn)
+        # the full-size cut takes the proof's place: proof.silent.mp4 stays only while the newest cut is the proof
+        if not a.proof:
+            PROOF.unlink(missing_ok=True)
+        n = strips(picture, film["timeline"], Path("frames"), run.spawn)
         where = f" on the {'graphics card' if rep.get('card') else 'CPU'} ({rep['gl']})" if rep.get("gl") else ""
         print(f"cut {film['seconds']:.1f} s in {time.time() - t0:.1f} s{where} "
-              f"-> {SILENT}; {n} beat strips and film-strip.png in frames/")
-        q = qa.report(qa.film_checks(SILENT, audio=False, spawn=run.spawn, report="render/cut-report.json"), "qa/cut.json")
+              f"-> {picture}{' (the half-size proof)' if a.proof else ''}; {n} beat strips and film-strip.png in frames/")
+        if a.proof:
+            print(proof.reading(picture))
+        q = qa.report(qa.film_checks(picture, audio=False, spawn=run.spawn, report="render/cut-report.json", scale=scale),
+                      "qa/cut.json")
         if q:
             print("the cut fails its checks (qa/cut.json): fix the board, snap and cut again before the critics watch it")
             return q
-        _env.write_json("cut.json", {"film": film_hash(), "seconds": film["seconds"], "render_seconds": seconds, "card": rep.get("card")})
+        _env.write_json("cut.json", {"film": film_hash(), "seconds": film["seconds"], "render_seconds": seconds,
+                                     "card": rep.get("card"), "scale": scale})
         print("next: the critics watch the cut (vote.py cut)")
         return 0
 
@@ -106,8 +128,11 @@ def ready():
     import vote
     h = film_hash()
     cut = _env.read_json("cut.json") or {}
-    if not SILENT.exists() or cut.get("film") != h:
-        return "film.json has no cut yet (or changed since it): run film.py cut"
+    if not proof.newest(SILENT).exists() or cut.get("film") != h:
+        return "film.json has no cut yet (or changed since it): run film.py cut --proof"
+    if proof.scale(SILENT) != 1:
+        return (f"the newest cut is the half-size proof {PROOF}: run film.py cut for the full-size cut, then vote.py cut, "
+                "where the critics read the type at full size")
     rs = vote.rounds()
     last = _env.read_json(rs[-1]) if rs else None
     if not last or last.get("film") != h:
@@ -294,6 +319,8 @@ def cmd_frames(a):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["cut", "render", "frames"])
+    ap.add_argument("--proof", action="store_true",
+                    help="cut: the picture at half size as proof.silent.mp4, for every critic round before the last")
     ap.add_argument("--film", default=str(FILM))
     ap.add_argument("--out", default="frames")
     a = ap.parse_args()

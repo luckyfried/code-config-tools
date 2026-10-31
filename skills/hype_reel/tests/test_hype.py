@@ -129,6 +129,32 @@ class Moves(unittest.TestCase):
         per = 60 / 123
         self.assertGreaterEqual(drive.least(beats[2], per) * per, drive.ARRIVES["tilted-wall"] + drive.SETTLE)
 
+    def test_a_once_move_plays_once_and_wins_the_peak(self):
+        for style in ("kinetic-type", "analog-home-movie", "scrapbook"):
+            card = compose.card(style)
+            once = {m["id"] for m in card["moves"] if m.get("once")}
+            beats = [beat("hook", "title", "nearly ready", "14 nov", own=True)] + \
+                [beat(f"build-{i}", "photo", f"glaze test {i} out of the kiln", own=i % 2 == 0) for i in range(1, 7)] + \
+                [beat("made", "photo", "Moss Runner", "14 nov", own=True, peak=True), beat("closer", "closer")]
+            drive.choose(card, beats)
+            self.assertIn(beats[-2]["move"], once, style)
+            played = collections.Counter(b["move"] for b in beats if b["move"] in once)
+            self.assertEqual(max(played.values()), 1, (style, [b["move"] for b in beats]))
+
+    def test_a_once_move_stays_once_when_the_beat_has_only_it_and_the_last_beats_move(self):
+        card = compose.card("kinetic-type")
+        once = {m["id"] for m in card["moves"] if m.get("once")}
+        build = [beat("build", "photo", "every saturday"), beat("build", "photo", own=True),
+                 beat("build", "clip", own=True), beat("build", "photo", own=True)]
+        for i, b in enumerate(build, 1):
+            b["id"] = f"build-{i}"
+        beats = [beat("hook", "title", "meet my friend ines", own=True)] + build + \
+            [beat("made", "photo", "ines duarte", own=True, peak=True), beat("closer", "closer")]
+        drive.choose(card, beats)
+        self.assertIn(beats[-2]["move"], once)
+        played = collections.Counter(b["move"] for b in beats if b["move"] in once)
+        self.assertEqual(max(played.values()), 1, [b["move"] for b in beats])
+
     def test_the_film_never_opens_on_black(self):
         card = compose.card("cinematic-letterbox")
         beats = [beat("hook", "title", "nearly ready", "14 nov", own=True), beat("closer", "closer")]
@@ -196,6 +222,16 @@ class Layouts(unittest.TestCase):
         self.assertEqual([ln.get("until") for ln in b["lines"]], [1, 2, 3, 4, None])
         self.assertEqual([ln.get("ground") for ln in b["lines"]], [None, "accent", None, "accent", None])
         self.assertEqual(storyboard.line_issues("1", b, "reel"), [])
+
+    def test_the_hook_is_set_at_the_title_size(self):
+        for style in ("swiss-grid", "cinematic-letterbox"):
+            card = compose.card(style)
+            lines = drive.words_over(card, "meet my friend ines", "", "top", "reel", 0, hook=True)
+            sizes = {l["size"] for l in lines}
+            self.assertEqual(sizes, {150}, style)
+            self.assertLessEqual(len(lines), drive.HOOK_LINES, style)
+            room = compose.SAFE["reel"]["width"] - compose.SAFE["reel"]["left"] - compose.SAFE["reel"]["right"]
+            self.assertTrue(all(l["w"] <= room for l in lines), style)
 
     def test_the_reveal_sets_its_name_off_the_picture(self):
         for style, move, layout in (("swiss-grid", "grid-snap", "card"), ("cinematic-letterbox", "anamorphic-push", "matte")):

@@ -10,7 +10,8 @@ nothing else: the storyboards, the vote and the strips stay in the run folder.
 python3 S/scripts/film.py render
 ```
 
-It refuses with the reason ("not yet: ...") until movement 5 shipped the current cut. Then it lays the mastered music
+It refuses with the reason ("not yet: ...") until movement 5 shipped the current cut and read its type on the
+full-size cut; it never renders from the half-size proof. Then it lays the mastered music
 and the board's sound effects (a whoosh on each cut, a shutter as each photograph lands, an impact on each slammed word
 and on the closer, a riser into the closer, all on the music's grid and in its key) under the cut into `out/film.mp4`
 (AAC 192 kbps), and renders the stills as settled frames of the same film, each from the frame `film.json` `cards`
@@ -56,7 +57,9 @@ gate`: the picture's checks of movement 4 on `out/film.mp4` (with the audio: AAC
 frame 0 matching the cover, the stills' sizes, `out/film.mp4` being the render of the current cut, the hook entry, the
 winner passing the swap test, the critic round passing every read, the captions (the share caption one to three
 sentences), the research and the board. On a red gate it names each failing check: fix the cause, then run deliver.py
-again.
+again. When the newest cut is the half-size proof, deliver.py refuses before it writes anything (`not delivered: the
+newest render is the half-size proof proof.silent.mp4`) and names the full-size cut, the critics' type read and the
+render to run first.
 
 ## Tell the person
 

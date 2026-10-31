@@ -222,7 +222,7 @@ export const HypeFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips}
   const over = (
     <>
       {matte ? null : words}
-      <MoveLayer line={line} look={look} t={t} bars={fin.bars} closer={{name: sys.closer, at: last.at, still}} />
+      <MoveLayer line={line} look={look} t={t} now={timeAt(placed, frame)} bars={fin.bars} closer={{name: sys.closer, at: last.at, still}} />
       {matte ? words : null}
     </>
   );

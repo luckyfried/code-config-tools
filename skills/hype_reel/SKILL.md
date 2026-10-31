@@ -58,8 +58,8 @@ browser's profile) go under `~/.cache/code-config/`, never into this folder.
 | 1 | research | `S/pipeline/1-research.md` | `research.py`, then you write `taste.md` and fix `taste.json` (its `plan`) | taste.md with its six headings |
 | 2 | storyboards | `S/pipeline/2-storyboards.md` | `cast.py looks` and look, `storyboard.py draft`, `cast.py show`, `storyboard.py check`, `storyboard.py sheets`, look | three boards in three looks (`storyboards/1` to `3`), `out/boards.png`, check clean |
 | 3 | pick | `S/pipeline/3-vote.md` | show `out/boards.png` and ask which look; `vote.py pick --board N` (with `--why "..."` when you picked) | `winner.json` |
-| 4 | the cut | `S/pipeline/4-cut.md` | `music.py find` (it composes a bed with `music.py make` when they gave no track), `music.py analyze`, `storyboard.py snap`, `music.py master`, `clips.py list` and make the clips, `clips.py normalize`, `film.py cut` | `film.silent.mp4`, `qa/cut.json` passing |
-| 5 | critics | `S/pipeline/5-critics.md`, `S/critic/critic.md` | `vote.py cut`, the reads and the scores, `vote.py verdict` (fix once if told) | `SHIP` |
+| 4 | the cut | `S/pipeline/4-cut.md` | `music.py find` (it composes a bed with `music.py make` when they gave no track), `music.py analyze`, `storyboard.py snap`, `music.py master`, `clips.py list` and make the clips, `clips.py normalize`, `film.py cut --proof` | `proof.silent.mp4` (the half-size proof every critic round reads), `qa/cut.json` passing |
+| 5 | critics | `S/pipeline/5-critics.md`, `S/critic/critic.md` | `vote.py cut`, the reads and the scores, `vote.py verdict` (fix once if told) on the proof; then the full-size `film.py cut`, `vote.py cut` and the type read at full size | `SHIP` on the full-size cut |
 | 6 | render, deliver | `S/pipeline/6-deliver.md` | `film.py render`, look, write `captions.md`, `deliver.py` | `GATE GREEN` |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
@@ -98,6 +98,8 @@ delivered: `). Tell the person the one sentence it printed and stop.
 - The film renders in chunks saved in the run (`render/chunks/`). When a render is interrupted, run the same command
   again: the finished chunks are kept and only the missing ones render. Never start over and never delete
   `render/chunks/`.
+- Every critic round before the last cuts the half-size proof (`film.py cut --proof`); the cut `film.py render` lays
+  the music under, and deliver takes, is full size (`film.py cut`).
 - Run `film.py cut` and `film.py render` each in the foreground in one tool call with a 40-minute timeout on that call,
   never in the background, and read its progress in `render/render-report.log`. Once the first chunks land, their time
   times the chunks still to go is the estimate to tell the person.

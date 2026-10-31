@@ -30,7 +30,25 @@ export type BeatOn = {
   photo?: string;
   place?: [number, number, number, number];
   say?: string;
+  /** on a photo beat: the part of its photograph that matters, [u, v] fractions of the photograph across and down
+   * (absent: its middle) */
+  focus?: [number, number];
+  /** on a photo beat: the degrees clockwise the shot hangs the print at (absent: the card's print tilt) */
+  tilt?: number;
+  /** on a photo beat: the rim px around the print and the strips of tape over it, as the shot draws them (absent: the
+   * card's print) */
+  rim?: number;
+  tape?: number;
+  /** on a beat whose photograph is one cell of a grid, every other cell as the shot draws it; on the wall, its posts:
+   * each one's box [x, y, w, h] px, its photograph, and where that lies in the frame [x, y, w, h] px (absent: it covers
+   * the box) */
+  cells?: {box: [number, number, number, number]; photo?: string; place?: [number, number, number, number]}[];
+  /** the seconds before its cut that the beat's frame-taking move begins, over the tail of the beat before (absent: 0) */
+  early?: number;
 };
+
+/** One move the style card lists: its name, the beats it fits, and whether it plays at most once a film. */
+export type CardMove = {id: string; fits: string[]; once?: boolean};
 
 /** The tones the card gives every role a move, a cut, or a closer draws in, each a hex: the ground the beats lie on,
  * the dip a cut goes through (null: the card's cuts never dip), the matte of the bars, a gate's edge and a dark closer,
@@ -63,10 +81,16 @@ export type Look = {
   print: {box: [number, number, number, number]; rim: number; tilt: number; tape: number};
   /** whether the card's words take the film's finish or stand clean above it */
   finished: boolean;
+  /** the profile's safe area, px in from each edge, that every word at rest stands inside; absent: the grid's margin on
+   * every side */
+  safe?: {top: number; bottom: number; left: number; right: number};
   /** the address of the photograph the film's ground is made from, sharp; absent when the film has none */
   photo?: string;
   /** the address of every photograph the film has, in the board's order; absent when the kit lists none */
   photos?: string[];
+  /** the moves the style card lists, in its order; absent when the kit passes none, and then every beat plays the move
+   * the board gives it */
+  moves?: CardMove[];
 };
 
 /** A move at beat `t` of the film: `u` its progress through its beat, 0 to 1, and `local` the beats since it began. */
@@ -77,6 +101,8 @@ export type MoveProps = {beat: BeatOn; look: Look; u: number; local: number; t: 
 export type Nudge = {scale?: number; dx?: number; dy?: number; roll?: number};
 
 export type Move = {
+  /** a move that takes the whole frame may begin before its cut, by the beat's `early` seconds */
+  early?: boolean;
   nudge?: (p: MoveProps) => Nudge;
   fx?: (p: MoveProps) => Partial<Travel>;
   Overlay?: React.FC<MoveProps>;

@@ -67,6 +67,9 @@ def tone_of(ctx):
 
 
 HOOK_ZOOM = 1.3
+HOOK_SIZE = (150, 96)  # the words that open the film: the hook, at the title's size, never below 96 px
+HOOK_LINES = 3
+HOOK_TALL = 0.45  # the share of the type area's height the hook's lines may take
 LEADING = {"on", "off", "from", "in", "into", "with", "for", "out", "a", "an", "the", "to", "of", "and", "my", "your", "our"}
 # moves that set words of their own (the beat's words, else its label): the kit sets none over them, and a beat with
 # neither words nor a label never takes one. A move whose words fly with the photograph and leave as it lands
@@ -188,11 +191,12 @@ def card_box(card, frame=(W, H)):
 
 
 # ------------------------------------------------------------------ words
-def said_lines(text, most, face):
-    """Their words on up to `most` lines (more than two words make two, more than five three, more than nine four),
-    broken where the widest line is narrowest and never after a word that leads the next."""
+def said_lines(text, most, face, exact=False):
+    """Their words on up to `most` lines (more than two words make two, more than five three, more than nine four; on
+    `most` lines when `exact`), broken where the widest line is narrowest and never after a word that leads the next."""
     ws = text.split()
-    n = min(most, 1 if len(ws) <= 2 else 2 if len(ws) <= 5 else 3 if len(ws) <= 9 else 4, len(ws)) or 1
+    n = min(most, len(ws)) if exact else min(most, 1 if len(ws) <= 2 else 2 if len(ws) <= 5 else 3 if len(ws) <= 9 else 4, len(ws))
+    n = n or 1
     best = None
     for cuts in itertools.combinations(range(1, len(ws)), n - 1):
         rows = [ws[a:b] for a, b in zip((0,) + cuts, cuts + (len(ws),))]
@@ -265,18 +269,29 @@ def card_lines(card, text, label, fmt, t0=0.0, sizes=None):
     return out, fits
 
 
-def words_over(card, text, label, band, fmt, t0, want=None):
+def words_over(card, text, label, band, fmt, t0, want=None, hook=False):
     """The beat's words set over a whole-frame picture in the family's grammar (at `want` px, else the family's), in
     the frame's px: each line's text, its box top, left or middle, size, face, color, and the beat it lands on. `band`
-    is "top" or "foot": where the subject is not."""
+    is "top" or "foot": where the subject is not. The hook's words are set at the title's size (HOOK_SIZE) in at most
+    HOOK_LINES lines, broken into more lines before they are set smaller."""
     fam = FAMILY[family(card)]
     sf = compose.SAFE[fmt]
     fw, fh = sf["width"], sf["height"]
     left, right = sf["left"], sf["right"]
     room = fw - left - right
     face = fam["face"]
-    rows = said_lines(text, fam["lines"], face)
-    size = min(compose.fit(r, want or fam["want"], room, face) for r in rows)
+    if hook:
+        tall, lh = HOOK_TALL * (fh - sf["top"] - sf["bottom"]), compose.face_of(face)["lineHeight"]
+        size, rows = HOOK_SIZE[1], said_lines(text, HOOK_LINES, face, exact=True)
+        for s in range(HOOK_SIZE[0], HOOK_SIZE[1] - 1, -2):
+            fit = next((r for n in range(1, HOOK_LINES + 1) for r in [said_lines(text, n, face, exact=True)]
+                        if len(r) * lh * s <= tall and all(compose.width(x, s, face) <= room for x in r)), None)
+            if fit:
+                size, rows = s, fit
+                break
+    else:
+        rows = said_lines(text, fam["lines"], face)
+        size = min(compose.fit(r, want or fam["want"], room, face) for r in rows)
     lead = compose.face_of(face)["lineHeight"] * size
     lab = card["photo"]["label"]
     lab_color = lab["color"] if lab["color"].startswith("accent") else "paper"
@@ -363,8 +378,13 @@ def pick(options, tags, form, used, avoid):
     """The option whose `fits` matches the beat best (its form counts twice, each other tag once, and every earlier beat
     on it one less, so a film keeps reaching for the card's other options); between equals the one used least so far,
     then the card's order. The option `avoid` (the previous beat's) is never picked while another
-    exists."""
-    pool = [o for o in options if o["id"] != avoid] or options
+    exists. A move the card marks `once` plays at most once a film and wins the story's peak: on the peak beat the
+    unplayed `once` moves that fit its form are the only ones picked from. Where the beat has nothing but a played
+    `once` move and the previous beat's, it takes the previous beat's again: a `once` move never plays twice."""
+    pool = [o for o in options if not (o.get("once") and used.get(o["id"]))] or options
+    pool = [o for o in pool if o["id"] != avoid] or pool
+    if "peak" in tags:
+        pool = [o for o in pool if o.get("once") and form in o["fits"] and not used.get(o["id"])] or pool
     score = lambda o: 2 * (form in o["fits"]) + len((tags - {form}) & set(o["fits"])) - used.get(o["id"], 0)
     best = max(pool, key=lambda o: (score(o), -used.get(o["id"], 0), -options.index(o)))
     used[best["id"]] = used.get(best["id"], 0) + 1
@@ -407,11 +427,13 @@ def choose(card, beats):
     # before the reveal; two beats running never move alike, which matters more
     peak = next((b for b in beats if b["peak"]), None)
     ahead = pick(allowed_of(peak), tags_of(peak), peak["form"], {}, None) if peak else None
-    moves, prev = {}, None
+    # the peak's move counts as played from the start, so a `once` move it takes never plays on a beat before it
+    played = {ahead: 1} if ahead and any(m["id"] == ahead and m.get("once") for m in card["moves"]) else {}
+    moves, prev = dict(played), None
     for b in beats:
         if b is peak:
             b["move"] = ahead
-            moves[ahead] = moves.get(ahead, 0) + 1
+            moves[ahead] = moves.get(ahead, 0) + (0 if ahead in played else 1)
         else:
             allowed = allowed_of(b)
             fresh = [m for m in allowed if m["id"] != ahead]
@@ -708,7 +730,8 @@ def lay(b, card, fmt=(W, H)):
     else:
         box = [0, 0, fmt[0], fmt[1]]
         b["ground"] = "bg"
-        b["lines"] = [] if draws or not b["words"] else words_over(card, b["words"], b["label"], band_of(b, fmt), "reel", 0)
+        b["lines"] = [] if draws or not b["words"] else words_over(card, b["words"], b["label"], band_of(b, fmt), "reel", 0,
+                                                                         hook=b["part"] == "hook")
         b["scrim"] = max(SHADE, card["photo"]["line"]["scrim"]) if b["lines"] and b["photo"] else 0
     b["picture"] = (whole_in if b["layout"] == "matte" else picture_of)(b["photo"], box) if b["photo"] and box else None
     b["enter"] = card["photo"]["line"]["enter"]

@@ -25,7 +25,8 @@ holds the run's lock (render/render.lock, as "deliver") from the moment it enter
 out/review.html before it writes anything into out/, and writes the page as not ready until the gate has passed. On a
 passing gate the last line printed is the reel's path from the workspace root (build/<run>/out/film.mp4), or the
 first asked piece's path when only some were asked, the path the reply to the person names first; on a failed gate it is "the gate failed: " and the failing checks' names, and
-no path.
+no path. deliver refuses a run whose newest cut is the half-size proof (proof.silent.mp4), before it writes anything,
+and names the full-size cut, the critics' type read and the render to run first: the reel it delivers is the full-size one.
 """
 import html
 import os
@@ -36,6 +37,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import chunks  # noqa: E402
+import film  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import storyboard  # noqa: E402
 import vote  # noqa: E402
@@ -355,6 +358,9 @@ def keep_only(asked):
 
 
 def deliver(run, asked=()):
+    if proof.scale(film.SILENT) != 1:
+        sys.exit(proof.refusal(film.SILENT, then="film.py cut for the full-size cut, then vote.py cut, where the critics "
+                                                "read the type at full size, then film.py render and deliver.py again"))
     lib = _env.read_json("library.json") or {}
     taste = _env.read_json("taste.json") or {}
     win = _env.read_json("winner.json") or {}

@@ -47,15 +47,15 @@ closer that does not pay the idea off.
 
 The film has one finish, its card's: the grade, the grain, the vignette, the bloom, the dust, the blur, the cadence,
 the letterbox, each at the card's value, zero included. Every color on screen is a photograph's own or one the card's
-palette rule made from the photographs. The closer's still is deliberate and stays still.
+palette rule made from the photographs. The closer's still is deliberate and keeps a slow push to the last frame.
 
 The critic's read: three beats side by side, a 1:1 crop of a moving frame and of a held frame, the closer's frames after
 it settles. A pass: the beats are in one finish and it is the card's; every color is a photograph's or the palette's;
-the closer's frames do not move. Not a pass: a beat in another finish from its neighbors, a color the card's palette
-rule did not produce, or a closer that drifts.
+the closer's frames keep their slow push and nothing else on them moves. Not a pass: a beat in another finish from its
+neighbors, a color the card's palette rule did not produce, or a closer that stands frozen or wanders.
 
 Built by: the motion system (`motion/system/`, the files every kit shares) builds the finish from the card and the
-closer's stillness; the palette module makes the colors from `taste.json` by the card's rule.
+closer's slow push; the palette module makes the colors from `taste.json` by the card's rule.
 
 ## R3 Type that reads, in the card's faces
 
@@ -73,24 +73,26 @@ subject.
 ## R4 Motion and rhythm
 
 The camera moves on the card's easing and lean. No two consecutive beats make the same move. Beats vary in length; a
-fast run is followed by a held composition; the peak holds longest; the closer holds still and silent after the ask.
+fast run is followed by a held composition; the peak holds longest; after the ask the closer holds its composition
+with a slow push while the music lets go.
 
 The critic's read: a strip of every move at 10 frames a second, the beats' lengths in the strip, and the closer's last
 seconds. A pass: no two consecutive beats make the same move; the beats differ in length, a fast run is followed by a
-held composition, and the peak's beat is the longest; after the ask the closer's frames do not move (its silence is
-read with R5's evidence). Not a pass: the same move on two beats in a row, beats of one length, a peak no longer than
-the others, or a closer that drifts.
+held composition, and the peak's beat is the longest; after the ask the closer keeps one slow push to the last frame
+and the `frozen` row of `qa/check.json` passes (its sound is read with R5's evidence). Not a pass: the same move on
+two beats in a row, beats of one length, a peak no longer than the others, or a closer that stands frozen.
 
 ## R5 Sound to picture
 
-A cue only where a beat lands; effects 8 LU under the music; the bed from the card; the music stops where the ask lands.
+A cue only where a beat lands; music and effects mastered together to -14 LUFS; the bed from the card; the music lets go
+where the ask lands: it stops there, or rings out under the closer's push and is gone by the last frame.
 
 The critic's read: the loudness row of `qa/check.json`, and the film watched with its sound. A pass: the loudness row
-passes with the effects 8 LU under the music; a person watching hears a cue only where a beat lands, the bed the card
-names, and the music stopping where the ask lands. When nobody in the session can watch with sound, the cue placement
-is not read: the read is the loudness alone, and the review page says the cue placement was not read. A cue table, a
-storyboard's sound lines, or a picture of the waveform is never a read of the cue placement. Not a pass: a loudness row
-that fails, a cue with nothing landing, a landing that has no cue, or music running past the ask.
+passes; a person watching hears a cue only where a beat lands, the bed the card names, and the music letting go where the
+ask lands. When nobody in the session can watch with sound, the cue placement is not read: the read is the loudness
+alone, and the review page says the cue placement was not read. A cue table, a storyboard's sound lines, or a picture of
+the waveform is never a read of the cue placement. Not a pass: a loudness row that fails, a cue with nothing landing, a
+landing that has no cue, or music that keeps playing at its level past the ask.
 
 ## Truthful content
 

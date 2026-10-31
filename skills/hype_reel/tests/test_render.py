@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -255,21 +256,21 @@ class Render(unittest.TestCase):
         def killed(*a, **k):
             raise KeyboardInterrupt
         with mock.patch.object(film, "strips", killed), self.assertRaises(KeyboardInterrupt):
-            film.cmd_cut(None)
+            film.cmd_cut(types.SimpleNamespace(proof=False))
         self.assertFalse(Path("cut.json").exists())
         self.assertFalse(Path("qa/cut.json").exists())
         with self.assertRaises(SystemExit) as e:
             vote.cmd_cut(None)
-        self.assertEqual(str(e.exception.code), "there is no cut of the current film.json: run film.py cut first")
+        self.assertEqual(str(e.exception.code), "there is no cut of the current film.json: run film.py cut --proof first")
 
     def test_a_cut_is_certified_only_once_its_checks_pass(self):
         film = self.cut_command()
         with mock.patch.object(film, "strips", lambda *a: 0), \
                 mock.patch.object(film.qa, "film_checks", lambda *a, **k: [("still", False, "a still picture")]):
-            self.assertEqual(film.cmd_cut(None), 1)
+            self.assertEqual(film.cmd_cut(types.SimpleNamespace(proof=False)), 1)
         self.assertFalse(Path("cut.json").exists())
         with mock.patch.object(film, "strips", lambda *a: 0), mock.patch.object(film.qa, "film_checks", lambda *a, **k: []):
-            self.assertEqual(film.cmd_cut(None), 0)
+            self.assertEqual(film.cmd_cut(types.SimpleNamespace(proof=False)), 0)
         self.assertEqual(_env.read_json("cut.json")["film"], film.film_hash())
 
     def test_checking_the_silent_cut_again_reads_the_cuts_own_report(self):
@@ -288,7 +289,7 @@ class Render(unittest.TestCase):
             _env.write_json(report, rep)
             return rep
         with mock.patch.object(film, "strips", lambda *a: 0), mock.patch.object(film._env, "render", render):
-            film.cmd_cut(None)
+            film.cmd_cut(types.SimpleNamespace(proof=False))
         safe = [c for c in _env.read_json("qa/cut.json")["checks"] if c["check"] == "safe"]
         self.assertEqual([c["pass"] for c in safe], [True])
         with mock.patch.object(sys, "argv", ["qa.py", "check", "--film", "film.silent.mp4"]), \

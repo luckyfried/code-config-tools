@@ -61,6 +61,8 @@ export type System = {
   photo: PhotoLayout;
   /** how the camera moves within a beat: slam, dolly or snap */
   camera: string;
+  /** each format's safe area, px in from each edge */
+  safe?: Record<string, {top: number; bottom: number; left: number; right: number}>;
 };
 
 /** A beat's photograph: its box on the frame [x, y, w, h], where it lies in the box (`place`, box px) and the point the

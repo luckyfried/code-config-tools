@@ -2,21 +2,24 @@
 """The measurable checks of the cut and the film, and the gate that refuses delivery.
 
 USAGE (in a run; S = this skill's folder):
-    python3 S/scripts/qa.py check [--film F]  # the picture's checks (--film: the silent cut F against the cut's report
+    python3 S/scripts/qa.py check [--film F]  # the picture's checks (--film: the newest cut of F, the half-size proof
+                                              # while proof.silent.mp4 is beside film.silent.mp4, against the cut's report
                                               # render/cut-report.json into qa/cut.json, as film.py cut runs them;
                                               # with no --film, out/film.mp4 against render-report.json into qa/check.json)
     python3 S/scripts/qa.py gate              # everything below on out/; exit 0 only when every check passes
 
+A proof is measured in board units: its size read is divided by the proof's scale (proof.py) before it is held to
+1080x1920, and every other figure is read on a fixed downscale of the frame, so a proof passes or fails where the
+full-size cut would. The check of a proof says so on its first line. The gate reads the full-size film only.
+
 The checks of a picture:
-  film      it is not 1080x1920 H.264 High yuv420p at 30 fps, or runs outside 15-25 s
-  audio     (out/film.mp4 only) music was found but the film has no AAC track near 192 kbps, or its loudness is off
-            -14 LUFS by more than 1 LU, or with sound cues the effects stem sits less than music.FX_UNDER_BED_LU - 1 LU
-            under the bed (both integrated, from music.json); the row names the two numbers and the cue and beat
-            counts, and refuses nothing on count
+  film      it is not 1080x1920 (in board units) H.264 High yuv420p at 30 fps, or runs outside 15-25 s
+  audio     (out/film.mp4 only) music was found but the film has no AAC track near 192 kbps, its loudness (the music
+            with the shared effects over it, mastered together by sfx.py) is off -14 LUFS by more than 1 LU, or its
+            true peak is over -1.5 dBTP; the row names the beat count and refuses nothing on count
   black     a black stretch of 0.4 s or more (ffmpeg blackdetect)
-  frozen    a frozen stretch of 1.0 s or more (freezedetect at -80 dB) starting more than SETTLE musical beats (or
-            SETTLE_SECONDS, the longer) before the board's stop: the picture the board holds from its stop cue to the
-            end is the ending, the closer eases into it over its last beat, and a board with no stop cue holds nothing
+  frozen    a frozen stretch of 1.0 s or more (freezedetect at -80 dB) anywhere in the film, its ending too: frames
+            that repeat, as a stalled render's do; the closer keeps its slow push from the stop to the last frame
   frame0    frame 0 is a flat field: the first frame (read at 270x480 gray, inside the card's letterbox bars) shows
             neither a picture nor words
   hook      nothing arrives in the first 30 frames: the hook event is the first frame whose mean luma differs from the
@@ -64,7 +67,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
-import music  # noqa: E402
+import proof  # noqa: E402
 
 PLACEHOLDER = re.compile(r"TODO|TBD|lorem|ipsum|\{\{|\}\}|XXX|PLACEHOLDER|undefined|(?-i:\bNaN\b|\bNone\b)|@handle\b|your_handle", re.I)
 OUT_FILM = Path("out/film.mp4")
@@ -82,10 +85,6 @@ STILL = 0.5
 SCENE = 0.12
 HOOK_FRAMES, HOOK_LUMA = 30, 6.0
 FLAT = 8.0
-# how long before the stop a picture may come to rest: a closer eases into its hold over its last beat, and the
-# shared ease out moves under a pixel for about its last 0.6 s, so the allowance is a musical beat or 0.6 s, the longer
-SETTLE = 1
-SETTLE_SECONDS = 0.6
 MEASURES = {}
 
 
@@ -113,10 +112,12 @@ def detect(film, flt, key, spawn):
 
 
 def loudness(film, spawn):
-    r = spawn([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(film), "-af", "ebur128=framelog=quiet", "-vn", "-f", "null", "-"],
-              capture_output=True, text=True)
+    """The film's integrated loudness (LUFS) and true peak (dBTP) as its AAC track decodes."""
+    r = spawn([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(film), "-af", "ebur128=framelog=quiet:peak=true", "-vn", "-f", "null",
+               "-"], capture_output=True, text=True)
     m = re.findall(r"I:\s+(-?[\d.]+) LUFS", r.stderr)
-    return float(m[-1]) if m else None
+    tp = re.findall(r"Peak:\s+(-?[\d.]+|-inf) dBFS", r.stderr)
+    return (float(m[-1]) if m else None), (float(tp[-1]) if tp else None)
 
 
 def still_figure(film, spawn):
@@ -156,12 +157,6 @@ def cuts_figure(film, board, secs, spawn):
     MEASURES["cuts"] = {"cuts": len(cuts), "cuts_per_minute": per_min, "planned_cuts": len(planned), "scene_cuts": len(scene),
                         "at": [round(c, 2) for c in cuts], "duration": round(secs, 2)}
     return f"{len(cuts)} cuts ({len(planned)} planned), {per_min} a minute"
-
-
-def held_from(board):
-    """Where the board holds its picture still to the end (its `stop` sound cue), in seconds; never, without one."""
-    stop = next((c["at"] for c in board.get("sound") or [] if c["kind"] == "stop"), None)
-    return stop * 60 / board["bpm"] if stop is not None else float("inf")
 
 
 def hook_check(film, spawn):
@@ -205,9 +200,10 @@ def board_checks(board, check):
     check("board", not found, f"{len(found)} findings on film.json" + (f": {found[0]}" if found else ""))
 
 
-def film_checks(film, audio, spawn=subprocess.run, report="render-report.json"):
-    """The checks of a picture and of `report`, its render report. A command that holds the run's lock passes its
-    run.spawn, so every ffprobe and ffmpeg these start keeps the lock."""
+def film_checks(film, audio, spawn=subprocess.run, report="render-report.json", scale=1):
+    """The checks of a picture rendered at `scale` (proof.SCALE for a proof), measured in board units, and of `report`,
+    its render report. A command that holds the run's lock passes its run.spawn, so every ffprobe and ffmpeg these
+    start keeps the lock."""
     res = []
 
     def check(name, ok, detail):
@@ -223,34 +219,29 @@ def film_checks(film, audio, spawn=subprocess.run, report="render-report.json"):
     v = next((s for s in p.get("streams", []) if s.get("codec_type") == "video"), {})
     a = next((s for s in p.get("streams", []) if s.get("codec_type") == "audio"), None)
     secs = float(p.get("format", {}).get("duration") or 0)
-    ok = (v.get("width"), v.get("height")) == (1080, 1920) and v.get("codec_name") == "h264" and v.get("profile") == "High" \
+    got = proof.board((v.get("width") or 0, v.get("height") or 0), scale)
+    ok = got == (1080, 1920) and v.get("codec_name") == "h264" and v.get("profile") == "High" \
         and v.get("pix_fmt") == "yuv420p" and v.get("r_frame_rate") == "30/1" and LENGTH[0] <= secs <= LENGTH[1]
-    check("film", ok, f"{v.get('width')}x{v.get('height')} {v.get('codec_name')} {v.get('profile')} {v.get('pix_fmt')} "
+    check("film", ok, (f"{got[0]}x{got[1]} in board units, rendered at " if scale != 1 else "")
+          + f"{v.get('width')}x{v.get('height')} {v.get('codec_name')} {v.get('profile')} {v.get('pix_fmt')} "
                       f"{v.get('r_frame_rate')} fps, {secs:.1f} s, {film.stat().st_size / 1e6:.1f} MB, {film.stat().st_size * 8e-6 / max(secs, 0.001):.1f} Mbit/s")
     if audio:
         track = _env.read_json("music.json") or {}
         if track.get("file") and not a:
             check("audio", False, "music was found but the film has no audio track")
         elif track.get("file"):
-            lu = loudness(film, spawn)
+            lu, tp = loudness(film, spawn)
             br = int(a.get("bit_rate") or 0)
-            cues = track.get("sound_cues") or 0
-            under = track["bed_lufs"] - track["fx_lufs"] if "fx_lufs" in track else None
-            mix = (f"bed {track['bed_lufs']} LUFS, effects {track['fx_lufs']} LUFS, {under:.1f} LU under (at least {music.FX_UNDER_BED_LU - 1})"
-                   if under is not None else "no effects stem measured")
             check("audio", a.get("codec_name") == "aac" and br >= 150000 and lu is not None and abs(lu + 14) <= 1.0
-                  and (not cues or (under is not None and under >= music.FX_UNDER_BED_LU - 1)),
-                  f"{a.get('codec_name')} {br // 1000} kbps, {lu} LUFS integrated; {mix}; {cues} sound cues over "
-                  f"{len(board.get('beats') or [])} beats")
+                  and tp is not None and tp <= -1.5,
+                  f"{a.get('codec_name')} {br // 1000} kbps, {lu} LUFS integrated, true peak {tp} dBTP; "
+                  f"the music and the shared effects (sfx.py) mastered together over {len(board.get('beats') or [])} beats")
         else:
             check("audio", True, "no music was found; the film carries its sound effects alone")
     black = detect(film, "blackdetect=d=0.4:pix_th=0.10", "black_start", spawn)
     check("black", not black, f"{len(black)} black stretches of 0.4 s or more" + (f": {black[0][-80:]}" if black else ""))
-    held = held_from(board)
-    rest = held - max(SETTLE * 60 / board["bpm"], SETTLE_SECONDS) if held != float("inf") else held
-    frozen = [ln for ln in detect(film, "freezedetect=n=-80dB:d=1.0", "freeze_start", spawn) if float(ln.split(":")[-1]) < rest]
-    check("frozen", not frozen, f"{len(frozen)} frozen stretches of 1.0 s or more before the stop"
-          + (f" at {held:.2f} s" if held != float("inf") else " (the board has no stop)") + (f": {frozen[0][-40:]}" if frozen else ""))
+    frozen = detect(film, "freezedetect=n=-80dB:d=1.0", "freeze_start", spawn)
+    check("frozen", not frozen, f"{len(frozen)} frozen stretches of 1.0 s or more" + (f": {frozen[0][-40:]}" if frozen else ""))
     check("frame0", *frame0_check(film, (board["system"].get("finish") or {}).get("bars", 0), spawn))
     check("hook", *hook_check(film, spawn))
     figure("cuts", cuts_figure(film, board, secs, spawn))
@@ -451,13 +442,18 @@ def report(res, path, gate=False):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["check", "gate"])
-    ap.add_argument("--film", help="check: the silent cut to check against render/cut-report.json (default: out/film.mp4)")
+    ap.add_argument("--film", help="check: the silent cut to check against render/cut-report.json, its half-size proof "
+                                   "while that is the newest cut (default: out/film.mp4)")
     a = ap.parse_args()
     _env.enter_run()
     if a.cmd == "check":
         film = Path(a.film) if a.film else OUT_FILM
         if a.film:
-            return report(film_checks(film, audio=False, report="render/cut-report.json"), "qa/cut.json")
+            scale = proof.scale(film)
+            if scale != 1:
+                film = proof.of(film)
+                print(proof.reading(film))
+            return report(film_checks(film, audio=False, report="render/cut-report.json", scale=scale), "qa/cut.json")
         return report(film_checks(film, audio=True), "qa/check.json")
     return report(gate_checks(), "qa/gate.json", gate=True)
 

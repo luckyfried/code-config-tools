@@ -60,7 +60,9 @@ for a failing frame says which photograph or which line the frame should be made
 
 ## The cut (movement 5)
 
-The motion designer and the person score the timed cut, `film.silent.mp4`, from its strips. Before either scores,
+The motion designer and the person score the timed cut from its strips. Every round before the last scores the
+half-size proof, `proof.silent.mp4` from `film.py cut --proof`; its strips in `frames/` are drawn at the same size as
+the full cut's. Before either scores,
 make the reads: each is a `pass` and a `why` of at least eight words naming its seconds, in `reads` of
 `critic/cut-N.json`, and a cut that fails any read never renders.
 
@@ -105,13 +107,15 @@ move or an arrival placed in the stretch that stands still. A finding here is fi
 - `qa/cut.json` (the measured checks) and `render/cut-report.json`.
 
 Never score from memory of the storyboard; the cut is what ships. Fill in `critic/cut-N.json` and run
-`vote.py verdict`. When a score is below 4, name the one change that fixes the worst thing in the paragraph, using
+`vote.py verdict`. Type is read last on the full-size cut: after `SHIP` on the proof, `film.py cut` renders it full size
+and `vote.py cut` empties each critic's `type` score in the same round; read every line on its new strips at the size a
+phone shows it, and score `type` again. When a score is below 4, name the one change that fixes the worst thing in the paragraph, using
 the levers below.
 
 ## The levers
 
 - Words, order, bars, an item's place: the winner's `storyboards/N/storyboard.json`, then `storyboard.py check`,
-  `snap`, `music.py master`, `film.py cut`.
+  `snap`, `music.py master`, `film.py cut --proof`.
 - A photograph: its subject box in `looks.json` (the crop follows it), or `skip: true` on it so the next photograph
   by the same rule plays the part, then `storyboard.py draft`, `sheets`, `check`, and the winner from `snap` on.
 - A beat's line: `taste.json` `moments[].line` for its photograph (the hook's can be led by `said.hook`), then
@@ -119,4 +123,4 @@ the levers below.
 - The grade: `taste.json` (`palette`, `texture`), `grade.py recipe`, then `storyboard.py draft`.
 - The music: `taste.json` `music` (its brief) and `music.py find`, another track at `music/source.<ext>`, or
   `music.py make --mood calm|drive|film --bpm N`, then
-  `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py cut`.
+  `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py cut --proof`.

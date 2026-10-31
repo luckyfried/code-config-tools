@@ -11,8 +11,9 @@ USAGE (in a run; S = this skill's folder):
                                              # their taste and its one-line reason): winner.json carries board N; in a run
                                              # that already has a cut or a film, every piece made from the last board
                                              # (music, film.json, the cut, the critics' rounds, the film) goes first
-    python3 S/scripts/vote.py cut            # critic/cut-N.json to fill in for the timed cut (film.silent.mp4): the
-                                             # newest round when it is for this cut, else round N+1
+    python3 S/scripts/vote.py cut            # critic/cut-N.json to fill in for the newest timed cut (the half-size
+                                             # proof.silent.mp4 while it is there, else film.silent.mp4): the newest
+                                             # round when it is for this cut, else round N+1
     python3 S/scripts/vote.py verdict        # SHIP at the bar, else the worst thing
 
 The panel (S/critic/critic.md has each critic's brief): a motion designer (craft, pacing, type, motion), an editor
@@ -26,6 +27,11 @@ The bar: the cut ships when the mean of every score of the latest round is at le
 Under the bar, the one fix is the worst thing; a second round still under the bar ships, and deliver.py writes its
 scores in the run's brief.md and nowhere the person reads. film.py render waits for a round on the current film.json
 that passes every read and either meets the bar or has spent the one fix.
+
+Every round before the last scores the half-size proof (film.py cut --proof, proof.silent.mp4): `cut` reads the newest
+cut and its first line says when that is the proof. Once the full-size cut of the same film.json is made, `cut` moves
+the latest round to it and empties its `type` scores: the critics read the type again on the full-size cut, at the
+size a phone shows it, and film.py render waits until they have scored it there.
 """
 import argparse
 import shutil
@@ -34,6 +40,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
 CRITERIA = {
     "professional": "it looks like a professional motion designer made it",
@@ -221,13 +228,28 @@ def rounds():
 def cmd_cut(a):
     import film
     cut = _env.read_json("cut.json") or {}
-    if not film.SILENT.exists() or cut.get("film") != film.film_hash():
-        sys.exit("there is no cut of the current film.json: run film.py cut first")
+    scale = proof.scale(film.SILENT)
+    picture = proof.newest(film.SILENT)
+    if scale != 1:
+        print(proof.reading(picture))
+    if not picture.exists() or cut.get("film") != film.film_hash():
+        sys.exit("there is no cut of the current film.json: run film.py cut --proof first")
     rs = rounds()
     last = _env.read_json(rs[-1]) if rs else None
     # a round is for one cut: asking again for the same cut reopens that round and never spends the one fix
     if last and last.get("film") == cut["film"]:
-        print(f"round {last.get('round')} is for this cut: fill in {rs[-1]} after watching {film.SILENT} and the strips in frames/")
+        if scale == 1 and last.get("scale") == proof.SCALE:
+            # the full-size cut of the film.json the round scored on its proof: the same round, with the type read at
+            # full size
+            last["scale"] = 1
+            for c in CUT_PANEL:
+                last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+            _env.write_json(rs[-1], last)
+            print(f"round {last.get('round')} moves to the full-size {picture}: as each critic, read the type again on it "
+                  f"and on the strips in frames/, at the size a phone shows it, and score type in {rs[-1]}; the other "
+                  "scores and the reads stand")
+            return 0
+        print(f"round {last.get('round')} is for this cut: fill in {rs[-1]} after watching {picture} and the strips in frames/")
         return 0
     d = Path("critic")
     d.mkdir(parents=True, exist_ok=True)
@@ -236,10 +258,11 @@ def cmd_cut(a):
     data = blank(CUT_PANEL, ["film"], swap=False)
     data["round"] = n
     data["film"] = cut["film"]
+    data["scale"] = scale
     data["reads"] = {k: {"pass": None, "why": "", "asks": v} for k, v in READS.items()}
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: fill in {f} after watching {film.SILENT} and the strips in frames/ (scores, a paragraph, and each "
+    print(f"round {n}: fill in {f} after watching {picture} and the strips in frames/ (scores, a paragraph, and each "
           "read's pass and why)" + (" and say in 'fixed' what changed since the last round" if n > 1 else ""))
     return 0
 
@@ -257,19 +280,23 @@ def cmd_verdict(a):
         return 1
     failed = [k for k in READS if not data["reads"][k]["pass"]]
     if failed:
-        print(f"FIX: the cut fails {', '.join(failed)} ({data['reads'][failed[0]]['why']}). Change the board, snap, cut, "
-              "then run vote.py cut again")
+        print(f"FIX: the cut fails {', '.join(failed)} ({data['reads'][failed[0]]['why']}). Change the board, snap, cut "
+              "the proof again (film.py cut --proof), then run vote.py cut again")
         return 2
     ok, mean, worst = at_bar(data)
+    # a round on the proof ends in the full-size cut, where the critics read the type once more before the render
+    full = (" Next: the full-size cut (film.py cut), then vote.py cut: the critics read the type again at full size "
+            "before film.py render" if data.get("scale") == proof.SCALE else "")
     if ok:
-        print(f"SHIP: round {data.get('round')} meets the bar, mean {mean} (at least {BAR}), every score {FLOOR} or more")
+        print(f"SHIP: round {data.get('round')} meets the bar, mean {mean} (at least {BAR}), every score {FLOOR} or more."
+              + full)
         return 0
     if len(rs) >= 2:
         print(f"round {data.get('round')}: under the bar, mean {mean}, lowest {worst[1]} ({worst[2]}: {worst[0]}). The one fix "
-              "is spent: render it, and deliver.py writes the scores in the run's brief.md")
+              "is spent: render it, and deliver.py writes the scores in the run's brief.md." + full)
         return 2
-    print(f"FIX ONCE: under the bar (mean {mean}); the worst thing is {worst[1]} ({CRITERIA[worst[1]]}), {worst[2]} gave {worst[0]}. Fix it, snap, cut, "
-          "then run vote.py cut for round 2")
+    print(f"FIX ONCE: under the bar (mean {mean}); the worst thing is {worst[1]} ({CRITERIA[worst[1]]}), {worst[2]} gave {worst[0]}. Fix it, snap, "
+          "cut the proof again (film.py cut --proof), then run vote.py cut for round 2")
     return 2
 
 

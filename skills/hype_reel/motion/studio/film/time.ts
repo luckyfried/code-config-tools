@@ -48,7 +48,8 @@ export const timelineOf = (placed: Placed[]): Timeline => ({
   beats: placed.map((p) => {
     const b = p.beat;
     const pi = b.picture;
-    const lands = pi ? {photo: staticFile(pi.file), place: [pi.box[0] + pi.place[0], pi.box[1] + pi.place[1], pi.place[2], pi.place[3]] as [number, number, number, number]} : {};
+    const lands = pi ? {photo: staticFile(pi.file), place: [pi.box[0] + pi.place[0], pi.box[1] + pi.place[1], pi.place[2], pi.place[3]] as [number, number, number, number],
+      focus: [(pi.focus[0] - pi.place[0]) / pi.place[2], (pi.focus[1] - pi.place[1]) / pi.place[3]] as [number, number]} : {};
     const of = {id: b.id, form: b.form, at: p.at, end: p.end, move: b.move ?? undefined, transition: b.transition ?? null, peak: b.peak, ...lands};
     if (b.layout === 'field') return {...of, words: '', label: ''};
     const pic = b.layout === 'card' ? b.picture : null;
@@ -97,6 +98,7 @@ export const lookOf = (board: Board): Look => {
       rim: pic.rim * W, tilt: pic.tilt, tape: pic.tape,
     },
     finished: fin.words !== 'clean',
+    safe: board.format.name ? board.system.safe?.[board.format.name] : undefined,
     photo: ground?.picture ? staticFile(ground.picture.file) : undefined,
     photos: [...new Set(board.beats.flatMap((b) => (b.picture ? [b.picture.file] : [])))].map((f) => staticFile(f)),
   };

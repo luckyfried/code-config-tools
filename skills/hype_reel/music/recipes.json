@@ -40,7 +40,7 @@
       "roles": {
         "piano": {"program": 0, "play": "arp", "order": "updown", "octave": 4, "velocity": 0.5, "enter": 0, "pan": -0.15,
                   "pattern": "x.o.x.o.x.o.x.o.", "tags": ["piano", "keys"]},
-        "pad": {"program": 89, "play": "chord", "octave": 3, "velocity": 0.34, "enter": 1, "pan": 0.0,
+        "pad": {"program": 89, "play": "chord", "octave": 3, "velocity": 0.34, "enter": 0, "pan": 0.0,
                 "pattern": "x-------------------------------", "tags": ["pad", "synth"]},
         "cello": {"program": 42, "play": "bass", "octave": 2, "velocity": 0.46, "enter": 2, "pan": 0.2,
                   "pattern": "x---------------x---------------", "tags": ["strings", "bass"]},
