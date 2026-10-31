@@ -1,21 +1,32 @@
 # Motion standards
 
-What every film from this kit is held to. The critics score against it; `qa.py gate` measures what can be measured.
+What every film from this kit is held to: the seven rules of a studio-grade film (R1 to R7), each with the kit's own
+standards under it. The look (faces, colors, moves, cuts, finish, closer) is the picked style card's; the story is the
+kit's. The critics score R1 to R4 from frames and no other evidence; `storyboard.py check` refuses what a board can get
+wrong; `qa.py` and the kit's tests measure what the film did.
 
 | standard | how the kit meets it | measured by |
 |---|---|---|
-| no linear motion | every tween uses a preset from `easing.json` (enter, exit, move); entrances are springs; lines and tiles stagger | the critics |
-| every photo alive | `PhotoLive` pushes and drifts with parallax planes; `Mosaic` tiles arrive in a stagger; no full-frame still holds longer than 1.5 s | `freezedetect` (1.5 s) |
-| a type system | two faces per direction from `type.json`, a fixed scale, tracking per face, headlines fit to balanced lines | the critics; `FONT_ERROR` in the render report |
-| a grade from their palette | `grade.md`: one filter on every photo and clip | the critics |
-| transitions that mean something | each cut names a preset from `transitions.json`; the preset's meaning is the reason it is there | `storyboard.py check` refuses an unknown preset |
-| texture only when taste says so | grain, vignette and leaks read `taste.json` `texture` | the critics |
-| cut to the music | `storyboard.py snap` moves each cut onto a downbeat within 0.45 s, else a beat within 0.3 s | the critics; `build/film.json` lists the snapped cuts |
-| readable in the first second | one idea per beat; the headline has settled within the first second of its beat | the critics |
-| safe areas | type sits inside `safe-areas.json` for the format; the renderer logs `SAFE_BREACH` for any line box outside it or any clipped text | `qa.py gate` (safe) |
-| no black or dead air | transitions overlap; no beat is ever empty (a missing clip is substituted) | `blackdetect` (0.4 s) |
-| loudness | music mastered to −14 LUFS integrated, true peak −1.5 dB | `qa.py gate` (audio, ±1 LU) |
-| an ending made to be posted | the closer carries their prints, "see you in" next year, and their handle; the last card says "share yours" | the critics |
+| **R1 one idea, every move motivated** | the year as a line: the year lands on its underline inside the first second, the line opens into a window where every month flashes, a hard cut into the first month; each month opens on its own line, its name and their words on it; the year closes into its chapters, a row a month, joined by the dot; every beat's move and cut is the look's own, picked from what the beat shows | frames: the hook, a month, the closer (the critics, `transitions` and `ending`; the four reads, `carried`); `storyboard.py check` (moves and cuts inside the card) |
+| one element carried | the dot travels the whole film: the title's underline, each month's line, the rows' ends in the closer | the critics (the four reads, `carried`) |
+| an ending made to be posted | the year's chapters whole, then the look's closer lands the sign-off on the music's stop, then two silent seconds | the critics (`ending`); the kit's tests (every row ends at the spine) |
+| **R2 depth, light, one grade** | each month's photograph stands where the look's photo layout puts it (a print over its own soft field with a shadow under it, a picture in a box of the grid, or the look's ground alone), moves under the month's camera, and splits on its line into two layers that move at different rates; the grade is the card's turned by the person's palette; the grain, vignette and stillness are the card's finish | frames (the critics, `professional`); the kit's tests (the near layer moves against the far one, consecutive months in different directions) |
+| the year in calendar order | the months come first to last in the calendar, whatever order `picks.json` lists them in; a sparse year makes a shorter film | `storyboard.py draft`; the kit's tests |
+| motion that belongs to the photograph | each month's line is cut along the photograph's own line (`picks.json` `line`, read by a person); their line for the month stands on it; each composition passes the swap test | the critics (`vote/scores.json` `swap`, the four reads, `swap`) |
+| **R3 type in motion, as a system** | the card's two faces and its scale; a month's name and their line enter the card's way (typed letter by letter in one run, slammed, cut in, risen), settled within a second of the month's start and held at least a second before the camera leaves; through the hold every line stays inside the type area, off the photograph's subject, and nothing collides | frames (the critics, `type`); `storyboard.py check` (bounds, subject); the kit's tests (timing, the words inside the type area through the hold); `FONT_ERROR` in the render report |
+| type that reads | a month's words in the card's colors on a plate as dense as 4.5:1 over the worst tenth of what is under them needs; each line set on the wall takes the card's ink or paper by the light of the ground under it, with a plate where neither holds 4.5:1; a row's month never under 48 px and the sign-off never under 72 px | `storyboard.py check` (contrast and smallest sizes); the kit's tests |
+| their own name or none | the handle on screen is the username the export's profile files give; with none, no handle is shown; a stand-in handle refuses every `storyboard.py` command | `storyboard.py` (every command); `gather.py` (`stats.json` `handle`) |
+| safe areas | at rest, type sits inside `safe-areas.json` and is never cut by the frame | `storyboard.py check` (the bounds check) |
+| **R4 motion and rhythm** | one camera: it pushes through the hook's flashes to the cut into the first month; each month makes its own move on the hold, no two consecutive months alike; before a jump cut the camera gathers back, and it lands on the next month's mark past it and settles; the months run two quick (5 beats) and one held (7), the story's peak longest (10); the closer holds still and silent after the stop | frames and the strip (the critics, `pacing` and `professional`); the kit's tests (moves, the gather and the landing, beats, the peak) |
+| no linear motion | every move uses the card's easing or the camera's own curves | the critics |
+| one held thing per beat | the moment's photograph and their line on it, the year in the hook, the year's chapters; nothing holds over a second except the 2 s still after the stop | the critics (the four reads, `held`) |
+| a hook | the year lands on its underline inside the first 30 frames | `qa.py timed` (hook) |
+| no black or dead air | no beat is ever empty; the only held frame is the ending's still | `blackdetect` (0.4 s), `freezedetect` (1.0 s before the stop) |
+| **R5 sound to picture** | the board's sound cues mark where a beat lands: the year on its line, each month, the build into the peak and its impact, the closer's hit and the sign-off's impact; words and moves have none; the effects sit 8.5 LU under the music and the gate refuses them closer than 8; the music stops where the sign-off lands; `storyboard.py snap` times the board at the music's tempo | the critics (the four reads, `sound`); `qa.py check` (audio); `film.json` names the tempo |
+| loudness | music mastered to -14 LUFS integrated, true peak -1.5 dB | `qa.py check` (audio, 1 LU) |
+| **R6 generated shots** | one request per shot, each the length of its beat, framed as the film frames it, a seamless loop: each month's photograph brought to life (its scene, the month's camera move, a lens, the photograph's measured light, the seconds of its hold), never a caption pasted in; the stand-in for a clip that never arrives is the look's move on the still photograph | `clips/requests.json`; the kit's tests |
+| **R7 the deliverable is unmistakable** | `out/` holds the film, the ten carousel cards, the three story cards, the caption, `boards.png`, the other two looks and `review.html` with the strip of the film's frames, and nothing else; the page opens on the film with the hook's story card as its poster, shows the other two looks and says how the film was made, and carries no score; the storyboards and the brief stay in `build/` | the `out/` listing; `qa.py gate` (`deliver`); the kit's tests (`test_deliver`) |
 
-Delivery: 1080×1920, 30 fps, H.264 high profile, yuv420p, CRF 18, AAC 192 kbps at 48 kHz, 45–75 s.
-Carousel: 10 PNGs at 1080×1350. Story cards: 3 PNGs at 1080×1920.
+Delivery: the reel, 1080x1920, 30 fps H.264 High, yuv420p, AAC 192 kbps at 48 kHz, 6 to 90 s (a full year runs under a minute; a sparse year is shorter).
+Carousel: 10 PNGs at 1080x1350, windows of the film's frames at rest. Story cards: 3 PNGs at 1080x1920, the film's
+frames at rest.

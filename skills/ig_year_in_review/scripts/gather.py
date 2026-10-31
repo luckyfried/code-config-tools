@@ -5,7 +5,7 @@ USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/gather.py [--pulled build/library/pulled] [--door instagram_account="open: 120 posts"] \
         [--door browser="closed: no signed-in session"] [--year 2026] [--photos DIR] [--root .]
 
-Doors, in order of preference (every one tried is recorded in library.json and in out/brief.md):
+Doors, in order of preference (every one tried is recorded in library.json and in build/brief.md):
   1. Material the agent pulled itself from the person's connected Instagram or Facebook account or a signed-in
      browser session, saved under --pulled DIR as items.json (shape below) with the media files beside it.
   2. Instagram "Download your information" exports (JSON) anywhere under --root, as folders or .zip files (a zip is
@@ -259,11 +259,6 @@ def read_export(root):
             smd = u.get("string_map_data") or {}
             handle = handle or fix((smd.get("Username") or {}).get("value", "")) or None
             name = name or fix((smd.get("Name") or {}).get("value", "")) or None
-    if not handle:
-        m = re.match(r"instagram-([A-Za-z0-9._]+?)-\d{4}-\d{2}-\d{2}", root.name)
-        if m:
-            handle = m.group(1)
-            notes.append(f"Username taken from the export's folder name ({root.name}).")
     return {"posts": posts, "reels": reels, "stories": stories, "likes": likes, "comments": comments,
             "followers": followers, "saved": saved, "following": following, "handle": handle, "name": name,
             "found": found, "notes": notes}
@@ -370,7 +365,7 @@ def pick_year(rows, asked):
 
 def write_howto(out):
     out.mkdir(exist_ok=True)
-    (out / "brief.md").write_text(f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
+    _env.write_text(out / "brief.md", f"# Year in review: no data found\n\n## Assumptions\n\n- No Instagram export and no folder of "
                                   f"photos was found in this workspace.\n\n## What to do\n\n{HOWTO}\n")
 
 
@@ -454,7 +449,7 @@ def main():
         sources.append("instagram download")
         doors["instagram_download"] = f"open: {rel(export, root)}"
     else:
-        doors.setdefault("instagram_download", "closed: none under the workspace")
+        doors.setdefault("instagram_download", "closed: no download in the workspace")
     fbs = [] if a.photos else find_exports(root, is_fb_export)
     for f in fbs:
         rows = read_facebook(f)
@@ -462,7 +457,7 @@ def main():
         doors[f"facebook_download:{f.name}"] = f"open: {len(rows)} posts and photos"
         d["found"]["facebook"] = [str(f)]
     if not fbs:
-        doors.setdefault("facebook_download", "closed: none under the workspace")
+        doors.setdefault("facebook_download", "closed: no download in the workspace")
     source = ("accounts" if sources and sources[0] != "instagram download" else "export") if sources else None
     if not d["posts"] and not d["reels"]:
         _env.need("PIL")
@@ -485,8 +480,8 @@ def main():
             return 3
     year, why = pick_year(d["posts"] + d["reels"] + d["stories"], a.year)
     assumptions.append(why)
-    handle = d["handle"] or "you"
-    assumptions.append(f"Handle: @{handle}." if d["handle"] else "No username in the data; the cards say 'you'.")
+    handle = (d["handle"] or "").strip().lstrip("@") or None
+    assumptions.append(f"Handle: @{handle}, from the profile." if handle else "No username in the export's profile files; no handle is shown.")
     inyear = lambda rows: sorted((r for r in rows if r.get("ts") and year_of(r["ts"]) == year), key=lambda r: r["ts"])
     lib = {k: inyear(d[k]) for k in ("posts", "reels", "stories", "likes", "saved", "comments", "facebook")}
     dates = [r["ts"] for r in lib["posts"] + lib["reels"] + lib["stories"]]
@@ -498,8 +493,6 @@ def main():
         missing = [k for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers") if not d["found"].get(k)]
         if missing:
             assumptions.append("Not in the data (left out): " + ", ".join(missing) + ".")
-        if not any(p.get("likes") is not None for p in lib["posts"]):
-            assumptions.append("The data has no likes per post, so top posts are picked by comments, else spread across the year.")
     shelve(lib)
     no_media = sum(1 for p in lib["posts"] if not p["media"])
     if no_media:
@@ -508,7 +501,7 @@ def main():
            "year": year, "range": span, "found": d["found"], **lib, "followers": d["followers"],
            "following": d["following"], "assumptions": assumptions + d["notes"]}
     _env.write_json("build/library.json", out)
-    print(f"source: {source}   handle: @{handle}   year: {year}   range: {span['first']} to {span['last']}")
+    print(f"source: {source}   handle: {'@' + handle if handle else 'none'}   year: {year}   range: {span['first']} to {span['last']}")
     print("  ".join(f"{k} {len(out[k])}" for k in ("posts", "reels", "stories", "likes", "saved", "comments", "followers",
                                                    "following", "facebook")))
     for k, v in doors.items():

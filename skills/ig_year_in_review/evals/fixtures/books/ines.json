@@ -1,0 +1,140 @@
+{
+ "handle": "ines.at.home",
+ "name": "Inês Moreira",
+ "year": 2026,
+ "exported": "2026-12-30",
+ "months": [
+  {
+   "month": 1,
+   "photo": "snow.jpg",
+   "posts": 6,
+   "likes": 214,
+   "caption": "snowed in at the cabin with rita. three days, one stove, no signal. @rita.moreira",
+   "more": [
+    "the red cabin under the snow",
+    "steps buried to the top"
+   ]
+  },
+  {
+   "month": 2,
+   "photo": "coffee.jpg",
+   "posts": 8,
+   "likes": 263,
+   "caption": "new job, first day. joana drew me a heart for luck. @joana.cafe",
+   "more": [
+    "the saucer and the spoon",
+    "lettering on the cup"
+   ]
+  },
+  {
+   "month": 3,
+   "photo": "bakery.jpg",
+   "posts": 9,
+   "likes": 287,
+   "caption": "a morning at avó's bakery. she let me shape the loaves. porto @padaria.lurdes",
+   "more": [
+    "loaves stacked to the ceiling",
+    "the price cards, all by hand"
+   ]
+  },
+  {
+   "month": 4,
+   "photo": "flowers.jpg",
+   "posts": 11,
+   "likes": 341,
+   "caption": "tulip fields outside amsterdam with marta. we got lost twice. @marta.sousa",
+   "more": [
+    "red all the way down the row",
+    "the dirt path between the beds"
+   ]
+  },
+  {
+   "month": 5,
+   "photo": "tomatoes.jpg",
+   "posts": 10,
+   "likes": 322,
+   "caption": "our first tomatoes. dad said nothing would grow on that plot. @joao.moreira",
+   "more": [
+    "gardening gloves and a clay bowl",
+    "one still green"
+   ]
+  },
+  {
+   "month": 6,
+   "photo": "picnic.jpg",
+   "posts": 12,
+   "likes": 365,
+   "caption": "a walk for marta's birthday. the alliums were out. porto @marta.sousa",
+   "more": [
+    "the white ones open first",
+    "bees all afternoon"
+   ]
+  },
+  {
+   "month": 7,
+   "photo": "garden.jpg",
+   "posts": 19,
+   "likes": 512,
+   "caption": "a week in provence with mum. lavender as far as you could see. @ana.moreira",
+   "more": [
+    "the gravel path down the middle",
+    "clouds over the orchard"
+   ]
+  },
+  {
+   "month": 8,
+   "photo": "cat.jpg",
+   "posts": 9,
+   "likes": 498,
+   "caption": "miso came home. she picked the sunniest window on day one.",
+   "more": [
+    "the blue eyes",
+    "whiskers in the light"
+   ]
+  },
+  {
+   "month": 9,
+   "photo": "hands-pottery.jpg",
+   "posts": 7,
+   "likes": 239,
+   "caption": "first pottery class with rita. my first bowl, only a little lopsided. @rita.moreira @barro.studio",
+   "more": [
+    "clay to the wrists",
+    "the wheel spinning"
+   ]
+  },
+  {
+   "month": 10,
+   "photo": "bookshop.jpg",
+   "posts": 10,
+   "likes": 301,
+   "caption": "book hunting with joana. the shop on rua das flores, porto. @joana.cafe",
+   "more": [
+    "shelves to the ceiling",
+    "the bulbs down the aisle"
+   ]
+  },
+  {
+   "month": 11,
+   "photo": "ramen.jpg",
+   "posts": 8,
+   "likes": 276,
+   "caption": "ramen in lisbon with rita, after the concert. @rita.moreira",
+   "more": [
+    "chashu at the rim",
+    "the noodles under it all"
+   ]
+  },
+  {
+   "month": 12,
+   "photo": "kids-party.jpg",
+   "posts": 13,
+   "likes": 389,
+   "caption": "leo's birthday at mum's. balloons in every room. @ana.moreira",
+   "more": [
+    "the strings tied to the chair",
+    "the green one with white dots"
+   ]
+  }
+ ]
+}

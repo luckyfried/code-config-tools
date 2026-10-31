@@ -35,5 +35,6 @@ sentence and stop. Do not make a film from nothing.
 
 ## Done when
 
-`build/library.json` exists and gather.py's summary names a year, a handle and counts. Read its `assumptions`; they
+`build/library.json` exists and gather.py's summary names a year, the handle the export's profile files give (or
+none) and counts. Read its `assumptions`; they
 go into `brief.md` as they are.

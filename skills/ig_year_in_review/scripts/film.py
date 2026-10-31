@@ -1,300 +1,188 @@
 #!/usr/bin/env python3
-"""Movement 4: the film, the carousel and the story cards, rendered from build/film.json.
+"""Movement 4: the film and its stills, rendered by the studio composition from the cut storyboard (build/film.json).
 
 USAGE (from the workspace root; S = this skill's folder):
-    python3 S/scripts/film.py render            # out/film.mp4 + out/carousel/NN-*.png + out/stories/NN-*.png
-    python3 S/scripts/film.py render --only film|cards
-    python3 S/scripts/film.py frames            # one frame per beat of out/film.mp4 into build/frames/NN-<beat>.png
-    python3 S/scripts/film.py stills            # the stills route (no node): the same film.json as stills under motion
+    python3 S/scripts/film.py preview   # the reel at half size, measured: build/preview/film.mp4, preview.json, strips
+    python3 S/scripts/film.py render    # out/film.mp4 (1080x1920), out/carousel/01..10.png (1080x1350),
+                                        # out/stories/01..03.png (1080x1920), out/strip/01..08.jpg (540x960),
+                                        # build/frames/*.png
 
-The engine is the Remotion project in S/motion (setup.py installs it). render writes the silent picture to
-build/film.silent.mp4 (1080x1920, 30 fps, H.264 high, CRF 18), then lays the mastered music under it
-(build/music/master.wav from music.py, AAC 192 kbps) into out/film.mp4. Every SAFE_BREACH (text that left its
-safe box), FONT_ERROR and render error lands in build/render-report.json, which qa.py gate reads.
-build/timeline.json carries each beat's start and length for qa.py and the frame extraction.
-When setup.py reports engine "stills", render runs the stills route instead and build/engine.json says so.
+preview is what the critic's timed read and qa.py timed look at before the film renders: the cuts as planned and as
+the picture shows them, cuts per minute, the luma line and its quiet seconds, and the hook event's frame. It prints
+every cut the picture shows that the storyboard does not plan, beside the board's sound cue nearest it: each one is a
+move that reads as a cut, answered before the critic reads.
+render refuses until qa.py timed has passed this cut (build/qa/timed.json names film.json's hash). It renders the
+reel, lays the mastered music (the master build/music.json names) under it at AAC 192 kbps, and takes every still from the
+film's own frames at rest, so the cards carry the film's grade and type:
+
+  stories   01 the hook's window over the months' photographs, 02 the story's peak open with its line (the middle
+            month's when the year has no peak), 03 the closer's wall at its stop
+  carousel  01 the hook, 02-09 eight months open with their lines (spread evenly through the year, the peak among
+            them, in calendar order), 10 the closer's wall; each a 1080x1350 window of the reel's frame around the
+            type area
+  strip     01 the hook, 02-07 six months open with their lines (spread evenly through the year, the peak among
+            them, in calendar order), 08 the closer's wall; each the reel's frame at half size, the review page's strip
+            beside the player, and 01 its poster
+
+The film, the stories, the carousel and the strip are made in out.part/ beside out/ and move into out/ by rename once
+every one of them is made, the reel last; a card or frame the new set does not make leaves after. The page that says
+out/ is ready to post (out/review.html, which deliver writes) and the render report qa.py and vote.py cut read
+(build/render/film-report.json: every finding the composition logged, and the hash of the cut out/ shows) both name
+out/, so they go before the first file moves in, and the report is published after the reel; the render works on its
+own report under a staging name until then. A render stopped between two files, or a retry stopped before its first
+file moves, leaves a set the gate refuses. build/frames/ holds the hook, an
+ordinary month, the story's peak and the closer at half size for the critics. preview.json names the cut its film
+shows, so it goes before the preview renders and comes back after the measure.
 """
 import argparse
-import copy
-import json
 import os
-import subprocess
+import shutil
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import studio  # noqa: E402
 
-FPS = 30
-PUBLIC = Path("build/public")
-
-
-def clip_for(beat, clips):
-    c = beat.get("clip")
-    if not c:
-        return None
-    if isinstance(c, dict):
-        return c
-    got = clips.get(c) or {}
-    return {"id": c, "file": got.get("file"), "frames": got.get("frames", 0),
-            "image": got.get("image") or (beat.get("photos") or [None])[0], "status": got.get("status", "pending")}
+OUT = Path("../out")
+CARD = (1080, 1350)
+STRIP = (540, 960)
+# where a carousel card's window sits on the reel's frame: the reel's type area (270 to 1250 px) with room around it
+CARD_TOP = 135
 
 
-def props_for(board):
-    """The composition props: the board with every clip reference resolved to a file or its substitute."""
-    b = copy.deepcopy(board)
-    clips = (_env.read_json("build/clips.json") or {}).get("clips", {})
-    for bt in b["beats"]:
-        bt["clip"] = clip_for(bt, clips)
-        if bt["clip"] and bt["clip"].get("image") is None and bt.get("photos"):
-            bt["clip"]["image"] = bt["photos"][0]
-    for bt in b.get("cards", []) + b.get("stories", []):
-        bt["clip"] = None
-    for k in ("timeline", "clips", "idea", "music", "structure", "tone", "clip_use", "direction", "seconds"):
-        b.pop(k, None)
-    return {"board": b}
+def film():
+    f = _env.read_json("film.json")
+    if not f:
+        sys.exit("film.json is missing: run storyboard.py snap first")
+    return f, _env.read_json(f["boards"]["reel"])
 
 
-def render_jobs(jobs, report, concurrency=None):
-    t = _env.tools()
-    if t.get("engine") != "remotion":
-        sys.exit("the motion engine is not installed (setup.py reports engine 'stills'); run film.py stills")
-    spec = {"publicDir": str(PUBLIC.resolve()), "report": str(Path(report).resolve()), "jobs": jobs,
-            "bundleDir": str(Path(os.environ.get("TMPDIR") or Path("build/.bundle").resolve()) / "yir-bundle")}
-    if concurrency:
-        spec["concurrency"] = concurrency
-    jf = Path("build/render") / f"{Path(report).stem}.jobs.json"
-    _env.write_json(jf, spec)
-    node = t["node"]
-    env = dict(os.environ, PATH=f"{Path(node).parent}{os.pathsep}{os.environ.get('PATH', '')}")
-    r = subprocess.run([node, str(Path(t["motion"]) / "render.mjs"), str(jf.resolve())], env=env)
-    rep = _env.read_json(report) or {"failed": len(jobs), "findings": [{"text": f"render.mjs exited {r.returncode}"}]}
-    return rep
+def month_rests(board):
+    """Each month's frame at rest: its halves open, its line said, the camera not yet pulling back (the storyboard's
+    rest frame)."""
+    pulse = 30 * 60 / board["bpm"]
+    return {m["id"]: round((m["at"]["pull"][0] - 0.1) * pulse) for m in board["year"]["months"]}
 
 
-def timeline(beats):
-    out, start = [], 0
-    for i, b in enumerate(beats):
-        t = (b.get("transition") or {}).get("frames", 0) if i else 0
-        start = start - t if i else 0
-        out.append({"id": b["id"], "kind": b["kind"], "start": start, "frames": b["frames"], "transition": t,
-                    "start_s": round(start / FPS, 3), "seconds": round(b["frames"] / FPS, 3),
-                    "shots": [0] + list((b.get("data") or {}).get("cuts") or []) + [b["frames"]]})
-        start += b["frames"]
-    return out
-
-
-def card_jobs(board, props):
-    jobs = []
-    cards = board.get("cards", [])
-    for i, c in enumerate(cards):
-        jobs.append({"type": "still", "composition": "Card", "frame": 0, "scale": 1,
-                     "props": {"board": props["board"], "beat": c, "format": "carousel", "index": i, "total": len(cards)},
-                     "out": str(Path(f"out/carousel/{i + 1:02d}-{c['id']}.png").resolve())})
-    for i, c in enumerate(board.get("stories", [])):
-        jobs.append({"type": "still", "composition": "Card", "frame": 0, "scale": 1,
-                     "props": {"board": props["board"], "beat": c, "format": "story", "index": i, "total": 1},
-                     "out": str(Path(f"out/stories/{i + 1:02d}-{c['id']}.png").resolve())})
-    return jobs
-
-
-def mux(silent, out, seconds):
-    ff = _env.ffmpeg()
-    master = Path("build/music/master.wav")
-    if master.exists():
-        cmd = [ff, "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a",
-               "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{seconds:.3f}",
-               "-movflags", "+faststart", str(out)]
-    else:
-        cmd = [ff, "-y", "-v", "error", "-i", str(silent), "-c:v", "copy", "-movflags", "+faststart", str(out)]
-    subprocess.run(cmd, check=True)
-    return master.exists()
-
-
-def cmd_render(a):
-    board = _env.read_json("build/film.json")
-    if not board:
-        sys.exit("build/film.json is missing: run storyboard.py snap first")
-    if _env.tools().get("engine") != "remotion":
-        return cmd_stills(a)
-    for d in ("out/carousel", "out/stories"):
-        Path(d).mkdir(parents=True, exist_ok=True)
-        if a.only in (None, "cards"):
-            for f in Path(d).glob("*.png"):
-                f.unlink()
-    props = props_for(board)
-    jobs = []
-    silent = Path("build/film.silent.mp4").resolve()
-    if a.only in (None, "film"):
-        jobs.append({"type": "video", "composition": "Film", "props": props, "out": str(silent), "crf": 18, "preset": "medium"})
-    if a.only in (None, "cards"):
-        jobs += card_jobs(board, props)
-    t0 = time.time()
-    rep = render_jobs(jobs, "build/render-report.json")
-    tl = timeline(board["beats"])
-    secs = (tl[-1]["start"] + tl[-1]["frames"]) / FPS
-    _env.write_json("build/timeline.json", {"fps": FPS, "seconds": secs, "beats": tl})
-    _env.write_json("build/engine.json", {"engine": "remotion", "node": _env.tools().get("node"),
-                                          "seconds": round(time.time() - t0, 1), "jobs": len(jobs)})
-    music = False
-    if a.only in (None, "film") and silent.exists():
-        Path("out").mkdir(exist_ok=True)
-        music = mux(silent, Path("out/film.mp4"), secs)
-    for f in rep.get("findings", []):
-        print("finding:", f["text"][:400])
-    print(f"rendered {len(jobs) - rep.get('failed', 0)} of {len(jobs)} jobs in {time.time() - t0:.1f} s; "
-          f"film {secs:.1f} s{' with music' if music else ' (no music track)'} -> out/film.mp4")
-    return 1 if rep.get("failed") else 0
-
-
-def cmd_frames(a):
-    tl = _env.read_json("build/timeline.json")
-    film = Path(a.film)
-    if not tl or not film.exists():
-        sys.exit("out/film.mp4 and build/timeline.json are needed: run film.py render first")
-    out = Path(a.out)
-    out.mkdir(parents=True, exist_ok=True)
-    for f in out.glob("*.png"):
-        f.unlink()
-    ff = _env.ffmpeg()
-    for i, b in enumerate(tl["beats"], 1):
-        # the settled moment of the beat's longest shot: past its entrance, before the next cut or transition
-        edges = b.get("shots") or [0, b["frames"]]
-        lo, hi = max(((edges[k], edges[k + 1]) for k in range(len(edges) - 1)), key=lambda e: e[1] - e[0])
-        lo = max(lo, b["transition"])
-        t = (b["start"] + lo + (hi - lo) * 0.7) / FPS
-        dst = out / f"{i:02d}-{b['id']}.png"
-        subprocess.run([ff, "-y", "-v", "error", "-ss", f"{t:.3f}", "-i", str(film), "-frames:v", "1", str(dst)], check=True)
-    print(f"{len(tl['beats'])} frames -> {out}/")
+def cmd_preview(a, run):
+    f, board = film()
+    d = Path("preview")
+    d.mkdir(exist_ok=True)
+    (d / "preview.json").unlink(missing_ok=True)
+    rep = studio.render([studio.video(board, d / "film.mp4", f["frames"], scale=0.5)], "preview", run)
+    if rep["failed"]:
+        sys.exit("the preview render failed; see build/render/preview.log")
+    m = studio.measure(d / "film.mp4", f["cuts"], f["hook_frame"], run=run)
+    m.update(hash=f["hash"], style=f["style"], findings=[x["text"][:200] for x in rep["findings"]])
+    _env.write_json(d / "preview.json", m)
+    print(f"preview: {m['seconds']} s, {m['cuts']} cuts ({m['cuts_per_minute']} a minute), hook at frame {m['hook_event_frame']}, "
+          f"seconds under 0.5: {m['seconds_under_half']} -> build/{d / 'preview.json'}, strip {m['strip2']}")
+    sec = 60 / board["bpm"]
+    cues = [(c["at"] * sec, f"{c['beat']}, {c['what']}") for c in board.get("sound") or []]
+    for t in m["extra_scene_cuts"]:
+        at, what = min(cues, key=lambda c: abs(c[0] - t), default=(t, "no sound cue"))
+        print(f"  unplanned cut {t:.2f} s: nearest cue {what} ({t - at:+.2f} s)")
     return 0
 
 
-# ------------------------------------------------------------------ the stills route (no node)
-def cmd_stills(a):
-    """Each beat as one composed still under an eased push, cut with crossfades. Same film.json, same out/ names."""
-    _env.need("PIL")
-    from PIL import Image, ImageDraw, ImageFilter, ImageOps
-    board = _env.read_json("build/film.json")
-    if not board:
-        sys.exit("build/film.json is missing: run storyboard.py snap first")
-    s = board["system"]
-    W, H = board["format"]["width"], board["format"]["height"]
-    safe = s["safe"]["reel"]
-    fonts = {k: str(_env.SKILL / s[k]["file"]) for k in ("display", "text")}
-    from PIL import ImageFont
+def mux(run, silent, out, seconds):
+    master = (_env.read_json("music.json") or {}).get("master")
+    if master:
+        run.spawn([_env.ffmpeg(), "-y", "-v", "error", "-i", str(silent), "-i", str(master), "-map", "0:v", "-map", "1:a",
+                   "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{seconds:.3f}", "-movflags", "+faststart",
+                   str(out)], check=True)
+    else:
+        shutil.copyfile(silent, out)
+    return bool(master)
 
-    def font(kind, size):
-        return ImageFont.truetype(fonts[kind], size)
 
-    def photo(p, w, h):
-        im = Image.open(PUBLIC / p).convert("RGB")
-        return ImageOps.fit(im, (w, h), Image.LANCZOS)
+def card(src, dst):
+    """A carousel card: the 1080x1350 window of a reel frame around its type area."""
+    from PIL import Image
+    im = Image.open(src).convert("RGB")
+    im.crop((0, CARD_TOP, CARD[0], CARD_TOP + CARD[1])).save(dst, "PNG")
 
-    def compose(bt, w, h, sf):
-        bg = Image.new("RGB", (w, h), s["colors"]["bg"])
-        ph = (bt.get("photos") or [])
-        if bt.get("clip") and isinstance(bt["clip"], dict) and bt["clip"].get("image"):
-            ph = [bt["clip"]["image"]] + ph
-        if ph:
-            bg.paste(photo(ph[0], w, h))
-            shade = Image.new("L", (1, 256))
-            for y in range(256):
-                shade.putpixel((0, y), int(max(0, (y - 90) / 166) * 200))
-            bg = Image.composite(Image.new("RGB", (w, h), s["colors"]["bg"]), bg, shade.resize((w, h)))
-        d = ImageDraw.Draw(bg)
-        t = bt.get("text") or {}
-        if bt["kind"] == "StatCard" and (bt.get("data") or {}).get("stats"):
-            st = bt["data"]["stats"][0]
-            t = {"kicker": t.get("kicker"), "headline": f"{st['value']:,}", "line": st["label"]}
-        if bt["kind"] == "KineticType" and (bt.get("data") or {}).get("rows"):
-            t = {"kicker": t.get("kicker"), "headline": bt["data"]["rows"][0]["text"], "line": t.get("line")}
-        if bt["kind"] == "Mosaic" and (bt.get("data") or {}).get("groups"):
-            g = bt["data"]["groups"][0]
-            t = {"kicker": g.get("label"), "headline": g.get("headline"), "line": g.get("line")}
-        left, bottom, maxw = int(safe["left"] * sf), int(h - safe["bottom"] * sf), int(w - (safe["left"] + safe["right"]) * sf)
-        y = bottom
-        blocks = []
-        if t.get("line"):
-            blocks.append(("text", t["line"], int(s["scale"]["body"] * sf), s["colors"]["ink"]))
-        if t.get("headline"):
-            size = int(s["scale"]["h1"] * sf)
-            while size > 20 and font("display", size).getlength(str(t["headline"])) > maxw * 1.9:
-                size -= 4
-            blocks.append(("display", t["headline"], size, s["colors"]["ink"]))
-        if t.get("kicker"):
-            blocks.append(("text", str(t["kicker"]).upper(), int(s["scale"]["label"] * sf), s["colors"]["accent"]))
-        for kind, text, size, color in blocks:
-            f = font(kind, size)
-            words, lines, cur = str(text).split(), [], ""
-            for wd in words:
-                nxt = (cur + " " + wd).strip()
-                if f.getlength(nxt) <= maxw or not cur:
-                    cur = nxt
-                else:
-                    lines.append(cur)
-                    cur = wd
-            lines.append(cur)
-            for ln in reversed(lines):
-                y -= int(size * 1.08)
-                d.text((left, y), ln, font=f, fill=color)
-            y -= int(size * 0.4)
-        return bg
 
-    ff = _env.ffmpeg()
-    work = Path("build/stills")
-    work.mkdir(parents=True, exist_ok=True)
-    props = props_for(board)["board"]
-    parts = []
-    for i, bt in enumerate(props["beats"]):
-        im = compose(bt, W, H, 1)
-        f = work / f"{i + 1:02d}-{bt['id']}.png"
-        im.save(f)
-        secs = bt["frames"] / FPS
-        clip = work / f"{i + 1:02d}.mp4"
-        z = "1+0.06*(1-pow(1-on/{n},3))".format(n=bt["frames"])
-        subprocess.run([ff, "-y", "-v", "error", "-loop", "1", "-i", str(f), "-t", f"{secs:.3f}", "-vf",
-                        f"scale={W * 2}:{H * 2},zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={bt['frames']}:s={W}x{H}:fps={FPS},format=yuv420p",
-                        "-c:v", "libx264", "-profile:v", "high", "-crf", "18", "-r", str(FPS), str(clip)], check=True)
-        parts.append((clip, secs, (bt.get("transition") or {}).get("frames", 0) / FPS))
-    inputs, flt, last, offset = [], [], "0:v", 0
-    for k, (clip, secs, tr) in enumerate(parts):
-        inputs += ["-i", str(clip)]
-    offset = parts[0][1]
-    for k in range(1, len(parts)):
-        tr = max(0.1, parts[k][2])
-        offset -= tr
-        flt.append(f"[{last}][{k}:v]xfade=transition=fade:duration={tr:.3f}:offset={offset:.3f}[v{k}]")
-        last = f"v{k}"
-        offset += parts[k][1]
-    silent = Path("build/film.silent.mp4")
-    subprocess.run([ff, "-y", "-v", "error", *inputs, "-filter_complex", ";".join(flt), "-map", f"[{last}]",
-                    "-c:v", "libx264", "-profile:v", "high", "-crf", "18", "-pix_fmt", "yuv420p", "-r", str(FPS), str(silent)], check=True)
-    tl = timeline(board["beats"])
-    secs = (tl[-1]["start"] + tl[-1]["frames"]) / FPS
-    _env.write_json("build/timeline.json", {"fps": FPS, "seconds": secs, "beats": tl})
-    Path("out").mkdir(exist_ok=True)
-    music = mux(silent, Path("out/film.mp4"), secs)
-    for d, items, size in (("out/carousel", board.get("cards", []), (1080, 1350)), ("out/stories", board.get("stories", []), (1080, 1920))):
-        Path(d).mkdir(parents=True, exist_ok=True)
-        for f in Path(d).glob("*.png"):
-            f.unlink()
-        for i, c in enumerate(items):
-            compose(c, size[0], size[1], 1 if size[1] == 1920 else 0.75).save(Path(d) / f"{i + 1:02d}-{c['id']}.png")
-    _env.write_json("build/engine.json", {"engine": "stills", "why": "node could not be installed on this machine"})
-    _env.write_json("build/render-report.json", {"failed": 0, "findings": [], "engine": "stills"})
-    print(f"stills route: film {secs:.1f} s{' with music' if music else ''} -> out/film.mp4; cards -> out/carousel/, out/stories/")
+def strip_frame(src, dst):
+    """A frame of the review page's strip: a reel frame at half size."""
+    from PIL import Image
+    Image.open(src).convert("RGB").resize(STRIP, Image.LANCZOS).save(dst, "JPEG", quality=88)
+
+
+def spread(ms, n, peak):
+    """n of the months, spread evenly through the year with the peak among them, in calendar order; every month when
+    the year has n or fewer."""
+    pick = [ms[round(i * (len(ms) - 1) / (n - 1))] for i in range(n)] if len(ms) > n else list(ms)
+    if peak not in pick:
+        pick[min(range(len(pick)), key=lambda i: abs(pick[i]["month"] - peak["month"]))] = peak
+    return sorted(pick, key=lambda m: m["month"])
+
+
+def publish(part, rep):
+    """Moves every file made in `part` into out/ by rename, the reel last, with the review page and the render report
+    (`rep`) gone while they move; then the report comes back and the cards and frames of out/ the new set does not
+    make leave."""
+    made = {p.relative_to(part) for p in part.rglob("*") if p.is_file()}
+    report = Path("render/film-report.json")
+    (OUT / "review.html").unlink(missing_ok=True)
+    report.unlink(missing_ok=True)
+    for rel in sorted(made, key=lambda r: (r == Path("film.mp4"), str(r))):
+        (OUT / rel).parent.mkdir(parents=True, exist_ok=True)
+        os.replace(part / rel, OUT / rel)
+    _env.write_json(report, rep)
+    for d in ("carousel", "stories", "strip"):
+        for p in (OUT / d).glob("*.*"):
+            if p.relative_to(OUT) not in made:
+                p.unlink()
+    shutil.rmtree(part)
+
+
+def cmd_render(a, run):
+    f, board = film()
+    gate = _env.read_json("qa/timed.json") or {}
+    if gate.get("hash") != f["hash"] or not gate.get("pass"):
+        sys.exit("qa.py timed has not passed this cut: run film.py preview, vote.py timed (the critic's timed read) and qa.py timed first")
+    y = board["year"]
+    rests = f["rests"]["reel"]
+    months = month_rests(board)
+    ms = y["months"]
+    peak = next((m for m in ms if m["peak"]), ms[len(ms) // 2])
+    eight = spread(ms, 8, peak)
+    part = OUT.with_name("out.part")
+    shutil.rmtree(part, ignore_errors=True)
+    for d in (part / "carousel", part / "stories", part / "strip", Path("render/silent"), Path("render/stills"), Path("frames")):
+        d.mkdir(parents=True, exist_ok=True)
+    stills = {"hook": rests["hook"], "closer": rests["closer"], **months}
+    jobs = [studio.video(board, Path("render/silent/film.mp4"), f["frames"])]
+    jobs += [studio.still(board, fr, Path("render/stills") / f"{k}.png") for k, fr in stills.items()]
+    jobs += [studio.still(board, fr, Path("frames") / f"{k}.png", scale=0.5) for k, fr in rests.items()]
+    rep = studio.render(jobs, "film", run)
+    if rep["failed"]:
+        sys.exit("a render job failed; see build/render/film.log and build/render/film-report.part.json")
+    music = mux(run, Path("render/silent/film.mp4"), part / "film.mp4", f["seconds"])
+    S = Path("render/stills")
+    for i, k in enumerate(("hook", peak["id"], "closer"), 1):
+        shutil.copyfile(S / f"{k}.png", part / "stories" / f"{i:02d}-{k}.png")
+    for i, k in enumerate(["hook", *[m["id"] for m in eight], "closer"], 1):
+        card(S / f"{k}.png", part / "carousel" / f"{i:02d}-{k}.png")
+    for i, k in enumerate(["hook", *[m["id"] for m in spread(ms, 6, peak)], "closer"], 1):
+        strip_frame(S / f"{k}.png", part / "strip" / f"{i:02d}-{k}.jpg")
+    publish(part, dict(rep, hash=f["hash"]))
+    print("wrote out/film.mp4, out/carousel/ (10 cards), out/stories/ (3 cards), out/strip/ (8 frames) and build/frames/"
+          + ("" if music else " (music.json names no master: the film is silent)"))
     return 0
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["render", "frames", "stills"])
-    ap.add_argument("--only", choices=["film", "cards"])
-    ap.add_argument("--film", default="out/film.mp4")
-    ap.add_argument("--out", default="build/frames")
+    ap.add_argument("cmd", choices=["preview", "render"])
     a = ap.parse_args()
-    return {"render": cmd_render, "frames": cmd_frames, "stills": cmd_stills}[a.cmd](a)
+    _env.need("PIL")
+    _env.enter_build()
+    # the render lock is taken before the command's first write into the run, so a refused second one changes nothing
+    with studio.lock({"preview": "preview", "render": "film"}[a.cmd]) as run:
+        return {"preview": cmd_preview, "render": cmd_render}[a.cmd](a, run)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
-# 2. Storyboards: three different films, not three versions of one
+# 2. Three looks: the film of their year, computed from their moments, in three styles
 
-Goal: `build/storyboards/1..3/` each with `storyboard.md`, `storyboard.json` and a six-frame style sheet
-(`frames/01..06.png` and `sheet.png`).
+Goal: for each of the three styles, `build/storyboards/<style>/` with `board-reel.json`, `plan.json`,
+`storyboard.md` and `sheet.png`; `build/storyboards/boards.json` naming them in order; and `out/boards.png`.
 
 ## Draft
 
@@ -9,38 +9,57 @@ Goal: `build/storyboards/1..3/` each with `storyboard.md`, `storyboard.json` and
 python3 S/scripts/storyboard.py draft
 ```
 
-`draft` turns their palette into the film's grade (`build/grade.json`, `design/grade.md`), grades the photos it
-uses into `build/public/graded/` and writes three boards that differ on structure, tone and clip use:
+The three styles are analog-home-movie, kinetic-type and swiss-grid; when `taste.json` `style` names a style, it is
+that one and the two that differ from it most. Each board is the kit's one story told in one style card
+(`S/styles/<id>.json`):
 
-| board | structure | tone | generated clips |
-|---|---|---|---|
-| 1 month by month | chronological months | quiet editorial (paper, soft serif) | build the world: an establishing opener, the closer |
-| 2 by the numbers | chapters of their numbers | kinetic type, bold fields | texture between chapters |
-| 3 one thread | their trip or their busiest stretch | documentary (near-black, mono labels) | their stills brought to life, their own reels inside |
+- **The hook.** The year lands on its underline the way the card brings type on (typed, slammed, cut in), and the line
+  opens into a window where every month flashes, each as long as the next, up to a hard cut into the first month.
+- **The months**, in calendar order whatever order `build/picks.json` lists them in: two quick months (5 beats) and a
+  held one (7), the story's peak (`"peak": true` in `taste.json` `moments`) longest (10). Each month's photograph
+  stands where the card's photo layout puts it: full frame as a print over its own soft field (the home movie), in a
+  box of the frame on the card's ground (the grid), or not at all, the card's ground alone under the words (kinetic
+  type). The month's name and their line for it come on the card's way, in the card's faces and colors, off the
+  photograph's subject, inside the type area through the whole hold, and the camera gathers before each jump cut and
+  lands on the next month's mark.
+- **The ending.** Every month closes into its row of the year's chapters, a dot joins the rows, and the card's own
+  closer lands the sign-off on the music's stop, then two silent seconds.
 
-Each beat names its component (`Opener`, `StatCard`, `PhotoLive`, `Mosaic`, `KineticType`, `ClipShot`, `Closer`),
-its frames at 30 fps, its transition preset (`design/transitions.json`), its photos, its words and its clip.
+Every beat's move and cut is one of the card's own, picked from what that beat shows (a title, a wall, a photograph,
+the peak, the ending), never by position. The colors are the ones the card's palette rule makes from their year's
+palette. A month's words stand on a plate of the card's color as dense as 4.5:1 over the photograph under them needs;
+each line set on the wall takes the card's ink or paper by the light of the ground under it. The handle is the
+username the export's profile files give (`stats.json` `handle`), or there is none on screen; every `storyboard.py`
+command refuses a stand-in handle (@you, @username, @your_handle and the like), as the handle or anywhere in the words
+on screen. A year with few months makes a shorter film, never a refusal.
 
-## Make each board better than the draft
+Each `storyboard.md` states, per beat, the moment it shows, its photograph, its move and cut, what the move reveals
+and what it carries across the cut; the sound cues (a hit as each month lands, a build into the story's peak and an
+impact on it, the ending's hit and impact, and the stop where picture and music end together); the music brief and
+the `Mixed:` line `music.py master` fills; and the generated clips, each with its prompt, length and the move that
+stands in for it.
 
-Read each `storyboard.md`. Rewrite any line that does not sound like `taste.md` (their case, their length, no
-exclamation marks if they use none), swap a photo that is not their best (`grade.py photos FILE`, then
-`"graded/<name>.jpg"` in the beat), fix a clip prompt that does not fit their taste. Keep the three boards different.
-Then:
+## Check, then look
 
 ```
-python3 S/scripts/storyboard.py check && python3 S/scripts/storyboard.py sheets
+python3 S/scripts/storyboard.py check
+python3 S/scripts/storyboard.py sheets
 ```
 
-`check` refuses a board outside 45–75 s, a beat under 1.2 s, an unknown component or transition, a missing asset,
-a placeholder, a clip prompt without "no text", or a board without 10 cards and 3 stories. `sheets` renders six
-frames per board with the real engine (about 15 s for all three).
+`check` refuses a board where a line of type leaves the reel's safe area at its rest, any type holds under 4.5:1 over
+what is under it, a month's words cover its photograph's subject, a row's month is under 48 px or the sign-off under
+72 px, a cut runs outside 6 to 90 s, or the hook lands after frame 30; and it refuses the set when two styles share
+more than two of the six style axes, a board uses a face, move, cut or color its card does not have, or a board
+repeats one length, one word position or one move on consecutive beats.
 
-## Look at the sheets
-
-Open each `build/storyboards/N/sheet.png` with the Read tool, then any frame that looks wrong full size. Fix text
-that collides, crops that lose the subject, colors that fight their photos; run `check` and `sheets` again.
+`sheets` renders each board's hook, a month and its ending at rest into its `sheet.png`, and the three side by side,
+each under its name and one plain sentence, into `out/boards.png`. Open `out/boards.png` with the Read tool, then any
+frame under `build/storyboards/<style>/frames/` that looks wrong at full size. A month's line that is not their own
+words is fixed in that month's `taste.json` `moments` `line`; a sign-off that does not sound like `taste.md` in
+`taste.json` `words`; a line that misses its photograph's edge in that month's `line` in `build/picks.json`; then
+`draft`, `check` and `sheets` again. The layout is computed: do not edit a board by hand.
 
 ## Done when
 
-Three sheets that look like three different films, every one of them clearly theirs.
+`check` reports zero findings, the three looks on `out/boards.png` read as three different films of the same year, and
+each beat's row in every `storyboard.md` names a moment they would recognize.
