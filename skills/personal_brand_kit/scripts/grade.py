@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""The film's color grade, derived from the person's palette and applied to every photo and clip.
+"""The film's color grade, derived from the person's palette and applied to every photograph.
 
 USAGE (from the workspace root):
-    python3 S/scripts/grade.py recipe            # build/taste.json -> build/grade.json (the ffmpeg filter and why)
-    python3 S/scripts/grade.py photos [FILE...]  # grade build/photos/*.jpg (or the files named) into build/public/graded/
+    python3 S/scripts/grade.py recipe            # taste.json -> grade.json (the ffmpeg filter and why)
+    python3 S/scripts/grade.py photos [FILE...]  # grade photos/*.jpg (or the files named) into public/graded/
     python3 S/scripts/grade.py show              # print the filter
 
-The recipe (design/grade.md has the reasoning):
-  shadows lean toward the hue of their darkest color, highlights toward their lightest, midtones toward the
-  feed's average hue; saturation follows how saturated their palette is; a film taste lifts the blacks and
-  rolls off the whites. One ffmpeg filter string carries all of it, so a photo and a generated clip get the
-  identical grade. Also writes build/public/fx/grain.png, the grain tile the renderer overlays when taste asks.
+The recipe:
+  each photograph is first matched to the film: its own color cast taken out, and its saturation and
+  exposure brought toward one level (`match`), so a cyan beach, a sepia library and a neutral room start alike;
+  then shadows lean toward the hue of their darkest color, highlights toward their lightest, midtones toward the
+  feed's average hue, and saturation follows how saturated their palette is (`filter`, one ffmpeg filter string,
+  so every photograph gets the identical grade). The look the film wears over every frame (grain, grade,
+  bloom) is the style card's finish, never this file's.
 """
 import argparse
 import colorsys
-import random
+import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -23,7 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 
-PUBLIC = Path("build/public")
+PUBLIC = Path("public")
 GRADED = PUBLIC / "graded"
 
 
@@ -49,50 +51,69 @@ def recipe(taste):
     mean = tuple(sum(c[i] * wi for c, wi in zip(rgbs, w)) / sum(w) for i in range(3))
     sats = [colorsys.rgb_to_hsv(*(x / 255 for x in c))[1] for c in rgbs]
     sat = sum(sats) / len(sats)
-    film = bool(taste.get("texture", {}).get("grain"))
     rs, gs, bs = lean(dark, 0.9)
     rm, gm, bm = lean(mean, 0.45)
     rh, gh, bh = lean(light, 0.6)
     saturation = round(max(0.78, min(1.18, 0.82 + sat * 0.55)), 3)
-    contrast = 1.04 if film else 1.08
-    lift, roll = (0.05, 0.95) if film else (0.015, 0.985)
-    f = (f"eq=contrast={contrast}:saturation={saturation},"
-         f"colorbalance=rs={rs}:gs={gs}:bs={bs}:rm={rm}:gm={gm}:bm={bm}:rh={rh}:gh={gh}:bh={bh},"
-         f"curves=all='0/{lift} 0.5/0.5 1/{roll}'")
-    why = (f"shadows toward {sw[[hex_rgb(s['hex']) for s in sw].index(dark)]['hex']}, highlights toward "
-           f"{sw[[hex_rgb(s['hex']) for s in sw].index(light)]['hex']}, saturation x{saturation} from a palette "
-           f"saturation of {sat:.2f}, " + ("lifted blacks and soft whites for their film look" if film else "clean blacks"))
-    return {"filter": f, "why": why, "film": film}
+    f = (f"eq=contrast=1.06:saturation={saturation},"
+         f"colorbalance=rs={rs}:gs={gs}:bs={bs}:rm={rm}:gm={gm}:bm={bm}:rh={rh}:gh={gh}:bh={bh}")
+    why = (f"each photograph's own cast taken out first, then shadows toward {sw[[hex_rgb(s['hex']) for s in sw].index(dark)]['hex']}, "
+           f"highlights toward {sw[[hex_rgb(s['hex']) for s in sw].index(light)]['hex']}, saturation x{saturation} from a palette "
+           f"saturation of {sat:.2f}")
+    return {"filter": f, "why": why}
 
 
-def grain_tile(path, seed=7):
-    from PIL import Image
-    rnd = random.Random(seed)
-    n = 512
-    data = bytes(max(0, min(255, int(rnd.gauss(128, 46)))) for _ in range(n * n))
-    Image.frombytes("L", (n, n), data).convert("RGB").save(path)
+# how much of a photograph's own color cast the match takes out, and how far its saturation and exposure move toward
+# the film's level: all of the cast, and nearly all the way to the level, so every photograph stands in one light
+# before the shared grade tints them together
+CAST, LEVEL = 1.0, 0.9
+# the film's level: a photograph's mean saturation and its mean brightness, both 0-1
+SATURATION, BRIGHTNESS = 0.26, 0.47
+
+
+def match(img):
+    """The ffmpeg filter that matches one photograph (a PIL image) to the film before the shared grade: each channel
+    scaled so CAST of the cast between the channels' means goes, then the saturation and the brightness moved LEVEL
+    of the way (as ratios) toward SATURATION and BRIGHTNESS."""
+    import math
+    small = img.convert("RGB").resize((48, 48))
+    raw = small.tobytes()
+    px = [(raw[i] / 255, raw[i + 1] / 255, raw[i + 2] / 255) for i in range(0, len(raw), 3)]
+    mean = [sum(c[i] for c in px) / len(px) for i in range(3)]
+    gray = sum(mean) / 3
+    gains = [max(0.6, min(1.6, (gray / max(m, 1e-3)) ** CAST)) for m in mean]
+    sat = sum(max(c) - min(c) for c in px) / len(px)
+    s = max(0.55, min(1.6, (SATURATION / max(sat, 1e-3)) ** LEVEL))
+    luma = sum(0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2] for c in px) / len(px)
+    g = max(0.7, min(1.4, (math.log(max(luma, 1e-3)) / math.log(BRIGHTNESS)) ** LEVEL))
+    return (f"colorchannelmixer=rr={gains[0]:.4f}:gg={gains[1]:.4f}:bb={gains[2]:.4f},"
+            f"eq=saturation={s:.4f}:gamma={g:.4f}")
 
 
 def grade_file(src, dest, filt):
-    r = subprocess.run([_env.ffmpeg(), "-y", "-loglevel", "error", "-i", str(src), "-vf", filt, "-q:v", "2", str(dest)],
+    """The graded copy, made under another name and moved in whole: a copy newer than grade.json is kept."""
+    tmp = _env.part(dest)
+    r = subprocess.run([_env.ffmpeg(), "-y", "-loglevel", "error", "-i", str(src), "-vf", filt, "-q:v", "2", str(tmp)],
                        capture_output=True, text=True)
+    if r.returncode == 0:
+        os.replace(tmp, dest)
     return r.returncode == 0, r.stderr[-300:]
 
 
 def ensure_recipe():
-    g = _env.read_json("build/grade.json")
+    g = _env.read_json("grade.json")
     if g:
         return g
-    taste = _env.read_json("build/taste.json")
+    taste = _env.read_json("taste.json")
     if not taste:
-        sys.exit("build/taste.json is missing: run research.py first")
+        sys.exit("taste.json is missing: run research.py first")
     g = recipe(taste)
-    _env.write_json("build/grade.json", g)
+    _env.write_json("grade.json", g)
     return g
 
 
 def graded_name(p):
-    """The graded copy of a build/photos file, as a path relative to build/public/, the folder the renderer serves."""
+    """The graded copy of a photos file, as a path relative to public/, the folder the renderer serves."""
     return f"graded/{Path(p).name}"
 
 
@@ -100,12 +121,9 @@ def grade_photos(files=None):
     _env.need("PIL")
     g = ensure_recipe()
     GRADED.mkdir(parents=True, exist_ok=True)
-    fx = PUBLIC / "fx"
-    fx.mkdir(parents=True, exist_ok=True)
-    if not (fx / "grain.png").exists():
-        grain_tile(fx / "grain.png")
-    files = [Path(f) for f in files] if files else sorted(Path("build/photos").glob("*.jpg"))
-    todo = [f for f in files if not (GRADED / f.name).exists() or (GRADED / f.name).stat().st_mtime < Path("build/grade.json").stat().st_mtime]
+    # a photo stopped before its move is a hidden temp name beside it, never a photo
+    files = [Path(f) for f in files] if files else sorted(p for p in Path("photos").glob("*.jpg") if not p.name.startswith("."))
+    todo = [f for f in files if not (GRADED / f.name).exists() or (GRADED / f.name).stat().st_mtime < Path("grade.json").stat().st_mtime]
     with ThreadPoolExecutor(8) as ex:
         res = list(ex.map(lambda f: (f, *grade_file(f, GRADED / f.name, g["filter"])), todo))
     bad = [(f, e) for f, ok, e in res if not ok]
@@ -119,17 +137,18 @@ def main():
     ap.add_argument("cmd", choices=["recipe", "photos", "show"])
     ap.add_argument("files", nargs="*")
     a = ap.parse_args()
+    _env.enter()
     if a.cmd == "recipe":
-        taste = _env.read_json("build/taste.json")
+        taste = _env.read_json("taste.json")
         if not taste:
-            sys.exit("build/taste.json is missing: run research.py first")
+            sys.exit("taste.json is missing: run research.py first")
         g = recipe(taste)
-        _env.write_json("build/grade.json", g)
+        _env.write_json("grade.json", g)
         print(g["why"])
-        print("wrote build/grade.json")
+        print("wrote grade.json")
     elif a.cmd == "photos":
         n, total = grade_photos(a.files)
-        print(f"graded {n} of {total} photos into build/public/graded/ (the rest were already graded)")
+        print(f"graded {n} of {total} photos into public/graded/ (the rest were already graded)")
     else:
         print(ensure_recipe()["filter"])
     return 0

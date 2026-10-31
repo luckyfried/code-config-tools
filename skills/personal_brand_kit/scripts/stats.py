@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Movement 1, research: the counts. Reads build/library.json, writes build/stats.json.
+"""Movement 1, research: the counts. Reads library.json, writes stats.json.
 
 USAGE (from the workspace root):
     python3 S/scripts/stats.py
@@ -35,9 +35,10 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    d = _env.read_json("build/library.json")
+    _env.enter()
+    d = _env.read_json("library.json")
     if not d:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     src = d["source"]
     first, last = (dt.date.fromisoformat(x) for x in d["window"])
     exp = src == "export"
@@ -100,14 +101,14 @@ def main():
            "top": top, "top_ranked_by": by,
            "median_likes": like_counts[len(like_counts) // 2] if like_counts else None,
            "people": people[:5], "loved": loved, "register": register}
-    _env.write_json("build/stats.json", out)
+    _env.write_json("stats.json", out)
     print(f"@{d['handle']}: " + ", ".join(f"{v} {lab}" for _, v, lab in numbers))
     print(f"top posts (by {by}): " + "; ".join(f"{t['date_label']} {t['kind']} {t.get(by) if by else ''}" for t in top))
     print("people: " + ", ".join(f"@{p['account']} {p['total']}" for p in people[:5]))
     print("loved: " + ", ".join(f"@{p['account']} {p['likes']}" for p in loved))
     print(f"register: lowercase {register['lowercase_share']}, emoji/caption {register['emoji_per_caption']}, "
           f"avg words {register['avg_words']}, hashtags {register['top_hashtags'][:3]}")
-    print("wrote build/stats.json")
+    print("wrote stats.json")
     return 0
 
 

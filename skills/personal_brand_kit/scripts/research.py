@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Movement 1: the measured read behind the brand kit. Reads build/library.json; writes build/research.json, a
-machine draft of build/taste.json (with the brand draft under "brand"), and build/taste.draft.md (every finding
-with its number and its example, under the five headings the agent turns into build/taste.md).
+"""Movement 1: the measured read behind the brand kit. Reads library.json; writes research.json, a
+machine draft of taste.json (with the brand draft under "brand"), and taste.draft.md (every finding
+with its number and its example, under the five headings the agent turns into taste.md).
 
 USAGE (from the workspace root):
     python3 S/scripts/research.py
@@ -23,7 +23,12 @@ It runs stats.py, picks.py and palette.py first, then measures:
   outliers      posts that break two or more of their palette, pillars, voice and cadence (at least one of them
                 the palette or the cadence, since a short caption alone misses both pillar and voice), with how
                 they landed
-  landed        the posts that landed best and what they share
+  moments       every captioned post with a photograph, in date order, as what happened: the caption's own first
+                line, the place it names, the people it tags and its pillar; the agent curates them in taste.json
+                `moments`, and each card of the film is one of them
+The draft's `music` is the brief the film's music is made from (music.py): plain words for the feeling and what to
+avoid, never an artist, a band or a song; the look's own recipe carries the tempo and the instruments.
+A feed with photographs and no captions reads its voice and pillars from the bio's sentences instead.
 Anything the person said about themselves (bio, the request) outranks all of it: the agent writes their words
 into taste.json and taste.md over the draft.
 """
@@ -73,7 +78,8 @@ STOP = set("""a an the and or but of to in on at for with from by as is are was 
 i me my we our you your he she they them his her their what which who whom when where why how all any both each few more
 most other some such no nor not only own same so than too very can will just don should now one two three im ive i'm i've
 what's where's who's here there then up down out over again once about into after before under also get got go going went
-new day today yesterday still really little bit lot would could""".split())
+new day today yesterday still really little bit lot would could did do does done had has have made make know back
+finally always enough last first works got let good great nice""".split())
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐✨]")
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -90,8 +96,9 @@ def tokens(text):
 
 
 def words(text):
-    """Content words of a caption, hashtags kept as words (their # dropped)."""
-    t = (text or "").lower().replace("’", "'")
+    """Content words of a caption, hashtags kept as words (their # dropped); an @mention is one of their people, never
+    a word of a subject."""
+    t = re.sub(r"@[\w.]+", " ", (text or "").lower().replace("’", "'"))
     return {w.lstrip("#").replace("'s", "") for w in re.findall(r"#?[a-z][a-z']+", t)} - STOP
 
 
@@ -128,9 +135,13 @@ DEVICES = {
                                     lambda c: bool(re.search(r"\n\s*\n[^\n]*\?\s*$", clean(c)))),
     "line breaks": ("breaks the caption into lines", lambda c: "\n" in c.strip()),
     "emoji sign-off": ("signs off with an emoji", lambda c: bool(EMOJI.search(re.sub(r"#\w+", "", c).strip()[-3:]))),
+    "short plain line": ("writes one short plain line, twelve words or fewer, no hashtags",
+                         lambda c: 0 < len(clean(c).split()) <= 12 and "#" not in c and "\n" not in c.strip()),
     "hashtag line": ("puts its hashtags on a line of their own",
                      lambda c: any(l.strip() and all(w.startswith("#") for w in l.split()) for l in c.splitlines()[1:])),
 }
+# a weekday is one of their posting days when it carries this share of their posts
+SLOT = 0.2
 LOUD = lambda c: (sum(ch.isupper() for ch in c) > 0.3 * max(1, sum(ch.isalpha() for ch in c))) or "!!" in c or \
     len(EMOJI.findall(c)) >= 3
 
@@ -167,6 +178,22 @@ def voice(rows):
         "hashtags": [t for t, _ in tags.most_common(6)],
         "lean_words": [{"word": w, "captions": k, "share": round(k / len(texts), 3)} for w, k in df.most_common(10)],
     }
+
+
+def moments(rows, pls, photo_of):
+    """The moments draft: each row with a photograph (`photo_of`, row to picture) and words in its caption, oldest
+    first, as its date, its line (the caption's first paragraph without hashtags or emoji), the place it was posted
+    from, the people it tags and its pillar."""
+    pillar_of = {k: p["name"] for p in pls for k in p["rows"]}
+    out = []
+    for k in sorted(photo_of, key=lambda k: rows[k].get("ts") or 0):
+        r = rows[k]
+        line = re.sub(r"\s+", " ", re.split(r"\n\s*\n", clean(r.get("caption")).strip())[0]).strip()
+        if not line:
+            continue
+        out.append({"date": when(r["ts"]).strftime("%Y-%m-%d"), "row": k, "photo": photo_of[k], "line": line,
+                    "place": r.get("place"), "people": re.findall(r"@[\w.]*\w", r.get("caption") or ""), "pillar": pillar_of.get(k)})
+    return out
 
 
 # pillars -----------------------------------------------------------------------------------------------------------
@@ -210,6 +237,34 @@ def _assign(docs, clusters, df):
     return out
 
 
+def few(rows, caps, docs):
+    """A feed too small for words to repeat: its best-liked captions, up to six, each its own pillar named by the
+    caption's first subject word, so the guide and the film still stand on the person's own words."""
+    order = sorted((k for k, d in enumerate(docs) if d), key=lambda k: -(rows[k].get("likes") or 0))[:6]
+    out, seen = [], set()
+    for k in order:
+        first = noun(clean(caps[k]), docs[k] - seen)
+        if not first:
+            continue
+        seen.add(first)
+        out.append({"name": first, "share": 0, "posts": 1, "words": [first], "hashtag": None, "example": clean(caps[k]), "rows": [k]})
+    if len(out) < 2:
+        return [], list(range(len(rows)))
+    for p in out:
+        p["share"] = round(1 / len(out), 3)
+    out[0]["share"] = round(1 - sum(p["share"] for p in out[1:]), 3)
+    claimed = {k for p in out for k in p["rows"]}
+    return out, [k for k in range(len(rows)) if k not in claimed]
+
+
+def noun(text, allowed):
+    """The caption's subject word: the longest of its content words that reads as a thing (not an -ed, -ly or -ing
+    form when another word is there), ties to the earliest."""
+    ws = [w for w in re.findall(r"[a-z][a-z']+", text.lower()) if w in allowed]
+    things = [w for w in ws if not re.search(r"(ed|ly|ing)$", w)] or ws
+    return max(things, key=lambda w: (len(w), -ws.index(w)), default=None)
+
+
 def pillars(rows, threshold=0.3, top=80, min_share=0.05):
     """Pillars from caption words: [{name, share, posts, words, hashtag, example, rows}], shares summing to 1, and
     the row indices no pillar claims."""
@@ -220,7 +275,7 @@ def pillars(rows, threshold=0.3, top=80, min_share=0.05):
     tag_only = {w for w in df if all(("#" + w) in c.lower() or w not in words(c) for c in caps)}
     vocab = [w for w, k in df.most_common() if 3 <= k <= 0.6 * n][:top]
     if len(vocab) < 4:
-        return [], list(range(n))
+        return few(rows, caps, docs)
     for _ in range(5):  # words every pillar uses link pillars together: set them aside and cluster again
         vs = set(vocab)
         dv = [d & vs for d in docs]
@@ -307,8 +362,8 @@ def cadence(rows):
     weeks = max(1.0, (ts[-1] - ts[0]) / (7 * 86400))
     per_week = len(ts) / weeks
     wd = collections.Counter(when(t).weekday() for t in ts)
-    k = max(1, min(7, round(per_week)))
-    days = [d for d, _ in wd.most_common(k)]
+    # their days: every weekday that carries a fifth of their posts or more, and always the one that carries the most
+    days = [d for d, n in wd.most_common() if n >= SLOT * len(ts)] or [wd.most_common(1)[0][0]]
     slots, near = [], 0
     for d in sorted(days):
         mins = sorted(when(t).hour * 60 + when(t).minute for t in ts if when(t).weekday() == d)
@@ -370,36 +425,31 @@ def reel_pacing(reels):
             "avg_shot_seconds": round(statistics.mean(r["shot_seconds"] for r in out), 2)}
 
 
-def type_direction(own_themes, liked_themes, vc, pacing):
-    loud = vc.get("emoji_per_caption", 0) > 1 or (pacing.get("avg_shot_seconds") or 9) < 1.2
-    if loud:
-        return {"direction": "kinetic", "display": "Archivo Black", "text": "Archivo",
-                "why": f"{vc.get('emoji_per_caption')} emoji a caption and fast reels read loud: a heavy grotesk that can slam"}
-    film = own_themes.get("film photography", 0) + liked_themes.get("film photography", 0)
-    if film and own_themes.get("travel", 0) >= film:
-        return {"direction": "documentary", "display": "Space Grotesk", "text": "JetBrains Mono",
-                "why": "travel carried on film: a documentary grotesk with mono labels"}
-    return {"direction": "editorial", "display": "Fraunces", "text": "Inter",
-            "why": f"quiet {vc.get('case', 'lowercase')} captions of about {vc.get('avg_words')} words: a soft serif for "
-                   f"the statement and a plain sans for labels"}
+def bio_rows(bio):
+    """The bio's sentences as captions, for a feed whose photographs carry no words."""
+    return [{"caption": s.strip()} for s in re.split(r"(?<=[.!?])\s+|\n+", bio or "") if len(s.split()) >= 2]
 
 
 def main():
     import argparse
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.parse_args()
-    lib = _env.read_json("build/library.json")
+    _env.enter()
+    lib = _env.read_json("library.json")
     if not lib:
-        sys.exit("build/library.json is missing: run gather.py first")
+        sys.exit("library.json is missing: run gather.py first")
     for s in ("stats.py", "picks.py", "palette.py"):
         print(run(s).strip().splitlines()[-1])
-    stats = _env.read_json("build/stats.json")
-    pal = _env.read_json("build/palette.json") or {}
-    idx = _env.read_json("build/photo_index.json") or []
+    stats = _env.read_json("stats.json")
+    pal = _env.read_json("palette.json") or {}
+    idx = _env.read_json("photo_index.json") or []
     posts, reels = lib["posts"], lib["reels"]
     rows = posts + reels  # one caption and one time each; posts first so row k < len(posts) is a post
-    vc = voice(rows)
-    pls, unclaimed = pillars(rows)
+    said_rows = rows if any((r.get("caption") or "").strip() for r in rows) else bio_rows(lib.get("bio"))
+    vc = voice(said_rows)
+    pls, unclaimed = pillars(said_rows)
+    if said_rows is not rows:  # pillars read from the bio claim no post
+        pls, unclaimed = [dict(p, rows=[]) for p in pls], list(range(len(rows)))
     cad = cadence(rows)
     post_photos = [e for e in idx if e["kind"] == "post"]
     comps = compositions(post_photos)
@@ -407,8 +457,6 @@ def main():
     for e in post_photos:
         photo_of.setdefault(e["row"], e["src"])
     for p in pls:
-        liked_rows = sorted((k for k in p["rows"] if k in photo_of), key=lambda k: -(rows[k].get("likes") or 0))
-        p["photos"] = [photo_of[k] for k in liked_rows[:3]]
         p["examples"] = [rows[k]["caption"] for k in spaced(p["rows"])]
         found = collections.Counter(x.strip() for k in p["rows"] for m in re.findall(LIST3, clean(rows[k]["caption"]))
                                     for x in m[-3:] if len(x.split()) <= 4)
@@ -436,7 +484,6 @@ def main():
                          "lift": round(share / mine, 1) if mine else None, "accounts": accts})
     aspire = [s for s in subjects if s["likes_share"] >= 0.15 and (not s["own_share"] or s["likes_share"] >= 2 * s["own_share"])]
     pacing = reel_pacing(reels)
-    td = type_direction(own_themes, liked_themes, vc, pacing)
 
     # outliers: posts that break two or more of palette, pillar, voice, cadence
     off_pal = set(pal.get("off_palette") or [])
@@ -450,7 +497,9 @@ def main():
         if k in unclaimed_set:
             breaks.append("pillar")
         cap = r.get("caption") or ""
-        if LOUD(cap) or (kept and not any(DEVICES[d][1](cap) for d in kept)):
+        if LOUD(cap):
+            breaks.append("loud")
+        elif kept and not any(DEVICES[d][1](cap) for d in kept):
             breaks.append("voice")
         if r.get("ts") and off_cadence(r["ts"], cad):
             breaks.append("cadence")
@@ -459,58 +508,61 @@ def main():
                              "caption": cap, "breaks": breaks, "likes": r.get("likes"),
                              "times_usual": round(r["likes"] / usual, 2) if usual and r.get("likes") is not None else None,
                              "photo": photo_of.get(k)})
-    landed = []
-    for t in stats.get("top") or []:
-        k = next((i for i, r in enumerate(rows) if r.get("ts") == t["ts"] and (r.get("caption") or "") == t["caption"]), None)
-        pil = next((p["name"] for p in pls if k in p["rows"]), None)
-        landed.append({"date": t["date"], "likes": t.get("likes"), "caption": t["caption"], "pillar": pil,
-                       "times_usual": round(t["likes"] / usual, 2) if usual and t.get("likes") is not None else None})
 
     feed = pal.get("feed") or []
+    did = moments(rows, pls, photo_of)
     research = {
         "handle": lib["handle"], "name": lib.get("name"), "bio": lib.get("bio"), "window": lib.get("window"),
         "source": lib["source"], "doors": lib.get("doors", {}), "counts": stats.get("counts"),
         "palette": {"feed": feed, "others": pal.get("others"), "off_palette_posts": len(off_pal),
                     "posts_read": pal.get("posts_read"), "lead_floor": pal.get("lead_floor"),
-                    "likes": likes_palette, "likes_from": likes_from, "roles": pal.get("roles")},
+                    "likes": likes_palette, "likes_from": likes_from},
         "compositions": comps, "voice": vc,
         "pillars": [{k: v for k, v in p.items() if k != "rows"} for p in pls], "unclaimed_posts": len(unclaimed),
         "cadence": cad, "likes": {"accounts": len(like_accounts), "likes": sum(like_accounts.values()),
                                   "saves": sum(saved_accounts.values()), "liked_images": len(lib.get("liked_media", [])),
                                   "top": [{"account": a, "likes": n} for a, n in like_accounts.most_common(8)],
                                   "subjects": subjects, "aspire": aspire, "own_themes": dict(own_themes.most_common())},
-        "outliers": outliers, "landed": landed, "median_likes": usual, "reels": pacing, "type": td,
+        "outliers": outliers, "median_likes": usual, "reels": pacing,
     }
-    _env.write_json("build/research.json", research)
+    _env.write_json("research.json", research)
 
     # the brand draft: the agent rewrites the statement, stop list and voice lines in their words
     pnames = [p["name"] for p in pls]
     cnames = [c["name"] for c in feed]
     days = [s["day"] for s in cad["slots"]]
     stop = []
-    said = {"cadence": "posting late at night, off your days",
+    said = {"cadence": "posting off your days and times",
             "palette": "colors outside your palette",
-            "voice": "shouting captions",
+            "loud": "shouting captions",
+            "voice": "captions outside your voice",
             "pillar": "posts outside what you post about"}
     for brk in sorted(said, key=lambda x: -sum(1 for o in outliers if x in o["breaks"])):
         hit = [o for o in outliers if brk in o["breaks"]]
         lows = [o["times_usual"] for o in hit if o["times_usual"] is not None]
-        if len(stop) < 3 and len(hit) >= 2:
+        # a habit goes on the stop list only when the posts that had it landed under their usual likes
+        if len(stop) < 3 and len(hit) >= 2 and (not lows or statistics.mean(lows) < 1):
             used = {x["example"] for x in stop}
             stop.append({"line": said[brk], "why": f"{len(hit)} posts did" +
                          (f", and they got {statistics.mean(lows):.1f}x your usual likes" if lows else ""),
                          "example": next((o["caption"] for o in hit if o["caption"] not in used), hit[0]["caption"])})
     if cad["on_rhythm"] is not None and cad["on_rhythm"] < 0.8:
         stop.append({"line": "posting off your rhythm", "why": f"only {cad['on_rhythm']:.0%} of posts land on your days and times"})
+    low = [r for r in posts if usual and r.get("likes") is not None and r["likes"] < usual / 2 and clean(r.get("caption"))]
+    if not stop and low:  # the posts that landed under half their usual likes, said as what they share
+        r = min(low, key=lambda r: r["likes"])
+        stop.append({"line": f"posts like \"{clean(r['caption']).strip()}\"",
+                     "why": f"{len(low)} post{'s' if len(low) > 1 else ''} got under half your usual likes; this one {r['likes']}",
+                     "example": r["caption"]})
     if vc.get("hashtags_per_caption", 0) > 4:
         stop.append({"line": "long hashtag blocks", "why": f"{vc['hashtags_per_caption']} hashtags a caption"})
     weak = [d for d in vc["all_devices"] if 0 < d["share"] < 0.3 and d["name"] in ("emoji sign-off",)]
     brand = {
         "statement": (f"{', '.join(pnames[:-1])} and {pnames[-1]}" if len(pnames) > 1 else (pnames or ['your days'])[0]) +
                      f", in {' and '.join(cnames[:2]) or 'your colors'}" +
-                     (f", {len(days)} times a week" if days else "") + ".",
+                     (f", on {' and '.join(d + 's' for d in days)}" if days else "") + ".",
         "palette": [{"name": c["name"], "hex": c["hex"], "share": c["share"], "posts": c["posts"]} for c in feed],
-        "type": td, "compositions": [c["name"] for c in comps if c["share"] >= 0.5],
+        "compositions": [c["name"] for c in comps if c["share"] >= 0.5],
         "pillars": [{"name": p["name"], "share": p["share"], "words": p["words"][:5], "example": p["example"]} for p in pls],
         "cadence": {"per_week": cad["per_week"], "slots": [{"day": s["day"], "time": s["time"]} for s in cad["slots"]],
                     "timezone": cad.get("timezone", "UTC")},
@@ -526,24 +578,24 @@ def main():
         "handle": lib["handle"], "name": lib.get("name"), "bio": lib.get("bio"), "window": lib.get("window"),
         "palette": {"feed": [{"hex": c["hex"], "name": c["name"], "share": c["share"], "photo": c.get("photo")} for c in feed],
                     "likes": likes_palette},
-        "type": {"lead": td["direction"], "display": td["display"], "text": td["text"], "why": td["why"]},
-        "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": pacing.get("avg_shot_seconds"),
-                   "energy": "high" if td["direction"] == "kinetic" else "measured" if td["direction"] == "documentary" else "calm"},
+        "pacing": {"reel_seconds": pacing.get("avg_seconds"), "shot_seconds": pacing.get("avg_shot_seconds")},
+        "ask": True, "style": None, "hook": None, "question": None, "signoff": None,
         "register": {"lowercase": vc.get("case") == "lowercase", "emoji": vc.get("emoji_per_caption"),
                      "avg_words": vc.get("avg_words"), "hashtags": vc.get("hashtags", [])[:3],
                      "samples": [d["examples"][0] for d in vc["devices"][:4] if d["examples"]]},
         "pillars": pnames,
-        "texture": {"grain": 0.08, "vignette": 0.0, "leaks": False},
+        "moments": did,
         "avoid": ["neon", "loud all-caps captions", "stock-photo gloss"] if cnames else ["muddy grading"],
         "brand": brand,
+        "music": {"words": [], "avoid": []},
     }
-    if not Path("build/taste.json").exists() or "research.py draft" in (_env.read_json("build/taste.json") or {}).get("written_by", ""):
-        _env.write_json("build/taste.json", taste)
+    if not Path("taste.json").exists() or "research.py draft" in (_env.read_json("taste.json") or {}).get("written_by", ""):
+        _env.write_json("taste.json", taste)
 
     pct = lambda x: f"{x:.0%}" if x is not None else "n/a"
     q = lambda c: re.sub(r"\s*\n\s*", " / ", (c or "").strip())
     L = [f"# taste draft for @{lib['handle']} ({' to '.join(lib.get('window') or [])})", "",
-         "The agent writes build/taste.md from this: one page, five paragraphs that start with the five headings below,",
+         "The agent writes taste.md from this: one page, five paragraphs that start with the five headings below,",
          "every claim carrying its number and an example. Their own words (bio, what they asked) outrank every line here.", "",
          "## you are",
          f"- bio: {lib.get('bio') or '(none in the data)'}",
@@ -552,8 +604,10 @@ def main():
           f"{'; tag ' + p['hashtag'] if p['hashtag'] else ''}; e.g. \"{q(p['example'])}\"" for p in pls]
     L += [f"- cadence: {cad['per_week']} posts a week; " + ", ".join(f"{s['day']} {s['time']} ({s['posts']} posts)" for s in cad["slots"]) +
           f"; {pct(cad['on_rhythm'])} land within an hour of that rhythm",
-          f"- landed best: " + "; ".join(f"{x['date']} {x['likes']} likes ({x['times_usual']}x usual, {x['pillar'] or 'no pillar'})" for x in landed[:4]),
-          "", "## you like",
+          f"- moments ({len(did)} posts with a photograph and words; taste.json `moments` holds them for the film):"]
+    L += [f"  - {m['date']} \"{m['line']}\"" + "".join(f"; {x}" for x in (m["place"], ", ".join(m["people"])) if x) +
+          f" ({m['pillar'] or 'no pillar'}; {m['photo']})" for m in did]
+    L += ["", "## you like",
           f"- {research['likes']['likes']} likes to {len(like_accounts)} accounts, {research['likes']['saves']} saves, "
           f"{research['likes']['liked_images']} liked images",
           f"- palette of what you like ({likes_from}): " + ", ".join(f"{c['name']} {c['hex']} ({pct(c.get('area'))})" for c in likes_palette)]
@@ -564,8 +618,8 @@ def main():
           ", ".join(f"{c['name']} {c['hex']} {pct(c['share'])} ({c['posts']} posts)" for c in feed) +
           f"; {len(off_pal)} posts lead with none of them"]
     L += [f"- {c['name']}: {pct(c['share'])}" for c in comps]
-    L += [f"- type direction: {td['direction']} ({td['display']} / {td['text']}): {td['why']}", "", "## your voice is",
-          f"- {vc.get('captions')} captions, {vc.get('case')} ({pct(vc.get('lowercase_share'))}), {vc.get('avg_words')} words, "
+    L += ["- music: the look's own; add words the person uses for it (\"no drums\", \"piano\") to taste.json `music`", "", "## your voice is",
+          f"- {vc.get('captions')} captions, {vc.get('case')} ({pct(vc.get('lowercase_share'))} all lowercase), {vc.get('avg_words')} words, "
           f"{vc.get('emoji_per_caption')} emoji and {vc.get('hashtags_per_caption')} hashtags a caption"]
     for d in vc["all_devices"]:
         L.append(f"- {d['name']} ({d['what']}): {pct(d['share'])}" + (" (kept)" if d["share"] >= 0.3 else ""))
@@ -574,14 +628,14 @@ def main():
           "", "## avoid"]
     L += [f"- outlier {o['date']} ({', '.join(o['breaks'])}; {o['likes']} likes, {o['times_usual']}x usual): \"{q(o['caption'])}\"" for o in outliers]
     L += [f"- {s['line']}: {s['why']}" for s in stop] + [""]
-    Path("build/taste.draft.md").write_text("\n".join(L).replace("\n\n\n", "\n\n"))
+    _env.write_text("taste.draft.md", "\n".join(L).replace("\n\n\n", "\n\n"))
     print("palette: " + ", ".join(f"{c['name']} {pct(c['share'])}" for c in feed) + f"; off palette {len(off_pal)}")
     print("pillars: " + ", ".join(f"{p['name']} {pct(p['share'])}" for p in pls) + f"; unclaimed {len(unclaimed)}")
     print("voice: " + ", ".join(f"{d['name']} {pct(d['share'])}" for d in vc["devices"]))
     print(f"cadence: {cad['per_week']}/week " + ", ".join(f"{s['day'][:3]} {s['time']}" for s in cad["slots"]) + f"; on rhythm {pct(cad['on_rhythm'])}")
     print("likes: " + ", ".join(c["name"] for c in likes_palette) + "; aspire " + ", ".join(s["subject"] for s in aspire))
-    print(f"outliers: {len(outliers)}; type {td['direction']}")
-    print("wrote build/research.json, build/taste.json (draft) and build/taste.draft.md; now write build/taste.md")
+    print(f"outliers: {len(outliers)}")
+    print("wrote research.json, taste.json (draft) and taste.draft.md; now write taste.md")
     return 0
 
 

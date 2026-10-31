@@ -1,62 +1,72 @@
 # The critics
 
-Three critics judge the storyboards (movement 3); two of them judge the finished cut (movement 6). Each one is a
-voice you take on in turn, with its own eye. Score what a viewer would notice, and say why in plain words.
+Three critics score the three looks as boards (movement 3); two of them score the timed cut (movement 5). Each one is
+a voice you take on in turn, with its own eye. Score what a viewer would notice, against the rules of
+`S/motion/system/standards.md`, each look against its own style card (`S/styles/<id>.json`), and say why in plain
+words.
 
 ## The panel
 
-**The motion designer.** Has shipped title sequences and brand films. Looks at craft: is the motion eased and
-layered or does it slide; does every photo move; is the type a system (two faces, a scale, consistent placement)
-or a default; does each transition carry meaning; does the grade hold the film together; does anything collide,
-crop badly or sit outside the safe area.
+**The motion designer.** Has shipped title sequences and brand films. Looks at craft: is the type a system (the
+card's two faces, a scale, lines that enter and settle); is every move eased, anticipating and settling, or does it
+slide; are the cuts the card's own and on the beat; does the card's finish hold the film together; does anything
+collide, crop badly or sit outside the safe area.
 
-**The editor.** Cuts documentaries and social films. Looks at story: does the guide build to the statement; is there a
-turn, a peak and a release; does each beat earn its time; do the cuts land on the music; does the ending make you
-feel something and want to share it.
+**The editor.** Cuts documentaries and social films. Looks at story: does every beat show something they did, made or
+went to, in their own line, and would their friends say "that is so you"; does the film build to its last moment; does
+each shot earn its time; does the ending, their question and their sign-off, make you want to answer and share it.
+The editor scores the boards only.
 
-**The person.** Speaks in the first person, from `build/taste.md` and their captions: "is this me?" Their photos,
-their colors, their voice, their pacing, nothing on the avoid list. Would I post this today, without changing a
-thing? The person breaks a tie in the storyboard vote.
+**The person.** Speaks in the first person, from `taste.md` and their captions: "is this me?" Their photos, their
+colors, their voice, their pacing, nothing on the avoid list. Would I post this today, without changing a thing?
 
-## The seven criteria (1–5 each)
+## The criteria (1–5 each)
 
-| key | criterion | a 5 | a 3 or lower |
+| key | what it reads | a 5 | a 3 or lower |
 |---|---|---|---|
-| `professional` | it looks like a professional motion designer made it | studio-grade: eased, layered, a held grade, nothing collides | template feel, linear slides, text over busy photo, a crop that loses the subject |
-| `them` | it is unmistakably them | their photos, their palette by name, their own captions, the shares and times measured from their feed | generic stock mood, a voice that is not theirs, a finding without a number, something from their avoid list |
-| `pacing` | the pacing holds attention to the end | a rhythm with variation; quiet beats earn the loud ones; no beat outstays itself | uniform beats, a slow middle, a 5-second card with one word |
-| `type` | type is a system, not a default | two faces, a scale, the same placement logic everywhere | mixed alignments, a stray size, headlines that wrap badly |
-| `transitions` | every transition is intentional | each cut's preset means something (a page turn, a breath, a match) | the same crossfade everywhere, or flashy wipes with no reason |
-| `music` | the music and the cuts agree | cuts on downbeats, the energy of the track matches the film's | cuts that ignore the beat, a track at odds with the tone |
-| `ending` | the ending makes them want to post it | the statement and the first week land as the last image, one they would screenshot and save | an ending that just stops, a guide that never resolves, a generic sign-off |
+| `idea` | R1: the hook states one idea in their own words over their own photograph; every move and cut is the look's own; the closer pays it off | the first second says who they are; each moment is theirs, in their line; the ask and the sign-off land as the ending | a hook that could open anyone's film, a beat that shows no moment of theirs, an ending that just stops |
+| `picture` | R2: one finish, the look's; every color a photograph's own or the look's palette's; the closer holds still | their photographs fill the frames the card gives them, in one finish, the colors their feed's | a photograph lost under a field, colors from nowhere, a closer that keeps moving |
+| `type` | R3: the card's two faces at a clear scale; lines that enter and settle; every line reads on its ground; nothing colliding | every line readable at a glance on a phone, settled within a second, inside the safe area | a line too small to read, a line touching another or the edge, type lost on a busy picture |
+| `motion` | R4: every move anticipates and settles, no two beats in a row alike, the last moment held longest, cuts on the beat | a rhythm you can feel, beats of different lengths, the peak held | the same move twice, uniform beats, linear slides |
+| `sound` | R5, the cut only, from `qa/check.json`'s audio row: the bed belongs to the look, a cue only where a line lands, effects 8 LU or more under the music, quiet from the stop | the bed fits the look and their words, each cue on a line | a bed at odds with the look, more cues than lines, effects too loud, sound running on past the stop |
+| `own` | its own film: the hook and the closer read as this look and no other | the three looks are three different films | two looks that read as one |
 
-## The storyboards (movement 3)
+## The looks (movement 3)
 
-For each board look at `build/storyboards/N/sheet.png` (and any frame full size that you need), read its
-`storyboard.md`, and score it as each critic in turn in `build/vote/scores.json`. A storyboard is a promise:
-score the film it will become, from the frames you can see. Write one paragraph per board per critic, at least 25
-words: what works, what fails, the one change you would make. The three boards are meant to be different; the
-scores should show which difference suits this person.
+Look at `out/boards.png`, then each look's `storyboards/<letter>/sheet.png` (the hook, a middle beat and the closer
+at rest) and its `storyboard.md`, and score every look as each critic in turn in `vote/scores.json` on `idea`,
+`picture`, `type`, `motion` and `own`. A storyboard is a promise: score the film it will become, from the frames you
+can see. Write one paragraph per look and critic, at least 25 words: what works, what fails, the one change you
+would make. The scores are the critics'; the person picks the look.
 
-## The cut (movement 6)
+## The cut (movement 5)
 
-The motion designer and the person score the rendered film. Look, actually look:
+The motion designer and the person score the timed cut before the film renders. Look, actually look:
 
-- every `build/frames/NN-*.png` full size with the Read tool, one per beat;
-- all ten `out/cards/*.png` (1080x1350 each: one system per card, every finding with its number, nothing cut off,
-  the "stop" card said kindly);
-- `build/qa/check.json` (the measured checks) and `build/render-report.json`.
+- `cut.mp4` with its sound (the master `music.json` names; the reel delivered is this file), and its strips with the
+  Read tool: `cut-strip.png` (a frame a second) and `cut-strip12.jpg` (every frame at 12 a second, a row a second),
+  read row by row, and any frame you cut from `cut.mp4` to look closer;
+- `qa/check.json`: the measured checks and the figures, and its `audio` row, the film's sound measured.
 
-Never score from memory of the storyboard; the cut is what ships. Fill in `build/critic/cut-N.json` and run
-`vote.py verdict`. When a score is below 4, name the one change that fixes the worst thing in the paragraph, using
-the levers below.
+`idea`, `picture`, `type`, `motion` and `own` are scored from the frames and strips alone; `sound` from the `audio`
+row alone. A read that cites a storyboard or a move name instead of a frame is not a read. Fill in
+`critic/cut-N.json` as `vote.py cut` wrote it and run `vote.py verdict`:
+
+- a mean of 4.5 or more and no score under 4: SHIP, and the film renders;
+- round 1, anything less: the verdict names the lowest score; make the one change that fixes it with the levers
+  below, cut again and score round 2;
+- round 2, anything less: the budget is spent; the film renders as it stands and `brief.md` carries its scores and
+  what holds it under.
+
+Score what you see. Never round a score up to reach the bar: a spent budget with honest scores is the right outcome.
 
 ## The levers
 
-- Words, photos, order, beat lengths, transitions, clip prompts: the winner's
-  `build/storyboards/N/storyboard.json`, then `storyboard.py check`, `snap`, `film.py render`.
-- A photo: `grade.py photos FILE`, then `"graded/<name>.jpg"` in the beat.
-- The grade and texture: `taste.json` (`palette`, `texture`), `grade.py recipe`, `grade.py photos`, `clips.py
-  normalize`.
-- The music: another track at `build/music/source.<ext>`, or `music.py make --mood calm|drive|film --bpm N`, then
-  `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py render`.
+- The words on screen: `taste.json` `hook`, `question` and `signoff`, and each moment's `line` and `pillar`, then
+  `storyboard.py draft`, `check`, `sheets`, the pick, `snap`, `music.py master`, `film.py cut`.
+- Which moments play, and in what order: `taste.json` `moments` (the last is held longest), then the same steps.
+- Which photograph plays which part, with a folder of photographs: `cast.json`, then the same steps.
+- The music: another track at `music/source.<ext>`, or `taste.json` `music` (`words`, `avoid`), then `music.py find`,
+  `storyboard.py snap`, `music.py master`, `film.py cut`.
+- The look itself is the style card's; a board is never edited by hand. A look that cannot reach the bar is a reason
+  to offer another one, never to edit the card.
