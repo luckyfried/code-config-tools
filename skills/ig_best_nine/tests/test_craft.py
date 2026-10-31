@@ -52,6 +52,23 @@ class Finish(unittest.TestCase):
                     self.assertEqual(S[role]["family"], c["faces"][role]["family"])
 
 
+class Measure(unittest.TestCase):
+    """The board measures a line at the instance the film draws it: an optical-size axis at its default, never at the
+    drawn size, since the film draws its words with automatic optical sizing off."""
+
+    def test_a_line_in_a_face_with_an_optical_size_axis_is_measured_at_the_axis_default(self):
+        from PIL import ImageFont
+        file = "fonts/styles/kinetic-type/BricolageGrotesque[opsz,wdth,wght].ttf"
+        face = {"family": "Bricolage Grotesque", "file": file, "weight": 700, "tracking": 0}
+        S = {"display": face, "text": face}
+        for size in (40, 150):
+            with self.subTest(size=size):
+                f = ImageFont.truetype(str(KIT / file), size)
+                f.set_variation_by_axes([700 if a["name"] == b"Weight" else a["default"] for a in f.get_variation_axes()])
+                line = {"text": "golden hour", "size": size, "face": "display"}
+                self.assertAlmostEqual(compose.text_width(S, line), f.getlength("golden hour", features=["kern", "liga"]), places=3)
+
+
 class Shots(unittest.TestCase):
     def test_each_clip_names_its_subject_move_lens_and_light_and_moments_vary_the_move(self):
         for style in compose.TRIO:

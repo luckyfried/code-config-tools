@@ -12,8 +12,9 @@ import {FontGate, framesOf, pulseOf, SystemProvider} from '../system/system';
 import {bezier, clamp01, span} from '../system/three/motion';
 import {Stage, type Pose} from '../system/three/Stage';
 import {STILL} from '../system/three/travel';
-import {alpha, land, px} from '../system/moves/kit';
-import {fxAt, MoveLayer, nudgeAt, type Timeline} from '../system/moves/layer';
+import {coverOf} from '../system/moves/closer/book-cover';
+import {alpha, land, OPTICAL, px} from '../system/moves/kit';
+import {fxAt, MoveLayer, moveAt, nudgeAt, usePush, type Timeline} from '../system/moves/layer';
 import type {BeatOn, Look} from '../system/moves/types';
 import type {Pt} from '../system/three/motion';
 import type {Board, Clip, FilmProps, Layer, System} from '../system/types';
@@ -59,18 +60,47 @@ const typeOf = (b: Board['beats'][number], W: number): [number, number, number, 
   return [x0, Math.min(...ys), Math.max(x0 + 1, W - x0), Math.max(...ys)];
 };
 
+/** Where the whole of a photograph lies on the frame, [x, y, w, h] px, while the camera holds on it: its layer's crop
+ * drawn in about its focus by ROOM (as Picture draws it with no push) stretched over its box. */
+const placeOf = (L: Layer): [number, number, number, number] => {
+  const [x, y, w, h] = L.box as number[];
+  const [u0, v0, u1, v1] = L.uv as number[];
+  const [fx, fy] = (L.focus as number[] | undefined) ?? [0.5, 0.5];
+  const cu = u0 + (u1 - u0) * fx, cv = v0 + (v1 - v0) * fy;
+  const a = cu + (u0 - cu) / ROOM, b = cu + (u1 - cu) / ROOM, c = cv + (v0 - cv) / ROOM, d = cv + (v1 - cv) / ROOM;
+  const pw = w / (b - a), ph = h / (d - c);
+  return [x - a * pw, y - c * ph, pw, ph];
+};
+
+/** The print a landing ends on, as the shot draws it: a photograph's own tilt, rim px and strips of tape, and a bare
+ * print (no tilt, no rim, no tape) on a photograph the board prints none on and on every grid tile. */
+const printed = (L: Layer) => {
+  const pr = L.kind === 'Photo' ? L.print as {tilt?: number; rim?: number; tape?: number} | undefined : undefined;
+  return {tilt: pr?.tilt ?? 0, rim: pr?.rim ?? 0, tape: pr?.tape ?? 0};
+};
+
 /** The film's beats and their cuts as the moves read them. A photo beat carries its photograph's box (the picture, inside
  * its print's rim), the box its words stand in, and the beats the frame holds on it, so a move crops, mats and marks the
- * photograph where it lies and its marks leave with the words before the cut. */
-const lineOf = (board: Nine, at: number[], end: number): Timeline => ({
+ * photograph where it lies and its marks leave with the words before the cut; and its photograph, where the whole of it
+ * lies and the tilt its print hangs at (none on a photograph with no print), so a move that flies the photograph in
+ * lands exactly on the print the camera holds. The grid carries the box of the tile the board names as its landing when
+ * its move flies a photograph in, and every other tile as the shot draws it, so the move lands them in their cells. */
+export const lineOf = (board: Nine, at: number[], end: number): Timeline => ({
   beats: board.beats.map((b, i): BeatOn => {
-    const x = b as unknown as {form: string; words?: string; label?: string; peak?: boolean};
+    const x = b as unknown as {form: string; words?: string; label?: string; peak?: boolean; landing?: number; marks?: number[]};
     const to = i + 1 < at.length ? at[i + 1] : end;
-    const pic = x.form === 'photo' ? b.layers.find((L) => L.kind === 'Photo') : undefined;
+    const tiles = b.layers.filter((L) => L.kind === 'Slice');
+    const pic = x.form === 'photo' ? b.layers.find((L) => L.kind === 'Photo')
+      : x.landing !== undefined ? tiles[x.landing] : undefined;
     // the grid under a move that marks a print's corner carries the box its tiles fill, so the mark lands on the grid
-    const box = pic ? (pic.box as number[]) : (b as unknown as {marks?: number[]}).marks;
+    const box = pic ? (pic.box as number[]) : x.marks;
+    const cells = pic && pic.kind === 'Slice' ? tiles.filter((L) => L !== pic).map((L) => ({box: L.box as [number, number, number, number],
+      photo: staticFile(L.photo.file as string), place: placeOf(L)})) : undefined;
     return {id: b.id, form: x.form, at: at[i], end: to, move: b.move, transition: b.transition ?? null,
       words: x.words ?? '', label: x.label ?? '', peak: !!x.peak,
+      ...(pic ? {photo: staticFile(pic.photo.file as string), place: placeOf(pic), ...(pic.focus ? {focus: pic.focus as [number, number]} : {}),
+        ...printed(pic)} : {}),
+      ...(cells ? {cells} : {}),
       ...(box ? {box: [box[0], box[1], box[0] + box[2], box[1] + box[3]] as [number, number, number, number], type: typeOf(b, board.format.width),
         held: [at[i], Math.max(at[i], to - LEAVE)] as Pt} : {})};
   }),
@@ -84,8 +114,8 @@ const toneOf = (s: System, v: string) => {
   return hex;
 };
 
-/** The film around every move, cut and closer: the frame, the card's colors, tones, grid and faces, its print, and the
- * board's own words; the photograph the masked moves fill their letters with is the top of the countdown. */
+/** The film around every move, cut and closer: the frame, its safe area, the card's colors, tones, grid and faces, its
+ * print, and the board's own words; the photograph the masked moves fill their letters with is the top of the countdown. */
 const lookOf = (board: Nine, pulse: number): Look => {
   const s = board.system;
   const {swatches: _, ...colors} = s.colors;
@@ -112,7 +142,11 @@ const lookOf = (board: Nine, pulse: number): Look => {
       rim: pic.rim * W, tilt: pic.tilt, tape: pic.tape,
     },
     finished: s.finish.words !== 'clean',
+    // the format's safe area, which the moves lay their words out from
+    safe: board.format.name ? s.safe[board.format.name] : undefined,
     photo: top ? staticFile(top.photo.file as string) : undefined,
+    photos: [...new Set(board.beats.flatMap((b) => b.layers.flatMap((L) => (L.kind === 'Photo' && L.photo ? [L.photo.file as string] : []))))]
+      .map((f) => staticFile(f)),
   };
 };
 
@@ -156,10 +190,10 @@ const useClipFrame = (src: string | null) => {
 /**
  * A photograph on the frame: the board's box (frame px) showing the board's crop of the picture, drawn in about the
  * focus by ROOM, the move's push, pull, and slide (`scale`, `dx`, `dy`, shares of the box's height) moving the picture
- * inside the box, never the box. `grow` scales the box about its middle and `alpha` fades it.
+ * inside the box, never the box. `grow` scales the box about its middle, `alpha` fades it, and `lift` raises it px.
  */
-const Picture: React.FC<{W: number; H: number; layer: Layer; texture: THREE.Texture; scale?: number; dx?: number; dy?: number; grow?: number; alpha?: number; order: number;
-  system: System}> = ({W, H, layer, texture, scale = 1, dx = 0, dy = 0, grow = 1, alpha = 1, order, system}) => {
+const Picture: React.FC<{W: number; H: number; layer: Layer; texture: THREE.Texture; scale?: number; dx?: number; dy?: number; grow?: number; alpha?: number;
+  lift?: number; order: number; system: System}> = ({W, H, layer, texture, scale = 1, dx = 0, dy = 0, grow = 1, alpha = 1, lift = 0, order, system}) => {
   const [x, y, w, h] = layer.box as number[];
   const [u0, v0, u1, v1] = layer.uv as number[];
   const [fx, fy] = (layer.focus as number[] | undefined) ?? [0.5, 0.5];
@@ -193,7 +227,7 @@ const Picture: React.FC<{W: number; H: number; layer: Layer; texture: THREE.Text
   const turn = -((pr?.tilt ?? 0) * Math.PI) / 180;
   const tw = Math.min(w, h) * 0.34, th = Math.min(w, h) * 0.085;
   return (
-    <group position={[x + w / 2 - W / 2, H / 2 - (y + h / 2), 0]} rotation={[0, 0, turn]} scale={[grow, grow, 1]}>
+    <group position={[x + w / 2 - W / 2, H / 2 - (y + h / 2) + lift, 0]} rotation={[0, 0, turn]} scale={[grow, grow, 1]}>
       {pr && pr.rim > 0 ? (
         <>
           {[18, 9, 3].map((r, i) => (
@@ -239,6 +273,8 @@ const Scene: React.FC<{board: Nine; beat: number; local: number; t: number; line
   const enter = bezier(ease.enter);
   const form = (b as unknown as {form: string}).form;
   const sys = board.system;
+  // an instant print drops in carrying its photograph, from the height polaroid-drop.tsx drops it from
+  const lift = form === 'photo' && moveAt(line, look, beat) === 'polaroid-drop' ? (1 - land(0.25 + local * 0.9)) * H * 0.5 : 0;
   return (
     <group>
       {form === 'photo' ? (
@@ -249,7 +285,7 @@ const Scene: React.FC<{board: Nine; beat: number; local: number; t: number; line
       ) : null}
       {b.layers.map((L, i) => {
         if (L.kind === 'Photo') {
-          return <Picture key={i} W={W} H={H} layer={L} texture={texOf(L.photo.file)} scale={nudge.scale} dx={nudge.dx} dy={nudge.dy} order={i} system={sys} />;
+          return <Picture key={i} W={W} H={H} layer={L} texture={texOf(L.photo.file)} scale={nudge.scale} dx={nudge.dx} dy={nudge.dy} lift={lift} order={i} system={sys} />;
         }
         if (L.kind === 'Slice') {
           // the grid's tiles land one after another at the times the board gives them, each settling from a little
@@ -264,10 +300,12 @@ const Scene: React.FC<{board: Nine; beat: number; local: number; t: number; line
 };
 
 /** The shades or the words of the beat (`only`), drawn on their baselines where the board measured them, each line
- * rising into place in the card's easing and the card's stagger after the one before it, and leaving before the cut.
+ * entering the way the board names (rise, slam, fade, cut on, or typed) in the card's easing and the card's stagger
+ * after the one before it, the whole block landed within the layer's beats so its read is the board's, and leaving
+ * before the cut. Typed words run on letter by letter through the block, line after line, at one even pace.
  * The shades lie under the move's overlay, so a window's paper and the letterbox bars cover them as they cover the
  * picture; the words stand over it. */
-const Words: React.FC<{board: Nine; beat: number; local: number; length: number; only: 'Shade' | 'Words'}> = ({board, beat, local, length, only}) => {
+export const Words: React.FC<{board: Nine; beat: number; local: number; length: number; only: 'Shade' | 'Words'}> = ({board, beat, local, length, only}) => {
   const s = board.system;
   const enter = bezier(s.ease.enter);
   const W = board.format.width, H = board.format.height;
@@ -295,24 +333,29 @@ const Words: React.FC<{board: Nine; beat: number; local: number; length: number;
         if (L.kind !== 'Words') return null;
         const lines = L.lines as Line[];
         const turn = L.rotate ? `rotate(${L.rotate} ${lines[0].x} ${lines[lines.length - 1].y})` : undefined;
+        const len = Math.max(0.3, (L.beats ?? 1) * 0.6);
+        const gap = lines.length > 1 ? Math.min(s.ease.stagger * 4, Math.max(0, (L.beats ?? 1) - len) / (lines.length - 1)) : 0;
+        const letters = lines.map((ln) => ln.text.length);
+        const typed = Math.round(letters.reduce((a, b) => a + b, 0) * clamp01((local - (L.at ?? 0)) / Math.max(len, L.beats ?? 1)));
         return (
           <g key={i} transform={turn}>
             {lines.map((ln, j) => {
               const face = ln.face === 'display' ? s.display : s.text;
-              const from = (L.at ?? 0) + j * s.ease.stagger * 4;
-              const len = Math.max(0.3, (L.beats ?? 1) * 0.6);
+              const from = (L.at ?? 0) + j * gap;
               const u = span(local, from, len, enter);
               // the card's entrance: rise into place, slam down from large, type letter by letter, fade, or cut on
               const how = (L.enter as string) ?? 'rise';
-              const shown = how === 'cut' ? (local >= from ? 1 : 0) : how === 'type' ? (local >= from ? 1 : 0) : u;
-              const text = how === 'type' ? ln.text.slice(0, Math.round(ln.text.length * clamp01((local - from) / len))) : ln.text;
+              const before = letters.slice(0, j).reduce((a, b) => a + b, 0);
+              const shown = how === 'cut' ? (local >= from ? 1 : 0) : how === 'type' ? (typed > before ? 1 : 0)
+                : how === 'slam' ? span(local, from, len * 0.2) : u;
+              const text = how === 'type' ? ln.text.slice(0, Math.max(0, typed - before)) : ln.text;
               const dy = how === 'rise' ? (1 - u) * 0.35 * ln.size : 0;
               const big = how === 'slam' ? 1 + 0.35 * (1 - span(local, from, len * 0.5, enter)) : 1;
               const at = `translate(${ln.x} ${ln.y + dy}) scale(${big}) translate(${-ln.x} ${-ln.y})`;
               return (
                 <text key={j} x={ln.x} y={ln.y} transform={at} textAnchor={ln.anchor ?? 'start'} dominantBaseline="alphabetic"
                   fontFamily={`'${face.family}'`} fontWeight={face.weight} fontSize={ln.size} letterSpacing={`${face.tracking}em`}
-                  fill={colorOf(s, ln.color)} opacity={clamp01(shown) * leave}>
+                  fill={colorOf(s, ln.color)} opacity={clamp01(shown) * leave} style={OPTICAL}>
                   {text}
                 </text>
               );
@@ -326,15 +369,18 @@ const Words: React.FC<{board: Nine; beat: number; local: number; length: number;
 
 /** The scrapbook's last element: once the cover has landed, the top of the countdown is pasted onto its foot as a
  * print in the card's rim, taped at its corners in the card's tape, dropping in, turning onto its tilt and settled well
- * before the stop. It stands below the closing line, over the cover's lower edge and the page under it; it carries no
- * type, since its foot lies in the reel's caption band. */
-const Keepsake: React.FC<{look: Look; u: number}> = ({look, u}) => {
+ * before the stop. Its top stands clear below the cover's column, so it never covers the title or the closing line, and
+ * it takes the room from there to the reel's caption band, over the cover's lower edge and the page under it; it
+ * carries no type. */
+export const Keepsake: React.FC<{look: Look; u: number}> = ({look, u}) => {
   if (!look.photo) return null;
   const k = land(clamp01((u - 0.42) / 0.33));
-  const side = px(look, 380), rim = px(look, 24), foot = px(look, 84);
+  const rim = px(look, 24), foot = px(look, 84);
+  const top = coverOf(look).foot + px(look, 56);
+  const side = Math.max(px(look, 220), Math.min(px(look, 380), look.H * 0.93 - top - rim - foot));
   const tape = {position: 'absolute' as const, width: px(look, 130), height: px(look, 38), background: alpha(look.tone.tape, 0.82), top: -px(look, 16)};
   return (
-    <div style={{position: 'absolute', left: look.W * 0.5, top: look.H * 0.585, width: side + 2 * rim, height: side + rim + foot,
+    <div style={{position: 'absolute', left: look.W * 0.5, top, width: side + 2 * rim, height: side + rim + foot,
       background: look.tone.rim, opacity: clamp01(k * 3), boxShadow: `0 ${px(look, 14)}px ${px(look, 36)}px ${alpha(look.tone.matte, 0.32)}`,
       transform: `translateY(${(1 - k) * -px(look, 60)}px) rotate(${6 + (1 - k) * 10}deg) scale(${1 + (1 - k) * 0.12})`}}>
       <Img src={look.photo} style={{position: 'absolute', left: rim, top: rim, width: side, height: side, objectFit: 'cover'}} />
@@ -347,7 +393,7 @@ const Keepsake: React.FC<{look: Look; u: number}> = ({look, u}) => {
 /** The kit's own last element over each card's closer that leaves it room. */
 const KEEPSAKES: Partial<Record<string, typeof Keepsake>> = {'book-cover': Keepsake};
 
-const Frame: React.FC<{board: Nine; clips: Clip[]}> = ({board, clips}) => {
+export const Frame: React.FC<{board: Nine; clips: Clip[]}> = ({board, clips}) => {
   // a card with a cadence steps the picture at that many frames a second, as a camera that shoots fewer frames does
   const now = useCurrentFrame();
   const step = board.system.finish.cadence > 0 ? board.format.fps / board.system.finish.cadence : 1;
@@ -365,6 +411,7 @@ const Frame: React.FC<{board: Nine; clips: Clip[]}> = ({board, clips}) => {
   const travel = {...STILL, time: t * 0.25, ...fxAt(line, look, t)};
   const pose = useMemo(() => held(W, H), [W, H]);
   const Keep = KEEPSAKES[board.system.closer];
+  const push = usePush(look, still, frame / pulse);
   if (!board.beats.length) return null;
   return (
     <AbsoluteFill style={{background: board.system.colors.bg}}>
@@ -372,11 +419,16 @@ const Frame: React.FC<{board: Nine; clips: Clip[]}> = ({board, clips}) => {
         over={
           <>
             <Words board={board} beat={beat} local={local} length={beat + 1 < starts.length ? length : Infinity} only="Shade" />
-            <MoveLayer line={line} look={look} t={t} bars={board.system.finish.bars}
+            <MoveLayer line={line} look={look} t={t} now={frame / pulse} bars={board.system.finish.bars}
               closer={board.closer ? {name: board.system.closer, at: board.closer.at, still: board.closer.still} : undefined}>
               <Words board={board} beat={beat} local={local} length={beat + 1 < starts.length ? length : Infinity} only="Words" />
               {Keep && board.closer && t >= board.closer.at
-                ? <Keep look={look} u={Math.min(1, (t - board.closer.at) / Math.max(0.05, still - board.closer.at))} />
+                ? (
+                  // the keepsake is pasted on the cover, so it takes the cover's slow push from the stop to the end
+                  <div style={push.style}>
+                    <Keep look={push.look} u={Math.min(1, (t - board.closer.at) / Math.max(0.05, still - board.closer.at))} />
+                  </div>
+                )
                 : null}
             </MoveLayer>
           </>

@@ -32,7 +32,7 @@ python3 S/scripts/clips.py normalize --run build/<stamp> [--why "<why a clip did
 
 Run these after `snap`. `list` prints every clip the storyboard asks for, with its prompt, length, photograph and the
 file to save. Generate each with the platform's image-to-video model from the named photograph and save it where
-`list` says. `normalize` conforms what arrived to its photograph's size and its beat's length, and the film plays it
+`list` says. A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests build/<stamp>/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks. `normalize` conforms what arrived to its photograph's size and its beat's length, and the film plays it
 on that photograph's card. A clip that did not arrive stands in: the film makes the camera or depth move the
 storyboard names on the still photograph, and `clips.json` and `brief.md` say which.
 
@@ -56,7 +56,7 @@ python3 S/scripts/vote.py timed --run build/<stamp>
 ```
 python3 S/scripts/qa.py timed --run build/<stamp>
 python3 S/scripts/music.py master --run build/<stamp>
-python3 S/scripts/film.py render --run build/<stamp>
+python3 S/scripts/film.py render --run build/<stamp> --proof
 ```
 
 - `qa.py timed` checks the cut before it renders: the bounds check on all three formats, the asked length within 1 s, the hook
@@ -70,6 +70,12 @@ python3 S/scripts/film.py render --run build/<stamp>
   to `music.json` and to `storyboard.md`'s `Mixed:` line; the gate's audio row is red when the effects sit less than
   7 LU under. A board's `stop` cue cuts the music where the picture stops: the last hit rings out over the held grid
   and the rest of the film is silent. `music/bed.wav` is the music trimmed to the film, `music/fx.wav` the cues alone.
+- `render --proof` is the render of every round before deliver. It renders each film at half size, `out/proof.mp4`
+  (and `out/proof-square.mp4` and `out/proof-wide.mp4` when they were asked for), with `out/best-nine.png`, the story
+  card and `frames/` as the full render makes them, and never writes over `out/film.mp4`. `qa.py check` and `vote.py
+  cut` read the proof while it is the newest render, and every size they report is in board units, the same numbers
+  the full-size film gives. Without `--proof`, `render` is the full-size render that goes to deliver (movement 5), and
+  it takes the proof's films out of `out/`. Pass the same `--also` to both.
 - `render` renders the reel and the best-nine image (the square board's closer at rest); `render --also landscape
   square stories` adds the wide film, the square film and the story card (the reel's closer at rest), each only when
   the person asked for it, and takes away any extra an earlier render left in `out/` that this one was not asked

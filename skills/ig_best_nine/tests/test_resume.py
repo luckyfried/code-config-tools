@@ -10,10 +10,12 @@ round belongs to one reel.
 
     python3 -I -m unittest discover -s S/tests -p test_resume.py
 """
+import argparse
 import contextlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -300,6 +302,11 @@ class CallSite(unittest.TestCase):
         self.assertFalse(Path("preview/preview.json").exists(), "vote.py timed and qa.py timed find no figures to read")
 
 
+# a board of one photograph whose cut lands on frame 0
+ONE_BEAT = {"id": "one", "bpm": 120, "beats": [{"id": "piece-1", "form": "photo", "start": 0, "lands": 0, "move": None,
+                                                 "transition": None, "layers": []}]}
+
+
 class UnderTheLock(unittest.TestCase):
     """Every process film.py starts while it holds the run's lock goes through run.spawn: the mux and the measure."""
 
@@ -328,13 +335,15 @@ class UnderTheLock(unittest.TestCase):
         self.addCleanup(refuse.stop)
 
     def test_the_mux_and_the_measure_start_through_run_spawn(self):
-        self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1))
+        self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1, ONE_BEAT))
         m = studio.measure(Path("film.mp4"), [], run=self.run_)
         self.assertEqual(m["frames"], 30)
-        self.assertEqual(len(self.started), 6)
+        self.assertEqual(self.started[:2], ["ffmpeg", "ffmpeg"], "the effects' loudness, then the mux")
+        # the effects' loudness, the shared mux's two loudness reads and its encode, then the measure's five
+        self.assertEqual(len(self.started), 9)
 
     def test_every_process_the_gates_film_checks_start_goes_through_run_spawn(self):
-        self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1))
+        self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1, ONE_BEAT))
         Path("out").mkdir()
         for path, _ in qa.FILMS.values():
             shutil.copyfile("film.mp4", path)
@@ -349,6 +358,33 @@ class UnderTheLock(unittest.TestCase):
         self.assertEqual(measured["frames"], 30)
         self.assertIn("ffprobe", self.started)
         self.assertGreater(len(self.started), len(qa.FILMS) * 4, "the probe, the loudness, both detectors and the measure")
+
+
+class Mastered(unittest.TestCase):
+    """The film's mux masters the whole mix once: music and effects together onto -14 LUFS, whatever the master's level."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR")))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        here = os.getcwd()
+        self.addCleanup(os.chdir, here)
+        os.chdir(self.dir)
+        Path("music").mkdir()
+        ff = _env.ffmpeg()
+        subprocess.run([ff, "-v", "error", "-f", "lavfi", "-i", "testsrc2=s=64x64:r=30", "-frames:v", "120", "-pix_fmt", "yuv420p",
+                        "silent.mp4"], check=True)
+        # a master well under the target, as a quiet bed brought in at its own level would be
+        subprocess.run([ff, "-v", "error", "-f", "lavfi", "-i", "anoisesrc=d=4:c=pink:a=0.02", "-ar", "48000", "-ac", "2",
+                        "music/master.wav"], check=True)
+        _env.write_json("music.json", {"file": "music/master.wav", "master": "music/master.wav", "bpm": 120})
+
+    def test_a_quiet_master_reaches_minus_14_lufs_in_the_film(self):
+        sound = film.mux(PLAIN, Path("silent.mp4"), Path("film.mp4"), 4, ONE_BEAT)
+        self.assertTrue(sound["music"])
+        said = subprocess.run([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", "film.mp4", "-af", "ebur128=framelog=quiet",
+                               "-f", "null", "-"], capture_output=True, text=True).stderr
+        lufs = float(re.findall(r"I:\s+(-?[\d.]+) LUFS", said)[-1])
+        self.assertAlmostEqual(lufs, -14.0, delta=1.0)
 
 
 class Vote(unittest.TestCase):
@@ -744,7 +780,8 @@ class CutRound(unittest.TestCase):
 
 
 class AudioRow(unittest.TestCase):
-    """The gate's audio row reads where master placed the effects: their integrated loudness under the bed's."""
+    """The gate's audio row reads what the render measured: the effects' integrated loudness under the music's; its
+    frozen row reads the whole film."""
 
     def setUp(self):
         self.dir = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR")))
@@ -753,35 +790,116 @@ class AudioRow(unittest.TestCase):
         self.addCleanup(os.chdir, here)
         os.chdir(self.dir)
 
-    def audio_row(self, fx_lufs):
-        """The audio row over a reel at -14 LUFS whose master measured the bed at -21.4 LUFS and the effects at
-        `fx_lufs`."""
+    def audio_row(self, fx_lufs, effects=11, frozen=()):
+        """The audio row over a reel at -14 LUFS whose render laid `effects` effects at `fx_lufs` under music it read
+        at -21.4 LUFS; `frozen` names the film's frozen stretches as ffmpeg's freezedetect reports them."""
+        return next(r for r in self.rows(fx_lufs, effects, frozen) if r[0] == "audio")
+
+    def rows(self, fx_lufs, effects=11, frozen=(), asked=None):
+        asked = [] if asked is None else asked
+
+        def detect(film, flt, key, run=None):
+            asked.append(flt)
+            return [ln for ln in frozen if key in ln] if flt.startswith("freezedetect") else []
+
         Path("out").mkdir()
         Path("out/film.mp4").write_bytes(b"the reel")
         _env.write_json("board.json", {"bpm": 120, "beats": [{"id": "hook"}, {"id": "piece-1"}, {"id": "closer"}],
-                                       "sound": [{"kind": "hit", "at": 0.55, "beat": "hook", "what": "the year lands"},
-                                                 {"kind": "hit", "at": 5.3, "beat": "piece-1", "what": "the blade cuts"}]})
-        _env.write_json("music.json", {"file": "music/source.wav", "bed_lufs": -21.4, "fx_lufs": fx_lufs, "sound_cues": 2})
+                                       "sound": [{"kind": "stop", "at": 10.0, "beat": "closer", "what": "the music stops"}]})
+        _env.write_json("music.json", {"file": "music/source.wav", "master_lufs": -14.0})
+        _env.write_json("render/film-report.json", {"sound": {fmt: {"music": True, "effects": effects, "fx_lufs": fx_lufs,
+                                                                     "music_lufs": -21.4} for fmt in qa.FILMS}})
         f = {"boards": {fmt: "board.json" for fmt in qa.FILMS}, "rests": {fmt: {"closer": 0} for fmt in qa.FILMS}, "cuts": [], "hook_frame": 0}
         probed = {"streams": [{"codec_type": "audio", "codec_name": "aac", "bit_rate": "192000"}], "format": {"duration": "28"}}
         with mock.patch.object(qa, "cut", return_value=f), mock.patch.object(qa, "posts_n", return_value=9), \
                 mock.patch.object(qa, "probe", return_value=probed), mock.patch.object(qa, "loudness", return_value=-14.0), \
-                mock.patch.object(qa, "detect", return_value=[]), mock.patch.object(qa, "held_from", return_value=28.0), \
+                mock.patch.object(qa, "detect", side_effect=detect), \
                 mock.patch.object(qa.studio, "measure", return_value={}), mock.patch.object(qa, "figures"), \
                 mock.patch.object(qa, "shown_at", return_value=9):
-            res = qa.film_checks()[0]
-        return next(r for r in res if r[0] == "audio")
+            return qa.film_checks()[0]
 
-    def test_an_effects_stem_peak_normalized_over_a_quiet_bed_turns_the_audio_row_red(self):
+    def test_the_frozen_row_reads_freezes_of_a_second_at_minus_80_db_over_the_whole_film_its_ending_included(self):
+        asked = []
+        # the board's stop is at 5 s; a stretch the closer holds still after it is frozen as any other
+        at_end = ["[freezedetect @ 0x1] lavfi.freezedetect.freeze_start: 26.2",
+                  "[freezedetect @ 0x1] lavfi.freezedetect.freeze_duration: 1.8",
+                  "[freezedetect @ 0x1] lavfi.freezedetect.freeze_end: 28"]
+        _, ok, detail = next(r for r in self.rows(-29.4, frozen=at_end, asked=asked) if r[0] == "frozen")
+        self.assertFalse(ok, detail)
+        self.assertIn("1 frozen stretches of 1.0 s or more", detail)
+        self.assertIn("freezedetect=n=-80dB:d=1.0", asked)
+        shutil.rmtree("out")
+        _, ok, detail = next(r for r in self.rows(-29.4) if r[0] == "frozen")
+        self.assertTrue(ok, detail)
+
+    def test_effects_as_loud_as_the_music_turn_the_audio_row_red(self):
         _, ok, detail = self.audio_row(-16.3)
         self.assertFalse(ok)
-        self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS", detail)
-        self.assertIn("2 sound cues over 3 beats", detail)
+        self.assertIn("music -21.4 LUFS, effects -16.3 LUFS", detail)
+        self.assertIn("11 effects over 3 beats", detail)
 
-    def test_effects_eight_lu_under_the_bed_turn_the_audio_row_green(self):
+    def test_effects_eight_lu_under_the_music_turn_the_audio_row_green(self):
         _, ok, detail = self.audio_row(-29.4)
         self.assertTrue(ok, detail)
         self.assertIn("8.0 LU under", detail)
+
+    def test_a_film_with_no_effects_measured_under_music_is_red(self):
+        _, ok, detail = self.audio_row(None)
+        self.assertFalse(ok)
+        self.assertIn("no effects measured under the music", detail)
+
+
+class Master(unittest.TestCase):
+    """master brings the music to its loudness, cuts it at the board's stop, and writes its energy a frame beside it."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR")))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        here = os.getcwd()
+        self.addCleanup(os.chdir, here)
+        os.chdir(self.dir)
+        Path("music").mkdir()
+        subprocess.run([_env.ffmpeg(), "-v", "error", "-f", "lavfi", "-i", "sine=f=220:d=4", "-ar", "48000", "music/source.wav"],
+                       check=True)
+        _env.write_json("music.json", {"file": "music/source.wav", "bpm": 120, "downbeats": [0, 2]})
+        _env.write_json("board.json", {"bpm": 120, "fps": 30, "beats": [{"id": "closer"}],
+                                       "sound": [{"kind": "stop", "at": 4, "beat": "closer", "what": "the music stops"}]})
+        _env.write_json("film.json", {"seconds": 3, "music_start": 0, "boards": {"reel": "board.json"}})
+
+    def test_a_peaky_bed_reaches_the_target_by_one_gain_and_keeps_its_peaks_whole(self):
+        """Sharp clicks over a quiet bed need peaks past full scale to reach -14 LUFS: the master is written in float and
+        keeps them, so the film's one limiter (sfx.py) is the only thing that touches them."""
+        ff = _env.ffmpeg()
+        subprocess.run([ff, "-y", "-v", "error", "-f", "lavfi", "-i", "anoisesrc=d=6:c=pink:a=0.01", "-f", "lavfi", "-i",
+                        "aevalsrc='if(lt(mod(t,0.25),0.004),0.9,0)':d=6:s=48000", "-filter_complex",
+                        "[0:a][1:a]amix=inputs=2:normalize=0", "-ar", "48000", "music/source.wav"], check=True)
+        _env.write_json("music.json", {"file": "music/source.wav", "bpm": 120, "downbeats": [0, 2, 4]})
+        _env.write_json("board.json", {"bpm": 120, "fps": 30, "beats": [{"id": "closer"}], "sound": []})
+        _env.write_json("film.json", {"seconds": 6.0, "music_start": 0, "boards": {"reel": "board.json"}})
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(music.cmd_master(argparse.Namespace(seconds=None)), 0)
+        rec = _env.read_json("music.json")
+        self.assertAlmostEqual(rec["master_lufs"], music.TARGET_LUFS, delta=0.2)
+        said = subprocess.run([ff, "-hide_banner", "-nostats", "-i", rec["master"], "-af", "astats=measure_perchannel=none", "-f",
+                               "null", "-"], capture_output=True, text=True).stderr
+        peak = float(re.findall(r"Peak level dB: (-?[\d.]+)", said)[-1])
+        self.assertGreater(peak, 0.0, "the clicks stand past full scale in the float master, unclipped")
+        codec = subprocess.run([_env.ffprobe(), "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of",
+                                "csv=p=0", rec["master"]], capture_output=True, text=True).stdout.strip()
+        self.assertEqual(codec, "pcm_f32le")
+
+    def test_the_master_carries_no_effects_and_its_energy_is_one_number_a_frame(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(music.cmd_master(argparse.Namespace(seconds=None)), 0)
+        rec = _env.read_json("music.json")
+        self.assertTrue(Path(rec["master"]).is_file())
+        self.assertFalse({"sound_cues", "bed_lufs", "fx_lufs"} & set(rec), "the effects are laid at render, never in the master")
+        self.assertFalse(Path("music/fx.wav").exists())
+        e = _env.read_json("music/energy.json")
+        self.assertEqual(e["fps"], 30)
+        self.assertAlmostEqual(len(e["rms"]), 90, delta=1)
+        self.assertGreater(max(e["rms"][:55]), 0.05, "the music plays up to its stop")
+        self.assertLess(max(e["rms"][-15:]), 0.01, "and is silent after it")
 
 
 def engine(style=None, styles=(), avoid=(), seconds=60.0, edges=(), hue=None, seed="", bpm=None, target_bpm=None, out=Path("music")):

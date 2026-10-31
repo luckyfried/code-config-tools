@@ -18,7 +18,8 @@ the gate has passed it carries one saying so. On a passing gate it prints the ra
 nine, or that they are the most recent and why, the nine first to ninth, and the one the reel ends on), and the last
 line printed is the reel's path from the workspace root (build/<run>/out/film.mp4), the path the reply to the person
 names first; on a failed gate the last line is "not delivered: the gate failed on " and the failing checks' names,
-and no path.
+and no path. deliver.py refuses a run whose newest render is the half-size proof (out/proof.mp4) and names the
+full-size render to run, with qa.py check and vote.py cut, where the critics read the type at full size.
 """
 import argparse
 import html
@@ -29,6 +30,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import story  # noqa: E402
 import storyboard  # noqa: E402
@@ -145,9 +147,14 @@ def brief(lib, taste, win, music, film, report, cuts):
           f"- Rendered on {'the graphics card' if report.get('gpu') else 'the processor'} in {round(report.get('seconds') or 0)} s."]
     cl = (_env.read_json("clips.json") or {}).get("clips") or {}
     if cl:
-        L += ["", "## the generated clips", ""]
+        L += ["", "## the clips", ""]
         for k, c in cl.items():
-            if c.get("status") == "generated":
+            if c.get("status") == "recorded":
+                L.append(f"- {k}, {c['role']} ({c['beat']}): your recording {Path(c['source']).name}, from {c['start']:g} s, "
+                         f"{c['frames']} frames, sound off.")
+            elif c.get("status") == "poster":
+                L.append(f"- {k}, {c['role']} ({c['beat']}): its poster holds, {c.get('why')}.")
+            elif c.get("status") == "generated":
                 L.append(f"- {k}, {c['role']} ({c['beat']}): generated from {c['image']}, {c['frames']} frames, from {c['source']}.")
             else:
                 L.append(f"- {k}, {c['role']} ({c['beat']}): stand-in, {c.get('why')}; the film makes {c.get('stand_in')}.")
@@ -239,6 +246,8 @@ def main():
     # the run's lock from the first read to the last write: a film render never moves files into out/ while the page
     # and the gate read them
     with studio.lock("deliver") as run:
+        if proof.scale(OUT / "film.mp4") != 1:
+            sys.exit(proof.refusal(OUT / "film.mp4"))
         lib = _env.read_json("library.json") or {}
         taste = _env.read_json("taste.json") or {}
         win = _env.read_json("winner.json") or {}

@@ -52,8 +52,8 @@ person the line it printed and stop.
 | 1 | research | `S/pipeline/1-research.md` | `research.py`, then you write `taste.md` and fix `taste.json` | taste.md with its five headings |
 | 2 | storyboards | `S/pipeline/2-storyboards.md` | `storyboard.py draft`, `check`, `sheets`, look at `out/boards.png` | three looks, zero findings |
 | 3 | the look | `S/pipeline/3-vote.md` | ask which look (or pick by taste), `vote.py pick --board B` | `winner.json` |
-| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `storyboard.py snap`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed` and the read, `qa.py timed`, `music.py master`, `film.py render` | `out/film.mp4`, `out/best-nine.png` |
-| 5 | critic, gate, deliver | `S/pipeline/6-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told), write `caption.md`, `deliver.py` | `GATE GREEN` |
+| 4 | produce | `S/pipeline/4-produce.md` | `music.py find`, `storyboard.py snap`, `clips.py list` and `normalize`, `film.py preview`, `vote.py timed` and the read, `qa.py timed`, `music.py master`, `film.py render --proof` | `out/proof.mp4`, the half-size proof every round before deliver reads, and `out/best-nine.png` |
+| 5 | critic, gate, deliver | `S/pipeline/6-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told) on the proof; the full-size `film.py render`, `qa.py check`, `vote.py cut` and the type read at full size; write `caption.md`, `deliver.py` | `GATE GREEN` |
 
 Every script is `python3 S/scripts/<name>.py ... --run build/<stamp>` (gather and setup take no run); each answers
 `--help` with its inputs, outputs and options. If `gather.py` exits 3, every door is closed: tell the person the one
@@ -87,6 +87,8 @@ pick --board <that look>` in the same run, then movement 4 from `music.py find` 
   under it, the best cut is delivered with its scores in the run's `brief.md`. Scores never appear on the review page.
 - Make what they asked for: the reel, the best-nine image and the caption. The square and wide films and the story
   card render only when they ask for them (`film.py render --also landscape square stories`, naming only those).
+- Every round before deliver renders the half-size proof (`film.py render --proof`); the render deliver takes is full
+  size (`film.py render`), with the same `--also`.
 - Run `film.py preview` and `film.py render` in the foreground in one tool call with a 40-minute timeout, never in
   the background; read their progress in `render/preview.log` and `render/film.log`. An interrupted render resumes
   when the same command runs again; never delete `render/chunks/`.

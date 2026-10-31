@@ -1,10 +1,10 @@
 // picture-tunnel: the camera flies down a corridor walled with the film's photographs toward the beat's own, which
-// waits square at the far end in the card's ground tone, the corridor fogging into that tone with depth. The flight
-// slows as it nears, the corridor's slight roll comes out, and it arrives on the photograph centred and square,
-// exactly where the camera holds it; then the frame goes back to the picture.
+// waits at the far end in the card's ground tone, the corridor fogging into that tone with depth. The corridor's mouth
+// fills the frame on the first frame and comes down onto the print's rim as the flight slows, the corridor's slight roll
+// comes out, and it arrives on the print exactly as the shot draws it; then the frame goes back to the picture.
 import React from 'react';
-import {alpha, bezier, clamp01, hash, px} from '../kit';
-import {arrivalOf, Face, landingOf, photosOf} from '../arrival';
+import {alpha, bezier, clamp01, hash, px, SINE} from '../kit';
+import {arrivalOf, cornersOf, Face, landingOf, photosOf, Print} from '../arrival';
 import type {Move, MoveProps} from '../types';
 
 /** The flight: it gathers speed out of the cut and slows into the arrival. */
@@ -13,10 +13,19 @@ const FLY = bezier([0.4, 0, 0.18, 1]);
 /** Lengths of the corridor, in tiles along each wall. */
 const TILES = 7;
 
+/** How much a `w` x `h` box about (`cx`, `cy`), turned `roll` degrees, must grow to cover the whole frame. */
+export const coverOf = (W: number, H: number, cx: number, cy: number, w: number, h: number, roll: number) => {
+  const a = (-roll * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+  return Math.max(1, ...[[0, 0], [W, 0], [W, H], [0, H]].map(([x, y]) => {
+    const dx = x - cx, dy = y - cy;
+    return Math.max((2 * Math.abs(dx * c - dy * s)) / w, (2 * Math.abs(dx * s + dy * c)) / h);
+  }));
+};
+
 const Overlay: React.FC<MoveProps> = (p) => {
-  const {look, seed} = p;
-  const {s, land, shows} = arrivalOf(p, 1.1);
-  const {box: [x, y, w, h], src, place} = landingOf(p);
+  const {look, beat, seed} = p;
+  const {s, land, shows, bare} = arrivalOf(p, 1.1);
+  const {box: [x, y, w, h]} = landingOf(p);
   const photos = photosOf(p);
   if (shows <= 0) return null;
   // the viewer stands `d` px before the frame; a tile's length along the corridor is `len`, `step` with its gap
@@ -29,8 +38,27 @@ const Overlay: React.FC<MoveProps> = (p) => {
   const fog = (depth: number) => clamp01((depth - len * 0.3) / (far * 0.75));
   const ground = look.tone.ground;
   const inset = Math.min(w, h) * 0.06;
-  // each wall: where its tiles stand and how a tile turns to line the corridor; the ceiling's photographs are seen from
-  // below, so they are turned the right way up
+  const cx = x + w / 2, cy = y + h / 2;
+  // the corridor's mouth covers the frame at the cut and comes down to its own size by the arrival
+  const grow = 1 + (coverOf(look.W, look.H, cx, cy, w, h, roll) - 1) * (1 - go) ** 1.5;
+  // the print waiting down the corridor is drawn flat over it, at the size its depth alone gives it (the mouth's growth
+  // never reaches it), so it starts small in the fog and grows only as the flight nears it, and the 3D compositing
+  // never leaves part of it uncovered
+  const size = d / (d + far - cam);
+  // the corridor is seen through its mouth: the print's rim as it will land, grown and rolled with the corridor. The
+  // window holds the whole frame at the cut and is the mouth from 30% of the way in, so the corridor fills the frame
+  // around the flying print all the way and closes onto the print's rim exactly as it lands; it fades with the move's
+  // ground over the last of the flight
+  const ra = (roll * Math.PI) / 180, rc = Math.cos(ra), rs = Math.sin(ra);
+  const edge = cornersOf(look, beat).map(([ex, ey]) => {
+    const dx = ex - cx, dy = ey - cy;
+    return [cx + grow * (dx * rc - dy * rs), cy + grow * (dx * rs + dy * rc)];
+  });
+  const frame = [[0, 0], [look.W, 0], [look.W, look.H], [0, look.H]];
+  const shut = SINE(clamp01(go / 0.3));
+  const window = frame.map(([fx, fy], i) => `${fx + (edge[i][0] - fx) * shut}px ${fy + (edge[i][1] - fy) * shut}px`).join(', ');
+  // each wall: where its tiles stand and how a tile turns to line the corridor; every tile's top edge is its near edge
+  // on the ceiling and its far edge on the floor, so each photograph reads the right way up from inside the corridor
   const walls = [
     {left: x, top: y + inset, tw: len, th: h - 2 * inset, origin: 'left center', turn: 'rotateY(90deg)'},
     {left: x + w - len, top: y + inset, tw: len, th: h - 2 * inset, origin: 'right center', turn: 'rotateY(-90deg)'},
@@ -49,7 +77,7 @@ const Overlay: React.FC<MoveProps> = (p) => {
       tiles.push(
         <div key={`${k}-${i}`} style={{position: 'absolute', left: wl.left, top: wl.top, width: wl.tw, height: wl.th,
           transformOrigin: wl.origin, transform: `translateZ(${-z0}px) ${wl.turn}`, opacity: pass}}>
-          <Face src={pic} w={wl.tw} h={wl.th} style={{border: `${px(look, 6)}px solid ${look.tone.rim}`, boxSizing: 'border-box', transform: k === 2 ? 'scaleY(-1)' : undefined}}>
+          <Face src={pic} w={wl.tw} h={wl.th} style={{border: `${px(look, 6)}px solid ${look.tone.rim}`, boxSizing: 'border-box'}}>
             <div style={{position: 'absolute', inset: 0, background: alpha(ground, 0.25 + 0.75 * fog(z0 - cam + len / 2))}} />
           </Face>
         </div>,
@@ -57,19 +85,22 @@ const Overlay: React.FC<MoveProps> = (p) => {
     }
   });
   return (
-    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', opacity: shows, background: ground,
-      perspective: d, perspectiveOrigin: `${x + w / 2}px ${y + h / 2}px`}}>
-      <div style={{position: 'absolute', inset: 0, transformStyle: 'preserve-3d', transformOrigin: `${x + w / 2}px ${y + h / 2}px`,
-        transform: `translateZ(${cam}px) rotateZ(${roll}deg)`}}>
-        {tiles}
-        <div style={{position: 'absolute', left: x, top: y, width: w, height: h, transform: `translateZ(${-far}px)`}}>
-          <Face src={src} w={w} h={h} place={place}>
-            <div style={{position: 'absolute', inset: 0, background: alpha(ground, 0.85 * fog(far - cam) * (1 - go))}} />
-          </Face>
+    <div style={{position: 'absolute', inset: 0, overflow: 'hidden', opacity: shows}}>
+      <div style={{position: 'absolute', inset: 0, background: ground, opacity: bare}} />
+      <div style={{position: 'absolute', inset: 0, background: ground, clipPath: `polygon(${window})`, opacity: bare}}>
+        <div style={{position: 'absolute', inset: 0, transformOrigin: `${cx}px ${cy}px`, transform: `scale(${grow})`,
+          perspective: d, perspectiveOrigin: `${cx}px ${cy}px`}}>
+          <div style={{position: 'absolute', inset: 0, transformStyle: 'preserve-3d', transformOrigin: `${cx}px ${cy}px`,
+            transform: `translateZ(${cam}px) rotateZ(${roll}deg)`}}>
+            {tiles}
+          </div>
         </div>
+      </div>
+      <div style={{position: 'absolute', inset: 0, transformOrigin: `${cx}px ${cy}px`, transform: `scale(${size}) rotate(${roll}deg)`}}>
+        <Print look={look} beat={beat} veil={0.85 * fog(far - cam) * (1 - go)} />
       </div>
     </div>
   );
 };
 
-export default {Overlay} satisfies Move;
+export default {early: true, Overlay} satisfies Move;

@@ -70,8 +70,9 @@ template check however clean each frame is, whatever this read says; `film.py re
 
 ## The cut (movement 5)
 
-The motion designer and the person score the rendered film. Watch `out/film.mp4` at full size, once through, the
-way a paying client would, then look at:
+The motion designer and the person score the rendered film. Every round before deliver scores the half-size proof,
+`out/proof.mp4` from `film.py render --proof`; its frames in `frames/` and `out/best-nine.png` are the ones the full
+render makes. Watch the film `vote.py cut` names, once through, the way a paying client would, then look at:
 
 - every `frames/<format>-<rest>.png` full size with the Read tool;
 - the film's strip, `qa/film-strip2.png`;
@@ -79,7 +80,10 @@ way a paying client would, then look at:
 - `qa/check.json` and `render/film-report.json`.
 
 Never score from memory of the storyboard; the cut is what ships, and a score is never rounded up. Fill in
-`critic/cut-N.json` and run `vote.py verdict`. The film ships at the bar: a mean of 4.5 or more with no criterion
+`critic/cut-N.json` and run `vote.py verdict`. Type is read last on the full-size film: after `SHIP` on the proof,
+`film.py render` renders it full size and `vote.py cut` empties each critic's `type` score in the same round; watch
+`out/film.mp4` at full size, read the type on its strip and the frames at the size a phone shows it, and score `type`
+again. The film ships at the bar: a mean of 4.5 or more with no criterion
 under 4. Under it, the one fix names the change to the worst thing, through the levers below, and the film renders
 again. A film still under the bar after that fix is delivered as the best cut, with its scores in the run's
 `brief.md`; the review page never shows a score.

@@ -46,6 +46,7 @@ import _env  # noqa: E402
 import bounds  # noqa: E402
 import compose  # noqa: E402
 import palette  # noqa: E402
+import sfx  # noqa: E402
 import story  # noqa: E402
 
 BOARDS = Path("storyboards")
@@ -58,6 +59,10 @@ STOP = {"and", "i", "the", "a", "an", "to", "of", "be", "will", "not", "in", "on
         "but", "so", "just", "then", "that", "this", "all", "you", "we", "or", "by", "from", "like"}
 # the order the sheet shows a board's rests in
 SHEET = ("hook", "ordinary", "card")
+# each effect sfx.py lays, as storyboard.md names it
+EFFECTS = {"air": "soft air into the dissolve", "sweep": "a warm whoosh on the cut", "bright": "the bright sweep, once a film",
+           "shutter": "a shutter as the photograph lands", "pop": "a pop as the mark lands", "impact": "an impact as it lands",
+           "riser": "the riser into the closer"}
 
 
 def words_default(year):
@@ -136,7 +141,8 @@ def posts_of(stats, picks, taste):
     """The nine with a photograph as the posts the story lays out, ranked by the numbers, each with its `pick`: its place
     in taste.json `order` (the post's ts, the strongest first), else its rank. Each says its moment's line from taste.json
     `moments` (joined by the post's `ts`) as written, and the lead of its caption, in their case, when no moment names it;
-    a moment's `people` and `place` come along for the move each beat takes."""
+    a moment's `people` and `place` come along for the move each beat takes, and a recorded clip's file and its strongest
+    second (picks.json `video`, `clip_at`) for the beat that plays it."""
     info = {n["rank"]: n for n in picks["nine"]}
     lower = bool((taste.get("register") or {}).get("lowercase", True))
     moment = {mo["ts"]: mo for mo in taste.get("moments") or [] if "ts" in mo}
@@ -155,7 +161,8 @@ def posts_of(stats, picks, taste):
             said = said.lower() if lower else said
         out.append({"rank": len(out) + 1, "caption": said, "date": f"{d.day} {calendar.month_abbr[d.month].lower()}", "ts": t["ts"],
                     "file": n["file"], "aspect": n["aspect"], "focus": n["focus"], "crop": n["crop"], "line": n.get("line"),
-                    "look": n.get("look"), "people": list(mo.get("people") or []), "place": mo.get("place") or ""})
+                    "look": n.get("look"), "people": list(mo.get("people") or []), "place": mo.get("place") or "",
+                    **({"video": n["video"], "clip_at": n.get("clip_at") or 0.0} if n.get("video") else {})})
     named = [p for p in out if str(p["ts"]) in order]
     rest = [p for p in out if str(p["ts"]) not in order]
     for i, p in enumerate(sorted(named, key=lambda p: order.index(str(p["ts"]))) + rest):
@@ -214,6 +221,9 @@ def write_style(run, style, bpm=None):
     b = reel["board"]
     sec = 60 / b["bpm"]
     cell = lambda t: str(t).replace("|", "/")
+    fx, _ = sfx.events(story.fx_board(b), b["bpm"])
+    beat_at = lambda t: next((x["id"] for x in reversed(b["beats"]) if x["start"] * sec <= t + 1e-6), b["beats"][0]["id"])
+    stop = next((f"{q['at'] * sec:.2f} s, where the closer settles" for q in b["sound"] if q["kind"] == "stop"), "the film's end")
     lines = [f"# {compose.card(style)['name']}: {sentence(style)}", "",
              f"{len(run.posts)} posts, {b['bpm']} bpm, {reel['seconds']} s (asked {run.seconds:g} s), {len(reel['cuts'])} cuts "
              f"({len(reel['cuts']) / (reel['seconds'] / 60):.1f} a minute), the hook at frame {reel['hook_frame']}.", "",
@@ -227,13 +237,16 @@ def write_style(run, style, bpm=None):
                      f"{bt['frames'] / FPS:.2f} | {cell(' / '.join(said))[:90]} |")
     lines += ["", "Music: " + ((_env.read_json("music.json") or {}).get("origin") or "none yet (music.py find)") + ".",
               "The music brief (taste.json `music`): " + json.dumps(run.taste.get("music"), ensure_ascii=False) + ".",
-              "Mixed: not yet; music.py master writes the bed's and the effects' loudness here.",
-              "", f"Sound, where each beat lands (music.py places each under the bed; {len(b['sound'])} cues):", "",
-              "| at | beat | cue | what |", "|---|---|---|---|"]
-    lines += [f"| {q['at'] * sec:.2f} s | {q['beat']} | {q['kind']} | {cell(q['what'])} |" for q in b["sound"]]
-    lines += ["", "Generated clips (clips.py list asks the video model for them; clips.py normalize places what arrives):", "",
+              "", f"Sound: the shared effects (sfx.py), laid under the music at render, on its grid and in its key "
+              f"({len(fx)} effects); the music stops at {stop}:", "",
+              "| at | beat | effect |", "|---|---|---|"]
+    lines += [f"| {t:.2f} s | {beat_at(t)} | {EFFECTS[k]} |" for t, k in fx]
+    lines += ["", "Clips (clips.py list asks the video model for the generated ones; clips.py normalize places what arrives "
+              "and cuts their own from its strongest second):", "",
               "| clip | beat | role | seconds | prompt | in its place until it arrives |", "|---|---|---|---|---|---|"]
-    lines += [f"| {q['id']} | {q['beat']} | {q['role']} | {q['seconds']} | {cell(q['prompt'])} | {cell(q['stand_in'])} |" for q in b["clips"]]
+    lines += [f"| {q['id']} | {q['beat']} | {q['role']} | {q['seconds']} | "
+              + (f"their recording, from {q['from']:g} s, sound off | nothing: it is theirs |" if q.get("source")
+                 else f"{cell(q['prompt'])} | {cell(q['stand_in'])} |") for q in b["clips"]]
     lines += ["", "Rests (the sheet and the stills): " + ", ".join(f"{k} {reel['rest_beats'][k]} at frame {v}" for k, v in reel["rests"].items()), "",
               "The words, from taste.json `words` over the defaults: " + json.dumps(run.words(), ensure_ascii=False), "",
               "The photographs, in the film's order (focus and square crop from picks.json):", ""]

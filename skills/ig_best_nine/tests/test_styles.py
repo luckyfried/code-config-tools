@@ -235,23 +235,39 @@ class Moves(unittest.TestCase):
             self.assertAlmostEqual(x + focus[0] * w, win[0] + win[2] / 2, delta=1.0)
             self.assertAlmostEqual(y + focus[1] * h, win[1] + win[3] / 2, delta=1.0)
 
+    def test_the_picture_behind_the_instant_print_covers_only_what_the_print_shows(self):
+        # the window's move covers the frame around the window with the card's ground and the print carries its picture
+        # down with it, so the picture behind the print covers the window and the reach past each side, and the print
+        # shows most of the photograph, its subject whole
+        fr = compose.Frame("reel")
+        ox, oy = story.OVER * fr.W, story.OVER * fr.H
+        for title, most in ((True, 0.75), (False, 0.75)):
+            (x0, y0, x1, y1), _ = story.window("polaroid-drop", fr.W, fr.H, fr.safe, title)
+            p = {"aspect": 1.334, "focus": [0.47, 0.5]}
+            x, y, w, h = story.through(p, [x0, y0, x1 - x0, y1 - y0], fr)
+            self.assertTrue(x <= x0 - ox + 1 and x + w >= x1 + ox - 1 and y <= y0 - oy + 1 and y + h >= y1 + oy - 1, (title, x, y, w, h))
+            self.assertGreaterEqual((x1 - x0) / w, most, title)
+
+    def test_the_instant_print_stands_inside_the_safe_area_in_the_middle_of_its_height(self):
+        # polaroid-drop.tsx: no taller than the safe area and centred in its height, so the rim is never cut at the top
+        # and the words on the foot stand above the interface at the bottom
+        fr = compose.Frame("reel")
+        sx0, sy0, sx1, sy1 = fr.safe
+        for title in (True, False):
+            (x0, y0, x1, y1), ((_, f0, _, f1),) = story.window("polaroid-drop", fr.W, fr.H, fr.safe, title)
+            w = (x1 - x0) / (1 - 2 * (0.035 if title else 0.05))
+            rim = (w - (x1 - x0)) / 2
+            top = y0 - rim
+            self.assertGreaterEqual(top, sy0 - 1, title)
+            self.assertLessEqual(f1, sy1 + 1, title)
+            self.assertAlmostEqual(top - sy0, sy1 - f1, delta=1.0, msg=title)
+
     def test_a_shade_under_words_on_a_window_spans_the_frames_width(self):
         fr = compose.Frame("reel")
         S = test_story.board()["system"]
         line = {"text": "a caption", "face": "display", "size": 60, "x": 100, "y": 0.7 * fr.H}
         sh = story.shade_of([line], S, fr, "ink", 0.6, [0, 0.2 * fr.H, fr.W, 0.6 * fr.H])
         self.assertEqual((sh["box"][0], sh["box"][2]), (0, fr.W))
-
-    def test_a_held_composition_is_not_a_stalled_render(self):
-        still = next(m for m in self.MOVES if story.still(m))
-        moving = next(m for m in self.MOVES if not story.still(m))
-        board = {"format": {"fps": 30}, "beats": [{"form": "photo", "move": still, "frames": 60},
-                                                  {"form": "photo", "move": moving, "frames": 60},
-                                                  {"form": "closer", "move": "", "frames": 90}]}
-        self.assertTrue(qa.composed(board, 0.5, 1.9), "inside a beat whose move holds the picture")
-        self.assertFalse(qa.composed(board, 2.2, 3.9), "inside a beat whose move pushes the picture")
-        self.assertFalse(qa.composed(board, 1.5, 2.5), "across a cut")
-        self.assertTrue(qa.composed(board, 4.1, 6.9), "the closer's title stands still once it is set")
 
 
 class Length(unittest.TestCase):

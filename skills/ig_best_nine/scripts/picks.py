@@ -7,8 +7,8 @@ USAGE (from the workspace root):
 Indexes every photo of the year (color, contrast, exposure) into photo_index.json. For each of the nine (rank
 order, from stats.json) it writes the photograph the film draws, public/photos/r<rank>-<name>.jpg (HEIC
 converted, EXIF rotation applied, at most 2400 px on a side, its mean light moved halfway to the nine's common
-exposure by a curve that keeps its color; a reel stands in by its poster frame, 40% of the way in), and decides
-where the storyboard looks:
+exposure by a curve that keeps its color; a recorded clip stands in by its poster, the frame at its strongest second),
+and decides where the storyboard looks:
 
   focus  the subject, as [u, v] fractions of the photograph: each cell of a small copy is weighted by its detail
          (edge strength), by how far its color stands from the photograph's mean color, by skin tones, and by a
@@ -21,6 +21,10 @@ where the storyboard looks:
 
   look   the photograph's difference hash; the film holds a photograph that repeats an earlier one in the film for
          the shortest time (story.py).
+  clip_at  a recorded clip's strongest second: the start of the second in which the most moves (the mean change from
+         frame to frame of a small grey copy, sampled RATE times a second), among the starts that leave the clip at
+         least SHOT seconds to play. The film plays the clip from there over its beat (clips.py), and its poster is
+         the frame there, so the photograph a move flies in is the clip's first frame.
 
 picks.json carries the nine in rank order (file relative to public/, aspect as height over width, focus, crop,
 score, brightness, colors, look, source). The storyboard records the same focus and crop on every layer that draws the
@@ -50,6 +54,7 @@ PUBLIC = Path("public")
 PHOTOS = PUBLIC / "photos"
 VIDEO = {".mp4", ".mov", ".m4v"}
 LONG = 2400
+RATE, SHOT = 10, 2.0  # samples a second read for a clip's strongest second; the seconds a clip plays at least from it
 
 
 def open_image(path, draft=None):
@@ -60,26 +65,42 @@ def open_image(path, draft=None):
     return im.convert("RGB")
 
 
-def poster(video, dest):
+def strongest(video):
+    """The clip's strongest second (seconds from its start, see clip_at above); 0 for a clip too short to choose in."""
     r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
                        capture_output=True, text=True)
     try:
-        at = float(r.stdout.strip()) * 0.4
+        seconds = float(r.stdout.strip())
     except ValueError:
-        at = 0.5
+        return 0.0
+    raw = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(video), "-an", "-vf", f"fps={RATE},scale=32:32,format=gray",
+                          "-f", "rawvideo", "-"], capture_output=True).stdout
+    frames = [raw[i:i + 1024] for i in range(0, len(raw) - 1023, 1024)]
+    moved = [sum(abs(a - b) for a, b in zip(f, g)) / 1024 for f, g in zip(frames, frames[1:])]
+    last = int(max(0.0, seconds - SHOT) * RATE)
+    if not moved or last <= 0:
+        return 0.0
+    best = max(range(min(last, len(moved)) + 1), key=lambda i: (sum(moved[i:i + RATE]), -i))
+    return round(best / RATE, 1)
+
+
+def poster(video, dest, at=None):
+    """The clip's frame at `at` seconds (its strongest second when not given), at most LONG px on a side, at `dest`."""
+    at = strongest(video) if at is None else at
     subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(video), "-frames:v", "1",
                     "-vf", f"scale='min({LONG},iw)':-2", "-q:v", "2", str(dest)], capture_output=True)
     return dest.exists() and dest.stat().st_size > 0
 
 
-def place(rank, src, video=None):
-    """The photograph the film draws, in public/photos/. Returns its path, or None when it cannot be opened."""
+def place(rank, src, video=None, at=None):
+    """The photograph the film draws, in public/photos/; a recorded clip's is its frame at `at`. Returns its path, or
+    None when it cannot be opened."""
     PHOTOS.mkdir(parents=True, exist_ok=True)
     dest = PHOTOS / f"r{rank}-{Path(src).stem}.jpg"
     # written beside it and moved in whole, so the film never draws a half-written photograph
     part = dest.with_name(f".{dest.stem}.part.jpg")
     if video:
-        if not poster(src, part):
+        if not poster(src, part, at):
             part.unlink(missing_ok=True)
             return None
     else:
@@ -202,7 +223,8 @@ def main():
     lines = {n["src"]: n["line"] for n in (_env.read_json("picks.json") or {}).get("nine", []) if n.get("line")}
     nine = []
     for t in s["top_nine"]:
-        out = place(t["rank"], t["media"], t.get("video"))
+        at = strongest(t["video"]) if t.get("video") else None
+        out = place(t["rank"], t["media"], t.get("video"), at)
         if not out:
             print(f"skip rank {t['rank']}: its media cannot be opened ({Path(t['media']).name})", file=sys.stderr)
             continue
@@ -210,7 +232,7 @@ def main():
         aspect = round(im.size[1] / im.size[0], 4)
         focus = focus_of(im)
         nine.append({"rank": t["rank"], "kind": t["kind"], "file": str(out.relative_to(PUBLIC)), "src": t["media"],
-                     "video": t.get("video"), "aspect": aspect, "focus": focus, "crop": square_crop(aspect, focus), **analyse(out)})
+                     "video": t.get("video"), **({"clip_at": at} if t.get("video") else {}), "aspect": aspect, "focus": focus, "crop": square_crop(aspect, focus), **analyse(out)})
         if t["media"] in lines:
             nine[-1]["line"] = lines[t["media"]]
     _env.write_json("picks.json", {"nine": nine})

@@ -4,7 +4,7 @@
 USAGE (S = this skill's folder; any python3 from 3.9 to 3.14, nothing to install):
     python3 S/scripts/music_engine.py make --out DIR --seconds 45 [--style ID] [--styles "words" ...] [--avoid "words" ...]
                                            [--edges 8.2 21.5 ...] [--hue 210 | --color "#3a6ea5"] [--seed RUN] [--bpm N]
-                                           [--target-bpm N]
+                                           [--target-bpm N] [--peak LAND END]
         # DIR/bed.wav, DIR/fx/{riser,hit,bright,impact}.wav, and DIR/../music.json's grid (or --json-out FILE)
     python3 S/scripts/music_engine.py fx --out DIR [--style ID] [--hue H] [--seed RUN] [--bpm N]   # the effects alone
     python3 S/scripts/music_engine.py recipes                                                        # the recipes and their words
@@ -25,6 +25,10 @@ What decides the music:
 - the form: the film's section edges (seconds) split the bed into sections, each starting on a bar line and a new
   pass of its progression, with a drum fill into it and a crash on it; the recipe's `arc` gives each section's energy,
   which picks its groove and decides which roles play.
+- the peak (`peak`, seconds: where the story's peak lands and where its beat ends): a section turns on the bar the
+  landing falls in and another on the bar after the peak beat ends; the peak's section plays the arc's top energy and
+  every other section plays under it. The bed plays at LIFT expression outside the peak, rises over the two bars
+  before the landing to full expression on it, holds there to the peak beat's end and settles back over a bar.
 - the seed (the run id): the progressions, the grooves among equals, the melodies and the small velocity changes. The
   same inputs give the same bytes.
 """
@@ -61,6 +65,7 @@ MODES = {"ionian": (0, 2, 4, 5, 7, 9, 11), "dorian": (0, 2, 3, 5, 7, 9, 10), "ph
          "lydian": (0, 2, 4, 6, 7, 9, 11), "mixolydian": (0, 2, 4, 5, 7, 9, 10), "aeolian": (0, 2, 3, 5, 7, 8, 10)}
 NAMES = ("C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B")
 DEFAULT_EDGES = (0.2, 0.5, 0.8)  # with no section edges, the bed's own form: intro, lift, peak, out
+LIFT = 112  # the bed's expression outside the story's peak (of 127): about 2 dB under the peak's full expression
 
 
 class Refusal(SystemExit):
@@ -217,24 +222,55 @@ def pattern(text):
     return out
 
 
-def form(recipe, seconds, edges, bpm):
-    """The sections [(first bar, end bar, energy)] and the bar count."""
+def form(recipe, seconds, edges, bpm, peak=None):
+    """The sections [(first bar, end bar, energy)] and the bar count. With a `peak` (landing, end seconds), sections
+    turn on the bar the landing falls in and on the bar after the peak beat ends, whatever edge lies within a bar of
+    them; the peak's section takes the arc's top energy and every other section plays under it."""
     bar = 240 / bpm
     bars = max(1, math.ceil(seconds / bar))
     cuts = [round(e / bar) for e in (edges if edges else [f * seconds for f in DEFAULT_EDGES])]
+    held = set()
+    if peak:
+        held = {b for b in (math.floor(peak[0] / bar), math.ceil(peak[1] / bar)) if 0 < b < bars}
+        cuts = [c for c in cuts if all(abs(c - h) > 1 for h in held)] + sorted(held)
     starts = [0]
     for c in sorted(set(cuts)):
-        if c - starts[-1] >= 2 and bars - c >= 1:
+        if c in held:
+            while len(starts) > 1 and c - starts[-1] < 2 and starts[-1] not in held:
+                starts.pop()
+            if c > starts[-1] and bars - c >= 1:
+                starts.append(c)
+        elif c - starts[-1] >= 2 and bars - c >= 1:
             starts.append(c)
     arc, n = recipe["arc"], len(starts)
     energy = [arc[round(i * (len(arc) - 1) / (n - 1))] if n > 1 else arc[0] for i in range(n)]
+    if peak:
+        top, at = max(arc), math.floor(peak[0] / bar)
+        energy = [top if s == max([x for x in starts if x <= at] or [0]) else min(e, top - 1) for s, e in zip(starts, energy)]
     return [(s, (starts + [bars])[i + 1], energy[i]) for i, s in enumerate(starts)], bars
 
 
-def arrange(book, recipe, tonic, bpm, seconds, edges, seed):
+def lift(peak, bpm, channels, seconds):
+    """The bed's expression changes [(seconds, channel, value)] for a story's peak at (landing, end) seconds: LIFT from
+    the start, rising evenly over the two bars before the landing to 127 on it, held to the peak beat's end, and back to
+    LIFT over the bar after it, in steps of a twentieth of a second, on every channel."""
+    bar = 240 / bpm
+    land, end = peak
+    rise0, fall1 = max(0.0, land - 2 * bar), min(seconds, end + bar)
+    out = [(0.0, ch, LIFT) for ch in channels]
+    t = rise0
+    while t < fall1:
+        u = (t - rise0) / max(1e-6, land - rise0) if t < land else 1.0 if t <= end else 1 - (t - end) / bar
+        v = round(LIFT + (127 - LIFT) * max(0.0, min(1.0, u)))
+        out += [(round(t, 3), ch, v) for ch in channels]
+        t += 0.05
+    return out + [(round(fall1, 3), ch, LIFT) for ch in channels]
+
+
+def arrange(book, recipe, tonic, bpm, seconds, edges, seed, peak=None):
     """The bed as note events [(seconds, order, kind, channel, a, b)], its channels' presets, and what it played."""
     mode = MODES[recipe["mode"]]
-    sections, bars = form(recipe, seconds, edges, bpm)
+    sections, bars = form(recipe, seconds, edges, bpm, peak)
     step_s = 60 / bpm / 4
     swing = recipe.get("swing", 0.0)
     r = rng(seed, "progression")
@@ -465,23 +501,26 @@ def resolve(book, style=None, styles=(), avoid=()):
 
 
 def compose(style=None, styles=(), avoid=(), seconds=60.0, edges=(), hue=None, seed="", bpm=None, target_bpm=None,
-            out=Path("music")):
-    """The bed (out/bed.wav) and its effects (out/fx/*.wav). Returns what music.json carries about them: the recipe,
-    key, tempo, beats, downbeats, sections, chords, programs, and what the brief removed."""
+            out=Path("music"), peak=None):
+    """The bed (out/bed.wav) and its effects (out/fx/*.wav), the bed lifting into the story's `peak` (landing, end
+    seconds) when it is given. Returns what music.json carries about them: the recipe, key, tempo, beats, downbeats,
+    sections, chords, programs, the peak, and what the brief removed."""
     book = recipes()
     sf = instruments(player())
     rid, recipe, removed = resolve(book, style, styles, avoid)
     tonic = tonic_of(hue) if hue is not None else pick(rng(seed, "key"), range(12))
     bpm = tempo(recipe, bpm, target_bpm, seed)
-    events, presets, made = arrange(book, recipe, tonic, bpm, seconds, edges, seed)
+    events, presets, made = arrange(book, recipe, tonic, bpm, seconds, edges, seed, peak)
     out.mkdir(parents=True, exist_ok=True)
-    bed = write(render(sf, events, presets, seconds), chain_of(recipe), BED_LUFS, out / "bed.wav")
+    ramps = lift(peak, bpm, sorted(presets), seconds) if peak else ()
+    bed = write(render(sf, events, presets, seconds, ramps), chain_of(recipe), BED_LUFS, out / "bed.wav")
     place([bed] + render_fx(book, recipe, tonic, bpm, out, sf))
     beat = 60 / bpm
     beats = [round(i * beat, 3) for i in range(int(seconds / beat) + 1)]
     return {"recipe": rid, "key": f"{NAMES[tonic]} {recipe['mode']}", "bpm": bpm, "seconds": round(seconds, 2),
             "beats": beats, "downbeats": beats[::4], "sections": made["sections"], "chords": made["chords"],
             "programs": sorted({f"{b}:{p}" for b, p in presets.values()}), "removed": removed,
+            **({"peak": [round(peak[0], 3), round(peak[1], 3)]} if peak else {}),
             "fx": {c: str(out / "fx" / f"{c}.wav") for c in CUES}, "fx_recipe": rid}
 
 
@@ -500,6 +539,7 @@ def main():
     ap.add_argument("--bpm", type=float)
     ap.add_argument("--target-bpm", type=float)
     ap.add_argument("--json-out", type=Path)
+    ap.add_argument("--peak", nargs=2, type=float, metavar=("LAND", "END"))
     a = ap.parse_args()
     book = recipes()
     if a.cmd == "recipes":
@@ -513,7 +553,8 @@ def main():
         place(render_fx(book, recipe, tonic, tempo(recipe, a.bpm, a.target_bpm, a.seed), a.out))
         print(f"{rid}: {', '.join(str(a.out / 'fx' / f'{c}.wav') for c in CUES)}")
         return 0
-    info = compose(a.style, a.styles, a.avoid, a.seconds, a.edges, hue, a.seed, a.bpm, a.target_bpm, a.out)
+    info = compose(a.style, a.styles, a.avoid, a.seconds, a.edges, hue, a.seed, a.bpm, a.target_bpm, a.out,
+                   tuple(a.peak) if a.peak else None)
     dst = a.json_out or a.out.parent / "music.json"
     dst.write_text(json.dumps(dict(info, file=str(a.out / "bed.wav")), indent=2) + "\n")
     print(f"{info['recipe']} in {info['key']} at {info['bpm']:g} bpm, {info['seconds']} s: {' '.join(info['chords'])}"

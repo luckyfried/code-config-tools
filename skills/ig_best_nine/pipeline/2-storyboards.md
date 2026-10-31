@@ -17,9 +17,11 @@ else.
 The story is the same in all three. It opens on the first of the countdown, full in the frame, with their title over
 it. Then the nine, from the ninth to the first, with no number on screen: each in a layout of its own (nine layouts for
 nine posts), the photograph placed by its focus, their caption line and its day set in the look's faces, moved by one
-of the look's moves and cut into with one of its cuts, no move twice in a row. Then the nine as they post them, a three
-by three grid, the first at its top left, with the year and the ask; and the look's closer with their title and their
-promise, held still as the music stops.
+of the look's moves and cut into with one of its cuts, no move twice in a row, and no two captions in a row entering
+the same way. Every word stands inside the format's safe area at the board's sizes: a move that would write the title
+or a caption beside its window outside it (the wide margin under a crop) is handed none, and the board sets them over
+the picture; the instant print lays itself out from the safe area and writes its own words on its foot. Then the nine as they post them, a three by three grid, the first at its top left, with the year and the
+ask; and the look's closer with their title and their promise, settling under a slow push as the music stops.
 
 Each beat holds as long as its post asks: a captioned post for its words, a wordless one less, a repeat least, and the
 first longest. The film runs the length asked (`taste.json` `seconds`, 20 to 45 s, 30 s when it is `null`); a length

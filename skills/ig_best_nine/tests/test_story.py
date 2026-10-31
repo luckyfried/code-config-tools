@@ -16,6 +16,7 @@ KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
 import compose  # noqa: E402
 import research  # noqa: E402
+import sfx  # noqa: E402
 import stats  # noqa: E402
 import story  # noqa: E402
 import storyboard  # noqa: E402
@@ -161,6 +162,20 @@ class Holds(unittest.TestCase):
         ids = [x["id"] for x in pieces(board())]
         self.assertGreaterEqual(len({f[i] for i in ids}), 4, "no beat grid")
 
+    def test_the_countdown_pays_off_on_the_first_and_the_wall_never_sags(self):
+        """The first of the nine holds half again as long as the middle piece of the run, so the countdown lands on
+        it; the whole wall then holds still for WALL seconds, about 2, before the cut into the closer."""
+        for style in compose.TRIO:
+            b = board(style=style)
+            f = frames_of(b)
+            run = sorted(f[f"piece-{r}"] for r in range(2, 10))
+            with self.subTest(style=style):
+                self.assertGreaterEqual(f["piece-1"], 1.5 * run[len(run) // 2])
+                grid = next(x for x in b["beats"] if x["id"] == "grid")
+                still = grid["beats"] - (story.flight(grid["move"], grid["beats"], story.BPM)[1] if story.arrives(grid["move"])
+                                         else story.TILE * 8 + story.LANDS)
+                self.assertLessEqual(still * 60 / story.BPM, 2.0 + story.EDGE * 60 / story.BPM + 0.5)
+
     def test_every_line_lands_before_the_beat_is_half_over(self):
         for bpm in (100, 120, 140):
             for style in compose.TRIO:
@@ -203,6 +218,70 @@ class Words(unittest.TestCase):
         ps[4]["caption"] = ""
         beat = next(x for x in board(ps=ps)["beats"] if x["id"] == f"piece-{ps[4]['rank']}")
         self.assertEqual([ln["text"] for ln in lines_of(beat)] or [beat["label"]], [ps[4]["date"]])
+
+
+class Seen(unittest.TestCase):
+    """Every word is set where the person reads it: inside the format's safe area, at the board's sizes."""
+
+    def test_no_move_is_handed_words_it_would_write_outside_the_safe_area(self):
+        for style in compose.TRIO:
+            for fmt in compose.FORMATS:
+                b, fr = board(fmt, style=style), compose.Frame(fmt)
+                _, y0, _, y1 = fr.safe
+                for x in b["beats"]:
+                    if not x.get("move") or not story.frames_picture(x["move"]):
+                        continue
+                    if any(m[1] < y0 or m[3] > y1 for m in story.window(x["move"], fr.W, fr.H, fr.safe, x["form"] == "title")[1]):
+                        with self.subTest(style=style, fmt=fmt, beat=x["id"], move=x["move"]):
+                            self.assertEqual((x.get("words") or "", x.get("label") or ""), ("", ""))
+
+    def test_the_instant_print_writes_its_own_words_on_its_foot_inside_the_safe_area(self):
+        """polaroid-drop lays its print out from the safe area, so its foot holds the words it is handed: the title on
+        the hook, the caption on a piece."""
+        for fmt in compose.FORMATS:
+            b, fr = board(fmt, style="scrapbook"), compose.Frame(fmt)
+            x0, y0, x1, y1 = fr.safe
+            prints = [x for x in b["beats"] if x["move"] == "polaroid-drop"]
+            self.assertTrue(prints, fmt)
+            for x in prints:
+                with self.subTest(fmt=fmt, beat=x["id"]):
+                    self.assertFalse(story.writes_unseen("polaroid-drop", fr, x["form"] == "title"))
+                    _, (foot,) = story.window("polaroid-drop", fr.W, fr.H, fr.safe, x["form"] == "title")
+                    self.assertTrue(y0 - 1 <= foot[1] and foot[3] <= y1 + 1, (foot, fr.safe))
+                    if x["form"] == "title":
+                        self.assertEqual(x["words"].lower(), storyboard.words_default(BOOK["year"])["title"].lower())
+                        self.assertFalse([ln for ln in lines_of(x) if ln.get("face") == "display"], "the print writes the title once")
+                    else:
+                        self.assertTrue(x["words"] or x["label"], "a piece's print writes its caption")
+
+    def test_the_hooks_title_stands_inside_the_safe_area_at_the_title_size_or_in_the_move_that_sets_it_there(self):
+        for style in compose.TRIO:
+            for fmt in compose.FORMATS:
+                b, fr = board(fmt, style=style), compose.Frame(fmt)
+                hook = b["beats"][0]
+                title = storyboard.words_default(BOOK["year"])["title"].lower()
+                lines = [ln for ln in lines_of(hook) if ln.get("face") == "display"]
+                with self.subTest(style=style, fmt=fmt, move=hook["move"]):
+                    if not lines:
+                        self.assertEqual(hook["words"].lower(), title)
+                        continue
+                    self.assertEqual(" ".join(ln["text"] for ln in lines).lower(), title)
+                    x0, y0, x1, y1 = fr.safe
+                    for ln in lines:
+                        bx0, by0, bx1, by1 = story.text_box(b["system"], ln, ink=True)
+                        self.assertGreaterEqual(ln["size"], story.TITLE[fmt] * 0.6, ln)
+                        self.assertTrue(x0 - 1 <= bx0 and bx1 <= x1 + 1 and y0 - 1 <= by0 and by1 <= y1 + 1, (ln, fr.safe))
+
+    def test_no_two_captions_in_a_row_enter_the_same_way(self):
+        for style in compose.TRIO:
+            for fmt in compose.FORMATS:
+                b = board(fmt, style=style)
+                ways = [L["enter"] for x in pieces(b) for L in x["layers"] if L["kind"] == "Words"]
+                with self.subTest(style=style, fmt=fmt):
+                    self.assertGreater(len(ways), 4)
+                    self.assertFalse([a for a, b in zip(ways, ways[1:]) if a == b], ways)
+                    # the first caption enters the card's own way
+                    self.assertEqual(ways[0], b["system"]["photo"]["line"]["enter"])
 
 
 class Lines(unittest.TestCase):
@@ -276,13 +355,13 @@ class Ending(unittest.TestCase):
                     self.assertEqual(reading, list(range(1, 10)))
                     self.assertEqual(b["beats"][-1]["form"], "closer")
 
-    def test_the_wall_stands_whole_for_three_seconds_before_the_cut_into_the_closer(self):
+    def test_the_wall_stands_whole_for_its_hold_before_the_cut_into_the_closer(self):
         for style in compose.TRIO:
             with self.subTest(style=style):
                 b = board(style=style)
                 grid = next(x for x in b["beats"] if x["id"] == "grid")
                 landed = max(L["at"] + L["beats"] for L in grid["layers"] if L["kind"] == "Slice")
-                self.assertGreaterEqual((grid["beats"] - landed - story.EDGE) * 60 / b["bpm"], 3.0)
+                self.assertGreaterEqual((grid["beats"] - landed - story.EDGE) * 60 / b["bpm"], story.WALL)
 
     def test_the_closer_comes_up_over_the_whole_wall(self):
         for style in compose.TRIO:
@@ -321,13 +400,101 @@ class Ending(unittest.TestCase):
         b = board()
         self.assertFalse([c for c in b["sound"] if re.search(r"\bcount\b|\bno\. ", c["what"])])
 
-    def test_a_sound_lands_where_a_beat_lands_and_nowhere_else(self):
+    def test_the_board_cues_only_its_stop_and_the_effects_come_from_the_shared_layer(self):
+        for style in compose.TRIO:
+            b = board(style=style)
+            self.assertEqual([(c["kind"], c["beat"]) for c in b["sound"]], [("stop", "closer")], "nothing plays twice")
+            ev, _ = sfx.events(story.fx_board(b), b["bpm"])
+            kinds = [k for _, k in ev]
+            cuts = len(b["beats"]) - 2  # every cut but the one into the closer, which the riser leads into
+            step = 60 / b["bpm"] / sfx.GRID
+            with self.subTest(style=style):
+                self.assertEqual(sum(k in ("air", "sweep", "bright") for k in kinds), cuts)
+                self.assertEqual(kinds.count("bright"), 1, "the bright sweep once a film")
+                self.assertGreaterEqual(sum(k in ("shutter", "pop") for k in kinds), len(pieces(b)), "every photograph lands on a sound")
+                self.assertEqual(kinds.count("riser"), 1)
+                self.assertEqual(kinds.count("impact"), 3, "the hook's line, the grid's year and the closer land")
+                self.assertFalse([t for t, _ in ev if abs(t / step - round(t / step)) > 1e-6], "every effect on the grid")
+
+    def test_every_cut_lands_on_the_grid_so_its_whoosh_lands_on_it(self):
+        for bpm in (100, 120, 140):
+            for style in compose.TRIO:
+                b = board(bpm=bpm, style=style)
+                with self.subTest(bpm=bpm, style=style):
+                    self.assertFalse([x["id"] for x in b["beats"] if abs(x["start"] * sfx.GRID - round(x["start"] * sfx.GRID)) > 1e-6])
+
+    def test_the_closers_impact_lands_where_the_music_stops(self):
         b = board()
-        cues = b["sound"]
-        ids = [x["id"] for x in pieces(b)]
-        self.assertEqual([(c["kind"], c["beat"]) for c in cues if c["kind"] != "hit"],
-                         [("riser", ids[-1]), ("impact", ids[-1]), ("stop", "closer")])
-        self.assertEqual([c["beat"] for c in cues if c["kind"] == "hit"], ["hook", *ids[:-1], "grid", "closer"])
+        ev, _ = sfx.events(story.fx_board(b), b["bpm"])
+        stop = next(c["at"] for c in b["sound"] if c["kind"] == "stop") * 60 / b["bpm"]
+        riser = next(t for t, k in ev if k == "riser")
+        impact = max(t for t, k in ev if k == "impact")
+        self.assertEqual(riser, impact, "the riser builds into the closer's impact and is cut off on it")
+        self.assertAlmostEqual(impact, stop, delta=60 / b["bpm"] / sfx.GRID)
+
+
+class Flights(unittest.TestCase):
+    """A move that flies the photograph in takes the top of the countdown or the grid, never the hook, and the beat's
+    words stand only once it has handed the frame back, with their read after."""
+
+    def flown(self, b):
+        return [x for x in b["beats"] if x["move"] and story.arrives(x["move"])]
+
+    def test_a_flight_takes_only_the_top_of_the_countdown_or_the_grid(self):
+        for style in compose.TRIO:
+            for fmt in compose.FORMATS:
+                b = board(fmt, style=style)
+                with self.subTest(style=style, fmt=fmt):
+                    self.assertFalse([x["id"] for x in self.flown(b) if x["id"] not in ("piece-1", "grid")])
+                    self.assertLessEqual(len(self.flown(b)), 1, "one flight a film")
+
+    def test_the_looks_that_want_energy_fly_and_the_calm_one_flies_only_the_move_its_card_marks_once(self):
+        self.assertTrue(self.flown(board(style="swiss-grid")))
+        self.assertTrue(self.flown(board(style="cinematic-letterbox")))
+        once = {m["id"] for m in compose.card("scrapbook")["moves"] if m.get("once")}
+        self.assertLessEqual({x["move"] for x in self.flown(board(style="scrapbook"))}, once)
+
+    def test_the_words_of_a_flown_beat_stand_after_the_hand_back_and_read_before_the_cut(self):
+        for bpm in (100, 120, 140):
+            for style in ("swiss-grid", "cinematic-letterbox"):
+                for x in self.flown(board(bpm=bpm, style=style)):
+                    with self.subTest(bpm=bpm, style=style, beat=x["id"]):
+                        lands, back = story.flight(x["move"], x["beats"], bpm)
+                        self.assertAlmostEqual(x["lands"], lands, places=3)
+                        words = [L for L in x["layers"] if L["kind"] == "Words"]
+                        self.assertTrue(words)
+                        self.assertGreaterEqual(min(L["at"] for L in words), back - 1e-6)
+                        # what stands after the hand back holds at least a second and a half before the words leave
+                        self.assertGreaterEqual((x["beats"] - story.LEAVE - back) * 60 / bpm, 1.5)
+
+    def test_a_flight_onto_the_grid_lands_on_its_centre_tile_with_the_whole_wall_standing_under_it(self):
+        for style in ("swiss-grid", "scrapbook"):
+            b = board(style=style)
+            grid = next(x for x in b["beats"] if x["id"] == "grid")
+            with self.subTest(style=style):
+                self.assertTrue(story.arrives(grid["move"]))
+                self.assertEqual(grid["landing"], 4)
+                tiles = [L for L in grid["layers"] if L["kind"] == "Slice"]
+                self.assertEqual(len(tiles), 9)
+                # the move lands every tile in its own cell, so all nine stand from the cut under it and the frame it
+                # hands back is the whole wall
+                self.assertEqual({(L["at"], L["beats"]) for L in tiles}, {(0, 0)})
+                # the wall then holds clear of the cut out of it
+                _, back = story.flight(grid["move"], grid["beats"], story.BPM)
+                self.assertGreaterEqual((grid["beats"] - back) * 60 / story.BPM, story.WALL)
+
+    def test_the_grids_stand_in_says_how_the_grid_arrives(self):
+        for style, said in (("scrapbook", "the whole grid standing under the move that flies a photograph onto it"),
+                            ("cinematic-letterbox", "the grid landing tile by tile")):
+            with self.subTest(style=style):
+                self.assertEqual(next(c for c in board(style=style)["clips"] if c["beat"] == "grid")["stand_in"], said)
+
+    def test_a_grid_no_move_flies_onto_lands_tile_by_tile_from_the_first(self):
+        b = board(style="cinematic-letterbox")
+        grid = next(x for x in b["beats"] if x["id"] == "grid")
+        self.assertFalse(story.arrives(grid["move"]))
+        tiles = [L for L in grid["layers"] if L["kind"] == "Slice"]
+        self.assertEqual([(L["at"], L["beats"]) for L in tiles], [(round(story.TILE * i, 2), 0 if not i else story.LANDS) for i in range(9)])
 
 
 class Moments(unittest.TestCase):

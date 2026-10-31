@@ -8,7 +8,7 @@ USAGE (from the workspace root; S = this skill's folder):
                                                 # the look the film is made in: the person's answer, or with --why the pick by
                                                 # taste where nothing may be asked; B is a style id, A, B or C, or 1, 2 or 3
     python3 S/scripts/vote.py timed   --run R   # critic/timed.json to fill in: the monotony read of the timed cut
-    python3 S/scripts/vote.py cut     --run R   # critic/cut-N.json to fill in for the rendered film (next round N)
+    python3 S/scripts/vote.py cut     --run R   # critic/cut-N.json to fill in for the newest render (next round N)
     python3 S/scripts/vote.py verdict --run R   # SHIP at the bar (mean 4.5 or more, no criterion under 4), else the fix and its levers
 
 The boards are the run's three looks, storyboards/<style>/, in the order out/boards.png shows them (A, B, C). The panel
@@ -22,6 +22,11 @@ cut, the music made for that look, the preview, the reads and the critics' round
 runs again for the look picked. Before the film renders, the editor reads the timed cut (preview/film.mp4 and its
 strip) for monotony. The finished cut is scored by the motion designer and the person on the same criteria; it ships
 at the bar, and under it the one fix names the levers (a beat's layout, move and seconds in taste.json `beats`).
+
+Every round before deliver scores the half-size proof (film.py render --proof, out/proof.mp4): `cut` reads the newest
+render and its first line says when that is the proof. Once the full-size reel of the same cut is rendered, `cut` moves
+the latest round to it and empties its `type` scores: the critics read the type again on the full-size reel, at the
+size a phone shows it, and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -33,6 +38,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import compose  # noqa: E402
+import proof  # noqa: E402
 
 RESTS = ("hook", "dense", "closer")
 BAR = 4.5
@@ -251,25 +257,41 @@ def cmd_timed(a):
 def cmd_cut(a):
     d = Path("critic")
     d.mkdir(parents=True, exist_ok=True)
-    film = Path("out/film.mp4")
+    scale = proof.scale()
+    film = proof.newest()
+    if scale != 1:
+        print(proof.reading(film))
     # render/film-report.json stands only over a whole out/, so a round is opened only for a reel that finished
     if not Path("render/film-report.json").exists() or not film.exists():
-        sys.exit("render/film-report.json is missing: run film.py render first")
+        sys.exit("render/film-report.json is missing: run film.py render --proof first")
     digest = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
+    cut = _env.read_json("film.json") or {}
     rs = rounds()
+    last = (_env.read_json(rs[-1]) or {}) if rs else {}
     # a round scores one film: the same reel keeps its round and what the critics have filled in, a new reel opens the next
-    if rs and (_env.read_json(rs[-1]) or {}).get("film") == digest:
-        print(f"round {len(rs)} is this film's: fill in {rs[-1].resolve()} after watching out/film.mp4 and the frames in frames/")
+    if last.get("film") == digest:
+        print(f"round {len(rs)} is this film's: fill in {rs[-1].resolve()} after watching {film} and the frames in frames/")
+        return 0
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == cut.get("hash"):
+        # the full-size reel of the cut the round scored on its proof: the same round, with the type read at full size
+        last.update(film=digest, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+        _env.write_json(rs[-1], last)
+        print(f"round {len(rs)} moves to the full-size {film}: as each critic, read the type again on it and on the frames in "
+              f"frames/, at the size a phone shows it, and score type in {rs[-1].resolve()}; the other scores stand")
         return 0
     n = len(rs) + 1
     f = d / f"cut-{n}.json"
     data = blank(CUT_PANEL, ["film"])
     data["round"] = n
-    data["style"] = (_env.read_json("film.json") or {}).get("style")
+    data["style"] = cut.get("style")
     data["film"] = digest
+    data["scale"] = scale
+    data["cut"] = cut.get("hash")
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: fill in {f.resolve()} after watching out/film.mp4 and the frames in frames/"
+    print(f"round {n}: fill in {f.resolve()} after watching {film} and the frames in frames/"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 
@@ -294,18 +316,21 @@ def cmd_verdict(a):
             print("  -", x)
         return 1
     mean, worst, ship = at_bar(data)
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    full = (". Render the full-size film (film.py render, with the same --also), run qa.py check, then vote.py cut: the "
+            "critics read the type again at full size" if data.get("scale") == proof.SCALE else "")
     if ship:
-        print(f"SHIP: round {data.get('round')}, mean {mean} of 5, every criterion 4 or more")
+        print(f"SHIP: round {data.get('round')}, mean {mean} of 5, every criterion 4 or more" + full)
         return 0
     if len(rs) >= 2:
         print(f"UNDER THE BAR: round {data.get('round')}, mean {mean} (the bar is {BAR}), {worst[1]} at {worst[0]} ({worst[2]}). "
-              "The one fix is spent: deliver this cut; deliver.py writes its scores into the run's brief.md")
+              "The one fix is spent: deliver this cut; deliver.py writes its scores into the run's brief.md" + full)
         return 2
     print(f"FIX ONCE: mean {mean} (the bar is {BAR}, no criterion under {FLOOR}); the worst thing is {worst[1]} "
           f"({CRITERIA[worst[1]]}), {worst[2]} gave {worst[0]}. The levers are each beat's layout, move and seconds, in "
           "taste.json beats.<beat id> (a layout and a move the look offers, a hold in seconds), and the words in taste.json; "
           "change what the worst thing names, then storyboard.py snap, film.py preview, vote.py timed, qa.py timed, "
-          "film.py render and vote.py cut for round 2")
+          "film.py render --proof and vote.py cut for round 2")
     return 2
 
 

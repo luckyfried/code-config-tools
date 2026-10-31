@@ -13,6 +13,10 @@ in a window of its own (any move whose file draws a Window) is that beat's layou
 the photograph behind it is placed by its focus, so the window frames its subject, and a move that writes a label
 writes the caption on its print. On every other beat the board sets the caption and the day in the card's faces and
 hands the move no words, so a move whose only act is to set words is chosen there only when the card has no other.
+A move that flies the photograph in before it lands (any move whose file times itself by the shared arrival: the
+tunnel of their photographs, the wall that swings flat) takes the whole frame until it hands it back, so it plays on the
+top of the countdown (one the card fits to the wall on the grid) and nowhere else, never on the hook, and the beat's
+words stand only once it has handed the frame back; the top of the countdown holds that much longer (timing).
 
 Each piece holds as long as its post asks (reads): a captioned post for its words, a wordless one less, a post that
 repeats a photograph or a line already shown least, and the first a quarter longer than the most any of them asks;
@@ -29,10 +33,13 @@ from compose import cased, fit_size, ink, text_box, text_width, wrap_measured
 BPM = 120
 # the musical beats the hook runs; the closer runs from a downbeat to the film's end
 HOOK_BEATS = 4
-# the wall: its tiles land TILE beats apart, each in LANDS beats, the first standing from the cut; once the ninth has
-# landed the whole wall holds WALL seconds clear of the cut out of it, whose half window is at most EDGE beats. A film
-# that would leave its pieces less than ROOMY times their shortest runs the wall SHORT_NINE beats.
-TILE, LANDS, WALL, EDGE, SHORT_NINE, ROOMY = 0.2, 0.5, 3.2, 1.2, 4, 1.25
+# the wall: its tiles land TILE beats apart, each in LANDS beats, the first standing from the cut (all nine standing
+# from the cut under a move that flies a photograph in, which lands every tile in its cell); once the ninth has landed
+# the whole wall holds WALL seconds clear of the cut out of it, whose half window is at most EDGE beats. A film that
+# would leave its pieces less than ROOMY times their shortest runs the wall SHORT_NINE beats.
+TILE, LANDS, WALL, EDGE, SHORT_NINE, ROOMY = 0.2, 0.5, 2.0, 1.2, 4, 1.25
+# the grid's middle tile, where a move that flies a photograph in onto the grid lands it
+MIDDLE = 4
 # the closer settles SETTLE beats after it lands, where the picture and the sound stop together, then holds still at
 # least HOLD seconds; it takes an eighth of the film when that is longer
 SETTLE, HOLD = 2.0, 2.5
@@ -41,13 +48,23 @@ SETTLE, HOLD = 2.0, 2.5
 # first holds FIRST times the most any of the nine asks
 SHORTEST = 2.0
 CAPTIONED, A_WORD, LONGEST_READ, WORDLESS, REPEAT = 0.6, 0.15, 2.4, 0.5, 0.3
-FIRST = 1.25
+FIRST = 1.6
 # two photographs are the same scene when their difference hashes (picks.json `look`) differ in at most SAME bits
 SAME = 10
 TEMPO = (60, 200)
 # a piece's photograph holds clean for up to CLEAN beats before its words land, they have landed LAND beats later, and
 # they stand their read before the cut, LEAVE beats before the next beat
 CLEAN, LAND, LEAVE = 0.6, 1.0, 0.6
+# the ways a caption may enter in each card's type, its own first: each caption takes the first of them that neither
+# of the two captions before it took (the first that the one before it did not, on a card with two), so no two
+# captions in a row arrive the same way
+ENTRANCES = {"type": ("type", "slam", "rise"), "cut": ("cut", "rise", "slam"), "fade": ("fade", "rise"),
+             "rise": ("rise", "fade", "slam"), "slam": ("slam", "rise", "cut")}
+# a piece's hold is a whole number of GRID-ths of a beat, so every cut lands on the music's grid, where the effects land
+GRID = 4
+# a move that flies the photograph in hands the frame back this many seconds after it lands (the shared arrival's own
+# fade, arrivalOf), lands within this share of its room, and leaves this many seconds before the pull
+HAND_BACK, LAND_SHARE, BEFORE_PULL = 0.38, 0.55, 0.12
 # the hook event (the title landing) at this beat
 HOOK_AT = 0.25
 # px between the grid's tiles
@@ -70,6 +87,26 @@ def _source(move):
     return f.read_text() if f.is_file() else ""
 
 
+def arrives(move):
+    """The seconds a move that flies the photograph in asks of the shared arrival before it lands (its `arrivalOf(p, s)`),
+    or None for a move that does not take the frame."""
+    m = re.search(r"arrivalOf\(\s*p\s*(?:,\s*([\d.]+))?\s*\)", _source(move))
+    return (float(m.group(1)) if m.group(1) else 1.0) if m else None
+
+
+def flight(move, beats, bpm):
+    """(lands, hands back) in beats from the cut for a move that flies the photograph in on a beat of `beats` beats at
+    `bpm`, the way the shared arrival times it (arrivalOf: it lands within the first part of a short beat and has gone
+    before the pull, LEAVE beats before the cut out); (0, 0) for any other move."""
+    want = arrives(move)
+    if want is None:
+        return 0.0, 0.0
+    per = 60 / bpm
+    room = max(0.3, (beats - LEAVE) * per)
+    land = min(want, room * LAND_SHARE)
+    return round(land / per, 3), round(min(land + HAND_BACK, room - BEFORE_PULL) / per, 3)
+
+
 def on_box(move):
     """True when the move reads the photograph's box (the beat's `box`): it crops, mats or marks the photograph where the
     board laid it, so it plays on any layout."""
@@ -79,6 +116,16 @@ def on_box(move):
 def frames_picture(move):
     """True when the move draws the picture in a window of its own whatever the beat: the window is the beat's layout."""
     return "<Window" in _source(move) and not on_box(move)
+
+
+def writes_unseen(move, frame, title=False):
+    """True when a framing move writes its words beside its window outside the format's safe area (the wide margin
+    under a crop): the reel's interface covers them there and the square and the wide cut them off, so the board sets
+    those words itself, at its own sizes, and hands the move none. `title`: the beat is the hook."""
+    if not frames_picture(move) or not (sets_words(move) or sets_label(move)):
+        return False
+    _, y0, _, y1 = frame.safe
+    return any(m[1] < y0 or m[3] > y1 for m in window(move, frame.W, frame.H, frame.safe, title)[1])
 
 
 def covers(move):
@@ -116,10 +163,11 @@ def only_says(move):
     return sets_label(move) and not frames_picture(move) and not on_box(move) and still(move)
 
 
-def window(move, W, H):
+def window(move, W, H, safe=None, title=False):
     """The window [x0, y0, x1, y1] px a framing move shows the picture through once it has come to rest (for a crop that
     moves, the part it shows throughout), and the boxes
-    the move covers with its own print or its own words beside it, as its file draws them."""
+    the move writes its words in beside it, as its file draws them. `safe` is the format's safe area [x0, y0, x1, y1]
+    (absent: the whole frame) and `title` whether the beat is the hook, for a move that lays itself out from them."""
     px = lambda v: v * W / 1080
     if move == "white-space-crop":
         side = px(120)
@@ -127,10 +175,14 @@ def window(move, W, H):
     if move == "page-drift":
         return (px(70), 0.12 * H, W - px(70), 0.8 * H), []
     if move == "polaroid-drop":
-        w = 0.78 * W
-        h, foot, rim = 1.05 * w, 0.26 * w, 0.05 * w
-        x, y = (W - w) / 2, 0.2 * H
-        return (x + rim, y + rim, x + w - rim, y + h - rim), [(x, y, x + w, y + h + foot)]
+        # the instant print laid out from the safe area: no taller than it, standing in the middle of its height and
+        # over the middle of its width; on the hook it is as wide as the frame allows (polaroid-drop.tsx)
+        sx0, sy0, sx1, sy1 = safe or (0, 0, W, H)
+        w = min(W * (0.96 if title else 0.78), (sy1 - sy0) / 1.31)
+        h, foot, rim = 1.05 * w, 0.26 * w, w * (0.035 if title else 0.05)
+        y = sy0 + max(0.0, (sy1 - sy0 - 1.31 * w) / 2)
+        x = min(W - w / 2, max(w / 2, (sx0 + sx1) / 2)) - w / 2
+        return (x + rim, y + rim, x + w - rim, y + h - rim), [(x, y + h, x + w, y + h + foot)]
     if move == "tape-slap":
         return (px(90), 0.16 * H, W - px(90), 0.78 * H), []
     return (0, 0, W, H), []
@@ -139,8 +191,8 @@ def window(move, W, H):
 def writes(move, box, W):
     """Where a move that marks the photograph draws on it or beside it, [x0, y0, x1, y1] px, for the photograph's `box`
     [x, y, w, h] (doodle-draw-on.tsx, sticker-pop.tsx, rule-draw.tsx, and the moves that mat it); None for a move that
-    draws nothing there. A corner mark may take either top corner, so the band spans both: the board's own words keep
-    out of it."""
+    draws nothing there. A sticker may take either top corner, so the band spans both, and the board's own words keep
+    out of it; the doodle is given the same band, and rings the photograph's focus, keeping its loop off the words."""
     px = lambda v: v * W / 1080
     x, y, w, h = box
     if move == "doodle-draw-on":
@@ -268,12 +320,12 @@ def rows(frame, photo, y):
 
 
 def framed(move, frame):
-    """The geometry of a beat whose move frames the picture: the photograph across the frame, seen through the move's
-    window; the words in the band of the safe area the window and the move's own marks leave that holds them largest,
-    or on the window's foot over a shade when no band holds them."""
+    """The geometry of a beat whose move frames the picture: the photograph behind the move's window, seen through it;
+    the words in the band of the safe area the window and the move's own marks leave that holds them largest, or on the
+    window's foot over a shade when no band holds them."""
     W, H = frame.W, frame.H
     x0, y0, x1, y1 = frame.safe
-    (wx0, wy0, wx1, wy1), marks = window(move, W, H)
+    (wx0, wy0, wx1, wy1), marks = window(move, W, H, frame.safe)
     top = max([wy0] + [m[1] for m in marks if m[1] < wy0 + 1])
     foot = max([wy1] + [m[3] for m in marks])
     bands = [b for b in ([x0, y0, x1, min(top, wy0) - 16], [x0, foot + 16, x1, y1]) if b[3] - b[1] >= 1.6 * FLOOR[frame.name]]
@@ -298,11 +350,13 @@ def overscan(box, frame):
 
 def through(p, win, frame, most=1.6):
     """The photograph's box [x, y, w, h] behind a move's window `win` [x, y, w, h]: the whole picture at its own
-    proportions, covering the frame and the reach past it, placed so its focus stands at the window's middle; it grows
-    up to `most` times the size that only covers, then sits as near as that size allows."""
+    proportions, covering the window and the reach past each of its sides (the turn a print lands with), placed so its
+    focus stands at the window's middle; it grows up to `most` times the size that only covers, then sits as near as
+    that size allows. The move covers the frame around its window with the card's ground, so no more of the picture is
+    ever seen, and a print that drops in carries the picture down with it (Film.tsx)."""
     a = p["aspect"]
     ox, oy = OVER * frame.W, OVER * frame.H
-    X0, Y0, X1, Y1 = -ox, -oy, frame.W + ox, frame.H + oy
+    X0, Y0, X1, Y1 = win[0] - ox, win[1] - oy, win[0] + win[2] + ox, win[1] + win[3] + oy
     cx, cy = win[0] + win[2] / 2, win[1] + win[3] / 2
     fx, fy = (min(0.99, max(0.01, v)) for v in p["focus"])
     base = max(X1 - X0, (Y1 - Y0) / a)
@@ -442,12 +496,18 @@ def reads(story):
     return out
 
 
-def timing(story, seconds, bpm=BPM, asked=None):
+def timing(story, seconds, bpm=BPM, asked=None, moves=None, wall=None):
     """The film's beats at `bpm` for a film of `seconds`: {holds, reads, nine, grid, end}, the beats each piece holds in
     film order, what each asks to be read, the beat the grid starts on, the beats it runs and the film's end; None when the nine do not fit.
-    `asked` maps a piece's id to the seconds taste.json `beats` gives it; the others share what is left."""
+    `asked` maps a piece's id to the seconds taste.json `beats` gives it; the others share what is left. `moves` are
+    the pieces' moves in film order: a move that flies the photograph in holds its flight, then its words' landing,
+    read and leaving. `wall` is the grid's move: one that flies a photograph in holds its flight before the other tiles
+    land. Every hold is a whole number of GRID-ths of a beat."""
     end = seconds * bpm / 60
-    for grid, roomy in ((math.ceil(TILE * (len(story) - 1) + LANDS + WALL * bpm / 60 + EDGE), ROOMY), (SHORT_NINE, 1)):
+    # the grid's tiles land one after another; a wall's move that flies a photograph in lands all nine, and the wall is
+    # whole once it hands the frame back
+    tiles = (arrives(wall) + HAND_BACK) * bpm / 60 if wall and arrives(wall) else TILE * (len(story) - 1) + LANDS
+    for grid, roomy in ((math.ceil(tiles + WALL * bpm / 60 + EDGE), ROOMY), (SHORT_NINE, 1)):
         room = math.floor(end - HOOK_BEATS - grid - max(SETTLE + HOLD * bpm / 60, end / 8))
         if room >= roomy * SHORTEST * len(story):
             break
@@ -458,15 +518,30 @@ def timing(story, seconds, bpm=BPM, asked=None):
     most = max(want)
     want = [FIRST * most if p.get("pick", p["rank"]) == 1 else w for p, w in zip(story, want)]
     fixed = {i: max(SHORTEST, s * bpm / 60) for i, p in enumerate(story) for s in [(asked or {}).get(f"piece-{p['rank']}")] if s}
+    # a beat whose move flies the photograph in holds its flight until the frame is handed back, then its words'
+    # landing, their read and their leaving, on the grid
+    for i, m in enumerate(moves or []):
+        if m and arrives(m):
+            fly = ((arrives(m) + HAND_BACK) * bpm / 60 + LAND + r[i] * bpm / 60 + LEAVE)
+            fixed[i] = max(fixed.get(i, 0.0), math.ceil(fly * GRID) / GRID)
     free = [i for i in range(len(story)) if i not in fixed]
     left = room - sum(fixed.values())
     if left < SHORTEST * len(free):
         return None
     past = {i: max(0.0, want[i] - SHORTEST) for i in free}
     k = (left - SHORTEST * len(free)) / (sum(past.values()) or 1)
-    holds = [round(fixed[i], 3) if i in fixed else round(SHORTEST + k * past[i], 3) for i in range(len(story))]
+    on_grid = lambda x: round(x * GRID) / GRID
+    raw = [fixed[i] if i in fixed else SHORTEST + k * past[i] for i in range(len(story))]
+    holds = [on_grid(x) for x in raw]
     last = free[-1] if free else len(story) - 1
-    holds[last] = round(room - sum(h for i, h in enumerate(holds) if i != last), 3)
+    # on the grid a repeat still holds shortest and a wordless post shorter than any captioned one, by a grid step
+    rank = [0 if x == REPEAT else 1 if x == WORDLESS else 2 for x in r]
+    for step in (1, 2):
+        under = [holds[i] for i in free if rank[i] < step]
+        for i in free:
+            if i != last and rank[i] == step and under:
+                holds[i] = max(holds[i], max(under) + 1 / GRID)
+    holds[last] = on_grid(room - sum(h for i, h in enumerate(holds) if i != last))
     return {"holds": holds, "reads": r, "nine": HOOK_BEATS + room, "grid": grid, "end": end}
 
 
@@ -537,9 +612,10 @@ def layout_for(tags, free, frame=None, move=None):
 
 def choose(c, story, levers, frame, prev=None, then=()):
     """Each piece's move, the cut into it, and its layout, in film order: a lever's own where taste.json `beats` names
-    one, else the move picked from the piece's content (a framing move at most once in the nine, the last piece clear
-    of the moves `then` names, which the beat after the nine takes) and the free layout that suits it best, clear of
-    where the move writes; a framing move is its own layout."""
+    one, else the move picked from the piece's content (a framing move at most once in the nine, a move that flies the
+    photograph in on the top of the countdown alone, and never one the card fits to the wall, which the grid right after
+    it takes; the last piece clear of the moves `then` names, which the beat after the nine takes) and the free layout that suits it best, clear of where the move writes; a framing move is its
+    own layout."""
     used, cuts, taken, out = {}, {}, set(), []
     # the top of the countdown is kept a large picture: inset for a portrait, low for a landscape, which no other piece
     # takes unless its lever names it
@@ -560,7 +636,8 @@ def choose(c, story, levers, frame, prev=None, then=()):
             move = lv["move"]
             used[move] = used.get(move, 0) + 1
         else:
-            opts = [o for o in c["moves"] if not (frames_picture(o["id"]) and (home or o["id"] in taken or lv.get("layout")))]
+            opts = [o for o in c["moves"] if not (frames_picture(o["id"]) and (home or o["id"] in taken or lv.get("layout")))
+                    and not (arrives(o["id"]) and (home or p.get("pick", p["rank"]) != 1 or "wall" in o["fits"]))]
             if not home and not lv.get("layout") and not any(inside(n, frame) for n in ({keep} if p is peak and keep not in taken else set(LAYOUTS) - taken - {"card"})):
                 # a move that mats the photograph's box plays only in a free box inside the frame
                 opts = [o for o in opts if not mats(o["id"])] or opts
@@ -589,17 +666,20 @@ def choose(c, story, levers, frame, prev=None, then=()):
 # ------------------------------------------------------------------ the beats
 def hook_beat(S, frame, p, words, handle, move):
     """The first of the countdown full in the frame, their title over it at the foot of the safe area and the handle
-    small above it, on a shade; a move that sets the title itself sets it alone."""
+    small above it, on a shade; a move that sets the title itself sets it alone, where the person can read it."""
     R = roles(S)
     x0, y0, x1, y1 = frame.safe
     small = SMALL[frame.name]
     layers = [photo_layer(p, [0, 0, frame.W, frame.H], frame, at=-0.5, beats=1.0)]
     if frames_picture(move):
-        (wx0, wy0, wx1, wy1), _ = window(move, frame.W, frame.H)
+        (wx0, wy0, wx1, wy1), _ = window(move, frame.W, frame.H, frame.safe, True)
         layers[0].update(box=through(p, [wx0, wy0, wx1 - wx0, wy1 - wy0], frame), uv=[0, 0, 1, 1])
-    if sets_words(move) or sets_label(move):
+    if (sets_words(move) or sets_label(move)) and not writes_unseen(move, frame, True):
         return layers
     text = cased(S, "display", words["title"])
+    if frames_picture(move):
+        # over a print the title keeps clear of its edges by the small size
+        x0, x1 = x0 + small, x1 - small
     size, got = TITLE[frame.name], None
     while size > FLOOR[frame.name]:
         got = wrap_measured(S, {"text": text, "size": size, "face": "display"}, x1 - x0, 3)
@@ -628,7 +708,7 @@ def piece_beat(S, frame, p, ch, read, beats, bpm):
     look = S["photo"]
     move, layout = ch["move"], ch["layout"]
     g = framed(move, frame) if layout == move else geometry(layout, frame, look, landscape=p["aspect"] < 1 and frame.H > frame.W)
-    at = round(max(0.3, min(CLEAN, beats - LEAVE - LAND - read * bpm / 60)), 3)
+    at = round(max(0.3, min(CLEAN, beats - LEAVE - LAND - read * bpm / 60), flight(move, beats, bpm)[1]), 3)
     box = list(g["photo"])
     pic = look["picture"]
     inset = not g.get("window") and not (box[0] <= 0 and box[1] <= 0 and box[0] + box[2] >= frame.W and box[1] + box[3] >= frame.H)
@@ -656,7 +736,7 @@ def piece_beat(S, frame, p, ch, read, beats, bpm):
         g["above"] = above if above[3] - above[1] >= 1.6 * FLOOR[frame.name] else None
     g["bands"] = [outside(b, reach) for b in g.get("bands") or []]
     # a layout the board lays sets the caption and the day by the card; a move that frames the picture writes them
-    says_caption, says_day, _ = speaks(move) if layout == move else (True, True, None)
+    says_caption, says_day, _ = speaks(move) if layout == move and not writes_unseen(move, frame) else (True, True, None)
     caption = (p.get("caption") or "") if says_caption else ""
     day = p["date"] if says_day else ""
     if not (caption or day):
@@ -717,18 +797,19 @@ def marks(move):
     return move in ("doodle-draw-on", "sticker-pop", "rule-draw")
 
 
-def grid_beat(S, frame, posts, words, handle, year, move=None):
+def grid_beat(S, frame, posts, words, handle, year, move=None, after=0.0):
     """The nine as they are posted: a three by three grid of equal square tiles GUT apart, the first of the countdown at
     its top left. The reel sets the year and the handle with the ask over the grid, its block centered down the frame
     and never above the safe area; the wide sets them to the grid's left; the square is the grid alone. Returns the
     layers and the box a `move` that marks a corner marks: on the reel the room right of the year, so the mark stands
-    beside the year and off every tile, the tiles starting below its reach; elsewhere the grid's own box."""
+    beside the year and off every tile, the tiles starting below its reach; elsewhere the grid's own box. The words
+    land a beat in, or `after` beats in when the move holds the frame until then."""
     R = roles(S)
     W, H, g = frame.W, frame.H, GUT
     sx0, sy0, sx1, sy1 = frame.safe
     small = SMALL[frame.name]
     year_ = {"text": cased(S, "display", str(year)), "size": CLOSER_YEAR[frame.name], "face": "display", "color": R["on"]}
-    tag = {"text": cased(S, "text", f"{handle}  ·  {words['ask']}" if handle else words["ask"]), "size": round(small * 1.2), "face": "text",
+    tag = {"text": cased(S, "text", f"{handle}  ·  {words['ask']}" if handle else words["ask"]), "size": round(small * 1.5), "face": "text",
            "color": R["day"]}
 
     def stacked(x, top, width):
@@ -775,12 +856,14 @@ def grid_beat(S, frame, posts, words, handle, year, move=None):
         lines, foot = stacked(x, 0, x0 - 4 * g - x)
         lines, _ = stacked(x, (H - foot) / 2, x0 - 4 * g - x)
     tiles = []
-    # the first tile stands from the cut, so the wall never opens on bare ground; the rest land after it
+    # the first tile stands from the cut, so the wall never opens on bare ground; the rest land after it. A move that
+    # flies a photograph in lands it on the middle tile and every other tile in its own cell, so all nine stand from the
+    # cut under the move, and the frame it hands back is the whole wall
     for i, p in enumerate(sorted(posts, key=lambda p: p.get("pick", p["rank"]))):
         box = [x0 + (i % 3) * (side + g), y0 + (i // 3) * (side + g), side, side]
         tiles.append({"kind": "Slice", "photo": {"file": p["file"], "aspect": p["aspect"]}, "box": box, "uv": cover(p, box, True),
-                      "owner": p["rank"], "at": round(TILE * i, 2), "beats": LANDS if i else 0})
-    words_ = [{"kind": "Words", "at": 1.0, "lines": lines, "beats": LAND}] if lines else []
+                      "owner": p["rank"], "at": 0 if after else round(TILE * i, 2), "beats": 0 if after or not i else LANDS})
+    words_ = [{"kind": "Words", "at": max(1.0, after), "lines": lines, "beats": LAND}] if lines else []
     if frame.name != "reel" or not marks(move):
         mark = [x0, y0, 3 * side + 2 * g, 3 * side + 2 * g]
     return tiles + words_, mark
@@ -798,42 +881,55 @@ def build(c, posts, frame, words, handle, year, bpm=BPM, seconds=30, swatches=No
     story = film_order(posts)
     first = story[-1]
     asked = {k: v["seconds"] for k, v in levers.items() if isinstance(v, dict) and v.get("seconds")}
-    plan = timing(story, seconds, bpm, asked)
-    if plan is None:
-        raise ValueError(f"the nine do not fit {seconds} s at {bpm} bpm")
     moves_used = {}
     hook_tags = {"title", "words", "peak"}
     # the hook's photograph has the whole frame and no box of its own, so a move that mats a box has nothing to mat
-    hook_opts = [o for o in c["moves"] if frames_picture(o["id"]) or not covers(o["id"])]
+    # the hook's title lands a quarter beat in, so a move that holds the frame for its flight has no place there
+    hook_opts = [o for o in c["moves"] if (frames_picture(o["id"]) or not covers(o["id"])) and not arrives(o["id"])]
     hook_move = pick(hook_opts or c["moves"], hook_tags, "title", moves_used, ())
+    # a move that would write the title where it cannot be read is handed nothing; the board sets the title
+    unseen = writes_unseen(hook_move, frame, True)
     beats = [{"id": "hook", "form": "title", "at": 0.0, "beats": HOOK_BEATS, "move": hook_move, "transition": None, "layout": "bleed",
-              "words": words["title"],
+              "words": "" if unseen else words["title"],
               # a move that writes its label before the words would write the handle in the title's place
-              "label": "" if sets_label(hook_move) and not sets_words(hook_move) else handle, "peak": True, "layers": hook_beat(S, frame, first, words, handle, hook_move),
+              "label": "" if unseen or sets_label(hook_move) and not sets_words(hook_move) else handle, "peak": True,
+              "layers": hook_beat(S, frame, first, words, handle, hook_move),
               "held": "their title over the photograph at the top of the countdown"}]
     wall_opts = [o for o in c["moves"] if not covers(o["id"]) and not sets_words(o["id"])]
     chosen = choose(c, story, levers, frame, hook_move, [o["id"] for o in wall_opts] if len(wall_opts) == 1 else ())
+    wall_move = pick(wall_opts or c["moves"], {"wall", "photo"}, "wall", moves_used, {chosen[-1]["move"]})
+    plan = timing(story, seconds, bpm, asked, [ch["move"] for ch in chosen], wall_move)
+    if plan is None:
+        raise ValueError(f"the nine do not fit {seconds} s at {bpm} bpm")
     t = HOOK_BEATS
     word_at = {}
+    turns = ENTRANCES.get(S["photo"]["line"]["enter"], (S["photo"]["line"]["enter"],))
+    entered = []
     for p, n, read, ch in zip(story, plan["holds"], plan["reads"], chosen):
         layers, at = piece_beat(S, frame, p, ch, read, n, bpm)
+        for L in layers:
+            if L["kind"] == "Words":
+                L["enter"] = next((e for e in turns if e not in entered[-2:]), next((e for e in turns if e not in entered[-1:]), turns[0]))
+                entered.append(L["enter"])
         bid = f"piece-{p['rank']}"
         word_at[bid] = at
         beats.append({"id": bid, "form": "photo", "at": round(t, 3), "beats": n, "move": ch["move"], "transition": ch["transition"],
-                      "layout": ch["layout"], **handed(p, ch), "peak": p.get("pick", p["rank"]) == 1,
-                      "layers": layers})
+                      "layout": ch["layout"], **handed(p, ch, frame), "peak": p.get("pick", p["rank"]) == 1,
+                      "lands": flight(ch["move"], n, bpm)[0], "layers": layers})
         t += n
     t = plan["nine"]
-    wall_move = pick(wall_opts or c["moves"], {"wall", "photo"}, "wall", moves_used, {beats[-1]["move"]})
-    wall_layers, wall_mark = grid_beat(S, frame, story, words, handle, year, wall_move)
+    wall_layers, wall_mark = grid_beat(S, frame, story, words, handle, year, wall_move, flight(wall_move, plan["grid"], bpm)[1])
     beats.append({"id": "grid", "form": "wall", "at": t, "beats": plan["grid"], "move": wall_move,
                   "transition": cut_into(c, wall_move, pick(c["transitions"], {"wall"}, "wall", {}, ())), "layout": "grid", "words": "",
                   # the grid sets the year itself; a move handed it would write it a second time over the tiles
                   "label": "",
-                  "peak": False, "layers": wall_layers,
+                  "peak": False, "layers": wall_layers, "lands": flight(wall_move, plan["grid"], bpm)[0],
                   "held": "the best nine as a three by three grid, made to be posted"})
     if marks(wall_move):
         beats[-1]["marks"] = wall_mark
+    if arrives(wall_move):
+        # a move that flies a photograph in lands on the grid's middle tile, where it stands once the frame is handed back
+        beats[-1]["landing"] = MIDDLE
     t += plan["grid"]
     # every closer comes up over the last picture (a matte dims it, a page or a ground rises over it), so the wall
     # stays under the closer, every tile standing from the cut
@@ -845,33 +941,54 @@ def build(c, posts, frame, words, handle, year, bpm=BPM, seconds=30, swatches=No
                   "label": handle, "peak": False, "layers": wall, "held": "the closer with their title and their promise"})
     middle = story[len(story) // 2]["rank"]
     rest_at = {"hook": ("hook", HOOK_AT + LAND + 0.6), "ordinary": (f"piece-{middle}", word_at[f"piece-{middle}"] + LAND + 0.3),
-               "dense": ("grid", TILE * (len(story) - 1) + LANDS + 0.3), "closer": ("grid", plan["grid"] - EDGE - 0.2), "card": ("closer", SETTLE + 0.25)}
+               "dense": ("grid", max(TILE * (len(story) - 1) + LANDS, flight(wall_move, plan["grid"], bpm)[1] + LAND) + 0.3), "closer": ("grid", plan["grid"] - EDGE - 0.2), "card": ("closer", SETTLE + 0.25)}
     return {"system": S, "beats": beats, "end": plan["end"], "hook": HOOK_AT, "rest_at": rest_at, "settle": t + SETTLE,
-            "sound": sound(beats, story), "clips": clips(beats, story)}
+            "sound": sound(beats, story), "clips": clips(beats, story, bpm)}
 
 
 def sound(beats, story):
-    """The film's sound cues, one where each beat lands (`at` in beats from the film's start) for music.py to place:
-    the title landing over the photograph at the top of the countdown, each piece as its photograph lands, the build into
-    the first and its impact, the grid landing, and the closer settling with the stop, where the bed cuts and the film
-    holds silent."""
-    by = {p["rank"]: p for p in story}
-    cues = [{"kind": "hit", "at": HOOK_AT, "beat": "hook", "what": "the title lands over the photograph at the top of the countdown", "weight": 0.9}]
-    for b in beats:
-        if b["form"] != "photo":
-            continue
-        p = by[int(b["id"].split("-")[1])]
-        if p.get("pick", p["rank"]) == 1:
-            cues.append({"kind": "riser", "at": round(b["at"] - 2.0, 3), "beats": 2.0, "beat": b["id"], "what": f"the build into {p['date']}, the top of the countdown"})
-            cues.append({"kind": "impact", "at": b["at"], "beat": b["id"], "what": f"{p['date']} lands"})
-        else:
-            cues.append({"kind": "hit", "at": b["at"], "beat": b["id"], "what": f"{p['date']} lands", "weight": 0.6, "bright": 0.8})
-    grid = next(b for b in beats if b["id"] == "grid")
-    cues.append({"kind": "hit", "at": round(grid["at"] + 0.05, 3), "beat": "grid", "what": "the nine land in their grid", "weight": 0.7, "bright": 0.6})
+    """The board's one sound cue for music.py: the stop, where the closer settles, the bed cuts and the film holds
+    silent. Every effect is the shared layer's (sfx.py), laid at render from the board itself (fx_board)."""
     C = next(b for b in beats if b["id"] == "closer")["at"]
-    cues.append({"kind": "hit", "at": C + SETTLE, "beat": "closer", "what": "the closer settles", "weight": 0.8, "bright": 0.7})
-    cues.append({"kind": "stop", "at": C + SETTLE, "beat": "closer", "what": "the picture and the music stop together; the closer holds silent"})
-    return sorted(cues, key=lambda c: c["at"])
+    return [{"kind": "stop", "at": C + SETTLE, "beat": "closer", "what": "the picture and the music stop together; the closer holds silent"}]
+
+
+def landed(words):
+    """The beat, from its beat's start, a Words layer's first line has landed on: on its cut for one that cuts or types
+    in, halfway through its entrance for one that slams down, at its end for one that rises or fades (the film's Words:
+    an entrance of 0.6 of the layer's beats, at least 0.3)."""
+    at, n = words.get("at", 0), max(0.3, words.get("beats", 1) * 0.6)
+    how = words.get("enter") or "rise"
+    return at if how in ("cut", "type") else at + (0.5 * n if how == "slam" else n)
+
+
+def fx_board(board):
+    """The board as the shared effects (sfx.py) read it: each beat's form, move, the cut into it and its start, and one
+    layer naming its kind and its moments. A photo beat is a Photo arriving where its photograph lands (on the cut, or
+    where a move that flies it in lands it); the hook is a Title whose words slam on their landing (on the cut when its
+    move sets them), and the grid one whose year does; the closer is a Closer arriving where it settles, so the riser builds through its rise and the impact
+    lands where the picture and the music stop together."""
+    out = []
+    for b in board["beats"]:
+        start = b.get("start", b.get("at", 0))
+        words = next((L for L in b["layers"] if L["kind"] == "Words"), None)
+        said = " ".join(ln["text"] for ln in (words or {}).get("lines") or [])
+        if b["form"] == "photo":
+            layer = {"kind": "Photo", "at": {"arrive": round(start + (b.get("lands") or 0), 3)}, "label": said}
+        elif b["form"] == "closer":
+            settle = (board.get("closer") or {}).get("still", start)
+            layer = {"kind": "Closer", "signoff": {"text": board.get("signoff", "")}}
+            start = settle
+        elif words:
+            layer = {"kind": "Title", "title": {"text": said}, "slam": [round(start + landed(words), 3), 0]}
+        elif b.get("words") or b.get("label"):
+            # a move that sets the beat's words itself lands them with its picture, on the cut
+            layer = {"kind": "Title", "title": {"text": b.get("words") or b.get("label")}, "slam": [start, 0]}
+        else:
+            layer = {"kind": "Wall", "text": ""}
+        out.append({"id": b["id"], "form": b["form"], "move": b.get("move"), "transition": b.get("transition"), "start": start,
+                    "layers": [layer]})
+    return {"id": board.get("id"), "bpm": board.get("bpm"), "beats": out}
 
 
 def _short(caption, limit=10):
@@ -890,29 +1007,40 @@ def clip_move(p, prev=None):
     return next(w for w in ways if w != prev)
 
 
-def clips(beats, story):
-    """The generated clips the film would carry, for the platform's image-to-video model: the photograph at the top of
-    the countdown under the hook, each photograph brought to life under its piece, and the grid's texture. Each prompt
-    is a shot as a cinematographer writes it: the subject, the camera move, the lens, the light; `clips.py list` adds
-    the beat's length and the loop. `stand_in` names what the film shows in a clip's place when no clip has arrived."""
+def clips(beats, story, bpm=BPM):
+    """The clips the film carries. A piece the person gave as a recorded clip plays that clip, `role` "their own clip",
+    `source` the file, `from` its strongest second, for `seconds` the length of its beat, on its photograph (the clip's
+    poster), so the beat keeps the arrival and the move a photograph would have; nothing is generated for it. The
+    others are generated clips for the platform's image-to-video model: the photograph at the top of the countdown
+    under the hook (none when that is a recorded clip, which plays on its own beat), each photograph brought to life
+    under its piece, and the grid's texture. Each prompt is a shot as a cinematographer writes it: the subject, the
+    camera move, the lens, the light; `clips.py list` adds the beat's length and the loop. `stand_in` names what the
+    film shows in a generated clip's place when it has not arrived."""
     by = {p["rank"]: p for p in story}
     top = story[-1]
     light = "the photograph's own light, soft and directional, its highlights held"
-    out = [{"id": "00", "beat": "hook", "role": "the top of the countdown, alive", "seconds": 2.0, "image": top["file"],
-            "prompt": f"{_short(top.get('caption'))}, as in this photograph: a slow push in, 35 mm lens, deep focus, {light}, no text",
-            "stand_in": "the photograph held full in the frame under the card's move"}]
+    out = [] if top.get("video") else [
+        {"id": "00", "beat": "hook", "role": "the top of the countdown, alive", "seconds": 2.0, "image": top["file"],
+         "prompt": f"{_short(top.get('caption'))}, as in this photograph: a slow push in, 35 mm lens, deep focus, {light}, no text",
+         "stand_in": "the photograph held full in the frame under the card's move"}]
     prev = None
     for b in beats:
         if b["form"] != "photo":
             continue
         p = by[int(b["id"].split("-")[1])]
+        if p.get("video"):
+            out.append({"id": f"{len(out):02d}", "beat": b["id"], "role": "their own clip", "source": p["video"],
+                        "from": float(p.get("clip_at") or 0.0), "seconds": round(b["beats"] * 60 / bpm, 2), "image": p["file"],
+                        "prompt": None, "stand_in": None})
+            continue
         prev = clip_move(p, prev)
         out.append({"id": f"{len(out):02d}", "beat": b["id"], "role": "the photograph brought to life", "seconds": 1.5, "image": p["file"],
                     "prompt": f"{_short(p.get('caption'))}, as in this photograph: {prev}, 50 mm lens at eye level, shallow depth of field, {light}, small natural motion in the scene, nothing added, no text",
                     "stand_in": f"the photograph in its {b['layout']} layout under the card's {b['move']} move"})
     out.append({"id": f"{len(out):02d}", "beat": "grid", "role": "the texture of the grid", "seconds": 1.5, "image": top["file"],
                 "prompt": f"the surfaces of {_short(top.get('caption'))}, as in this photograph: a slow macro drift across them, 100 mm macro lens, raking light, no text",
-                "stand_in": "the grid landing tile by tile"})
+                "stand_in": "the whole grid standing under the move that flies a photograph onto it"
+                if any("landing" in b for b in beats if b["form"] == "wall") else "the grid landing tile by tile"})
     return out
 
 
@@ -920,10 +1048,11 @@ def _meets(a, b):
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
-def handed(p, ch):
+def handed(p, ch, frame):
     """The words a photo beat hands its move: none when the board lays the picture (the card's line and label set the
-    caption and the day), the caption and its label when the move frames the picture itself."""
-    if ch["layout"] != ch["move"]:
+    caption and the day) or when the move would write them outside the safe area, the caption and its label when the
+    move frames the picture itself."""
+    if ch["layout"] != ch["move"] or writes_unseen(ch["move"], frame):
         return {"words": "", "label": ""}
     return {"words": p.get("caption") or "", "label": (p.get("caption") or p["date"]) if speaks(ch["move"])[2] == "caption" else p["date"]}
 

@@ -202,6 +202,10 @@ AXIS = {b"Weight": "wght", b"Width": "wdth", b"Optical Size": "opsz", b"Optical 
 
 @functools.lru_cache(maxsize=512)
 def _font(file, size, axes):
+    """The face in `file` at `size` px for Pillow, at the instance the film draws it: each axis `axes` names at its
+    value, every other axis at its default. An optical-size axis stands at its default too, never at the drawn size: the
+    film draws its words with automatic optical sizing off (`OPTICAL` in motion/system/moves/kit.tsx), so a line stands
+    at the width measured here."""
     from PIL import ImageFont
     f = ImageFont.truetype(str(SKILL / file), max(1, round(size)))
     try:
@@ -213,8 +217,6 @@ def _font(file, size, axes):
     for a in spec:
         tag = AXIS.get(a["name"], "")
         v = want.get(tag)
-        if v is None and tag == "opsz":
-            v = size
         if v is None:
             v = a["default"]
         vals.append(max(a["minimum"], min(a["maximum"], v)))
