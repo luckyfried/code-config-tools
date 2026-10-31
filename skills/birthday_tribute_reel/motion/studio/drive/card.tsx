@@ -9,7 +9,7 @@
 // its strips of tape. When the camera leaves, the print trims into its cell of the closer's wall and settles onto it.
 import {useMemo} from 'react';
 import * as THREE from 'three';
-import {bezier, lerp, span, type Pt} from '../../system/three/motion';
+import {bezier, hash, lerp, span, type Pt} from '../../system/three/motion';
 import {onWall, paint, type Card, type Plan} from './plan';
 
 export const cardScale = (c: Card) => c.T.s;
@@ -40,12 +40,32 @@ const WRAP = {width: 9, hold: 0.16, move: 0.55};
 const DEEP = 300;
 const NEAR = 0.45;
 const SHOWN = 0.965;
+/** Seconds a move that flies the photograph in takes to hand the frame over to the print once it lands (the shared
+ * arrival's fade, `arrivalOf`), and beats the picture's depth then takes to open: the move lands a flat print, so the
+ * print under it is flat until the move has gone. */
+export const HANDED = 0.38;
+const OPENS = 0.6;
 
 /** The most a page shows round its photograph, a share of the frame's width, so the type standing inside the safe
  * area stays on the picture. */
 const PAGE = 0.06;
 /** A strip of tape: its length and width, shares of the frame's width, and how far it is turned off the print's top. */
 const TAPE = {long: 0.17, wide: 0.045, turn: 38};
+
+/** The moves that mark a corner of the print's top with an accent, and whether the accent takes the left corner from
+ * the beat's seed (its place in the timeline, counted from 1), as each move picks it. The doodle rings the photograph's
+ * subject and marks no corner. */
+const ACCENTS: Record<string, (seed: number) => boolean> = {
+  'sticker-pop': (seed) => hash(seed) <= 0.5,
+};
+
+/** The strip of tape (0 the top left, 1 the top right) a card goes without because its move draws its accent on that
+ * corner: the accent marks the print where it is bare, never over a strip. */
+export const bareCorner = (plan: Plan, c: Card): number | undefined => {
+  const i = plan.steps.findIndex((s) => s.id === c.key);
+  const left = i < 0 ? undefined : ACCENTS[plan.steps[i].move ?? '']?.(i + 1);
+  return left === undefined ? undefined : left ? 0 : 1;
+};
 
 /** How far the photograph stands in from the card's edges (frame px): the margin the card's picture box leaves round it,
  * up to PAGE, and its rim inside that. None on a card whose picture runs to the frame's edges. */
@@ -246,7 +266,7 @@ export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture}
   }, [texture, plan]);
   const tm = timesOf(c);
   const fly = span(t, tm.fly[0], tm.fly[1], bezier(plan.ease.enter));
-  if (t < tm.fly[0] - 0.01) return null;
+  if (t < tm.fly[0] - 0.01 || (c.jumped && t < c.arrive)) return null;
   const s = c.T.s;
   const lift = liftOf(c);
   const leave = span(t, tm.leave[0], tm.leave[1], bezier(plan.ease.move));
@@ -306,10 +326,11 @@ export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture}
   const n = U.clone().cross(V).normalize();
   const mid = corners[0].clone().add(corners[2]).multiplyScalar(0.5);
   const fx = (c.subject[0] + c.subject[2]) / 2, fy = (c.subject[1] + c.subject[3]) / 2;
+  const opened = c.flown ? span(t, c.cut + (HANDED * plan.fps) / plan.pulse, OPENS) : 1;
   const vAt = (x: number) => 1 - (edgeY(c, W, x) - py) / ph;
   parts.depth({u: U, v: V, n, front: mid.clone().add(n.clone().multiplyScalar(D * 1.2)),
     focus: new THREE.Vector2((fx - px) / pw, 1 - (fy - py) / ph), line: new THREE.Vector2(vAt(px), vAt(px + pw)),
-    deep: DEEP * s * (1 - leave), shown: lerp(SHOWN, 1, leave)});
+    deep: DEEP * s * (1 - leave) * opened, shown: lerp(SHOWN, 1, Math.max(leave, 1 - opened))});
   // the light wrapping the print's edges: strong while it flies and leaves, faint while it holds
   const moving = Math.max(1 - fly, Math.sin(Math.PI * leave));
   const wrap = lerp(WRAP.hold, WRAP.move, moving);
@@ -356,12 +377,13 @@ export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture}
   parts.streak.mesh.renderOrder = order + 3;
   parts.field.mesh.renderOrder = order + 4;
   const on = leave < 0.999;
+  const bare = bareCorner(plan, c);
   return (
     <group>
       {dressed > 0.002 ? <primitive object={parts.page.mesh} /> : null}
       {dressed > 0.002 && rim > 0 ? <primitive object={parts.rim.mesh} /> : null}
       <primitive object={parts.print.mesh} />
-      {dressed > 0.002 ? parts.tapes.slice(0, plan.photo.picture.tape).map((q, k) => <primitive key={k} object={q.mesh} />) : null}
+      {dressed > 0.002 ? parts.tapes.slice(0, plan.photo.picture.tape).map((q, k) => (k === bare ? null : <primitive key={k} object={q.mesh} />)) : null}
       {wrap > 0.002 && on ? <primitive object={parts.wrap.mesh} /> : null}
       {on && t >= c.cut - 0.2 ? <primitive object={parts.catcher.mesh} /> : null}
       {g > 0.002 ? <primitive object={parts.streak.mesh} /> : null}

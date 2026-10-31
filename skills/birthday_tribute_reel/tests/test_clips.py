@@ -85,5 +85,20 @@ class Stopped(unittest.TestCase):
                 _env._RUN, clips.board, clips.conform = was_run, was_board, was_conform
 
 
+class Onsets(unittest.TestCase):
+    def test_a_swell_with_a_dip_is_one_sound_from_where_it_leaves_the_room_and_a_hit_after_it_is_another(self):
+        import vote
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
+            wav = Path(d) / "fx.wav"
+            # a room at 0.01, a riser climbing slowly from 1.0 s with a dip of one window while it is still under the rise,
+            # and a hit at 3.0 s
+            level = "0.01+between(t,1,2)*(t-1)*0.1*not(between(t,1.121,1.139))+between(t,3,3.1)*0.6"
+            ff("-f", "lavfi", "-i", f"aevalsrc='sin(2*PI*440*t)*({level})':s=8000:d=4", str(wav))
+            found = vote.onsets(wav)
+            self.assertEqual(len(found), 2, found)
+            self.assertLess(abs(found[0] - 1.0), 0.1, found)
+            self.assertLess(abs(found[1] - 3.0), 0.05, found)
+
+
 if __name__ == "__main__":
     unittest.main()

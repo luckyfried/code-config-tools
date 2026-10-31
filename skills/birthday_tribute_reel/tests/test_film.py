@@ -119,7 +119,7 @@ class FilmOutputs(unittest.TestCase):
             film.main()
         self.assertEqual(got["also"], ["landscape", "square", "stories"])
 
-    def test_the_quiet_after_the_stop_is_measured_from_the_stop_on(self):
+    def test_the_film_falls_quiet_where_the_music_stops(self):
         import math
         import wave
         path = self.d / "stop.wav"
@@ -130,8 +130,7 @@ class FilmOutputs(unittest.TestCase):
             w.setframerate(rate)
             tone = (int(9000 * math.sin(2 * math.pi * 440 * i / rate)) for i in range(rate))
             w.writeframes(b"".join(v.to_bytes(2, "little", signed=True) for v in tone) + bytes(2 * rate))
-        self.assertGreater(qa.after(path, 0.0, PLAIN), qa.QUIET)
-        self.assertLessEqual(qa.after(path, 1.05, PLAIN), qa.QUIET)
+        self.assertAlmostEqual(qa.sfx.quiet_from(_env.ffmpeg(), path), 1.0, delta=0.05)
 
     def test_the_check_fails_on_a_shape_in_out_that_nobody_asked_for(self):
         (self.d / "B").mkdir()

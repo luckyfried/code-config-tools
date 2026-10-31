@@ -44,7 +44,8 @@ card's recipe, turned by the music brief.
 - **the closer**: the camera pulls back onto the wall of the year, a sheet of the look's ground carrying the wall's
   photographs falls shut over it with the age cut out of it in giant figures, and on the last hit the age's last figure
   punches through; then the card's closer takes the frame with the wish (the person's own line, `--line`, when they
-  gave one) and its sender, and the picture and the sound stop together. The wall holds exactly the year's
+  gave one) and its sender, and the picture and the sound stop together; the cover keeps a slow push to the last
+  frame. The wall holds exactly the year's
   photographs: the square root of their count in rows, rounded, each row's cells filling the frame's width inside a
   margin (five photographs are a row of two over a row of three), so no cell is empty and every photograph is whole in
   the frame at the end.
@@ -71,7 +72,7 @@ year with more moments than the length holds at 2 s a card keeps the ones spread
 named one first.
 
 `storyboard.md` says per beat what the move reveals and what it carries across the cut; the music's origin, the music
-brief, and the `mixed:` line `music.py master` fills with the bed's and the effects' loudness; and the sound cues, one
+brief, and the `mixed:` line `music.py master` fills with the music's and the effects' loudness; and the sound cues, one
 where each beat lands (a hit as the hook lands with its age and as each moment's card lands with its name, the build as
 the sheet falls over the wall, its impact, a hit as the last figure punches home, the stop on the wish; words rise and
 the camera moves without a sound of their own).
@@ -127,6 +128,8 @@ the clip, so every motion you name comes back to where it started within the bea
 hair or a flag in the wind, steam, a flame, light glinting on water, a slow breath); never a motion that crosses the
 frame, arrives or changes for good (a bird flying across, a head coming to rest on a shoulder, the light dimming). `check` names every clip with no shot; a redraft
 keeps each photograph's shot.
+A card the person filled with a clip of their own is listed as `their own clip`, with the seconds of it the beat
+plays; it needs no shot.
 
 ## Check, then look
 

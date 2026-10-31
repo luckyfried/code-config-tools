@@ -21,13 +21,17 @@ still in `out/` that the render did not make.
 
 ## Measure, then watch
 
+Every round before deliver reads the half-size proof from `film.py render --proof`: while `out/proof.mp4` is the
+newest render, `check` and `cut` read it and their first line says "reading the half-size proof". Every size they
+report is in board units, the full-size film's numbers, so a proof passes or fails exactly where the film would.
+
 ```
 python3 S/scripts/qa.py check
 ```
 
 `check` measures the reel and any square film, wide film and stills that were asked for (size, codec and High
 profile, 30 fps, a length of 20–60 s and within 1 s of the board's (the one the person asked for), the square and wide films within a second of the reel and with its sound, audio and loudness, black or white stretches,
-frozen stretches before the board's stop, failed render jobs and fonts or photographs that failed to load, the stills of
+frozen stretches anywhere in the film, its ending included, failed render jobs and fonts or photographs that failed to load, the stills of
 every rest moment when asked for, and any shape in `out/` nobody asked for) and writes them to `B/qa/check.json` with two figures that never pass or fail: the cuts a minute
 and each second's change. Fix anything it fails before the critics watch. Then:
 
@@ -48,10 +52,27 @@ python3 S/scripts/vote.py verdict
 - `FIX ONCE`: it quotes the worst thing the lowest-scoring critic found. Fix that thing, and not another one, with
   the levers in `S/critic/critic.md`, then run `storyboard.py snap`, `clips.py list`, `clips.py normalize`,
   `music.py master`, `film.py preview`, `vote.py timed` (the four reads again, from the new cut's frames),
-  `qa.py timed`, `film.py render`, `film.py frames`, `qa.py check`, then `vote.py cut` for round 2 (say in `fixed`
+  `qa.py timed`, `film.py render --proof`, `film.py frames`, `qa.py check`, then `vote.py cut` for round 2 (say in `fixed`
   what changed and which frames show it) and score again from round 2's own frames.
 - After round 2 the fix is spent: a film still below the bar delivers with the gate OPEN, and the review page and
   `B/brief.md` say what is below the bar.
+
+## Render the full-size film and read the type on it
+
+Once the verdict on the proof is `SHIP` (or the fix is spent), render the films at full size, with the same `--also`,
+and score the round once more:
+
+```
+python3 S/scripts/film.py render [--also ...]
+python3 S/scripts/qa.py check
+python3 S/scripts/vote.py cut
+python3 S/scripts/vote.py verdict
+```
+
+`cut` moves the round to the full-size reel: it cuts the round's 24 frames again from `out/film.mp4`, under the same
+names, and empties each critic's `type` score; the other scores stand. As each critic, open those frames again, read
+the type at the size a phone shows it, and score `type` again. A round that falls below the bar here is a `FIX ONCE`
+like any other: fix it, render the proof again, and score round 2.
 
 ## Caption
 
@@ -80,6 +101,9 @@ again. A green or open run is marked delivered, keeps a copy of its deliverables
 The gate must pass before the film is called ready. The last line deliver.py prints is the delivered reel's full path
 from the workspace root, for example `build/20261020T151200Z/out/film.mp4`.
 On a red gate the last line is `not delivered: the gate failed on <checks>` and names no film.
+deliver.py delivers only the full-size films: when the newest render is the half-size proof it refuses with `not
+delivered: the newest render is the half-size proof` and names the full-size render, `qa.py check` and `vote.py cut`
+to run before it.
 
 ## Tell the person
 

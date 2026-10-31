@@ -128,6 +128,10 @@ export type Beat = {
   label?: string;
   /** the year's peak, held longest */
   peak?: boolean;
+  /** on a card whose move flies its photograph in: the musical beat the flight starts on and the one the photograph
+   * lands on, where the card's name rises, from the film's start */
+  flies?: number;
+  lands?: number;
   layers?: Layer[];
 };
 
@@ -148,6 +152,9 @@ export type Board = {
   film: {cards: any[]; closer: {big: any; last: any; lines: any[]; bands: number[][]}};
 };
 
-/** A generated clip placed on the card of the photograph it was made from: its frames `dir`/0001.jpg onward, from the film's frame `from`. */
-export type Clip = {id: string; image: string; from: number; frames: number; dir: string};
+/**
+ * A clip placed on the card of its photograph: its frames `dir`/0001.jpg onward, from the film's frame `from`. `own` is
+ * a clip the person recorded, whose card holds its first frame before it and its last frame after it.
+ */
+export type Clip = {id: string; image: string; from: number; frames: number; dir: string; own?: boolean};
 export type FilmProps = {board: Board; clips?: Clip[]};

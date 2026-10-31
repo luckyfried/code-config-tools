@@ -47,6 +47,9 @@ const QUICK = 0.5;
 const EARLY = 0.15;
 /** Beats before a card's leave its name lifts off toward the lens. */
 const OFF = 0.6;
+/** Beats the type takes to fade once its card starts to leave: it is gone while the print is still near its place.
+ * A shadow map does not fade with its type, so type casts a shadow only while it is more there than gone. */
+const LETGO = 0.3;
 /** Beats a line of words takes to rise word by word. */
 const WORDS = 0.8;
 
@@ -67,7 +70,7 @@ export const headAt = (plan: Plan, c: Card, t: number): Flight | null => {
   const held = typeZ(c);
   const enter = clamp01((t - from) / len);
   const q = span(t, c.leave - OFF, OFF, (u) => u * u);
-  return {z: held + q * lensOf(plan, c) * 0.5, tip: q * 0.5, scale: 1 + pop(t, from + len * 0.7, 0.05), opacity: 1 - span(q, 0.1, 0.35),
+  return {z: held + q * lensOf(plan, c) * 0.5, tip: q * 0.5, scale: 1 + pop(t, from + len * 0.7, 0.05), opacity: 1 - span(t, c.leave - OFF, LETGO),
     shadow: shadowOf(c) * clamp01(enter * 2) * (1 - q), enter};
 };
 
@@ -90,7 +93,7 @@ export const HeadWords: React.FC<{plan: Plan; card: Card; fonts: Fonts; t: numbe
     <group>
       {c.head.map((ln, i) => (
         <Type3D key={i} font={fontOf(fonts, ln)} text={ln.text} tracking={ln.tracking} color={colorOf(plan, ln.color)} side={sideOf(plan, ln.color)} anchor={ln.anchor}
-          matrix={frameOf(plan, placeOnWall(c.T, ln), k.z, 1, k.tip, k.scale)} depth={DEPTH} enter={k.enter} opacity={k.opacity} shadow={k.shadow} castShadow={k.z > 4}
+          matrix={frameOf(plan, placeOnWall(c.T, ln), k.z, 1, k.tip, k.scale)} depth={DEPTH} enter={k.enter} opacity={k.opacity} shadow={k.shadow} castShadow={k.z > 4 && k.opacity > 0.5}
           renderOrder={2000 + index * 10 + i} />
       ))}
     </group>
@@ -109,7 +112,7 @@ export const CardWords: React.FC<{plan: Plan; card: Card; fonts: Fonts; t: numbe
       {c.lines.map((ln, i) => (
         <Type3D key={i} font={fontOf(fonts, ln)} text={ln.text} tracking={ln.tracking} color={colorOf(plan, ln.color)} anchor={ln.anchor}
           matrix={frameOf(plan, placeOnWall(c.T, ln), z)} enter={clamp01((t - (start + i * 0.2)) / WORDS)} by="word" opacity={fade}
-          shadow={shadowOf(c)} castShadow renderOrder={1000 + index * 10 + 5} />
+          shadow={shadowOf(c)} castShadow={fade > 0.5} renderOrder={1000 + index * 10 + 5} />
       ))}
     </group>
   );

@@ -3,10 +3,10 @@
 // its shadow on the wall, a streak of light running along its own line as the moment's name rises out of that line,
 // its words rising under it; the dust in the light floats between the wall and the cards, under the type; at the last
 // card the camera pulls back onto the whole wall, a sheet of the ground with the age cut out of it slams shut over the
-// year, the age's last figure is punched through it, and the style card's closer takes the frame with the wish; the film
-// holds still and silent from there. Every move, cut, and closer is the style card's, drawn over the picture by the
-// shared move layer inside the stage, so its words take the film's grain and grade; and a card with a cadence steps the
-// picture as a camera that shoots fewer frames does.
+// year, the age's last figure is punched through it, and the style card's closer takes the frame with the wish; from
+// the stop the film is silent and the closer keeps the shared slow push to the last frame. Every move, cut, and closer
+// is the style card's, drawn over the picture by the shared move layer inside the stage, so its words take the film's
+// grain and grade; and a card with a cadence steps the picture as a camera that shoots fewer frames does.
 import {useLoader, useThree} from '@react-three/fiber';
 import {Component, useLayoutEffect, useMemo, type ReactNode} from 'react';
 import {AbsoluteFill, continueRender, delayRender, staticFile, useCurrentFrame} from 'remotion';
@@ -37,7 +37,7 @@ const edgesOf = (plan: Plan) => plan.cards.map((c) => {
 const mixHex = (a: string, b: string, u: number) => '#' + new THREE.Color(a).lerp(new THREE.Color(b), u).getHexString();
 
 /**
- * The frame of a generated clip the film is on, as one texture whose picture is replaced each frame: the frame is
+ * The frame of a clip the film is on, as one texture whose picture is replaced each frame: the frame is
  * captured once the picture has loaded and the scene has been drawn with it.
  */
 const useClipFrame = (src: string | null) => {
@@ -78,6 +78,10 @@ const useClipFrame = (src: string | null) => {
   return tex;
 };
 
+/** A clip's `n`th frame (from 1), as its folder names it; a cadence steps the film's frame by a fraction, so `n` is
+ * the whole frame it falls in, inside the clip. */
+const frameOf = (c: Clip, n: number) => `${c.dir}/${String(Math.min(c.frames, Math.max(1, Math.floor(n)))).padStart(4, '0')}.jpg`;
+
 const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, Font>; clips: Clip[]}> = ({plan, t, frame, fonts, clips}) => {
   const files = useMemo(() => [...new Set(plan.cards.map((c) => c.file))], [plan]);
   const textures = useLoader(THREE.TextureLoader, files.map((f) => staticFile(f))) as THREE.Texture[];
@@ -86,12 +90,24 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; fonts: Map<string, 
     tx.anisotropy = 8;
     tx.needsUpdate = true;
   }), [textures]);
-  // a generated clip plays on its photograph's card over its beat; with none, the card holds the photograph
+  // a clip plays on its photograph's card over its beat; with none, the card holds the photograph, and a card the person
+  // recorded holds its clip's first frame before its beat and its last frame after it, so the shot never cuts to a still
+  const own = useMemo(() => clips.filter((c) => c.own), [clips]);
+  const ends = useLoader(THREE.TextureLoader, own.flatMap((c) => [1, c.frames].map((n) => staticFile(frameOf(c, n))))) as THREE.Texture[];
+  useMemo(() => ends.forEach((tx) => {
+    tx.colorSpace = THREE.SRGBColorSpace;
+    tx.anisotropy = 8;
+    tx.needsUpdate = true;
+  }), [ends]);
   const clip = clips.find((c) => frame >= c.from && frame < c.from + c.frames);
-  const clipSrc = clip ? `${clip.dir}/${String(frame - clip.from + 1).padStart(4, '0')}.jpg` : null;
-  const clipTex = useClipFrame(clipSrc);
-  const texOf = (f: string) => (clip && clip.image === f ? clipTex : textures[files.indexOf(f)]);
-  const imageOf = useMemo(() => (f: string) => textures[files.indexOf(f)]?.image as HTMLImageElement | undefined, [textures, files]);
+  const clipTex = useClipFrame(clip ? frameOf(clip, frame - clip.from + 1) : null);
+  const endOf = (f: string, after: boolean) => {
+    const i = own.findIndex((c) => c.image === f);
+    return i < 0 ? undefined : ends[2 * i + (after || frame >= own[i].from + own[i].frames ? 1 : 0)];
+  };
+  const texOf = (f: string) => (clip && clip.image === f ? clipTex : endOf(f, false) ?? textures[files.indexOf(f)]);
+  const imageOf = useMemo(() => (f: string) => (endOf(f, true) ?? textures[files.indexOf(f)])?.image as HTMLImageElement | undefined,
+    [textures, files, ends, own]);
   const edges = useMemo(() => edgesOf(plan), [plan]);
   const wall = useMemo(() => wallOf(plan, imageOf, 'smoked'), [plan, imageOf]);
   const ground = paint(plan, plan.photo.ground);
@@ -200,8 +216,10 @@ export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
   // a card with a cadence steps the picture at that many frames a second
   const step = plan.finish.cadence > 0 ? plan.fps / plan.finish.cadence : 1;
   const still = Math.round(plan.closer.still * plan.pulse);
-  // from the stop on, the picture is the still frame
-  const frame = Math.min(Math.floor(now / step) * step, still);
+  // the film's own frame, stepped at the card's cadence; from the stop on, the scene is the still frame and only the
+  // closer's slow push runs on
+  const stepped = Math.floor(now / step) * step;
+  const frame = Math.min(stepped, still);
   const line = useMemo(() => timelineOf(plan), [plan]);
   const look = useMemo(() => lookOf(plan), [plan]);
   const files = useMemo(() => [...new Set(linesOf(plan).map(fileOf))], [plan]);
@@ -216,7 +234,7 @@ export const DriveFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
     <AbsoluteFill style={{background: ground}}>
       {fonts ? (
         <Stage pose={shot.pose} travel={shot.travel} background={ground}
-          over={<MoveLayer line={line} look={look} t={t} bars={plan.finish.bars}
+          over={<MoveLayer line={line} look={look} t={t} now={stepped / plan.pulse} bars={plan.finish.bars}
             closer={{name: plan.closerShape, at: closerAt, still: plan.closer.still}}>
             {t >= closerAt && dim > 0 ? <AbsoluteFill style={{background: paint(plan, 'ink'), opacity: dim}} /> : null}
           </MoveLayer>}>

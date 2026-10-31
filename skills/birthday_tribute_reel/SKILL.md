@@ -63,8 +63,8 @@ and the moves and cuts it allows; each card's move is chosen for what its photog
 | 1 | research | `S/pipeline/1-research.md` | `research.py --who "..." [--occasion "..."] [--date ...] [--words "..."] [--line "..."] [--seconds N]`, then you write `B/taste.md` and fix `B/taste.json` (a style the person named goes in its `style`) | taste.md with its five headings |
 | 2 | storyboards | `S/pipeline/2-storyboards.md` | `storyboard.py draft`, look at the hook, write each photograph's subject box and each clip's shot, `storyboard.py check`, `storyboard.py sheets`, look | three boards, their sheets and `out/boards.png` |
 | 3 | the look | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores, `vote.py tally`; show `out/boards.png` and ask which look, then `vote.py pick N --reason "..."` | `B/winner.json` |
-| 4 | produce | `S/pipeline/4-produce.md` | `music.py make`, `storyboard.py snap`, `clips.py list`, `clips.py normalize`, `music.py master`, `film.py preview`, `vote.py timed`, read its 24 frames and fill the four reads, `qa.py timed`, `film.py render [--also ...]`, `film.py frames` | `out/film.mp4`, `out/post.png`, `out/story.png` (and only the asked-for square, wide or stills) |
-| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, read its 24 frames and score, `vote.py verdict` (below the bar: fix the worst thing it quotes, once), write `B/caption.md`, `deliver.py` | `GATE GREEN` (or `GATE OPEN` once the fix is spent) |
+| 4 | produce | `S/pipeline/4-produce.md` | `music.py make`, `storyboard.py snap`, `clips.py list`, `clips.py normalize`, `music.py master`, `film.py preview`, `vote.py timed`, read its 24 frames and fill the four reads, `qa.py timed`, `film.py render --proof [--also ...]`, `film.py frames` | `out/proof.mp4`, the half-size proof every round before deliver reads, `out/post.png`, `out/story.png` (and only the asked-for square, wide or stills) |
+| 5 | critic, gate, deliver | `S/pipeline/5-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, read its 24 frames and score, `vote.py verdict` (below the bar: fix the worst thing it quotes, once) on the proof; the full-size `film.py render [--also ...]`, `qa.py check`, `vote.py cut` and the type read at full size; write `B/caption.md`, `deliver.py` | `GATE GREEN` (or `GATE OPEN` once the fix is spent) |
 
 Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and options.
 
@@ -112,11 +112,16 @@ other look is reused.
   years, none for any other occasion); posts, likes, comments and days are never shown.
 - A beat the storyboard wants as a generated clip carries the clip's request (subject, what moves, the camera, the
   lens, the light) in `storyboard.json`. When no video model made it, the beat shows its photograph and is called a
-  still, never a clip.
+  still, never a clip. A moment the person recorded a clip of plays that clip on its card, one shot the length of its
+  beat from its strongest second, its sound left out, with the move its photograph would have had; nothing is asked
+  of a model for it.
 - Look at what you make: `out/boards.png` and the sheets, the hook's photograph, each clip's photograph, the 24
   frames `vote.py timed` cuts from the preview, the 24 frames `vote.py cut` cuts from the film, `out/post.png`,
   `out/story.png` and any stills that were asked for, each with the Read tool, before any read or score. A read or a
   score names the frames it was made from.
+- Every round before deliver renders the half-size proof (`film.py render --proof`); the render deliver takes is
+  full size (`film.py render`), and the critics read the type on it once more. deliver.py refuses a run whose newest
+  render is the proof.
 - The reel renders alone. `film.py render --also landscape square stories` adds the wide film, the square film and
   the stills, each only when the person's words asked for it (`S/pipeline/5-deliver.md` says which words); the gate
   fails on any of them in `out/` that nobody asked for.

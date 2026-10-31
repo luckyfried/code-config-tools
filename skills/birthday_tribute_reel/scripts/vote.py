@@ -9,9 +9,10 @@ USAGE (from the workspace root; S = this skill's folder):
                                          # B/winner.json names board N, and the cut made from another look goes
     python3 S/scripts/vote.py timed      # B/critic/timed.json to fill in: the four reads of the timed cut, with
                                          # 24 frames of the preview cut fresh for this cut
-    python3 S/scripts/vote.py cut        # B/critic/cut-N.json to fill in for the rendered film, with 24 frames of
-                                         # out/film.mp4 in B/critic/cut-N/ (a new round N for a new reel; the newest
-                                         # round again while it scores this reel or nobody has scored it yet)
+    python3 S/scripts/vote.py cut        # B/critic/cut-N.json to fill in for the newest reel, with 24 frames of it in
+                                         # B/critic/cut-N/: out/proof.mp4 while the proof is the newest render, else
+                                         # out/film.mp4 (a new round N for a new reel; the newest round again while it
+                                         # scores this reel or nobody has scored it yet)
     python3 S/scripts/vote.py verdict    # SHIP when the latest round is at the bar, else the worst thing a critic found
 
 The ballot holds the three storyboards, one per style. The panel (S/critic/critic.md has each critic's
@@ -31,8 +32,14 @@ not be made, and each read that is made names at least one of those frames. film
 fails; a read not made leaves the gate open. The finished cut is scored by the motion designer and the person on the
 same rules from the round's 24 frames, each critic's paragraph naming the frames it read, and each names the worst
 thing in the film in "worst", which the verdict quotes.
+Every round before deliver scores the half-size proof (film.py render --proof, out/proof.mp4): `cut` reads the newest
+render and its first line says when that is the proof. Once the full-size reel of the same cut is rendered, `cut`
+moves the latest round to it, cuts the round's frames again from the full-size reel under the same names, and empties
+each critic's `type` score: the critics read the type again at full size, at the size a phone shows it, and the round
+is complete once they have scored it there.
 """
 import argparse
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -40,24 +47,26 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import compose  # noqa: E402
+import proof  # noqa: E402
 
 CRITERIA = {
     "concept": "R1 one idea, the wall of their year: stated in the first second, a motif on every beat that pays off in the closer, "
                "every move between beats the wall's own act or a cut the style card names, never a crossfade",
     "image": "R2 the photograph, its field and the wall move at different rates, every photograph whole and in register; a "
              "light wrap and a shadow on every card that flies; the style card's finish (grain, vignette, bloom, dust) over "
-             "all; one grade on every photograph; the closer's still stays still",
+             "all; one grade on every photograph; the closer settles and keeps only its slow push",
     "type": "R3 the style card's two faces and a scale; names and figures enter by letter or word with tracking that resolves, "
             "settled within a second; the name over its words on every card; every line at rest inside the safe area, "
             "nothing colliding",
     "motion": "R4 one continuous camera with anticipation and settle on the style card's easing; each beat's move from the "
               "card's own moves, chosen for what the beat holds, never the same move twice in a row; a fast run before a "
-              "held card; the peak holds longest; the closer's shape lands, then holds still and silent",
+              "held card; the peak holds longest; the closer's shape lands, then keeps only its slow push, silent",
     "sound": "R5 a cue only where a beat lands, the effects 8 LU under the music, the music made from the style's recipe and "
              "the brief's words, stopping on the wish",
     "clips": "R6 every clip request (clips/requests.json) a shot a cinematographer would write: subject, move, lens, light, the "
              "beat's length, loopable; for the hook's world, texture between chapters, or a still brought to life; a beat "
-             "whose clip was not made is called a still, never a clip",
+             "whose clip was not made is called a still, never a clip; a clip the person recorded plays on its card as one "
+             "shot the length of its beat, its sound left out, and asks nothing of a model",
     "deliverable": "R7 out/ holds out/boards.png, the films asked for, the posted image, the story card, the caption and the "
                    "review page that opens on the film's cover and offers the other two looks, and nothing else",
 }
@@ -67,8 +76,8 @@ PANEL = {"motion_designer": "the motion designer", "editor": "the editor", "pers
 CUT_PANEL = {"motion_designer": "the motion designer", "person": "the person (from taste.md)"}
 READS = {
     "carry": "one element is carried across every transition (the wall of their year, each moment's photograph going to its cell)",
-    "sound": "a sound where each beat lands and nowhere else, under the music (the cues the board places against where the "
-             "effects stem's sounds start, both in timed.json's measured)",
+    "sound": "a sound where each beat lands and nowhere else, under the music (the effects music.py master places, a whoosh "
+             "peaking on each cut, against where the effects' sounds start, both in timed.json's measured)",
     "photograph": "the motion belongs to the photograph: put another photograph under the same move and it stops making sense",
     "held": "one held thing per beat, the moment's photograph and its line, and no beat holds still longer than its words need",
 }
@@ -290,11 +299,40 @@ def read_problems(t):
     return bad, open_
 
 
+# a stem is read in windows of WINDOW seconds; its floor is the quietest ROOM_SHARE of them (the room under the effects);
+# a sound is a run of windows over HUSH times the floor, after QUIET seconds under it, that reaches RISE times the floor,
+# and it starts where the run leaves the quiet (a whoosh or a riser swells up to its cue, so it starts before it); a dip
+# shorter than QUIET inside a swell is part of the swell
+WINDOW, ROOM_SHARE, RISE, HUSH, QUIET = 0.02, 0.2, 2.5, 1.6, 0.04
+
+
 def onsets(wav):
-    """Where each sound of a stem starts, in seconds (the end of each silence under -45 dB)."""
-    r = subprocess.run([_env.ffmpeg(), "-v", "info", "-i", str(wav), "-af", "silencedetect=n=-45dB:d=0.08", "-f", "null", "-"],
-                       capture_output=True, text=True)
-    return [round(float(ln.split("silence_end:")[1].split("|")[0]), 2) for ln in r.stderr.splitlines() if "silence_end:" in ln]
+    """Where each sound of a stem starts, in seconds: where its level leaves the room after a quiet spell, on its way
+    well over it."""
+    import array
+    rate = 8000
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(wav), "-ac", "1", "-ar", str(rate), "-f", "s16le", "-"],
+                       capture_output=True)
+    pcm = array.array("h", r.stdout[:len(r.stdout) // 2 * 2])
+    n = int(rate * WINDOW)
+    levels = [math.sqrt(sum(v * v for v in pcm[i:i + n]) / n) for i in range(0, len(pcm) - n + 1, n)]
+    if not levels:
+        return []
+    floor = max(1.0, sorted(levels)[int(len(levels) * ROOM_SHARE)])
+    out, quiet, start, armed = [], 0, None, True
+    for i, lv in enumerate(levels):
+        if lv <= HUSH * floor:
+            quiet += 1
+            if quiet * WINDOW >= QUIET:
+                start, armed = None, True
+            continue
+        quiet = 0
+        if armed and start is None:
+            start = i
+        if start is not None and lv > RISE * floor:
+            out.append(round(start * WINDOW, 2))
+            start, armed = None, False
+    return out
 
 
 def cmd_timed(a):
@@ -313,15 +351,15 @@ def cmd_timed(a):
     folder = Path(_env.B) / "critic" / f"timed-{f['hash'][:8]}"
     shots = cut_frames(Path(_env.B) / "preview" / "film.mp4", folder, f"{f['hash'][:4]}-t", f["seconds"])
     fx = Path(_env.B) / "music" / "fx.wav"
-    land = sorted({round(c["at"] * 60 / f["bpm"], 2) for c in f.get("sound") or [] if c.get("kind") != "stop"})
+    land = sorted({round(t, 2) for t, _ in (_env.read_json(f"{_env.B}/music.json") or {}).get("effects") or []})
     _env.write_json(path, {"hash": f["hash"], "style": f["style"], "reads": {k: {"pass": None, "read": ""} for k in READS},
                            "film": str((Path(_env.B) / "preview" / "film.mp4").resolve()), "strip": pv.get("strip2"),
                            "frames": str(folder.resolve()),
                            "measured": {**{k: pv.get(k) for k in ("seconds", "cuts", "cuts_per_minute", "seconds_under_half", "hook_event_frame")},
                                         "cue_seconds": land, "effect_onsets": onsets(fx) if fx.exists() else None}})
     print(f"the four reads, as the editor, from frames: open every frame in {folder}/ "
-          f"({len(shots)}, cut from this cut's preview) and its strip {pv.get('strip2')}; for sound, the cues the board places "
-          f"(measured.cue_seconds) against where the effects stem's sounds start (measured.effect_onsets). Then fill in {path}: "
+          f"({len(shots)}, cut from this cut's preview) and its strip {pv.get('strip2')}; for sound, the effects master places "
+          f"(measured.cue_seconds) against where the effects' sounds start (measured.effect_onsets). Then fill in {path}: "
           "for each read, pass (true or false) and read (at least 25 words naming the beats and the frames, for example "
           f"{shots[0].name.rsplit('-', 1)[0] if shots else ''}); a read you cannot make from what is here is pass \"not made\" "
           "and read the reason:\n" + "\n".join(f"  {k}: {v}" for k, v in READS.items()))
@@ -329,31 +367,49 @@ def cmd_timed(a):
 
 
 def cmd_cut(a):
-    """A round for the reel in out/, read from the render report that certifies out/ (B/render/film-report.json): the
-    newest round when it scores this same reel, a new one only when the reel changed."""
+    """A round for the newest reel in out/ (the proof while out/proof.mp4 is there), read from the render report that
+    certifies out/ (B/render/film-report.json): the newest round when it scores this same reel, the same round moved to
+    the full-size reel of the cut it scored on the proof, a new one only when the reel changed."""
     digest = (_env.read_json(f"{_env.B}/render/film-report.json") or {}).get("reel")
+    scale, src = proof.scale(), proof.newest()
+    if scale != 1:
+        print(proof.reading(src))
     if not digest:
-        sys.exit(f"{_env.B}/render/film-report.json is missing: out/ is not a whole render; run film.py render first")
+        sys.exit(f"{_env.B}/render/film-report.json is missing: out/ is not a whole render; run film.py render --proof first")
     d = Path(f"{_env.B}/critic")
     d.mkdir(parents=True, exist_ok=True)
     mine = rounds()
     last = _env.read_json(mine[-1]) if mine else {}
+    film = _env.read_json(f"{_env.B}/film.json") or {}
     if last.get("film") == digest:
         print(f"round {last.get('round')} ({mine[-1]}) already scores this reel: fill it in from the frames in {last.get('frames')}/")
+        return 0
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == film.get("hash"):
+        # the full-size reel of the cut the round scored on its proof: the same round, its frames cut again from the
+        # full-size reel under the same names, and the type read again at full size
+        cut_frames(src, Path(last["frames"]), f"r{last['round']}-f", film.get("seconds") or 60)
+        last.update(film=digest, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+        _env.write_json(mine[-1], last)
+        print(f"round {last['round']} moves to the full-size {src}: as each critic, open every frame in {last['frames']}/ "
+              f"again, cut from it, read the type at the size a phone shows it, and score type in {mine[-1]}; the other "
+              "scores stand")
         return 0
     unscored = last and not any(isinstance(v, int) for e in last["critics"].values() for v in e["boards"]["film"]["scores"].values())
     n = last["round"] if unscored else len(mine) + 1
     f = mine[-1] if unscored else d / f"cut-{len(all_rounds()) + 1}.json"
-    film = _env.read_json(f"{_env.B}/film.json") or {}
-    shots = cut_frames(Path("out/film.mp4"), d / f.stem, f"r{n}-f", film.get("seconds") or 60)
+    shots = cut_frames(src, d / f.stem, f"r{n}-f", film.get("seconds") or 60)
     data = blank(CUT_PANEL, ["film"], swap=False)
     data["round"] = n
     data["board"] = str(film.get("id"))
     data["film"] = digest
+    data["scale"] = scale
+    data["cut"] = film.get("hash")
     data["frames"] = str(d / f.stem)
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: open every frame in {d / f.stem}/ ({len(shots)}, cut from out/film.mp4), then fill in {f}: each critic "
+    print(f"round {n}: open every frame in {d / f.stem}/ ({len(shots)}, cut from {src}), then fill in {f}: each critic "
           f"scores the seven rules, writes a paragraph naming the frames it read (for example "
           f"{shots[0].name.rsplit('-', 1)[0] if shots else ''}) and the worst thing in the film in 'worst'"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
@@ -373,8 +429,11 @@ def cmd_verdict(a):
         return 1
     film = {c: data["critics"][c]["boards"]["film"] for c in CUT_PANEL}
     scores = [s for e in film.values() for s in e["scores"].values()]
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    full = (". Render the full-size film (film.py render, with the same --also), run qa.py check, then vote.py cut: the "
+            "critics read the type again at full size" if data.get("scale") == proof.SCALE else "")
     if at_bar(scores):
-        print(f"SHIP: round {data.get('round')}, {against_bar(scores)}")
+        print(f"SHIP: round {data.get('round')}, {against_bar(scores)}{full}")
         return 0
     # the critic who scored lowest names the fix, in the words they used for the worst thing they saw
     who = min(CUT_PANEL, key=lambda c: (min(film[c]["scores"].values()), list(CUT_PANEL).index(c)))
@@ -382,9 +441,10 @@ def cmd_verdict(a):
     found = f"{CUT_PANEL[who]} found the worst thing: {film[who]['worst'].strip()} (lowest: {low} {film[who]['scores'][low]})"
     if len(rs) >= 2:
         print(f"round {data.get('round')}: {against_bar(scores)}. {found}. The one fix is spent: deliver the best cut, and the "
-              "gate and B/brief.md carry its scores against the bar")
+              f"gate and B/brief.md carry its scores against the bar{full}")
         return 2
-    print(f"FIX ONCE ({against_bar(scores)}): {found}. Fix that, re-render, then run vote.py cut for round 2")
+    print(f"FIX ONCE ({against_bar(scores)}): {found}. Fix that, render the proof again (film.py render --proof), then run "
+          "vote.py cut for round 2")
     return 2
 
 

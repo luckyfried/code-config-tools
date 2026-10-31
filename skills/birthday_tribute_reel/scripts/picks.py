@@ -8,7 +8,8 @@ USAGE (from the workspace root; B = the run's folder, build/<run stamp>/):
 Scores every photo (color, contrast, exposure): the person's own (set "mine"), the named one's saved feed
 ("theirs"), and marks the ones the two share. Finds each one's focal point (where the detail is, so a cover crop
 keeps it), converts HEIC and rotates by EXIF, and saves a 2400 px JPEG copy of every shared photo in B/photos/.
-A shared video gets a poster frame (ffmpeg, 40% of the way in); the video itself stays available as footage.
+A shared video gets its shot's start (`strongest`: the second where the most moves in a lit picture, with a
+beat's worth of the clip after it) and a poster frame there; the film plays the clip from that second on its card.
 
 picks.json carries "shared" (every prepared photo of the two, and of the named one's own posts the two talked under:
 the only photos a beat may use; qa.py checks it),
@@ -71,19 +72,62 @@ def prepare(path):
     return str(dest.resolve())
 
 
-def poster(video):
-    """A reel's poster frame as a 2400 px JPEG in B/photos/, 40% of the way in. Returns its path or None."""
+# a clip is read RATE samples a second (at most SAMPLES samples), each WIDE px across in grey; a sample whose mean light
+# is under DARK or over BLOWN is unlit; the shot starts on a whole second with at least AFTER seconds of the clip after
+# it where the clip has them (a beat's length)
+RATE, SAMPLES, WIDE, DARK, BLOWN, AFTER = 4.0, 240, 160, 0.07, 0.93, 3.0
+
+
+def duration(video):
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(video)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def strongest(video):
+    """The second of a clip its shot starts on: the whole second whose lit samples change the most from the sample
+    before them, among the seconds with AFTER seconds of the clip after them (the first second when the clip is
+    shorter); 0 when the clip cannot be read."""
+    secs = duration(video)
+    rate = min(RATE, SAMPLES / max(secs, 1e-6))
+    r = subprocess.run([_env.ffprobe(), "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
+                        "-of", "csv=p=0", str(video)], capture_output=True, text=True)
+    try:
+        w, h = (int(x) for x in r.stdout.strip().split(",")[:2])
+    except ValueError:
+        return 0.0
+    hh = max(2, round(WIDE * h / w / 2) * 2)
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(video), "-an", "-vf", f"fps={rate:.4f},scale={WIDE}:{hh},format=gray",
+                        "-f", "rawvideo", "-"], capture_output=True)
+    n = WIDE * hh
+    frames = [r.stdout[i:i + n] for i in range(0, len(r.stdout) - n + 1, n)]
+    if r.returncode or len(frames) < 2:
+        return 0.0
+    score = {}
+    for i in range(1, len(frames)):
+        light = sum(frames[i]) / n / 255
+        if not DARK < light < BLOWN:
+            continue
+        change = sum(abs(a - b) for a, b in zip(frames[i], frames[i - 1])) / n / 255
+        sec = int(i / rate)
+        score[sec] = score.get(sec, 0.0) + change
+    last = max(0, int(secs - AFTER))
+    fits = {k: v for k, v in score.items() if k <= last}
+    return float(max(sorted(fits), key=lambda k: fits[k])) if fits else 0.0
+
+
+def poster(video, at=None):
+    """A clip's poster as a 2400 px JPEG in B/photos/: its frame at `at` seconds, the second its shot starts on. Returns
+    its path or None."""
     src = Path(video)
-    dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + "#poster").encode()).hexdigest()[:12] + ".jpg")
+    at = strongest(src) if at is None else at
+    dest = PHOTOS / (hashlib.sha1((str(src.resolve()) + f"#shot{at:.2f}").encode()).hexdigest()[:12] + ".jpg")
     if dest.exists():
         return str(dest.resolve())
     PHOTOS.mkdir(parents=True, exist_ok=True)
-    r = subprocess.run([_env.ffprobe(), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
-                       capture_output=True, text=True)
-    try:
-        at = float(r.stdout.strip()) * 0.4
-    except ValueError:
-        at = 0.5
     tmp = dest.with_name(f".{dest.name}.part.jpg")
     r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-ss", f"{at:.2f}", "-i", str(src), "-frames:v", "1",
                         "-vf", "scale='min(2400,iw)':-2", "-q:v", "2", str(tmp)], capture_output=True)
@@ -158,13 +202,14 @@ def main():
     for x in sh["items"]:
         for n, m in enumerate(x["media"]):
             video = Path(m).suffix.lower() in VIDEO
-            still = poster(m) if video else prepare(m)
+            shot = strongest(m) if video else None
+            still = poster(m, shot) if video else prepare(m)
             if not still:
                 print(f"skip {Path(m).name}: cannot be opened", file=sys.stderr)
                 continue
             a = analyse(still)
             row = {"id": x["id"], "photo": still, "src": m, "date": x["date"], "ts": x["ts"], "caption": x["caption"],
-                   "from": x["from"], "era": era_of.get(x["id"]), "video": m if video else None, "group": len(x["tagged"]) >= 3, **a}
+                   "from": x["from"], "era": era_of.get(x["id"]), "video": m if video else None, **({"shot": shot, "seconds": round(duration(m), 3)} if video else {}), "group": len(x["tagged"]) >= 3, **a}
             out["shared"].append(still)
             out["focal"][still] = focal(a)
             out["source_of"][still] = m

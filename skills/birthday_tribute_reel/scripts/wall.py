@@ -70,13 +70,24 @@ HOOK_BEATS, CLOSER_BEATS, STOP_AT = 3, 9, 6.0
 # one the film is for adds, up to CROWD of them; what a photograph that tags them or is their own adds; the words read
 # a second, of at most WORDS shown; how much longer than the longest other card the year's peak holds
 LEAST, LOOK, PERSON, CROWD, SHOWS, READ, WORDS, PEAK = 2.0, 1.6, 0.3, 3, 0.4, 3.0, 24, 1.25
+# the music's grid a card starts on: quarters of a beat
+GRID = 4
 # the cards just before the year's peak that run fast, and the seconds each of them takes
 RUN, FAST = 3, 1.3
 # beats from a card's arrival to its landing on its lift, where its name starts to rise out of its line and its hit
 # falls (the hook's, as it falls flat)
-LIFT, HOOK_LIFT = 0.25, 0.3
+LIFT, HOOK_LIFT = 0.25, 0.25
 # beats a card's leave starts before the next card arrives
 LEAVE = 0.6
+# the trailer moves that take the whole frame from the start of their beat and fly its photograph in, and the seconds
+# their flight takes to land it (what each asks of the shared arrival): the card's name rises and its hit falls as the
+# photograph lands, on the last quarter beat before the landing, so the beat holds the flight longer than its card
+# would and its words read after it
+TAKES = {"picture-tunnel": 1.1, "exploded-layers": 1.15, "tilted-wall": 1.2}
+# every trailer move; the looks whose grammar they are take them wherever their card's fits win the beat, every other
+# look plays one once, on the year's peak: the one its card marks `once`, else the first its card lists
+SPECTACLE = set(TAKES) | {"slam-words", "counter"}
+GRAMMAR = {"kinetic-type", "swiss-grid"}
 # beats before a card's end the camera's move to the next card starts (the camera's GO), and twice that before the last
 # card's end, where the pull back onto the whole wall starts; a card is at rest only before its move
 GO = 0.8
@@ -85,6 +96,9 @@ GO = 0.8
 AGE = {"reel": 500, "feed": 300, "wide": 300}
 HEAD = {"reel": 120, "feed": 92, "wide": 96}
 CAPTION = {"reel": 46, "feed": 40, "wide": 42}
+# the least cap height of a moment's words, px, per format: a text face with short capitals is set larger than CAPTION
+# until its capitals stand this tall, so the words read at one size on a phone in every look
+CAPTION_CAP = {"reel": 34, "feed": 29, "wide": 31}
 WISH = {"reel": 96, "feed": 72, "wide": 80}
 SMALL, SMALL_STEP, LEAD = 42, 54, 1.3
 # the hook's tag and day beside the figure are set up to TAG_SHARE of the figure's height, as large as the room at its
@@ -236,13 +250,13 @@ def lines_of(path, n=4):
 
 def moments_of(ctx, skip, day):
     """The moments the year is told by, by date: taste.json's `moments` as the agent curated them (research's draft
-    where it kept none), each with a photograph of its own, before the day, the hook's post aside. A name stands only
+    where it kept none), each with a photograph or a recorded clip of its own, before the day, the hook's post aside. A name stands only
     in its caption's own words, else the moment takes the name its caption gives it, none for a post with no caption
     (a wordless card); a comment stands only as one of the two wrote it under that post."""
     seen, out = set(), []
     for m in ctx.taste.get("moments") or compose.draft_moments(ctx.shared):
         r = ctx.rows.get(m.get("post"))
-        if not still(r) or m["post"] == skip or r["photo"] in seen or compose.day(m["date"]) >= day:
+        if not r or m["post"] == skip or r["photo"] in seen or compose.day(m["date"]) >= day:
             continue
         line = plain(ctx.caption_of.get(m["post"]) or "")
         name = str(m.get("name") or "").strip()
@@ -256,7 +270,7 @@ def moments_of(ctx, skip, day):
 
 
 def still(r):
-    """Whether a photograph row is one the film can show: a still photograph."""
+    """Whether a photograph row is a still photograph, the only kind the hook falls flat as."""
     return bool(r) and not r.get("video")
 
 
@@ -374,7 +388,10 @@ def plan(ctx, style):
     for i, m in enumerate(year):
         x = by_id.get(m["post"]) or {}
         fast = m["post"] in run
-        beats.append({"id": f"card-{i + 1}", "form": "moment", "post": m["post"], "date": m["date"], "name": m["name"],
+        r = ctx.rows.get(m["post"]) or {}
+        # a moment the person recorded plays its clip on the card from the second its shot starts on (picks.py)
+        recorded = {"recorded": {"source": r["video"], "from": float(r.get("shot") or 0), "seconds": r.get("seconds")}} if r.get("video") else {}
+        beats.append({**recorded, "id": f"card-{i + 1}", "form": "moment", "post": m["post"], "date": m["date"], "name": m["name"],
                       "hold": holds[m["post"]], "pulses": 0, "words": "" if fast else said(compose.moment_words(m["line"], m["name"])),
                       "talk": [] if fast else [{"by": t["by"], "text": said(t["text"]), "voice": voice(t["by"])} for t in m["talk"] if said(t["text"])],
                       "peak": m["peak"], "run": fast, "voice": "mine" if x.get("from") == "mine" else "theirs"})
@@ -383,7 +400,8 @@ def plan(ctx, style):
     c = compose.card(style)
     choose(c, beats, {x["post"]: ctx.photo(x["post"]) for x in beats if x.get("post")}, {m["post"]: m for m in year}, ctx.who)
     board = {"id": None, "style": style, "name": NAME, "idea": IDEA, "structure": STRUCTURE,
-             "footage": "the photographs, still; each clip below is a request, in the film only once a video model makes it",
+             "footage": "the photographs, still, and the clips the person recorded, each playing on its card; each other clip "
+                         "below is a request, in the film only once a video model makes it",
              "for": ctx.called, "handle": ctx.me, "occasion": ctx.occ.get("label"), "year": compose.day(ctx.items[-1]["date"]).year,
              "music": {"recipe": c["music"], "direction": MUSIC}, "bpm": bpm,
              "wish": {**wish, "number": number}, "day": date, "length": length, "length_from": length_from,
@@ -437,11 +455,25 @@ def choose(c, beats, photos, moments, who):
     fade meant for the peak and the closer is never spent on every card that has a line. Outside the fast run before
     the peak no cut follows itself: where the best cut is the one into the beat before, the card's next best cut that is
     not kept for the peak, the wall and the closer (`KEPT`) takes its place, so a card that jumps in is followed by one
-    the camera travels to and the year changes pace from card to card."""
+    the camera travels to and the year changes pace from card to card. A move the card marks `once` plays at most once
+    a film and wins the peak: on a grammar card too, the peak takes the `once` move made for a photograph and no other
+    card plays it."""
+    grammar = c["id"] in GRAMMAR
+    marked = {o["id"] for o in c["moves"] if o.get("once")}
+    plain = [o for o in c["moves"] if o["id"] not in marked] if grammar else [o for o in c["moves"] if o["id"] not in SPECTACLE]
+    shown = [o for o in c["moves"] if o["id"] in SPECTACLE]
+    once = (next((o["id"] for o in c["moves"] if o["id"] in marked and "photo" in o["fits"]), None) if grammar else
+            next((o["id"] for o in shown if o.get("once")), shown[0]["id"] if shown else None))
+    # a move that flies the photograph in plays only on a card that holds long enough for its words after it, and on a
+    # photograph: a recorded clip plays on its card from the cut
+    flies = lambda b: b["form"] == "moment" and not b.get("run") and not b.get("recorded")
+    cards = [b for b in beats if flies(b)]
+    peak = next((b for b in cards if b.get("peak")), None) or max(cards, key=lambda b: b.get("hold", 0), default=None)
     prev = cut = None
     for i, b in enumerate(beats):
         tags = tags_of(b, photos.get(b.get("post")), moments.get(b.get("post")), who)
-        b["move"] = pick(c["moves"], tags, prev)
+        options = [o for o in plain if flies(b) or o["id"] not in TAKES] or plain
+        b["move"] = once if once and b is peak else pick(options, tags, prev)
         seen = tags - WORD_TAGS
         b["transition"] = None if i == 0 else pick(c["transitions"], seen, None)
         if b["transition"] and b["transition"] == cut and not b.get("run"):
@@ -449,23 +481,43 @@ def choose(c, beats, photos, moments, who):
             if other:
                 score = lambda o: sum(WEIGHT.get(t, 2) for t in seen & set(o["fits"]))
                 b["transition"] = max(other, key=lambda o: (score(o), -c["transitions"].index(o)))["id"]
+        # the flight is the way into its beat: the picture cuts straight into it
+        if b["move"] in TAKES and "hard-cut" in compose.ids(c, "transitions"):
+            b["transition"] = "hard-cut"
         prev, cut = b["move"], b["transition"]
 
 
 def fit(board, bpm):
     """The board timed at `bpm`: the hook and the closer keep their pulses (their hits land on the music's beats), the
     run before the peak takes FAST seconds a card, and the other cards share the rest of the board's length, each LEAST
-    seconds and the remainder in proportion to its hold, so the film runs `length` seconds at any tempo."""
+    seconds and the remainder in proportion to its hold, so the film runs `length` seconds at any tempo, less the part
+    of a quarter beat it takes to end on the grid. Every card starts and ends on a quarter beat of the music (GRID), each
+    edge within an eighth of a beat of where the shares put it, so each cut,
+    each landing and the sound effects on them fall together on the music's grid."""
     cards = [b for b in board["beats"] if b["form"] == "moment"]
     rest = board["length"] - sum(b["pulses"] for b in board["beats"] if b["form"] != "moment") * 60 / bpm
     run = [b for b in cards if b.get("run")]
     slow = [b for b in cards if not b.get("run")]
     fast = min(FAST, rest / len(cards)) if cards else 0
     rest -= fast * len(run)
+    fly = lambda b: 0 if b.get("run") else TAKES.get(b.get("move"), 0)
+    rest -= sum(fly(b) for b in slow)
     least = min(LEAST, rest / len(slow)) if slow else 0
     total = sum(b["hold"] for b in slow) or 1
-    secs = lambda b: fast if b.get("run") else least + (rest - least * len(slow)) * b["hold"] / total
-    beats = [{**b, "pulses": round(secs(b) * bpm / 60, 4)} if b["form"] == "moment" else b for b in board["beats"]]
+    secs = lambda b: fast if b.get("run") else least + (rest - least * len(slow)) * b["hold"] / total + fly(b)
+    # the cards' last edge stays where the film's length stays inside compose.LENGTH
+    fixed = sum(b["pulses"] for b in board["beats"] if b["form"] != "moment")
+    lo = math.ceil((compose.LENGTH[0] * bpm / 60 - fixed) * GRID - 1e-6) / GRID
+    hi = math.floor((compose.LENGTH[1] * bpm / 60 - fixed) * GRID + 1e-6) / GRID
+    exact, done, last = 0.0, 0.0, cards[-1]["id"] if cards else None
+    beats = []
+    for b in board["beats"]:
+        if b["form"] == "moment":
+            exact += secs(b) * bpm / 60
+            edge = round(exact * GRID) / GRID
+            edge = min(hi, max(lo, edge)) if b["id"] == last else edge
+            b, done = {**b, "pulses": edge - done}, edge
+        beats.append(b)
     return {**board, "bpm": bpm, "beats": beats}
 
 
@@ -782,7 +834,8 @@ def card_lines(f, edge, beat, wish, fmt, side="over"):
             said = []
         least = max(math.ceil(compose.FLOOR / cap(v)) for _, v in said) if said else 0
         k = 1 - 0.04 * (step % 13)
-        cs = max(round(CAPTION[fmt] * k), least)
+        short = min((cap(v) for _, v in said), default=1)
+        cs = max(round(max(CAPTION[fmt], CAPTION_CAP[fmt] / short) * k), least)
         measure = (f.r - f.l) / math.cos(t) - math.tan(t) * cs * 1.18 * 4 - 8
         x = f.l
         if hook:
@@ -954,8 +1007,12 @@ def lay(board, fmt="reel", bpm=None):
     # each beat under the form the moves know it by: the hook is the title, a moment a photograph, the closer the wall
     forms = {"hook": "title", "moment": "photo", "closer": "closer"}
     subjects = {c["key"]: c["subject"] for c in cards}
+    # a card whose move flies its photograph in names, in beats from the film's start, when the flight starts and when
+    # the photograph lands
+    tm = times(board)
+    flight = lambda b: ({"flies": round(tm[b["id"]]["flies"], 4), "lands": round(tm[b["id"]]["cut"], 4)} if "flies" in tm[b["id"]] else {})
     studio_beats = [{"id": b["id"], "form": forms[b["form"]], "frames": n, "bars": round(b["pulses"] / 4, 4), "move": b.get("move"), "transition": b.get("transition"),
-                     "label": label_of(f, b, subjects.get(b["id"])), "peak": bool(b.get("peak"))}
+                     "label": label_of(f, b, subjects.get(b["id"])), "peak": bool(b.get("peak")), **flight(b)}
                     for b, (a, n) in zip(beats, at)]
     st = {"id": f"tribute-{board['style']}-{fmt}", "name": f"{board['name']} ({fmt})", "handle": board["handle"], "year": board["year"], "bpm": bpm,
           "style": board["style"], "format": {"name": fmt, "width": f.W, "height": f.H, "fps": compose.FPS},
@@ -1030,13 +1087,26 @@ def closer_lines(f, board, fmt):
 
 # ---------------------------------------------------------------- times, sound, story, clips
 
+def landing(b, bpm):
+    """Beats from a card's start to its landing, where its name rises and its hit falls: LIFT (HOOK_LIFT on the hook),
+    or for a move that flies its photograph in (TAKES), the last quarter beat at or before the flight lands."""
+    take = TAKES.get(b.get("move")) if bpm and b["form"] == "moment" else None
+    if take:
+        return math.floor(take * bpm / 60 * GRID + 1e-9) / GRID
+    return HOOK_LIFT if b["form"] == "hook" else LIFT
+
+
 def times(board):
-    """Every beat's start in musical beats, and per card its arrival, its landing and its leave."""
+    """Every beat's start in musical beats, and per card its arrival, its landing and its leave; a card whose move flies
+    its photograph in also names when the flight starts (`flies`), its flight's length before its landing."""
     out, at = {}, 0.0
-    beats = board["beats"]
-    for i, b in enumerate(beats):
+    bpm = board.get("bpm")
+    for b in board["beats"]:
         nxt = at + b["pulses"]
-        out[b["id"]] = {"at": at, "end": nxt, "cut": at + (HOOK_LIFT if b["form"] == "hook" else LIFT), "leave": nxt - LEAVE}
+        cut = at + landing(b, bpm)
+        out[b["id"]] = {"at": at, "end": nxt, "cut": cut, "leave": nxt - LEAVE}
+        if b["form"] == "moment" and bpm and b.get("move") in TAKES:
+            out[b["id"]]["flies"] = cut - TAKES[b["move"]] * bpm / 60
         at = nxt
     return out
 
@@ -1058,6 +1128,41 @@ def sound(board, st):
              {"kind": "stop", "at": round(C + STOP_AT, 3)}]
     return sorted(cues, key=lambda c: c["at"])
 
+
+
+def effects_board(film):
+    """The cut film as the shared sound effects read a board (sfx.py), placed at the board's own cues: the hook a title
+    whose age slams as it lands (an impact), each moment's card a photograph that arrives on its cut (a whoosh, soft into
+    a dissolve or a burn) and lands on its hit (a shutter, or the pop of its mark), the closer arriving as its sheet slams
+    shut over the wall (the riser into it and its impact), and the last figure punching home as a title of its own that
+    slams. Each beat's start and end are in musical beats; the effects land on the music's quarter-beat grid."""
+    tm = times(film)
+    cues = film.get("sound") or []
+    C = tm["closer"]["at"] if "closer" in tm else None
+    slam = next((c["at"] for c in cues if c["kind"] == "impact"), C)
+    punch = [c["at"] for c in cues if c["kind"] == "hit" and slam is not None and c["at"] > slam]
+    stop = next((c["at"] for c in cues if c["kind"] == "stop"), None)
+    beats = []
+    for b in film["beats"]:
+        t = tm[b["id"]]
+        if b["form"] == "hook":
+            layer = {"kind": "Title", "at": {"arrive": t["cut"], "end": t["end"]}, "title": {"text": b.get("name") or ""},
+                     "slam": [t["cut"], 0]}
+            beats.append({"id": b["id"], "form": "hook", "move": b.get("move"), "transition": None, "start": t["at"], "layers": [layer]})
+        elif b["form"] == "moment":
+            layer = {"kind": "Photo", "at": {"arrive": t["cut"], "end": t["end"]}, "label": b.get("name") or "", "text": b.get("words") or ""}
+            beats.append({"id": b["id"], "form": "moment", "move": b.get("move"), "transition": b.get("transition"),
+                          "start": t["at"], "layers": [layer]})
+        else:
+            end = stop if stop is not None else t["end"]
+            beats.append({"id": b["id"], "form": "closer", "move": b.get("move"), "transition": b.get("transition"),
+                          "start": slam, "layers": [{"kind": "Closer", "at": {"arrive": slam, "end": end},
+                                                     "signoff": {"text": (film.get("wish") or {}).get("title") or ""}}]})
+            for k, at in enumerate(punch):
+                beats.append({"id": f"punch-{k + 1}", "form": "punch", "move": None, "transition": None, "start": at,
+                              "layers": [{"kind": "Title", "at": {"arrive": at, "end": end},
+                                          "title": {"text": (film.get("wish") or {}).get("number") or ""}, "slam": [at, 0]}]})
+    return {"id": film.get("id"), "bpm": film["bpm"], "beats": beats}
 
 def story(board):
     """Per beat, one line on what its move reveals and what it carries across its cut."""
@@ -1082,7 +1187,7 @@ def story(board):
         else:
             out[b["id"]] = (f"reveals: the whole wall of the year, then a sheet carrying the wall with {w['number']} cut out of it falls shut over it, its shadow "
                             f"on the photographs through the figures; on the last hit the last figure punches through it; \"{w['title']}\" "
-                            "rises; carries: nothing, the picture and the sound stop together and hold")
+                            "rises; carries: nothing, the picture and the sound stop together and the cover keeps its slow push to the last frame")
     return out
 
 
@@ -1096,7 +1201,8 @@ def clips(board, st):
     beat's length and a seamless loop. Each record is a clip request in the shape motion/system/standards.md gives one:
     its use, subject, move, lens, light, duration and loop, and the prompt that says all of them. A beat with no `shot`
     yet has no subject and no prompt; storyboard.py check names it. A request is never a clip: until a video model makes
-    it, the film shows the photograph still."""
+    it, the film shows the photograph still. A card the person recorded asks nothing of a model: its record is their own
+    clip (`source`, the seconds `from` and `to` of it), one shot the length of its beat from the second it starts on."""
     beats = board["beats"]
     cards = [b for b in beats if b["form"] == "moment"]
     laid = {c["key"]: c for c in st["film"]["cards"]}
@@ -1107,7 +1213,7 @@ def clips(board, st):
     uses = [(USES[0], beats[0]), (USES[1], texture), (USES[2], peak)]
     out, seen = [], set()
     for (use, camera), b in uses:
-        if not b or b["id"] in seen:
+        if not b or b["id"] in seen or b.get("recorded"):
             continue
         seen.add(b["id"])
         p = (board.get("photos") or {}).get(b["post"]) or {}
@@ -1124,9 +1230,18 @@ def clips(board, st):
             rec["prompt"] = (f"{subject}. Camera: {camera}. Lens: {rec['lens']}. Light: {rec['light']}. "
                              f"Frame: {rec['frame'] or 'the whole photograph'}. {secs} s. {LOOP}")
         out.append(rec)
+    for b in cards:
+        if (own := b.get("recorded")):
+            secs = round(b["pulses"] * 60 / board["bpm"], 3)
+            # from its strongest second, or earlier when the clip ends before its beat does, so as much of it plays
+            start = min(own["from"], max(0.0, float(own.get("seconds") or own["from"] + secs) - secs))
+            out.append({"id": f"{len(out) + 1:02d}", "beat": b["id"], "use": OWN, "image": ((board.get("photos") or {}).get(b["post"]) or {}).get("file"),
+                        "source": own["source"], "from": round(start, 3), "to": round(start + secs, 3), "duration": secs, "prompt": None})
     return out
 
 
+# the use a clip the person recorded has: it is theirs, nothing is generated for it
+OWN = "their own clip"
 # the uses a generated clip has, and the camera's move each asks for
 USES = [("the hook's world", "a slow push in toward the subject, the place around them alive and opening past the photograph's edges"),
         ("texture between chapters", "a slow sideways drift close across the subject, holding on its surfaces and the light on them"),

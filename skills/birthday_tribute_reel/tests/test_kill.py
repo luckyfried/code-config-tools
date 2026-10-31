@@ -194,6 +194,22 @@ class Inputs(Base):
         film.mux(self.d / "silent.mp4", self.d / "out.mp4", 10, types.SimpleNamespace(spawn=lambda argv, **kw: spawned.append(argv)))
         self.assertIn(str(self.d / "named.wav"), spawned[0])
 
+    def test_the_film_mixes_the_effects_over_the_master_and_masters_the_mix_the_shared_way(self):
+        fx = self.d / "fx.wav"
+        fx.write_bytes(b"the effects")
+        master = str(self.d / "named.wav")
+        _env.write_json(self.B / "music.json", {"master": master, "effects_wav": str(fx), "impacts": [1.5]})
+        spawned, reads = [], iter(["-16.0", "-14.5"])  # the mix as laid, then raised 2 dB and limited
+
+        def spawn(argv, **kw):
+            spawned.append(argv)
+            return types.SimpleNamespace(stderr=f"  I:  {next(reads)} LUFS") if kw.get("capture_output") else None
+        with mock.patch.object(_env, "_TOOLS", {"ffmpeg": "ffmpeg"}):
+            film.mux(self.d / "silent.mp4", self.d / "out.mp4", 10, types.SimpleNamespace(spawn=spawn))
+        self.assertEqual(len(spawned), 3, "two loudness reads and the encode")
+        self.assertIn(f"volume=2.00dB,{film.sfx.LIMIT}", " ".join(spawned[1]), "the second read is through the limiter")
+        self.assertEqual(spawned[2], film.sfx.mux_cmd("ffmpeg", self.d / "silent.mp4", fx, self.d / "out.mp4", 10, [1.5], master, 2.5))
+
 
 def made_by_ffmpeg(argv, **kw):
     """ffmpeg writing the file it is asked for, from the input's bytes when the input is a file."""
@@ -203,11 +219,11 @@ def made_by_ffmpeg(argv, **kw):
 
 
 def engine(style=None, styles=(), avoid=(), seconds=60.0, edges=(), hue=None, seed="", bpm=None, target_bpm=None, out=Path("music"),
-           calls=None):
+           peak=None, calls=None):
     """The music engine's compose, standing in: it writes out/bed.wav and returns what music.json carries, and notes
     what it was asked for in `calls`."""
     if calls is not None:
-        calls.append({"style": style, "styles": list(styles), "avoid": list(avoid), "seconds": seconds, "bpm": bpm})
+        calls.append({"style": style, "styles": list(styles), "avoid": list(avoid), "seconds": seconds, "bpm": bpm, "peak": peak})
     out.mkdir(parents=True, exist_ok=True)
     (out / "bed.wav").write_bytes(b"bed")
     return {"key": "D major", "bpm": bpm or 100.0, "chords": ["D", "G"], "removed": [], "beats": [], "downbeats": []}
@@ -229,6 +245,25 @@ class Brief(Base):
             args = argparse.Namespace(board=None, bpm=None, seconds=None, origin=None)
             self.assertEqual((music.cmd_find if cmd == "find" else music.cmd_make)(args), 0)
         return calls[0], _env.read_json(self.B / "music.json")
+
+    def test_make_lifts_the_bed_into_the_story_peak(self):
+        import music
+        with mock.patch.object(music, "peak", lambda b, bpm: (12.5, 15.0)):
+            asked, _ = self.make("scrapbook")
+        self.assertEqual(asked["peak"], (12.5, 15.0))
+
+    def test_the_peak_is_where_the_peak_card_lands_to_where_its_beat_ends(self):
+        import compose
+        import music
+        st = {"format": {"fps": 30}, "beats": [{"frames": 60, "peak": False}, {"frames": 90, "peak": True, "lands": 3.0},
+                                               {"frames": 30, "peak": False}]}
+        with mock.patch.object(compose, "lay", lambda b, fmt="reel", bpm=None: st):
+            self.assertEqual(music.peak({"style": "scrapbook", "beats": [{}]}, 120), (1.5, 5.0))
+            st["beats"][1].pop("lands")
+            self.assertEqual(music.peak({"style": "scrapbook", "beats": [{}]}, 120), (2.0, 5.0))
+            st["beats"][1]["peak"] = False
+            self.assertIsNone(music.peak({"style": "scrapbook", "beats": [{}]}, 120))
+        self.assertIsNone(music.peak(None, 120))
 
     def test_each_look_plays_its_own_recipe_in_its_own_tempo_range(self):
         import compose
@@ -259,13 +294,14 @@ class Brief(Base):
 
 
 class AudioRow(Base):
-    def audio_row(self, fx_lufs):
-        """The gate's audio row over a film at -14 LUFS whose master measured the bed at -21.4 LUFS and the effects at
-        `fx_lufs`."""
+    def audio_row(self, fx_lufs, quiet=None, stop=False):
+        """The gate's audio row over a film at -14 LUFS whose master measured the music at -21.4 LUFS and the effects at
+        `fx_lufs`; with `stop`, the board stops its music at 36 s and the film falls quiet for good at `quiet` s."""
         import qa
+        sound = [{"kind": "hit", "at": 0.3}, {"kind": "hit", "at": 4.0}] + ([{"kind": "stop", "at": 72}] if stop else [])
         _env.write_json(self.B / "film.json", {"hash": "h", "bpm": 120, "cuts": [], "hook_frame": 0, "rest": [],
                                                "beats": [{"id": "hook"}, {"id": "card-1"}, {"id": "closer"}],
-                                               "sound": [{"kind": "hit", "at": 0.3}, {"kind": "hit", "at": 4.0}]})
+                                               "sound": sound})
         _env.write_json(self.B / "music.json", {"file": "source.wav", "bed_lufs": -21.4, "fx_lufs": fx_lufs, "sound_cues": 2})
         Path("out").mkdir()
         for film, _ in qa.FILMS.values():
@@ -273,15 +309,26 @@ class AudioRow(Base):
         probed = {"streams": [{"codec_type": "audio", "codec_name": "aac", "bit_rate": "192000"}], "format": {"duration": "40"}}
         with mock.patch.object(qa, "probe", lambda film, run=None: probed), mock.patch.object(qa, "loudness", lambda film, run=None: -14.0), \
                 mock.patch.object(qa, "detect", lambda *a: []), mock.patch.object(qa.studio, "measure", lambda *a, **kw: {}), \
-                mock.patch.object(qa, "figures", lambda *a: None):
+                mock.patch.object(qa, "figures", lambda *a: None), \
+                mock.patch.object(qa.sfx, "quiet_from", lambda ffmpeg, film, level=qa.sfx.QUIET: quiet):
             res = qa.film_checks()[0]
         return next(r for r in res if r[0] == "audio")
+
+    def test_the_music_gone_after_the_stop_turns_the_audio_row_green(self):
+        _, ok, detail = self.audio_row(-29.4, quiet=36.4, stop=True)
+        self.assertTrue(ok, detail)
+        self.assertIn("the music stops at 36.00 s; quiet under -30 dB from 36.40 s to the end", detail)
+
+    def test_music_playing_to_the_last_frame_past_the_stop_turns_the_audio_row_red(self):
+        _, ok, detail = self.audio_row(-29.4, quiet=None, stop=True)
+        self.assertFalse(ok, detail)
+        self.assertIn("never quiet under -30 dB before the end", detail)
 
     def test_an_effects_stem_peak_normalized_over_a_quiet_bed_turns_the_audio_row_red(self):
         _, ok, detail = self.audio_row(-16.3)
         self.assertFalse(ok)
         self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS", detail)
-        self.assertIn("2 sound cues over 3 beats", detail)
+        self.assertIn("2 sound effects over 3 beats", detail)
 
     def test_effects_eight_lu_under_the_bed_turn_the_audio_row_green(self):
         _, ok, detail = self.audio_row(-29.4)

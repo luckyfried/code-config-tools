@@ -30,6 +30,8 @@ marked delivered (B/delivered.json) with its deliverables kept in B/out/, so a l
 (except `vote.py pick`, which makes another look in the same run), and the last line deliver prints is that run's
 reel, B/out/film.mp4, as a path from the workspace root (for example build/20261020T151200Z/out/film.mp4): the path
 the reply names. The line before it names the other two looks in the page's order, so "the second one" is known.
+deliver delivers the full-size films only: it refuses a run whose newest render is the half-size proof (out/proof.mp4)
+and names the full-size render, qa.py check and vote.py cut to run first.
 """
 import html
 import os
@@ -40,6 +42,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import shared as shared_py  # noqa: E402
 import studio  # noqa: E402
@@ -139,7 +142,9 @@ def brief(lib, taste, shared, win, music, film, cuts):
     if cl:
         L += ["", "## the clips", ""]
         for k, c in cl.items():
-            if c.get("status") == "generated":
+            if c.get("status") == "recorded":
+                L.append(f"- {k} ({c['beat']}): their own clip, {Path(c['source']).name}, {c['frames']} frames, its sound left out.")
+            elif c.get("status") == "generated":
                 L.append(f"- {k} ({c['beat']}, {c['use']}): made by a video model from {c['image']}, {c['frames']} frames.")
             else:
                 L.append(f"- {k} ({c['beat']}, {c['use']}): requested and not made ({c.get('why')}); the film shows the "
@@ -148,13 +153,14 @@ def brief(lib, taste, shared, win, music, film, cuts):
     if music.get("file"):
         L.append(f"- {music.get('origin')}.")
         L.append(f"- {music.get('bpm')} bpm, the film timed at {film.get('bpm') or music.get('bpm')} bpm so the opening hit, the close's fall and its punch land on its beats; "
-                 f"mastered to {music.get('master_lufs', -14)} LUFS.")
+                 "the music and the sound effects mastered together to -14 LUFS.")
     else:
         L.append("- No music was found, so the film is silent. Add a sound when you post.")
     L += ["", "## how the film was made", ""]
     shapes = ["1080x1920 for Reels"] + [w for f, w in (("film-square.mp4", "1080x1080 for the feed"), ("film-wide.mp4", "1920x1080 for a wide screen"))
                                          if (OUT / f).exists()]
-    L.append("- Every picture in it is one of your own photographs" + (" or a clip a video model made from one" if made_clips() else "")
+    L.append("- Every picture in it is one of your own photographs" + (" or clips" if own_clips() else "")
+             + (" or a clip a video model made from one" if made_clips() else "")
              + ", set in motion by the kit's motion studio from one storyboard, laid out "
              + ("for each shape: " + ", ".join(shapes) if len(shapes) > 1 else "at " + shapes[0]) + ".")
     if any((OUT / "stills").glob("*.png")):
@@ -182,8 +188,12 @@ def brief(lib, taste, shared, win, music, film, cuts):
     return "\n".join(L) + "\n"
 
 
-def made_clips():
-    return sum(1 for c in ((_env.read_json(f"{_env.B}/clips.json") or {}).get("clips") or {}).values() if c.get("status") == "generated")
+def made_clips(status="generated"):
+    return sum(1 for c in ((_env.read_json(f"{_env.B}/clips.json") or {}).get("clips") or {}).values() if c.get("status") == status)
+
+
+def own_clips():
+    return made_clips("recorded")
 
 
 def looks_order(win, all_looks=False):
@@ -211,6 +221,8 @@ def how_made(win, music, film, shared):
     n = made_clips()
     if n:
         L.append(f"{n} of its moments move because a video model brought the photograph to life.")
+    if (n := own_clips()):
+        L.append(f"{n} of its moments play {'a clip' if n == 1 else 'clips'} you recorded, as you shot {'it' if n == 1 else 'them'}, the sound left out.")
     L.append("Three looks were drafted from the same photographs; " + ("you picked this one." if win.get("picked_by") not in (None, "the vote", "taste")
                                                                        else "this one was picked as the strongest of the three."))
     return " ".join(L)
@@ -258,6 +270,10 @@ def main():
         return 0
     _env.run_dir()
     with studio.lock("deliver") as run:
+        if proof.scale(OUT / "film.mp4") != 1:
+            sys.exit(proof.refusal(OUT / "film.mp4", "film.py render (with the same --also) for the full-size films, then "
+                                   "qa.py check and vote.py cut, where the critics read the type at full size, then "
+                                   "deliver.py again"))
         return _deliver(run)
 
 

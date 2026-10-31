@@ -5,6 +5,7 @@ import {staticFile} from 'remotion';
 import type {Board, Finish, PhotoLayout} from '../../system/types';
 import type {Pt} from '../../system/three/motion';
 import type {Look} from '../../system/moves/types';
+import {cutOf} from '../../system/moves';
 
 export type Box = [number, number, number, number];
 
@@ -60,6 +61,12 @@ export type Card = {
   /** the card's cell on the closer's wall (top left, top right, bottom right, bottom left) */
   slot: Pt[];
   arrive: number;
+  /** the style's cut jumps onto the card at its arrival, so its print is seen from that cut on, settling the rest of its
+   * way in, and never crosses the frame while the camera still holds the card before it */
+  jumped: boolean;
+  /** a move flies the card's photograph in and lands it flat at `cut`: the camera holds still until then, and the
+   * print's picture takes its depth only once the move has handed the frame over */
+  flown: boolean;
   leave: number;
   /** when the card lands on its lift and its name rises out of its line */
   cut: number;
@@ -81,7 +88,9 @@ export type Card = {
 
 /** One beat of the board as the moves see it: its form, when it starts and ends, the move and the cut into it the board
  * chose from its content, and its label. */
-export type Step = {id: string; form: string; at: number; end: number; move?: string; transition?: string | null; words: string; label: string; peak: boolean};
+export type Step = {id: string; form: string; at: number; end: number; move?: string; transition?: string | null; words: string; label: string; peak: boolean;
+  /** when a move that flies the beat's photograph in starts, ahead of the photograph's landing */
+  flies?: number};
 
 export type Plan = {
   W: number;
@@ -105,12 +114,14 @@ export type Plan = {
    * the core of each band under the wish's lines (wall px), and `still`: where the picture and the sound stop together */
   closer: {at: number; big: Line; last: Line; lines: Line[]; bands: number[][]; still: number};
   end: number;
+  /** the profile's safe area, px in from each edge (absent: the board names no profile) */
+  safe?: {top: number; bottom: number; left: number; right: number};
 };
 
 /** Beats from a card's arrival to its landing on its lift, where its name rises and its hit falls, as wall.py LIFT and
- * HOOK_LIFT. */
+ * HOOK_LIFT; a card whose move flies its photograph in lands where its beat says (`lands`). */
 const LIFT = 0.25;
-const HOOK_LIFT = 0.3;
+const HOOK_LIFT = 0.25;
 
 export const planOf = (board: Board): Plan => {
   const {width: W, height: H, fps} = board.format;
@@ -128,17 +139,19 @@ export const planOf = (board: Board): Plan => {
     return i + 1 < order.length ? starts[order[i + 1]] : end;
   };
   const film = board.film;
+  const beatOf = (id: string) => board.beats.find((b) => b.id === id);
   const cards: Card[] = film.cards.map((c: any) => {
     const arrive = starts[c.key];
+    const lands = beatOf(c.key)?.lands;
     return {
       key: c.key, post: c.post, hook: c.hook, file: c.file, line: c.line, field: c.field ?? 'paper', place: c.place, subject: c.subject ?? [W * 0.3, H * 0.3, W * 0.7, H * 0.7], T: c.T, slot: c.slot,
-      arrive, leave: nextStart(c.key), cut: arrive + (c.hook ? HOOK_LIFT : LIFT), head: c.head, lines: c.lines, type: c.type ?? 'paper', shade: c.shade ?? 0.4, typeX: c.type_x ?? [0, W], side: c.side ?? 'over',
+      arrive, jumped: !c.hook && Boolean(cutOf(beatOf(c.key)?.transition)?.jump), flown: !c.hook && lands !== undefined, leave: nextStart(c.key), cut: lands ?? arrive + (c.hook ? HOOK_LIFT : LIFT), head: c.head, lines: c.lines, type: c.type ?? 'paper', shade: c.shade ?? 0.4, typeX: c.type_x ?? [0, W], side: c.side ?? 'over',
       entry: c.entry ?? (c.hook ? 'fall' : 'rise'),
     };
   });
   const C = starts.closer ?? end;
   const steps: Step[] = board.beats.map((b) => ({id: b.id, form: b.form ?? 'photo', at: starts[b.id], end: nextStart(b.id), move: b.move,
-    transition: b.transition, words: '', label: b.label ?? '', peak: Boolean(b.peak)}));
+    transition: b.transition, words: '', label: b.label ?? '', peak: Boolean(b.peak), ...(b.flies !== undefined ? {flies: b.flies} : {})}));
   const lines = film.closer.lines as Line[];
   const named = (n: string) => lines.find((l) => l.name === n)?.text ?? '';
   return {
@@ -149,6 +162,7 @@ export const planOf = (board: Board): Plan => {
     wish: {title: named('title'), from: lines.filter((l) => l.name?.startsWith('wish-')).map((l) => l.text).pop() ?? ''},
     closer: {at: C, big: film.closer.big, last: film.closer.last, lines: film.closer.lines, bands: film.closer.bands, still: board.sound?.find((s) => s.kind === 'stop')?.at ?? end},
     end,
+    safe: board.format.name ? board.system.safe[board.format.name] : undefined,
   };
 };
 
@@ -162,8 +176,8 @@ const toneOf = (plan: Plan, v: string) => {
   return hex;
 };
 
-/** The film around every move, cut, and closer: the frame, the card's colors, tones, grid and faces, the print the
- * card dresses a photograph as, the occasion's photograph, and the board's own words: the giant figure (the age, the
+/** The film around every move, cut, and closer: the frame and its profile's safe area, the card's colors, tones, grid and faces, the print the
+ * card dresses a photograph as, the occasion's photograph and every photograph of the year, and the board's own words: the giant figure (the age, the
  * years, or the name) is the closer's title where its shape sets one, the wish is the closing line, and its sender the
  * line under it. */
 export const lookOf = (plan: Plan): Look => {
@@ -172,7 +186,7 @@ export const lookOf = (plan: Plan): Look => {
   const m = g.margin * plan.W;
   const hook = plan.cards.find((c) => c.hook) ?? plan.cards[0];
   return {
-    W: plan.W, H: plan.H, fps: plan.fps, pulse: plan.pulse, colors: plan.colors,
+    W: plan.W, H: plan.H, fps: plan.fps, pulse: plan.pulse, colors: plan.colors, safe: plan.safe,
     display: plan.faces.display, text: plan.faces.text, italic: plan.faces.italic,
     title: plan.closer.big?.text ?? '', handle: plan.wish.from, signoff: plan.wish.title,
     tone: {
@@ -187,6 +201,7 @@ export const lookOf = (plan: Plan): Look => {
     },
     finished: plan.finish.words !== 'clean',
     photo: hook ? staticFile(hook.file) : undefined,
+    photos: [...new Set(plan.cards.map((c) => c.file))].map((f) => staticFile(f)),
     print: {
       box: [Math.max(0, pic.box[0]) * plan.W, Math.max(0, pic.box[1]) * plan.H,
         (Math.min(1, pic.box[0] + pic.box[2]) - Math.max(0, pic.box[0])) * plan.W, (Math.min(1, pic.box[1] + pic.box[3]) - Math.max(0, pic.box[1])) * plan.H],

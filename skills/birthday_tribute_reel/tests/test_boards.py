@@ -1,7 +1,7 @@
 """The board builder on an invented year: each look's board in every format lays out inside the rules of the frame, its
 cards are the year's moments in the two people's own words, each holding as long as its photograph asks, the film runs
 the length the person asked for at any tempo, the photographs that show the one it is for lead and close it, and thin
-years still make the film.
+years still make the film; and every card's beat hands its move the middle of the photograph's subject.
 
 USAGE (from anywhere; needs Pillow and ffmpeg, the same as the pipeline):
     python3 -m unittest discover -s S/tests -p 'test_boards.py'
@@ -10,6 +10,7 @@ The year is evals/fixtures/make_person.py with drawn photographs, run through ga
 temporary workspace. The thin years are that year with the named one's comments cut to three, with their own posts
 removed, with no comment of theirs at all, and an agent's curation of four and of nine moments.
 """
+import argparse
 import copy
 import importlib.util
 import json
@@ -414,6 +415,32 @@ class Boards(unittest.TestCase):
         self.assertEqual(sum(c["kind"] == "hit" for c in cues), len(board["beats"]))
         self.assertEqual([c["kind"] for c in cues][-3:], ["impact", "hit", "stop"])
 
+    def test_the_shared_effects_land_on_the_boards_cues_on_the_musics_grid(self):
+        import sfx
+        import wall
+        ctx = compose.Ctx(B)
+        board = boxed(compose.finish(ctx, compose.plan(ctx, STYLE), "5"))
+        film = {**compose.fit(board, 112), "sound": compose.lay(board, "reel", 112)["sound"]}
+        tm = wall.times(film)
+        cards = [b for b in film["beats"] if b["form"] == "moment"]
+        for b in cards:
+            self.assertEqual(tm[b["id"]]["at"] * wall.GRID % 1, 0, f"{b['id']} starts on a quarter beat")
+        ev, _ = sfx.events(wall.effects_board(film), 112)
+        q = 60 / 112 / wall.GRID
+        for t, kind in ev:
+            self.assertAlmostEqual(t / q, round(t / q), places=4, msg=f"{kind} at {t} s is on the music's grid")
+        kinds = [k for _, k in ev]
+        cues = {c["kind"]: c["at"] * 60 / 112 for c in film["sound"] if c["kind"] in ("riser", "impact", "stop")}
+        self.assertEqual(ev[0], (round(round(tm["hook"]["cut"] * 60 / 112 / q) * q, 6), "impact"), "the age slams as the hook lands")
+        self.assertEqual(sum(k in ("air", "sweep", "bright") for k in kinds), sum(1 for b in cards if b.get("transition")))
+        self.assertEqual(kinds.count("bright"), 1, "the bright sweep once a film")
+        self.assertEqual(sum(k in ("shutter", "pop") for k in kinds), len(cards), "each photograph lands on a shutter or its mark's pop")
+        self.assertEqual(kinds.count("riser"), 1)
+        slam = next(t for t, k in ev if k == "riser")
+        self.assertAlmostEqual(slam, cues["impact"], delta=q / 2, msg="the riser runs into the sheet's slam")
+        self.assertEqual(kinds[-3:], ["impact", "riser", "impact"], "the slam, then the last figure punched home")
+        self.assertLess(ev[-1][0], cues["stop"], "nothing sounds from the stop on")
+
     def test_master_writes_the_films_length_at_the_musics_tempo_into_the_storyboard(self):
         import argparse
         import _env
@@ -435,6 +462,17 @@ class Boards(unittest.TestCase):
         line = next(x for x in md.read_text().splitlines() if x.startswith("- length: "))
         self.assertTrue(line.startswith(f"- length: {secs:.1f} s ({board['length_from']}) at 112 bpm, "), line)
         self.assertLessEqual(abs(secs - board["length"]), 1)
+        # the shared effects beside the master, under the music by FX_UNDER_BED_LU, silent from the stop, and the
+        # music's energy a frame
+        m = _env.read_json(d / "music.json")
+        self.assertGreaterEqual(m["master_lufs"] - m["fx_lufs"], music.FX_UNDER_BED_LU - 0.2)
+        self.assertEqual(m["sound_cues"], len(m["effects"]))
+        energy = _env.read_json(d / "music" / "energy.json")
+        self.assertEqual((energy["fps"], len(energy["rms"])), (compose.FPS, int(secs * compose.FPS)))
+        stop = next(c["at"] for c in _env.read_json(d / "film.json")["sound"] if c["kind"] == "stop") * 60 / 112
+        tail = subprocess.run([_env.ffmpeg(), "-v", "info", "-ss", f"{stop + music.STOP_FADE + 0.01:.3f}", "-i", m["effects_wav"],
+                               "-af", "volumedetect", "-f", "null", "-"], capture_output=True, text=True).stderr
+        self.assertIn("max_volume: -91", tail, "the effects are silent from the stop on")
 
     def reel(self):
         ctx = compose.Ctx(B)
@@ -760,10 +798,72 @@ class Look(unittest.TestCase):
         cards = [b for b in board["beats"] if b["form"] == "moment"]
         self.assertEqual([b["run"] for b in cards], [False, False, True, True, True, False, False, False])
         for b in cards[2:5]:
-            self.assertAlmostEqual(b["pulses"] * 60 / board["bpm"], kit.FAST, places=2)
+            self.assertAlmostEqual(b["pulses"] * 60 / board["bpm"], kit.FAST, delta=60 / board["bpm"] / kit.GRID + 1e-9)
             self.assertEqual((b["words"], b["talk"]), ("", []), b["id"])
             self.assertTrue(b["name"], b["id"])
         self.assertGreater(cards[5]["pulses"], max(b["pulses"] for b in cards if b is not cards[5]))
+
+    def test_a_calm_look_flies_one_photograph_in_once_on_the_peak(self):
+        ms = [dict(m) for m in drafted()[:16:2]]
+        ms[5]["peak"] = True
+        ctx = curated("look-run", ms)
+        for style, move in (("scrapbook", "exploded-layers"), ("analog-home-movie", "tilted-wall"), ("editorial-quiet", "exploded-layers")):
+            with self.subTest(style):
+                self.assertIn({"id": move, "once": True}, [{k: o.get(k) for k in ("id", "once")} for o in compose.card(style)["moves"]],
+                              "the card marks the move it flies once")
+                board = compose.plan(ctx, style)
+                used = [(b["id"], b["move"]) for b in board["beats"] if b.get("move") in wall.SPECTACLE]
+                peak = next(b for b in board["beats"] if b.get("peak"))
+                self.assertEqual(used, [(peak["id"], move)])
+                self.assertEqual(peak["transition"], "hard-cut", "the picture cuts straight into the flight")
+
+    def test_a_type_led_look_takes_its_cards_trailer_moves_wherever_they_win_and_never_on_a_run(self):
+        # a run of three cards the trailer moves would win (each tagged peak), then a photograph they do win:
+        # swiss-grid's exploded-layers (fits photo and peak) on a wordless landscape peak, kinetic-type's picture-tunnel
+        # on a peak with a line, the move the card marks `once`, which wins the peak over slam-words (fits words and peak)
+        def beats(peak):
+            out = [{"id": "hook", "form": "hook", "post": "p0"}]
+            out += [{"id": f"run-{i}", "form": "moment", "post": f"p{i}", "run": True, "peak": True} for i in (1, 2, 3)]
+            out += [{"id": "card", "form": "moment", "post": "p4", "peak": True, **peak}, {"id": "closer", "form": "closer"}]
+            return out
+        photos = {f"p{i}": {"aspect": 0.75} for i in range(5)}
+        moments = {f"p{i}": {"people": ["me"], "place": None} for i in range(5)}
+        for style, peak, move in (("swiss-grid", {}, "exploded-layers"), ("kinetic-type", {"words": "the ridge at six"}, "picture-tunnel")):
+            with self.subTest(style):
+                card = compose.card(style)
+                self.assertIn(move, compose.ids(card, "moves"), "the move is the style card's")
+                # a type-led card's moves are its grammar, and the move it marks `once` still plays on the peak alone
+                self.assertIn(card["id"], wall.GRAMMAR)
+                bs = beats(peak)
+                wall.choose(card, bs, photos, moments, "me")
+                self.assertEqual(bs[4]["move"], move)
+                for b in bs[1:4]:
+                    self.assertNotIn(b["move"], wall.TAKES, "a run card never takes a frame-taking move")
+
+    def test_a_flight_lands_on_the_grid_and_its_card_holds_its_words_after_it(self):
+        ms = [dict(m) for m in drafted()[:16:2]]
+        ms[5]["peak"] = True
+        ctx = curated("look-run", ms)
+        for style in ("scrapbook", "analog-home-movie", "editorial-quiet"):
+            with self.subTest(style):
+                board = boxed(compose.finish(ctx, compose.plan(ctx, style), f"flight-{style}"))
+                st = compose.lay(board, "reel")
+                bpm = st["bpm"]
+                film = compose.fit(board, bpm)
+                tm = wall.times(film)
+                peak = next(b for b in film["beats"] if b.get("peak"))
+                take = wall.TAKES[peak["move"]] * bpm / 60
+                t = tm[peak["id"]]
+                self.assertEqual(t["cut"] * wall.GRID % 1, 0, "the photograph lands on a quarter beat")
+                self.assertLessEqual(t["cut"] - t["at"], take)
+                self.assertGreater(t["cut"] - t["at"], take - 1 / wall.GRID)
+                self.assertAlmostEqual(t["flies"], t["cut"] - take, places=6)
+                self.assertGreaterEqual((t["end"] - t["cut"]) * 60 / bpm, wall.LEAST, "its words read after the landing")
+                self.assertIn({"kind": "hit", "at": round(t["cut"], 3)}, [{k: c[k] for k in ("kind", "at")} for c in st["sound"]],
+                              "its hit falls as it lands")
+                beat = next(b for b in st["beats"] if b["id"] == peak["id"])
+                self.assertEqual((beat["flies"], beat["lands"]), (round(t["flies"], 4), round(t["cut"], 4)))
+                self.assertEqual([b["id"] for b in st["beats"] if "flies" in b], [peak["id"]])
 
     def test_every_look_sets_its_type_in_its_own_card_faces(self):
         ctx = compose.Ctx(B)
@@ -870,3 +970,144 @@ class Look(unittest.TestCase):
                 self.assertIn(f"{r['duration']} s", r["prompt"])
                 self.assertIn("seamless loop", r["prompt"])
         self.assertFalse([i for i in storyboard.board_issues(board, ctx, allowed) if 'write in this beat "shot"' in i])
+
+
+CLIP = S / "tests" / "fixtures" / "clip-tram.mp4"
+
+
+def with_clip(name, still, post):
+    """A copy of the run folder `still` whose post `post` the person filled with the fixture's recorded clip, read the
+    way picks.py reads a clip; returns its Ctx."""
+    import picks
+    d = WS / "build" / name
+    if not d.exists():
+        shutil.copytree(still, d, symlinks=True)
+        p = json.loads((d / "picks.json").read_text())
+        row = next(r for r in p["items"] if r["id"] == post)
+        p["items"] = [r for r in p["items"] if r["id"] != post]
+        p["videos"] = [r for r in p.get("videos") or [] if r["id"] != post] + [{**row, "video": str(CLIP), "shot": picks.strongest(CLIP),
+                                                                                "seconds": picks.duration(CLIP)}]
+        (d / "picks.json").write_text(json.dumps(p))
+        # the photograph its card shows, graded as storyboard.py grades it before the clips are cut
+        (d / "public" / "graded").mkdir(parents=True, exist_ok=True)
+        shutil.copy(row["photo"], d / "public" / "graded" / Path(row["photo"]).name)
+    return compose.Ctx(d)
+
+
+class Recorded(unittest.TestCase):
+    """A clip the person recorded plays on its moment's card as one shot the length of its beat, from the second its
+    shot starts on, its sound left out; nothing is asked of a video model for it."""
+
+    @classmethod
+    def setUpClass(cls):
+        videos = {r["id"] for r in json.loads((B / "picks.json").read_text()).get("videos") or []}
+        ms = [dict(m) for m in drafted() if m["post"] not in videos][:16:2]
+        ms[5]["peak"] = True
+        cls.still = curated("rec-still", ms)
+        # a card of the year that holds its words, neither the peak nor one of the run before it, on every look
+        on = lambda style: {b["post"] for b in compose.finish(cls.still, compose.plan(cls.still, style), f"rec-on-{style}")["beats"]
+                            if b["form"] == "moment" and not b.get("run") and not b.get("peak")}
+        cls.post = next(m["post"] for m in ms if all(m["post"] in on(s) for s in ("scrapbook", "analog-home-movie", "editorial-quiet")))
+        cls.clip = with_clip("rec-clip", WS / "build" / "rec-still", cls.post)
+
+    def boards(self, style):
+        out = []
+        for ctx, name in ((self.still, "still"), (self.clip, "clip")):
+            board = boxed(compose.finish(ctx, compose.plan(ctx, style), f"rec-{name}-{style}"))
+            out.append((board, compose.lay(board, "reel")))
+        return out
+
+    def test_a_clip_request_is_one_shot_the_length_of_its_beat(self):
+        import clips
+        import picks
+        import _env
+        start = picks.strongest(CLIP)
+        self.assertLessEqual(start, 1.0, "a 4 s clip starts where a beat's length of it is still to come")
+        for style in ("scrapbook", "analog-home-movie", "editorial-quiet"):
+            with self.subTest(style):
+                (_, _), (board, st) = self.boards(style)
+                beat = next(b for b in board["beats"] if b.get("post") == self.post)
+                own = [c for c in st["clips"] if c.get("source")]
+                self.assertEqual(len(own), 1)
+                c = own[0]
+                secs = clips.windows(st)[beat["id"]][1] / clips.FPS
+                self.assertEqual((c["beat"], c["use"], c["source"], c["prompt"]), (beat["id"], wall.OWN, str(CLIP), None))
+                self.assertEqual(c["image"], board["photos"][self.post]["file"], "it plays where its photograph would")
+                self.assertEqual(c["from"], round(min(start, max(0.0, picks.duration(CLIP) - c["duration"])), 3),
+                                 "from its strongest second, or as much earlier as its beat needs of it")
+                self.assertAlmostEqual(c["to"] - c["from"], secs, delta=1.5 / clips.FPS)
+                self.assertAlmostEqual(c["duration"], secs, delta=1.5 / clips.FPS)
+                self.assertNotIn(beat["id"], [r["beat"] for r in st["clips"] if not r.get("source")], "no model is asked for it")
+        run = WS / "build" / "rec-clip"
+        was_run, was_board = _env._RUN, clips.board
+        _env._RUN, clips.board = run, lambda: st
+        try:
+            self.assertEqual(clips.cmd_normalize(argparse.Namespace(why="no video model")), 0)
+            placed = clips.placed()
+        finally:
+            _env._RUN, clips.board = was_run, was_board
+        at, n = clips.windows(st)[beat["id"]]
+        got = next(r for r in json.loads((run / "clips.json").read_text())["clips"].values() if r["status"] == "recorded")
+        self.assertEqual((got["beat"], got["from_frame"], got["frames"]), (beat["id"], at, n), "one shot, its beat's first frame to its last")
+        self.assertEqual(len(list((run / "public" / got["dir"]).glob("*.jpg"))), n)
+        self.assertEqual([p.get("own") for p in placed if p["dir"] == got["dir"]], [True])
+
+    def test_a_beat_without_a_clip_is_unchanged(self):
+        for style in ("scrapbook", "analog-home-movie", "editorial-quiet"):
+            with self.subTest(style):
+                (b0, s0), (b1, s1) = self.boards(style)
+                rec = next(b["id"] for b in b1["beats"] if b.get("recorded"))
+                self.assertEqual([b for b in b0["beats"] if b["id"] != rec], [b for b in b1["beats"] if b["id"] != rec])
+                self.assertEqual({k: v for k, v in next(b for b in b1["beats"] if b["id"] == rec).items() if k != "recorded"},
+                                 next(b for b in b0["beats"] if b["id"] == rec))
+                bare = lambda s: [{k: v for k, v in c.items() if k != "id"} for c in s["clips"] if c["beat"] != rec]
+                self.assertEqual(bare(s0), bare(s1))
+                self.assertEqual([b for b in s0["beats"] if b["id"] != rec], [b for b in s1["beats"] if b["id"] != rec])
+
+
+FOCUS = """
+const [bundle, path] = process.argv.slice(1);
+const {readFileSync} = await import('fs');
+const {planOf, timelineOf, photoBoxOf} = await import(bundle);
+const plan = planOf(JSON.parse(readFileSync(path, 'utf8')));
+const tl = timelineOf(plan);
+console.log(JSON.stringify(plan.cards.map((c) => {
+  const b = tl.beats.find((x) => x.id === c.key);
+  const flown = b.place !== undefined;
+  const on = flown ? [c.place[0], c.place[1], c.place[0] + c.place[2], c.place[1] + c.place[3]] : photoBoxOf(plan, c);
+  return {key: c.key, move: b.move, focus: b.focus ?? null, subject: c.subject, on};
+})));
+"""
+
+NODE = shutil.which("node")
+ESBUILD = S / "motion" / "node_modules" / ".bin" / "esbuild"
+
+
+@unittest.skipUnless(NODE and ESBUILD.exists(), "an authoring check of the motion source: needs node and motion/node_modules")
+class DoodleFocus(unittest.TestCase):
+    """A card's beat hands its move the middle of the photograph's subject, so a doodle rings the people the photograph
+    is of, never the middle of the print."""
+
+    def test_every_card_beat_carries_the_subjects_middle_on_the_photograph_the_move_finds(self):
+        ctx = compose.Ctx(B)
+        s = compose.lay(boxed(compose.finish(ctx, compose.plan(ctx, STYLE), "1")), "reel")
+        with tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as d:
+            entry, bundle, path = Path(d) / "entry.ts", Path(d) / "camera.mjs", Path(d) / "board.json"
+            path.write_text(json.dumps(s))
+            entry.write_text(f"export {{planOf}} from '{S}/motion/studio/drive/plan';\n"
+                             f"export {{timelineOf}} from '{S}/motion/studio/drive/camera';\n"
+                             f"export {{photoBoxOf}} from '{S}/motion/studio/drive/card';\n")
+            subprocess.run([str(ESBUILD), str(entry), "--bundle", "--format=esm", "--platform=node", "--log-level=error",
+                            f"--outfile={bundle}"], check=True, cwd=S / "motion")
+            rows = json.loads(subprocess.run([NODE, "--input-type=module", "-e", FOCUS, str(bundle), str(path)], check=True,
+                                             capture_output=True, text=True).stdout)
+        self.assertTrue(rows)
+        self.assertIn("doodle-draw-on", {r["move"] for r in rows})
+        for r in rows:
+            with self.subTest(card=r["key"]):
+                self.assertIsNotNone(r["focus"])
+                (x0, y0, x1, y1), (a, b, c, e) = r["subject"], r["on"]
+                want = [((x0 + x1) / 2 - a) / (c - a), ((y0 + y1) / 2 - b) / (e - b)]
+                for got, w in zip(r["focus"], want):
+                    self.assertAlmostEqual(got, w, places=6)
+                    self.assertTrue(-0.01 <= got <= 1.01, r)

@@ -8,6 +8,7 @@
 // settles back. At the last card it pulls back onto the whole wall and lands on it as the cover slams; from there only
 // the cover's slam and the last figure's punch move it, and from the stop it is still. Over all of it the beat's move
 // from the style card turns the framing, and the move and the cut add to the travel pass.
+import {staticFile} from 'remotion';
 import * as THREE from 'three';
 import type {Pose} from '../../system/three/Stage';
 import {bezier, clamp01, lerp, mixPt, smooth, span, type Pt} from '../../system/three/motion';
@@ -16,7 +17,7 @@ import {cutOf} from '../../system/moves';
 import {fxAt, nudgeAt, type Timeline} from '../../system/moves/layer';
 import type {Nudge} from '../../system/moves/types';
 import {lookOf, type Card, type Plan} from './plan';
-import {cardScale, liftOf, photoBoxOf} from './card';
+import {cardScale, HANDED, liftOf, photoBoxOf} from './card';
 import {onWall} from './plan';
 import {COVER_Z} from './words';
 
@@ -51,7 +52,8 @@ const TOWARD = 0.25;
 
 /** The framing of card `i`'s hold at progress `e` (eased): wide at its start and close at its end, turning toward the
  * side the photograph's subject stands on and drifting toward it as far as the frame stays in the picture; the hook
- * fills the frame. */
+ * fills the frame. A card whose photograph a move flies in starts its hold square on to the print, so the flat print
+ * the move lands is the print the camera sees, and turns only toward the subject's side. */
 const holdOf = (plan: Plan, i: number, e: number): Framing => {
   const c = plan.cards[i];
   const st = stationOf(plan, c);
@@ -61,7 +63,8 @@ const holdOf = (plan: Plan, i: number, e: number): Framing => {
   const room = [((k - 1) / 2) * st.h * (plan.W / plan.H), ((k - 1) / 2) * st.h];
   const shift = [0, 1].map((j) => Math.max(-room[j], Math.min(room[j], (sub[j] - st.c[j]) * TOWARD * e)));
   const turn = sub[0] >= st.c[0] ? 1 : -1;
-  return {...st, c: [st.c[0] + shift[0], st.c[1] + shift[1]], h: st.h * k, yaw: turn * ARC * (2 * e - 1), pitch: 0.03 * (2 * e - 1)};
+  const swing = c.flown ? e : 2 * e - 1;
+  return {...st, c: [st.c[0] + shift[0], st.c[1] + shift[1]], h: st.h * k, yaw: turn * ARC * swing, pitch: 0.03 * swing};
 };
 
 /** A move between two framings. `lean` is how far it first goes the other way and `over` how far it lands past, both
@@ -155,7 +158,10 @@ const scheduleOf = (plan: Plan) => {
   });
   const from = cards.map((c, i) => (i === 0 ? 0 : jumps(plan, i) ? cuts[i] : c.arrive + LAND));
   const to = cards.map((c, i) => (jumps(plan, i + 1) ? cuts[i + 1] : goes[i]));
-  return {from, to, cuts};
+  // the beat each hold starts to move: a card whose photograph a move flies in holds the camera still until the move
+  // has landed the photograph (`cut`) and faded off it, so the print the move hands over is where the card stands
+  const moves = cards.map((c, i) => (c.flown ? Math.max(from[i], c.cut + (HANDED * plan.fps) / plan.pulse) : from[i]));
+  return {from, to, cuts, moves};
 };
 
 type Box4 = [number, number, number, number];
@@ -179,9 +185,25 @@ const typeOf = (plan: Plan, c: Card): Box4 | undefined => {
   return [x0, Math.min(...ys), Math.max(x0 + 1, plan.W - x0), Math.max(...ys)];
 };
 
+/** Where a box of card `c`'s frame ([x0, y0, x1, y1] px) stands in the film's frame at beat `t`, through the camera
+ * as it is then: the bounds of its corners on the print as it stands off the wall. */
+const boxAt = (plan: Plan, c: Card, b: Box4, t: number): Box4 => {
+  setCam(poseOf(plan, baseAt(plan, t)), plan.W / plan.H);
+  const pts = [[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]]].map(([x, y]) => {
+    const w = onWall(c.T, [x, y]);
+    const v = new THREE.Vector3(w[0] - plan.W / 2, plan.H / 2 - w[1], liftOf(c)).project(cam);
+    return [((v.x + 1) / 2) * plan.W, ((1 - v.y) / 2) * plan.H];
+  });
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+};
+
 /** The film's beats and the moments of the cuts between them. On a card's beat the move is handed where the
  * photograph and the card's type stand while the camera holds on it, and the beats it holds there, so a mark drawn on
- * the print lands on the print and is gone before the camera leaves it. */
+ * the print lands on the print and is gone before the camera leaves it. A move that flies the photograph in starts its
+ * beat when its flight does, and is handed the photograph, where it lies, and where the print stands in the frame as
+ * the flight lands, so the photograph it lands is the one the picture shows from there; and every photograph of the
+ * year is on the look it flies past. */
 export const timelineOf = (plan: Plan): Timeline => {
   const {from, to, cuts} = scheduleOf(plan);
   return {
@@ -189,10 +211,21 @@ export const timelineOf = (plan: Plan): Timeline => {
       const i = plan.cards.findIndex((c) => c.key === s.id);
       const c = plan.cards[i];
       const type = c ? typeOf(plan, c) : undefined;
+      const flight = c && s.flies !== undefined ? (() => {
+        const box = boxAt(plan, c, photoBoxOf(plan, c), c.cut);
+        const [px, py, pw, ph] = c.place;
+        const pl = boxAt(plan, c, [px, py, px + pw, py + ph], c.cut);
+        return {photo: staticFile(c.file), box, place: [pl[0], pl[1], pl[2] - pl[0], pl[3] - pl[1]] as [number, number, number, number]};
+      })() : undefined;
+      // the subject's middle as fractions of where the move finds the photograph: its place in a flight, else its box
+      const on = c && (flight ? [c.place[0], c.place[1], c.place[0] + c.place[2], c.place[1] + c.place[3]] : photoBoxOf(plan, c));
+      const focus = c && on ? {focus: [((c.subject[0] + c.subject[2]) / 2 - on[0]) / (on[2] - on[0]),
+        ((c.subject[1] + c.subject[3]) / 2 - on[1]) / (on[3] - on[1])] as Pt} : {};
       return {id: s.id, form: s.form, at: s.at, end: s.end, move: s.move, transition: s.transition, words: s.words, label: s.label, peak: s.peak,
-        ...(c ? {box: heldBox(plan, c, photoBoxOf(plan, c)), ...(type ? {type: heldBox(plan, c, type)} : {}), held: [from[i], to[i]] as Pt} : {})};
+        ...(c ? {box: heldBox(plan, c, photoBoxOf(plan, c)), ...(type ? {type: heldBox(plan, c, type)} : {}), held: [from[i], to[i]] as Pt, ...focus} : {}),
+        ...(flight ?? {})};
     }),
-    cuts,
+    cuts: cuts.map((t, i) => plan.steps[i].flies ?? t),
   };
 };
 
@@ -201,13 +234,13 @@ const baseAt = (plan: Plan, t: number): Framing => {
   const cards = plan.cards;
   const C = plan.closer.at;
   const last = cards.length - 1;
-  const {from, to} = scheduleOf(plan);
+  const {from, to, moves} = scheduleOf(plan);
   const open = bezier(plan.ease.enter);
   for (let i = 0; i <= last; i++) {
     const c = cards[i];
     if (t < from[i]) continue;
     if (t <= to[i]) {
-      const hold = smooth(clamp01((t - from[i]) / Math.max(0.1, to[i] - from[i])));
+      const hold = smooth(clamp01((t - moves[i]) / Math.max(0.1, to[i] - moves[i])));
       const wide = c.hook ? 1 + 0.12 * (1 - span(t, 0, 0.35, open)) : 1;
       const f = holdOf(plan, i, hold);
       return {...f, h: f.h * wide};

@@ -17,7 +17,7 @@ thing it does not, and no set photograph appears in two rows.
 
 Every photograph written carries a subject box, the box that must stay in frame ([x0, y0, x1, y1], fractions of the
 photograph): the people a drawing stands in its foreground, SUBJECTS for a set photograph (the part its caption is
-about, never the whole print by default), the middle of a drawing with no one in it. DEST/fixture-subjects.json holds them by the SHA-1 of each photograph's bytes. --subjects B
+about, never the whole print by default), the middle of a drawing with no one in it; a reel carries its still's box as its push frames it. DEST/fixture-subjects.json holds them by the SHA-1 of each photograph's and reel's bytes. --subjects B
 writes each one into the "photos" of B's storyboards, the record the storyboard agent writes after opening each
 photograph (pipeline/2-storyboards.md), so a fixture run checks and renders the way a real one does.
 
@@ -462,12 +462,29 @@ def subject_of(job):
             round(min(1.0, (1 - span) / 2 + span * (1 - 1 / (2 * figures)) + reach), 3), 0.97]
 
 
+# how far a reel's push has gone where its shot is read, about its middle (make_reel pushes from 1 to 1.12)
+REEL_PUSH = 1.06
+
+
+def reel_subject(still, box):
+    """A reel's subject box in its own frame: its still's box through make_reel's portrait cut and partway into its
+    push."""
+    from PIL import Image
+    w, h = Image.open(still).size
+    k = max(1080 / w, 1920 / h)
+    ox, oy = (w * k - 1080) / 2, (h * k - 1920) / 2
+    x0, y0, x1, y1 = box
+    at = lambda v, side, off, out: min(1.0, max(0.0, 0.5 + ((v * side * k - off) / out - 0.5) * REEL_PUSH))
+    return [round(at(x0, w, ox, 1080), 3), round(at(y0, h, oy, 1920), 3), round(at(x1, w, ox, 1080), 3), round(at(y1, h, oy, 1920), 3)]
+
+
 def subjects_by_file(ws, B):
     """{photo file name in B: its subject box}, from DEST/fixture-subjects.json through the bytes of each library copy."""
     import hashlib
     table = json.loads((Path(ws) / "fixture-subjects.json").read_text())
     picks = json.loads((Path(B) / "picks.json").read_text())
-    return {Path(r["photo"]).name: table[hashlib.sha1((Path(B) / r["src"]).read_bytes()).hexdigest()] for r in picks.get("items") or []}
+    return {Path(r["photo"]).name: table[hashlib.sha1((Path(B) / r["src"]).read_bytes()).hexdigest()]
+            for r in [*(picks.get("items") or []), *(picks.get("videos") or [])]}
 
 
 def record_subjects(ws, B):
@@ -842,8 +859,10 @@ def main():
         pool.map(place_set_photo, list(SETS.items()))
         pool.map(make_reel, clip_jobs)
     import hashlib
-    (dest / "fixture-subjects.json").write_text(json.dumps(
-        {hashlib.sha1(Path(j[0]).read_bytes()).hexdigest(): subject_of(j) for j in jobs}, indent=1))
+    boxes = {j[0]: subject_of(j) for j in jobs}
+    table = {hashlib.sha1(Path(f).read_bytes()).hexdigest(): b for f, b in boxes.items()}
+    table.update({hashlib.sha1(Path(c[0]).read_bytes()).hexdigest(): reel_subject(c[1], boxes[c[1]]) for c in clip_jobs if c[1] in boxes})
+    (dest / "fixture-subjects.json").write_text(json.dumps(table, indent=1))
     print(json.dumps({"workspace": str(dest), "instagram": root.name, "facebook": fb.name, "handle": HANDLE,
                       "posts": len(posts), "post_media": sum(len(p["media"]) for p in posts), "reels": len(reels),
                       "reel_clips": len(clip_jobs), "stories": len(stories), "likes": 900, "liked_accounts": len(liked),

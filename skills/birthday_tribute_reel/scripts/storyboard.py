@@ -75,6 +75,7 @@ FORMATS = ("reel", "feed", "wide")
 SHEET_SCALE = 0.25
 LOOK_SCALE = 0.5  # the boards image: each look's hook, middle card and closer at half size
 REQUEST = ("use", "subject", "move", "lens", "light", "duration", "loop")  # a clip request's parts (motion/system/standards.md)
+OWN = ("use", "source", "from", "to", "duration")  # a clip the person recorded: the seconds of it the beat plays
 
 
 def boards_dir():
@@ -99,9 +100,9 @@ def write_md(b, path):
          f"- music: {m.get('origin') or 'none yet (music.py make); the ' + b['music']['recipe'] + ' recipe with the brief below'}",
          f"- the music brief (taste.json music): {json.dumps((_env.read_json(f'{_env.B}/taste.json') or {}).get('music'), ensure_ascii=False)}",
          f"- sound: {b['music']['direction']}; {len(sound)} sound cues over {len(b['beats'])} beats, the last a {sound[-1]['kind']} at beat {sound[-1]['at']}",
-         "- mixed: " + (f"bed {m['bed_lufs']} LUFS, effects {m['fx_lufs']} LUFS, {m['bed_lufs'] - m['fx_lufs']:.1f} LU under; "
-                        f"{len(sound)} sound cues over {len(b['beats'])} beats" if "fx_lufs" in m and b.get("seconds")
-                        else "not yet; music.py master writes the bed's and the effects' loudness here"),
+         "- mixed: " + (f"music {m['bed_lufs']} LUFS, effects {m['fx_lufs']} LUFS, {m['bed_lufs'] - m['fx_lufs']:.1f} LU under; "
+                        f"{m.get('sound_cues', 0)} sound effects over {len(b['beats'])} beats" if "fx_lufs" in m and b.get("seconds")
+                        else "not yet; music.py master writes the music's and the effects' loudness here"),
          f"- color: ground {colors['bg']}, ink {colors['ink']}, paper {colors['paper']}, accent {colors['accent']}, from the card's "
          f"{card['palette']['rule']} rule over the photographs' colors; grain {fin['grain']}, vignette {fin['vignette']}, closer {card['closer']}",
          f"- stills: the settled frames of {', '.join(b['rest'])}",
@@ -114,6 +115,9 @@ def write_md(b, path):
     L += ["", "## what each move reveals and carries", ""] + [f"- **{k}**: {v}" for k, v in story.items()]
     L += ["", "## clip requests", "", "Each is a request for a video model; until one makes it, the film shows the photograph still.", ""]
     for c in st["clips"]:
+        if c.get("source"):
+            L.append(f"- {c['id']} under {c['beat']}, {c['use']}: {Path(c['source']).name} from {c['from']:g} s to {c['to']:g} s, as they recorded it")
+            continue
         L.append(f"- {c['id']} under {c['beat']}, {c['use']} ({c['duration']} s)" + ("" if c["prompt"] else
                  ": no shot yet: open its photograph and write the beat's \"shot\""))
         L += [f"  - {k}: {c[k]}" for k in REQUEST[1:] if c.get(k)]
@@ -167,12 +171,14 @@ def cmd_draft(a):
 
 
 def requests_into(b):
-    """Each beat the film wants a generated clip for carries its clip request, in the shape standards.md gives one."""
+    """Each beat the film wants a generated clip for carries its clip request, in the shape standards.md gives one; a
+    beat the person recorded carries the seconds of their own clip it plays."""
     asks = {c["beat"]: c for c in compose.lay(b, "reel")["clips"]}
     for bt in b["beats"]:
         bt.pop("clip", None)
         if bt["id"] in asks:
-            bt["clip"] = {k: asks[bt["id"]][k] for k in REQUEST}
+            a = asks[bt["id"]]
+            bt["clip"] = {k: a[k] for k in (OWN if a.get("source") else REQUEST)}
 
 
 def load_boards():
@@ -241,7 +247,7 @@ def board_issues(b, ctx, allowed, bpm=None):
             issues += unwritten(s, b, ctx, pool)
             issues += [f"{c['beat']} ({c['use']}): open {Path(_env.B) / 'photos' / Path(c['image'] or '').name} and write in this "
                        "beat \"shot\": {\"subject\": what the photograph shows, in your words, \"moves\": what in it would move "
-                       "in the clip}" for c in s["clips"] if not c["prompt"]]
+                       "in the clip}" for c in s["clips"] if not c["prompt"] and not c.get("source")]
     issues += style_findings(b)
     for p, r in sorted(b["photos"].items()):
         if r["file"] not in allowed:

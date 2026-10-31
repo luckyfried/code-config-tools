@@ -132,7 +132,8 @@ _CARDS = {}
 
 
 def card(style):
-    """The style card `style`, validated, or SystemExit naming the styles there are and what the card breaks."""
+    """The style card `style`, validated, or SystemExit naming the styles there are and what the card breaks. The card is
+    the one place a look's moves live, its frame-taking moves and the one it plays `once` among them."""
     if style not in _CARDS:
         f = STYLES / f"{style}.json"
         if not f.is_file():
@@ -258,8 +259,8 @@ def moment_words(line, name):
 
 
 def draft_moments(shared):
-    """The year's moments as research drafts them, by date: one per photograph post the two share, the occasion's post
-    aside (it is the hook); a post with no caption is a wordless moment, its name and line empty. Each is its post and date, its name and its line in the caption's own words,
+    """The year's moments as research drafts them, by date: one per photograph post or reel the two share, the
+    occasion's post aside (it is the hook); a post with no caption is a wordless moment, its name and line empty. Each is its post and date, its name and its line in the caption's own words,
     its place, the people in it besides the person, and the first two comments the two left under it, oldest first."""
     me = shared.get("me")
     who = (shared.get("who") or {}).get("handle")
@@ -271,7 +272,7 @@ def draft_moments(shared):
     out = []
     for x in sorted(shared.get("items") or [], key=lambda x: x["ts"]):
         cap = x.get("caption") or ""
-        if x.get("kind") != "post" or x.get("video") or (cap and cap[:40] in told):
+        if x.get("kind") not in ("post", "reel") or (cap and cap[:40] in told):
             continue
         people = {p.rstrip(".") for p in set(x.get("tagged") or []) | set(re.findall(r"@([\w.]+)", cap))} | ({who} if x.get("from") == "theirs" else set())
         people -= {me, None, ""}

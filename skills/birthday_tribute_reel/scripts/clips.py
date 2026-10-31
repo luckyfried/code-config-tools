@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Movement 4, beside the cut: the generated clips the storyboard asks for, conformed and placed on their cards.
+"""Movement 4, beside the cut: the clips the storyboard lists, generated or recorded, conformed and placed on their cards.
 
 USAGE (from the workspace root; S = this skill's folder):
     python3 S/scripts/clips.py list                    # every clip: its prompt, length, photo, the file to save
@@ -11,13 +11,17 @@ the shape motion/system/standards.md gives one: its use, its subject and what mo
 agent saw the photograph), the camera's move, the lens feel and the camera's height, the light, its duration and a
 seamless loop, with the part of the photograph its card's frame shows, and its prompt says all of it. list writes
 B/clips/requests.json and prints one block per clip; the agent generates each clip from the named photograph with its
-video model and saves it as B/clips/NN.mp4 (.mov, .webm and .m4v are read too).
+video model and saves it as B/clips/NN.mp4 (.mov, .webm and .m4v are read too). A card the person filled with a clip
+of their own lists that clip (`source`, the seconds `from` and `to` of it, from the second picks.py found its shot
+starts on): nothing is asked of a model for it, and list leaves it out.
 
 normalize scales and crops each file to its photograph's own size, so the film maps it onto the card exactly where
 the photograph was, conforms it to 30 fps, trims it to its beat (looping a short file) and writes its frames as
 B/public/clips/<stamp>/NN/0001.jpg onward. The film shows those frames on the photograph's card while the clip's beat plays. A
 clip that did not arrive is not made: the film shows the still photograph on its card, moved as every card is, and
-nothing calls it a clip. B/clips.json records every clip as generated or not made, and brief.md lists them. Each normalize
+nothing calls it a clip. A recorded clip is cut to its seconds, its sound left out, graded the way the photographs are
+(B/grade.json's filter) and its last frame held to the end of its beat, so it plays as one shot the length of its beat.
+B/clips.json records every clip as recorded, generated or not made, and brief.md lists them. Each normalize
 writes its frames into a folder of its own, B/public/clips/<stamp>/NN/, then clips.json names them, and only then do the
 folders of earlier normalizes go, so clips.json always names frames that are whole.
 """
@@ -45,10 +49,11 @@ def board():
 
 
 def windows(b):
-    """Each beat's first frame and length in frames."""
-    at, out = 0, {}
+    """Each beat's first frame and length in whole frames: a beat's length in frames is fractional off a tempo that does
+    not divide the frame rate, so each edge is the frame nearest it."""
+    at, out = 0.0, {}
     for bt in b["beats"]:
-        out[bt["id"]] = (at, bt["frames"])
+        out[bt["id"]] = (round(at), round(at + bt["frames"]) - round(at))
         at += bt["frames"]
     return out
 
@@ -74,6 +79,8 @@ def cmd_list(a):
     (Path(_env.B) / "clips").mkdir(exist_ok=True)
     reqs = []
     for c in b.get("clips") or []:
+        if c.get("source"):
+            continue
         w, h = size_of(c["image"])
         secs = round(max(c.get("duration") or 0, win[c["beat"]][1] / FPS), 1)
         reqs.append({"id": c["id"], "beat": c["beat"], "use": c["use"], "duration": secs, "size": f"{w}x{h}",
@@ -89,13 +96,20 @@ def cmd_list(a):
     return 0
 
 
-def conform(src, image, frames, dst):
-    """The clip at the photograph's size, 30 fps, `frames` long, as one JPEG per frame in `dst`."""
+def conform(src, image, frames, dst, cut=None):
+    """The clip at the photograph's size, 30 fps, `frames` long, as one JPEG per frame in `dst`: looped when it is short,
+    or, given `cut` (from, to) in seconds, that interval alone, graded like the photographs, its last frame held."""
     w, h = size_of(image)
     shutil.rmtree(dst, ignore_errors=True)
     dst.mkdir(parents=True)
     vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS}"
-    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-i", str(src), "-frames:v", str(frames),
+    if cut:
+        grade = (_env.read_json(f"{_env.B}/grade.json") or {}).get("filter")
+        inp = ["-ss", f"{cut[0]:.3f}", "-t", f"{cut[1] - cut[0]:.3f}", "-i", str(src)]
+        vf += (f",{grade}" if grade else "") + f",tpad=stop_mode=clone:stop_duration={frames / FPS:.3f}"
+    else:
+        inp = ["-stream_loop", "-1", "-i", str(src)]
+    r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *inp, "-an", "-frames:v", str(frames),
                         "-vf", vf, "-q:v", "2", str(dst / "%04d.jpg")], capture_output=True, text=True)
     n = len(list(dst.glob("*.jpg")))
     return (n, "") if r.returncode == 0 and n else (0, r.stderr[-300:])
@@ -112,6 +126,15 @@ def cmd_normalize(a):
     for c in b.get("clips") or []:
         at, n = win[c["beat"]]
         rec = {"beat": c["beat"], "use": c["use"], "image": c["image"], "prompt": c["prompt"], "from_frame": at}
+        if c.get("source"):
+            got, err = conform(c["source"], c["image"], n, root / stamp / c["id"], (c["from"], c["to"]))
+            if not got:
+                sys.exit(f"clip {c['id']} ({c['beat']}): could not cut {c['source']} from {c['from']} s to {c['to']} s: {err}")
+            rec.update(status="recorded", source=c["source"], dir=f"clips/{stamp}/{c['id']}", frames=got)
+            out[c["id"]] = rec
+            print(f"clip {c['id']} ({c['beat']}): recorded, {Path(c['source']).name} from {c['from']:g} s to {c['to']:g} s, "
+                  f"{got} frames -> public/clips/{stamp}/{c['id']}/")
+            continue
         src = arrived(c["id"])
         got, err = conform(src, c["image"], n, root / stamp / c["id"]) if src else (0, "")
         if got:
@@ -126,15 +149,17 @@ def cmd_normalize(a):
     for old in root.iterdir() if root.exists() else ():
         if old.name != stamp:
             shutil.rmtree(old)
-    g = sum(1 for r in out.values() if r["status"] == "generated")
-    print(f"clips: {g} generated, {len(out) - g} not made -> {_env.B}/clips.json")
+    k = {s: sum(1 for r in out.values() if r["status"] == s) for s in ("recorded", "generated", "not made")}
+    print(f"clips: {k['recorded']} recorded, {k['generated']} generated, {k['not made']} not made -> {_env.B}/clips.json")
     return 0
 
 
 def placed():
-    """The generated clips the film shows, for the composition's props: where each starts and its frames."""
-    return [{"id": k, "image": r["image"], "from": r["from_frame"], "frames": r["frames"], "dir": r["dir"]}
-            for k, r in ((_env.read_json(f"{_env.B}/clips.json") or {}).get("clips") or {}).items() if r.get("status") == "generated"]
+    """The recorded and generated clips the film shows, for the composition's props: where each starts, its frames, and
+    whether it is the person's own (a recorded clip's card shows its first frame before it and its last after it)."""
+    return [{"id": k, "image": r["image"], "from": r["from_frame"], "frames": r["frames"], "dir": r["dir"],
+             **({"own": True} if r["status"] == "recorded" else {})}
+            for k, r in ((_env.read_json(f"{_env.B}/clips.json") or {}).get("clips") or {}).items() if r.get("status") in ("recorded", "generated")]
 
 
 def main():

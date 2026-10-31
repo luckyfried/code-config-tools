@@ -85,6 +85,14 @@
         "peak",
         "place"
       ]
+    },
+    {
+      "id": "tilted-wall",
+      "fits": [
+        "photo",
+        "people",
+        "landscape"
+      ]
     }
   ],
   "transitions": [
@@ -183,7 +191,7 @@
         0,
         0,
         1,
-        0.52
+        1
       ],
       "rim": 0,
       "rimColor": "paper",
@@ -225,7 +233,7 @@
         0,
         0,
         1,
-        0.52
+        1
       ],
       "line": [
         0.05,

@@ -5,28 +5,35 @@
 // however many lines the title takes; the cover lands by half way to the stop and settles there.
 import React from 'react';
 import {alpha, balance, fill, fitTo, HANDLE, handleOn, inkOn, land, px, span, Words} from '../kit';
-import type {CloserProps} from '../types';
+import type {CloserProps, Look} from '../types';
 
 /** The cover's share of the page height, centred on it. */
-const COVER = 0.72;
+export const COVER = 0.72;
+
+/** The cover's column, measured the way the cover sets it: the title's lines and size, the closing line's lines and
+ * size, the gap above each, the inset's width and height, the height of the closing line and handle under the title,
+ * the cover's top, and where the column ends down the frame (`foot`). */
+export const coverOf = (look: Look) => {
+  const side = px(look, 60), inset = px(look, 60), gap = px(look, 50);
+  const inner = look.W - 2 * side - 4 * inset;
+  const room = look.H * COVER - 4 * inset;
+  const title = look.title || look.signoff;
+  const said = look.title ? balance(look.signoff, look.signoff.length > 22 ? 2 : 1) : [];
+  const saidSize = said.length ? Math.min(px(look, 62), fitTo(said, look.text, inner)) : 0;
+  const rest = (said.length ? gap + said.length * saidSize * 1.2 : 0) + (look.handle ? gap + px(look, HANDLE) * 1.2 : 0);
+  const lines = balance(title, title.length > 12 ? 2 : 1);
+  const size = Math.min(fitTo(lines, look.display, inner, {most: px(look, 420)}), (room - rest) / lines.length);
+  const top = (look.H * (1 - COVER)) / 2;
+  return {side, inset, gap, inner, room, said, saidSize, rest, lines, size, top, foot: look.H / 2 + (lines.length * size + rest) / 2};
+};
 
 const Closer: React.FC<CloserProps> = ({look, u}) => {
   const page = look.tone.ground;
   const cover = inkOn(page, [look.colors.accent, look.colors.accent2]);
   const ink = inkOn(cover, [look.colors.paper, look.colors.ink, page]);
   const k = land(0.3 + 0.7 * u);
-  const title = look.title || look.signoff;
-  const side = px(look, 60), inset = px(look, 60);
-  const inner = look.W - 2 * side - 4 * inset;
-  const room = look.H * COVER - 4 * inset;
-  const said = look.title ? balance(look.signoff, look.signoff.length > 22 ? 2 : 1) : [];
-  const saidSize = said.length ? Math.min(px(look, 62), fitTo(said, look.text, inner)) : 0;
-  const gap = px(look, 50);
-  const rest = (said.length ? gap + said.length * saidSize * 1.2 : 0) + (look.handle ? gap + px(look, HANDLE) * 1.2 : 0);
-  const lines = balance(title, title.length > 12 ? 2 : 1);
-  const size = Math.min(fitTo(lines, look.display, inner, {most: px(look, 420)}), (room - rest) / lines.length);
+  const {side, inset, gap, said, saidSize, lines, size, top} = coverOf(look);
   const hand = handleOn(look, cover, ink, 1);
-  const top = (look.H * (1 - COVER)) / 2;
   return (
     <div style={fill}>
       <div style={{...fill, background: page, opacity: span(u, 0, 0.25)}} />
