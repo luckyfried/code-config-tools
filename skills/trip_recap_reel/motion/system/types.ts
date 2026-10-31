@@ -111,6 +111,8 @@ export type Beat = {
   /** the beat's move and the cut into it, from the card's allowlists */
   move?: string | null;
   transition?: string | null;
+  /** seconds the move takes to fly the photograph in and land it where the camera holds it; 0 for every other move */
+  fly?: number;
   words: string;
   label: string;
   peak: boolean;

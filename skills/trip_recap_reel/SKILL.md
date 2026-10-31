@@ -52,9 +52,9 @@ what is missing, in a plain sentence; tell the person that sentence and stop.
 | 1 | research | `S/pipeline/1-research.md` | `research.py [--place ... / --from ... --to ... / --album ... / --folder ...]`, then you write `taste.md` and fix `taste.json` | taste.md with its five headings |
 | 2 | storyboard | `S/pipeline/2-storyboards.md` | `storyboard.py points`, look and correct, `storyboard.py draft`, `storyboard.py check`, `storyboard.py sheets`, look | three sheets, `out/boards.png`, a clean check |
 | 3 | vote and pick | `S/pipeline/3-vote.md`, `S/critic/critic.md` | `vote.py ballot`, fill scores, `vote.py tally`, show `out/boards.png` and ask which look, `vote.py pick --board N --why "..."` | `winner.json` |
-| 4 | produce | `S/pipeline/4-produce.md` | `music.py find` (a placed track, else a bed made for the look), `music.py analyze`, `storyboard.py snap`, movement 5, `music.py master`, `film.py render`, `film.py frames` | `out/film.mp4` (and the shapes they asked for) |
+| 4 | produce | `S/pipeline/4-produce.md` | `music.py find` (a placed track, else a bed made for the look), `music.py analyze`, `storyboard.py snap`, movement 5, `music.py master`, `film.py render --proof`, `film.py frames` | `out/proof.mp4`, the half-size proof every round before deliver reads (and the shapes they asked for) |
 | 5 | clips, inside 4 after `snap` | `S/pipeline/5-clips.md` | `clips.py list`, generate with your video model, `clips.py normalize` | `clips.json` |
-| 6 | critic, gate, deliver | `S/pipeline/6-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told), write `caption.md`, `deliver.py` | green gate |
+| 6 | critic, gate, deliver | `S/pipeline/6-deliver.md`, `S/critic/critic.md` | `qa.py check`, `vote.py cut`, score, `vote.py verdict` (fix once if told) on the proof; the full-size `film.py render`, `qa.py check`, `film.py frames`, `vote.py cut` and the type read at full size; write `caption.md`, `deliver.py` | green gate |
 
 Clips (5) run inside movement 4: after `snap`, which lists them from the timed film, and before the render,
 which plays them. Every script is `python3 S/scripts/<name>.py`; each answers `--help` with its inputs, outputs and
@@ -95,9 +95,11 @@ When they later say "make the second one" (or the third, or name a look), pick t
   sound from the stops, the photographs' points and the look's card. You change a film through its inputs (the
   points, the names in `taste.json`, the music) and run the step again; `storyboard.py check` refuses a board whose
   design does not answer its photographs, or that steps outside its look, before anything is timed or rendered.
+- Every round before deliver renders the half-size proof (`film.py render --proof`); the render deliver takes is full
+  size (`film.py render`, with the same `--also`), and the critics read the type once more on it.
 - Make what they asked for: the vertical film and the caption. The 16:9 and square films and the story cards render only
   when their words ask for them (`film.py render --also landscape square stories`, naming only those; the words are in
-  `S/pipeline/6-deliver.md`, "What they asked for"). They are the same spans and cues, the camera framing each
+  `S/pipeline/6-deliver.md`, "What they asked for"). They are the same spans and sounds, the camera framing each
   picture's own shape, never scaled to fit.
 - Look at what you make: points.png, the sheets, the frame strips of every film rendered and any story cards, with
   the Read tool, before any score.

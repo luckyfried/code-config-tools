@@ -91,19 +91,57 @@ class Looks(unittest.TestCase):
         cinematic = self.boards[style.TRIO.index("cinematic-letterbox")]
         self.assertEqual(cinematic["beats"][-2]["words"], "last night, the fountain lit up, we stayed", "a look closing on its name keeps every line")
 
-    def test_a_move_follows_what_the_stop_holds_and_not_its_place_in_the_order(self):
+    def test_a_recorded_clip_takes_the_move_and_cut_its_photograph_would_have_and_changes_no_other_beat(self):
+        """A clip plays on a photo beat: the board with the stop as a recording and the board with it as a photograph
+        are the same beat for beat, lengths, moves, cuts and words, except that the clip's beat is the form `clip` and
+        holds and shows a clip where the other holds and shows a photograph."""
         src = source()
-        moved = copy.deepcopy(src)
-        # the clip moves from the second stop to the fourth: the move made for a clip goes with it
-        moved["stops"][1], moved["stops"][3] = moved["stops"][3], moved["stops"][1]
+        still = copy.deepcopy(src)
+        still["stops"][1]["clip"] = False
         for look in style.TRIO:
             c = style.card(look)
-            a = {s["name"]: b["move"] for b, s in zip(board_trip.board(src, c)["beats"][1:], src["stops"][1:])}
-            z = {s["name"]: b["move"] for b, s in zip(board_trip.board(moved, c)["beats"][1:], moved["stops"][1:])}
-            clip_fits = [m["id"] for m in c["moves"] if "clip" in m["fits"]]
-            self.assertIn(a["graça"], clip_fits, look)
-            self.assertIn(z["graça"], clip_fits, look)
+            a, z = board_trip.board(src, c), board_trip.board(still, c)
+            self.assertEqual((a["beats"][1]["form"], z["beats"][1]["form"]), ("clip", "photo"), look)
+            self.assertEqual(set(a["beats"][1]["tags"]) ^ set(z["beats"][1]["tags"]), {"clip", "photo"}, look)
+            what = lambda x: {k: v for k, v in x.items() if k not in ("form", "tags", "shows")}  # noqa: E731
+            self.assertEqual([what(x) for x in a["beats"]], [what(y) for y in z["beats"]], look)
         self.assertEqual(len({b["beats"][2]["move"] for b in self.boards}), 3, "each look moves the same stop its own way")
+
+    def test_a_move_that_flies_the_photograph_in_holds_its_beat_until_the_words_have_read_after_it_lands(self):
+        """The trailer moves go where the look wants them: the calm looks take one at most, once, and every beat that
+        flies its photograph in runs its flight, the settle and the time its line takes to read."""
+        flown = {}
+        for b in self.boards:
+            for x in b["beats"]:
+                if x.get("move") in board_trip.ARRIVES:
+                    flown.setdefault(b["style"], []).append(x["move"])
+                    self.assertEqual(x["fly"], board_trip.ARRIVES[x["move"]])
+                    need = (x["fly"] + board_trip.SETTLE) * b["bpm"] / 60 + board_trip.read_beats(x["words"], b["bpm"])
+                    self.assertGreaterEqual(4 * x["bars"], need, (b["style"], x["id"]))
+                else:
+                    self.assertEqual(x.get("fly", 0.0), 0.0 if x["form"] != "closer" else x.get("fly", 0.0))
+        self.assertTrue(flown.get("cinematic-letterbox"), flown)
+        for calm in ("analog-home-movie", "scrapbook"):
+            self.assertLessEqual(len(flown.get(calm, [])), 1, flown)
+        taken = {m["id"] for look in style.styles() for m in style.card(look)["moves"]}
+        self.assertFalse(taken & style.LEFT_OUT, "no trip look takes a count")
+
+    def test_every_stop_holds_its_line_between_the_halves_of_the_cuts_either_side_of_it(self):
+        """A cut plays half its length over each beat it joins, so a stop's line reads only between those halves: every
+        stop with words holds the two halves, a flown-in photograph's landing, the label's lead, the line's reading time
+        and its fade."""
+        for b in self.boards:
+            cuts = [x["transition"] for x in b["beats"][1:]]
+            for x, out in zip(b["beats"][1:-1], cuts[1:]):
+                if not x["words"]:
+                    continue
+                landed = (x["fly"] + board_trip.SETTLE) * b["bpm"] / 60 if x["fly"] else 0.0
+                need = (max(0.25, board_trip.cut_beats(x["transition"]) / 2, landed) + 0.5
+                        + board_trip.read_beats(x["words"], b["bpm"]) + max(0.5, board_trip.cut_beats(out) / 2) + 0.6)
+                self.assertGreaterEqual(4 * x["bars"], need, (b["style"], x["id"]))
+        self.assertEqual(board_trip.cut_beats("long-dissolve"), 3.0)
+        self.assertEqual(board_trip.cut_beats("hard-cut"), 0.0)
+        self.assertEqual(board_trip.cut_beats(None), 0.0)
 
     def test_a_card_that_pastes_its_prints_never_takes_a_move_that_lays_a_print_of_its_own(self):
         b = self.boards[2]

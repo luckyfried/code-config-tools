@@ -46,31 +46,36 @@ words: what works, what fails, the one change you would make.
 
 ## The cut (movement 6)
 
-The motion designer and the person score the rendered film, and only the film that is in `out/` now. After every
-render, `qa.py check` measures it and `film.py frames` cuts its frames; `vote.py cut` refuses a film whose check or
+The motion designer and the person score the rendered film, and only the newest render in `out/`. Every round before
+deliver scores the half-size proof, `out/proof.mp4` from `film.py render --proof`; its cover and story cards are the
+ones the full render makes. After every render, `qa.py check` measures it and `film.py frames` cuts its frames; `vote.py cut` refuses a film whose check or
 frames are older than it, and `vote.py verdict` refuses a round whose frames are not this film's or whose paragraphs
 repeat the round before word for word. Look, actually look:
 
 - `frames/film-strip.png` (the film at one frame a second) and every `frames/strip-<beat>.png` (twelve frames across
   the span) full size with the Read tool: a span whose frames are all alike does not move;
-- when the person asked for them, the wide and square strips (`film.py frames --film out/film-16x9.mp4 --out
-  frames-16x9`, and the same for `film-square.mp4`): the same film framed again for each shape, the photograph
+- when the person asked for them, the wide and square strips (`film.py frames --film out/proof-16x9.mp4 --out
+  frames-16x9`, and the same for `proof-square.mp4`; `film-16x9.mp4` and `film-square.mp4` once the full-size films
+  are in): the same film framed again for each shape, the photograph
   filling the frame at every moment, nothing cut by the edge;
 - when the person asked for them, the `out/story-N.png` cards (a set that reads in order, each a finished picture);
 - the trip as the frames show it: every stop named once, its line their own caption, the trip's name and the dates
   on the closer;
-- for the music score only, `qa/check.json` (the sound cues, the loudness and where the music stops).
+- for the music score only, `qa/check.json` (what the film sounds, the loudness and where the music stops).
 
 Every score but the music's is read from the frames and strips alone, and every paragraph cites them by file and
 time: what a frame shows moving, holding, reading or failing. A paragraph that cites the storyboard, a plan, the name of
 a move, or what the kit's files intend is not a reading of the film; score again from the frames. Never score from
-memory of an earlier round; the cut is what ships. Fill in `critic/cut-N.json` and run `vote.py verdict`. When a score is below 4, name the one change that fixes the worst thing in the paragraph,
+memory of an earlier round; the cut is what ships. Fill in `critic/cut-N.json` and run `vote.py verdict`. Type is read
+last on the full-size film: after `SHIP` on the proof, `film.py render` renders it full size, and once `qa.py check`
+and `film.py frames` have run on it, `vote.py cut` empties each critic's `type` score in the same round; read the type
+on the full-size film's strips at the size a phone shows it, and score `type` again. When a score is below 4, name the one change that fixes the worst thing in the paragraph,
 using the levers below.
 
 ## The levers
 
 - Where they stood in a photograph and what it looks at: `points.json` (`near`, `far`), then `storyboard.py draft`,
-  `check`, `sheets`, the vote, `snap`, `film.py render`. The board is rebuilt from its inputs, so a lever is an input, never an
+  `check`, `sheets`, the vote, `snap`, `film.py render --proof`. The board is rebuilt from its inputs, so a lever is an input, never an
   edit to `storyboard.json` or `film.json`.
 - The words on screen: the names in `taste.json` `names` and `label`, their captions as `trip.json` carries them.
 - Which photograph shows a stop: the stop's photos in `picks.json`, then `draft` and the vote again.
@@ -78,4 +83,4 @@ using the levers below.
   normalize`.
 - The music: another track at `music/source.<ext>` with `music.py find --origin "..."`, or a corrected brief in
   `taste.json` `music` and `music.py find` again (a bed it made is made again whenever the brief's mood or tempo
-  changed), then `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py render`.
+  changed), then `music.py analyze`, `storyboard.py snap`, `music.py master`, `film.py render --proof`.

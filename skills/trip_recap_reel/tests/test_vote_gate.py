@@ -156,9 +156,9 @@ class VoteGate(unittest.TestCase):
         """qa.py's safe check on the run as it stands."""
         return self.checks("film_checks")["safe"][0]
 
-    def audio_row(self, music):
-        """qa's audio row on a rendered run whose music.json is `music`: nine cues over six beats, the film's track probed as
-        aac at 192 kbps and measured at -14 LUFS, so the row turns on the stems' numbers alone."""
+    def audio_row(self, music, lu=-14.0):
+        """qa's audio row on a rendered run whose music.json is `music`: nine effects over six beats, the film's track
+        probed as aac at 192 kbps and measured at `lu` LUFS integrated, true peak -2 dBTP."""
         import qa
         self.rendered()
         _env.write_json(self.run_dir / "film.json", dict(self.cut(2.0), beats=[{"frames": 60, "bars": 4}] * 6, sound=[{"kind": "hit", "at": 0.0}] * 9))
@@ -166,18 +166,18 @@ class VoteGate(unittest.TestCase):
         os.chdir(self.run_dir)
         streams = {"streams": [{"codec_type": "video", "width": 1080, "height": 1920}, {"codec_type": "audio", "codec_name": "aac", "bit_rate": "192000"}],
                    "format": {"duration": "2.0"}}
-        with mock.patch.object(qa, "probe", return_value=streams), mock.patch.object(qa, "loudness", return_value=(-14.0, -2.0)):
+        with mock.patch.object(qa, "probe", return_value=streams), mock.patch.object(qa, "loudness", return_value=(lu, -2.0)):
             return self.checks("film_checks")["audio"]
 
-    def test_the_audio_row_is_red_when_the_effects_stem_is_peak_normalized_over_the_bed(self):
-        ok, detail = self.audio_row({"file": "music/source.wav", "bed_lufs": -21.4, "fx_lufs": -16.3})
-        self.assertFalse(ok)
-        self.assertIn("bed -21.4 LUFS, effects -16.3 LUFS, -5.1 LU under (at least 7); 9 sound cues over 6 beats", detail)
-
-    def test_the_audio_row_is_green_with_the_effects_eight_lu_under_the_bed_and_prints_the_counts(self):
-        ok, detail = self.audio_row({"file": "music/source.wav", "bed_lufs": -21.4, "fx_lufs": -29.4})
+    def test_the_audio_row_is_green_on_aac_at_the_target_and_prints_the_counts(self):
+        ok, detail = self.audio_row({"file": "music/source.wav", "master_lufs": -14.0})
         self.assertTrue(ok, detail)
-        self.assertIn("aac 192 kbps, -14.0 LUFS integrated, true peak -2.0 dBTP; bed -21.4 LUFS, effects -29.4 LUFS, 8.0 LU under (at least 7); 9 sound cues over 6 beats", detail)
+        self.assertIn("aac 192 kbps, -14.0 LUFS integrated, true peak -2.0 dBTP; 9 effects over 6 beats (sfx.py)", detail)
+
+    def test_the_audio_row_is_red_when_the_film_is_off_the_loudness_target(self):
+        ok, detail = self.audio_row({"file": "music/source.wav"}, lu=-11.2)
+        self.assertFalse(ok)
+        self.assertIn("-11.2 LUFS integrated", detail)
 
     def test_qa_refuses_the_earlier_cuts_films_once_snap_times_a_new_cut(self):
         self.rendered()

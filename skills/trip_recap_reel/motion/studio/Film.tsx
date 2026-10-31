@@ -14,7 +14,7 @@ import {clamp01} from '../system/three/motion';
 import {Stage} from '../system/three/Stage';
 import {FontGate, SystemProvider} from '../system/system';
 import type {Clip, FilmProps} from '../system/types';
-import {cropAt, planOf, shotAt, type Plan, type Shot} from './plan';
+import {closingOf, cropAt, planOf, shotAt, type Plan, type Shot} from './plan';
 import {Words} from './words';
 
 const FOV = 30;
@@ -101,9 +101,10 @@ const Rect: React.FC<{plan: Plan; box: [number, number, number, number]; z: numb
   );
 };
 
-/** Where a boxed print stands at `t`: it drops onto the page turned a little more than the card's tilt and settles. */
+/** Where a boxed print stands at `t`: it drops onto the page turned a little more than the card's tilt and settles; a
+ * print its move flies in is laid flat where the move lands it. */
 const settleOf = (plan: Plan, shot: Shot, t: number) => {
-  if (shot.full) return {dy: 0, deg: 0, s: 1};
+  if (shot.full || shot.fly) return {dy: 0, deg: 0, s: 1};
   const k = land((t - (shot.beat.at ?? 0)) / 1.4);
   return {dy: -plan.H * 0.05 * (1 - k), deg: shot.tilt + 5 * (1 - k), s: 1 + 0.06 * (1 - k)};
 };
@@ -191,7 +192,7 @@ const Scene: React.FC<{plan: Plan; t: number; frame: number; still: number; clip
     tx.matrixAutoUpdate = false;
     tx.needsUpdate = true;
   }), [textures]);
-  const shot = shotAt(plan, t)!;
+  const shot = closingOf(plan, shotAt(plan, t)!, t);
   const clip = clips.find((c) => c.image === shot.stop.photo && frame >= c.from && frame < c.from + c.frames);
   const clipSrc = clip ? `${clip.dir}/${String(Math.floor((frame - clip.from) * (clip.step ?? 1)) + 1).padStart(4, '0')}.jpg` : null;
   const clipTex = useClipFrame(clipSrc);
@@ -255,7 +256,7 @@ const Picture: React.FC<{plan: Plan; clips: Clip[]}> = ({plan, clips}) => {
   return (
     <AbsoluteFill style={{background: plan.system.colors.bg}}>
       <Stage pose={{position: [0, 0, D], target: [0, 0, 0], roll: 0, fov: FOV}} travel={travel} background={plan.system.colors.bg}
-        over={<><Words plan={plan} t={t} /><MoveLayer line={plan.line} look={plan.look} t={t} bars={f.bars} closer={plan.closer} /></>}>
+        over={<><Words plan={plan} t={t} /><MoveLayer line={plan.line} look={plan.look} t={t} now={frame / plan.pulse} bars={f.bars} closer={plan.closer} /></>}>
         {/* the last stop stays under the closer, which dims it, covers it or lays the page over it as the card's closer does */}
         <Scene plan={plan} t={t} frame={Math.min(frame, still)} still={still} clips={clips} />
       </Stage>

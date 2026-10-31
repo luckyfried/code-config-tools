@@ -10,8 +10,8 @@ USAGE (from the workspace root; S = this skill's folder; the files named below a
                                          # from the board picked before (the music, the timed films, the clips, the
                                          # render, the films and stills in out/, the critics' rounds, the checks and
                                          # the frames) is removed, so the next music.py make starts the look clean
-    python3 S/scripts/vote.py cut        # critic/cut-N.json to fill in for the rendered film (next round N; the
-                                         # newest round again while out/film.mp4 is the film it is for); refused
+    python3 S/scripts/vote.py cut        # critic/cut-N.json to fill in for the newest render (next round N; the
+                                         # newest round again while that film is the one it is for); refused
                                          # until qa.py check and film.py frames have run on this film
     python3 S/scripts/vote.py verdict    # SHIP when the latest round clears the bar, else the worst thing; refused for a
                                          # round whose frames are another film's, or whose paragraphs repeat the round
@@ -26,6 +26,11 @@ its look. The finished cut is scored by the motion designer and the person on th
 The bar: a board or a cut clears it when the mean of its scores is 4.5 or more and no criterion's mean is under 4.
 Means are reported to two places, cut down, never rounded up. A cut still under the bar after its one fix ships as the
 best cut there is, its scores written in brief.md (deliver.py), never on the review page.
+
+Every round before deliver scores the half-size proof (film.py render --proof, out/proof.mp4): `cut` reads the newest
+render and its first line says when that is the proof. Once the full-size film of the same cut is rendered, `cut` moves
+the latest round to it and empties its `type` scores: the critics read the type again on the full-size film, at the
+size a phone shows it, and the round is complete once they have scored it there.
 """
 import argparse
 import hashlib
@@ -34,6 +39,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 
 CRITERIA = {
     "professional": "it looks like a professional motion designer made it",
@@ -199,8 +205,8 @@ def cmd_pick(a):
         _env.write_json("winner.json", dict(win, board=n, name=b["name"], style=b["style"], by="the person" if not a.taste else "their taste",
                                             why=(a.why or "").strip()))
     print(f"picked storyboard {n} ({b['look']}){': ' + a.why.strip() if a.why else ''}; the music, the cut and the film of "
-          "the look before are removed; next: music.py make, storyboard.py snap, film.py preview, qa.py check, music.py master, "
-          "film.py render, deliver.py")
+          "the look before are removed; next: music.py make, storyboard.py snap, film.py preview, music.py master, "
+          "film.py render --proof and the critics' rounds on it, then film.py render, deliver.py")
     return 0
 
 
@@ -213,37 +219,53 @@ def cmd_cut(a):
     round, so cut run again (after a kill, or twice) never spends the one fix on the same film."""
     d = Path("critic")
     d.mkdir(parents=True, exist_ok=True)
-    film = Path("out/film.mp4")
+    scale = proof.scale()
+    film = proof.newest()
+    if scale != 1:
+        print(proof.reading(film))
     # the render report is the index of out/: without it out/ is not one finished render
     if not Path("render/film-report.json").exists() or not film.exists():
-        sys.exit("out/ is not a finished render (render/film-report.json or out/film.mp4 is missing): run film.py render")
+        sys.exit(f"out/ is not a finished render (render/film-report.json or {film} is missing): run film.py render --proof")
     digest = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
-    stale = unread(digest)
+    stale = unread(digest, film)
     if stale:
         sys.exit(stale)
+    cut = hashlib.sha256(Path("film.json").read_bytes()).hexdigest()[:16] if Path("film.json").exists() else None
     rs = rounds()
-    if rs and (_env.read_json(rs[-1]) or {}).get("film") == digest:
-        print(f"round {len(rs)} is already for this out/film.mp4: fill in {rs[-1]}")
+    last = (_env.read_json(rs[-1]) or {}) if rs else {}
+    if last.get("film") == digest:
+        print(f"round {len(rs)} is already for this {film}: fill in {rs[-1]}")
+        return 0
+    if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == cut:
+        # the full-size film of the cut the round scored on its proof: the same round, with the type read at full size
+        last.update(film=digest, scale=1, proof_film=last["film"])
+        for c in CUT_PANEL:
+            last["critics"][c]["boards"]["film"]["scores"]["type"] = None
+        _env.write_json(rs[-1], last)
+        print(f"round {len(rs)} moves to the full-size {film}: as each critic, read the type again on it and on the frames "
+              f"in frames/, at the size a phone shows it, and score type in {rs[-1]}; the other scores stand")
         return 0
     n = len(rs) + 1
     f = d / f"cut-{n}.json"
     data = blank(CUT_PANEL, ["film"])
     data["round"] = n
     data["film"] = digest
+    data["scale"] = scale
+    data["cut"] = cut
     data["fixed"] = "" if n > 1 else None
     _env.write_json(f, data)
-    print(f"round {n}: fill in {f} after watching out/film.mp4 and the frames in frames/"
+    print(f"round {n}: fill in {f} after watching {film} and the frames in frames/"
           + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
     return 0
 
 
-def unread(digest):
-    """Why the film `digest` cannot be scored yet: its measurements (qa.py check) or its frames (film.py frames) are
-    another film's; None when both are this film's."""
+def unread(digest, film="out/film.mp4"):
+    """Why the film `digest` (the file `film`) cannot be scored yet: its measurements (qa.py check) or its frames
+    (film.py frames) are another film's; None when both are this film's."""
     if (_env.read_json("qa/check.json") or {}).get("film") != digest:
-        return "qa/check.json does not describe out/film.mp4: run qa.py check on this render, then vote.py cut"
+        return f"qa/check.json does not describe {film}: run qa.py check on this render, then vote.py cut"
     if (_env.read_json("frames/frames.json") or {}).get("film") != digest:
-        return "frames/ are not cut from out/film.mp4: run film.py frames on this render, then vote.py cut"
+        return f"frames/ are not cut from {film}: run film.py frames on this render, then vote.py cut"
     return None
 
 
@@ -258,7 +280,8 @@ def cmd_verdict(a):
     if not rs:
         sys.exit("no cut scores: run vote.py cut and fill it in")
     data = _env.read_json(rs[-1])
-    stale = unread(data.get("film"))
+    on_proof = data.get("scale") == proof.SCALE
+    stale = unread(data.get("film"), proof.of("out/film.mp4") if on_proof else "out/film.mp4")
     if stale:
         print(f"{rs[-1]} is not a read of the film it is for: {stale}")
         return 1
@@ -276,15 +299,20 @@ def cmd_verdict(a):
         return 1
     res = against(data, CUT_PANEL, "film")
     worst = min((v, k) for k, v in res["criteria"].items())
+    import qa
+    render = qa.full_render()
+    # a round on the proof ends in the full-size render, where the critics read the type once more before deliver
+    full = (f". Render the full-size film ({render}), run qa.py check and film.py frames, then vote.py cut: the critics "
+            "read the type again at full size" if on_proof else "")
     if res["clears"]:
-        print(f"SHIP: round {data.get('round')}, mean {res['mean']:.2f}, every criterion {FLOOR} or more")
+        print(f"SHIP: round {data.get('round')}, mean {res['mean']:.2f}, every criterion {FLOOR} or more" + full)
         return 0
     if len(rs) >= 2:
         print(f"round {data.get('round')}: mean {res['mean']:.2f}, lowest {worst[1]} {worst[0]:.2f}, under the bar. The one fix "
-              "is spent; deliver this cut, the best there is, and deliver.py writes its scores in brief.md")
+              "is spent; deliver this cut, the best there is, and deliver.py writes its scores in brief.md" + full)
         return 2
     print(f"FIX ONCE: mean {res['mean']:.2f}, the worst thing is {worst[1]} ({CRITERIA[worst[1]]}) at {worst[0]:.2f}. Fix it, "
-          "re-render, then run vote.py cut for round 2")
+          f"render the proof again ({render} --proof), run qa.py check and film.py frames, then vote.py cut for round 2")
     return 2
 
 

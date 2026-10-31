@@ -55,7 +55,7 @@ class Asked(unittest.TestCase):
                 Path(j["out"]).write_text("new")
             return {"jobs": len(jobs), "failed": 0, "findings": [], "seconds": 1}
 
-        def mux(silent, out, seconds, run):
+        def mux(silent, out, seconds, film, run):
             os.replace(silent, out)
             return False
         boards = {"reel": board(), "landscape": board(), "square": board()}

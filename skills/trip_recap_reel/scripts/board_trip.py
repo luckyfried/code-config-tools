@@ -12,8 +12,11 @@ middle of the card's music recipe, so every cut lands on a beat of the bed.
 
 Times are in beats from the film's start, at the board's tempo."""
 import json
+import math
 import re
+from pathlib import Path
 
+import sfx
 import style
 from board_parts import compass, km_between, mapped
 
@@ -29,6 +32,12 @@ DATED = {"date-stamp"}
 SETS_WORDS = {"long-fade-title"}
 ANCHORS = ("top", "middle", "bottom")
 MOST_IN_ONE = 0.7  # the share of a board's worded beats one anchor may hold
+# the moves that take the frame and fly the photograph in before it lands (motion/system/moves/move/<id>.tsx), the
+# seconds each flies; a beat with one holds that long and SETTLE more, so its words come on and read once it has landed
+ARRIVES = {"picture-tunnel": 1.1, "exploded-layers": 1.15, "tilted-wall": 1.2}
+SETTLE = 0.3
+LONG_CUT = 2  # beats: a cut this long or longer is a long one
+TITLE_AT = 1.0  # beats into the hook the trip's name comes on (motion/studio/words.tsx)
 
 
 def bpm_of(c):
@@ -77,11 +86,17 @@ def tags_of(src, i, peak):
     return tags
 
 
-def length_of(tags, caption, bpm, hook):
-    """Beats a stop's span runs, from what it holds."""
-    n = read_beats(caption, bpm) + 1
-    n += 2 * ("peak" in tags) + ("people" in tags or "portrait" in tags) + ("place" in tags) - ("wordless" in tags)
-    return max(SHORTEST + hook, min(LONGEST, n + 2 * hook))
+def length_of(tags, caption, bpm, hook, move=None):
+    """Beats a stop's span runs, from what it holds; a move that flies the photograph in holds it at least until its
+    words have read after the landing."""
+    read = read_beats(caption, bpm)
+    n = read + 1 + 2 * ("peak" in tags) + ("people" in tags or "portrait" in tags) + ("place" in tags) - ("wordless" in tags)
+    return max(SHORTEST + hook, min(LONGEST, n + 2 * hook), landing(move, bpm) + read + 1 if move in ARRIVES else 0)
+
+
+def landing(move, bpm):
+    """Whole beats at `bpm` a move that flies the photograph in takes to land and settle; none for any other move."""
+    return math.ceil((ARRIVES[move] + SETTLE) * bpm / 60) if move in ARRIVES else 0
 
 
 def leaning(s, move):
@@ -117,14 +132,14 @@ def anchors(leans, fixed):
 
 def board(src, c):
     """The board's own parts in the look `c`: the route of stops with their times, the beats with their moves, cuts, words
-    and anchors, the sound cues, the clips."""
+    and anchors, what the film sounds, the clips."""
     bpm = bpm_of(c)
     st = src["stops"]
     legs = legs_of(src)
     on_map = mapped(src)
     peak = max(range(1, len(st)), key=lambda i: (legs[i][0], -i)) if len(st) > 1 else None
     beats, stops, t = [], [], 0.0
-    used_m, used_t, prev = {}, {}, None
+    used_m, used_t, prev, prev_cut = {}, {}, None, None
     # a look that ends on their closing line takes it from the last stop that has one; a line short enough to read on a
     # phone is said once, as the last thing on screen, and that stop plays wordless, and a longer line plays whole on its
     # stop while the closer holds its last phrase, the way a film comes back to the line it just said
@@ -136,14 +151,20 @@ def board(src, c):
         tags = tags_of(src, i, peak)
         form = "title" if i == 0 else ("clip" if s.get("clip") else "photo")
         caption = "" if i == held else onscreen(s.get("caption"))
-        n = length_of(tags, caption, bpm, i == 0)
-        # the hook's move is chosen for the title first; a later beat's form counts as one more thing it holds, so what
-        # is in the photograph decides its move and its cut, except a clip, whose own motion wants a move made for one
+        # the hook opens on a move the card makes for its title; a later beat's form counts as one more thing it holds, so what
+        # is in the photograph decides its move and its cut; their own clip plays where the photograph would have been,
+        # so it takes the move and the cut the photograph would have taken
         # a stop whose card stands the photograph in a box of its own never takes a move that lays a print or a margin of
         # its own over the page: that print would sit inside the card's print and its paper would cover the card's line
         moves = c["moves"] if i == 0 or full_frame(c) else [m for m in c["moves"] if m["id"] not in WINDOWED] or c["moves"]
-        move = style.pick(moves, tags, form, used_m, prev) if i == 0 else style.pick(moves, tags | {form}, "clip" if form == "clip" else "", used_m, prev)
-        cut = None if i == 0 else style.pick(c["transitions"], tags | {form}, "", used_t, None)
+        seen = (tags - {"clip"}) | {"photo"}
+        opens = [m for m in moves if "title" in m["fits"]] or moves
+        ahead = {m["id"] for m in moves if m.get("once") and "photo" in m["fits"]} if peak is not None and i < peak else set()
+        move = style.pick(opens, tags, form, used_m, prev, ahead) if i == 0 else style.pick(moves, seen, "", used_m, prev, ahead)
+        # a long cut never follows a long cut: a stop between two plays half of each over its picture and holds longest
+        short = [x for x in c["transitions"] if cut_beats(x["id"]) < LONG_CUT] if cut_beats(prev_cut) >= LONG_CUT else []
+        cut = None if i == 0 else style.pick(short or c["transitions"], seen, "", used_t, None)
+        n = length_of(tags, caption, bpm, i == 0, move)
         km, brg = legs[i]
         stops.append({"name": s["name"], "place": s["place"], "city": s.get("city"), "photo": s["photo"], "aspect": s["aspect"],
                       "long": s.get("long"), "near": s["points"]["near"], "far": s["points"]["far"], "caption": caption,
@@ -152,14 +173,33 @@ def board(src, c):
                       "at": t, "end": t + n})
         label = s["date"] if move in DATED else s["name"]
         beats.append({"id": "hook" if i == 0 else f"stop-{i + 1}", "form": form, "bars": n / 4, "move": move, "transition": cut,
-                      "tags": sorted(tags), "words": caption, "label": label, "peak": i == peak, "stops": [i]})
-        prev, t = move, t + n
+                      "fly": ARRIVES.get(move, 0.0), "tags": sorted(tags), "words": caption, "label": label, "peak": i == peak,
+                      "stops": [i]})
+        prev, prev_cut, t = move, cut, t + n
+    closing = style.pick(c["transitions"], {"closer"}, "closer", used_t, None)
+    # a stop's line reads between the cut into its beat and the cut out of it, each of which plays half its length over
+    # the beat, so a stop holds those halves, a flown-in photograph's landing and settle, the label's lead and the line's
+    # fade on top of the time its line takes to read
+    # fade on top of the time its line takes to read; the peak holds at least as long as any other stop after the hook
+    cuts = [b["transition"] for b in beats[1:]] + [closing]
+    for i, b in enumerate(beats):
+        if i and b["words"]:
+            landed = (b["fly"] + SETTLE) * bpm / 60 if b["fly"] else 0.0
+            need = (max(0.25, cut_beats(b["transition"]) / 2, landed) + 0.5 + read_beats(b["words"], bpm)
+                    + max(0.5, cut_beats(cuts[i]) / 2) + 0.6)
+            b["bars"] = max(b["bars"], math.ceil(need) / 4)
+    if peak is not None:
+        beats[peak]["bars"] = max(b["bars"] for b in beats[1:])
+    t = 0
+    for st_i, b in zip(stops, beats):
+        st_i["at"], st_i["end"] = t, t + 4 * b["bars"]
+        t = st_i["end"]
     leans = [leaning(s, b["move"]) if b["words"] or b["form"] == "title" else None for s, b in zip(st, beats)]
     fixed = {0: "middle"} if c["closer"] == "title-card" else {}
     for b, a in zip(beats, anchors(leans, fixed)):
         b["anchor"] = a
     beats.append({"id": "closer", "form": "closer", "bars": CLOSER, "move": None,
-                  "transition": style.pick(c["transitions"], {"closer"}, "closer", used_t, None), "tags": ["closer"],
+                  "transition": closing, "tags": ["closer"],
                   "words": "", "label": "", "peak": False, "anchor": None, "stops": list(range(len(st)))})
     trip = src["trip"]
     signoff = echo or (onscreen(st[held].get("caption")) if held is not None else f"{trip['range']} {trip['year']}")
@@ -167,7 +207,20 @@ def board(src, c):
     r = {"title": trip["label"], "kicker": f"{trip['range']} {trip['year']}", "stops": stops, "mapped": on_map,
          "closer": closer_of(t, bpm), "signoff": signoff or trip["label"],
          "handle": "" if handle in ("", "you") else (handle if handle.startswith("@") else f"@{handle}")}
-    return {"bpm": bpm, "route": r, "beats": describe(r, beats, c), "sound": sound(r, beats), "clips": clips(r, src, bpm)}
+    out = {"bpm": bpm, "route": r, "beats": describe(r, beats, c), "clips": clips(r, src, bpm)}
+    return dict(out, sound=sound(out))
+
+
+CUTS = Path(__file__).resolve().parents[1] / "motion" / "system" / "moves" / "cut"
+
+
+def cut_beats(cut):
+    """The beats a cut plays, as its file in the film's system (motion/system/moves/cut/<id>.tsx) gives them; none for
+    no cut."""
+    if not cut:
+        return 0.0
+    m = re.search(r"beats:\s*([\d.]+)", (CUTS / f"{cut}.tsx").read_text())
+    return float(m.group(1)) if m else 0.0
 
 
 # the moves that lay the picture on a page through a print or a margin of their own (motion/system/moves/move/<id>.tsx);
@@ -224,27 +277,45 @@ def describe(r, beats, c):
     return beats
 
 
-def sound(r, beats):
-    """The film's sound cues, each where something lands, at a named beat (`at` in beats) for music.py to mix under the
-    bed: a hit on the first frame as the trip's name lands, a hit on every cut (heaviest into the peak), a soft bright note
-    as each beat's words settle, a tick where the camera lands on what the photograph looks at; a riser over the last two
-    beats before the closer, the impact as the closer opens, a hit as its last words land, and the stop, where the bed
-    cuts and the picture holds silent."""
-    C = r["closer"]
-    cues = [{"kind": "hit", "at": 0.0, "beat": "hook", "what": "the first photograph opens and the trip's name lands on it", "weight": 0.8, "bright": 0.4}]
-    for b, s in zip(beats, r["stops"]):
-        if b["id"] != "hook":
-            cues.append({"kind": "hit", "at": s["at"], "beat": b["id"], "what": f"the cut to {s['name']}",
-                         "weight": 0.85 if b["peak"] else 0.6, "bright": 0.5})
-        if b["words"] or b["anchor"]:
-            cues.append({"kind": "hit", "at": s["at"] + 1.0, "beat": b["id"], "what": f"the words settle on {s['name']}", "weight": 0.25, "bright": 0.8})
-        cues.append({"kind": "hit", "at": s["end"] - 1.0, "beat": b["id"], "what": f"the camera lands on what {s['name']}'s photograph looks at",
-                     "weight": 0.3, "bright": 0.7})
-    cues.append({"kind": "riser", "at": round(C["at"] - 2, 3), "beats": 2.0, "beat": beats[-2]["id"], "what": "the build into the closer"})
-    cues.append({"kind": "impact", "at": C["at"], "beat": "closer", "what": "the closer opens"})
-    cues.append({"kind": "hit", "at": round(C["at"] + 1.5, 3), "beat": "closer", "what": "the closer's last words land", "weight": 0.6, "bright": 0.7})
-    cues.append({"kind": "stop", "at": C["still"], "beat": "closer", "what": "the picture and the music stop together"})
-    return sorted(cues, key=lambda x: x["at"])
+def fx_board(b):
+    """The board as the shared effects read it (sfx.py): each beat's form, move and cut, where it starts, where its
+    picture lands, and the words on it, in beats from the film's start at the board's tempo."""
+    r, out, at = b["route"], [], 0.0
+    for x in b["beats"]:
+        end = at + 4 * x["bars"]
+        kind = {"title": "Title", "closer": "Closer"}.get(x["form"], "Photo")
+        layer = {"kind": kind, "at": {"arrive": at + (x.get("fly") or 0.0) * b["bpm"] / 60, "end": end}}
+        if kind == "Title":
+            # the trip's name comes on TITLE_AT beats in and lands on an impact
+            layer.update(title={"text": r["title"]}, slam=[at + TITLE_AT, 0])
+        elif kind == "Closer":
+            layer["signoff"] = {"text": r["signoff"]}
+        else:
+            layer.update(label=x.get("label") or "", text=x.get("words") or "")
+        out.append({"id": x["id"], "form": x["form"], "move": x.get("move"), "transition": x.get("transition"), "start": at,
+                    "layers": [layer]})
+        at = end
+    return {"id": b.get("id") or r["title"], "bpm": b["bpm"], "beats": out}
+
+
+SOUNDS = {"air": "a soft air into {name}", "sweep": "the cut to {name} sweeps past", "bright": "the cut to {name}, the film's one bright sweep",
+          "shutter": "{name}'s photograph lands", "pop": "the mark lands on {name}", "riser": "the build into the closer"}
+
+
+def sound(b):
+    """What the film sounds, each where something lands (`at` in beats), for storyboard.md and the checks: the shared
+    effects (sfx.py) the film is mixed with as it renders, each on the nearest quarter beat; then the stop, where the
+    music cuts and the picture holds silent. The hook's title lands on an impact and the closer opens on one."""
+    fb, sec = fx_board(b), 60 / b["bpm"]
+    names = {x["id"]: (b["route"]["stops"][x["stops"][0]]["name"] if x["form"] != "closer" else "the closer") for x in b["beats"]}
+    out = []
+    for t, kind in sfx.events(fb)[0]:
+        at = round(t / sec, 3)
+        beat = [x["id"] for x in fb["beats"] if x["start"] <= at + 1e-6][-1]
+        what = ("the trip's name lands" if beat == "hook" else "the closer opens") if kind == "impact" else SOUNDS[kind]
+        out.append({"kind": kind, "at": at, "beat": beat, "what": what.format(name=names[beat])})
+    out.append({"kind": "stop", "at": b["route"]["closer"]["still"], "beat": "closer", "what": "the picture and the music stop together"})
+    return sorted(out, key=lambda x: x["at"])
 
 
 MOVES = {

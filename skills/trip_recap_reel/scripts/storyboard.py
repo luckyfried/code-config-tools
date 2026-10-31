@@ -44,7 +44,7 @@ check re-solves each board from its source and its card (so an edit goes in the 
 
 snap times the picked board at the music's tempo (doubled or halved into the octave around the board's, from the track's
 first downbeat) and reads the timed cut for monotony before anything renders: it refuses a span that holds more than
-two bars with nothing sounding.
+two bars with nothing landing.
 """
 import argparse
 import copy
@@ -375,9 +375,10 @@ def write_md(board, path):
     the music's tempo and the film's length, with the music's origin and loudness from music.json."""
     r = board["route"]
     m = _env.read_json("music.json") or {}
-    mixed = (f"bed {m['bed_lufs']} LUFS, effects {m['fx_lufs']} LUFS, {m['bed_lufs'] - m['fx_lufs']:.1f} LU under; "
-             f"{len(board['sound'])} sound cues over {len(board['beats'])} beats" if "fx_lufs" in m and board.get("seconds")
-             else "not yet; music.py master writes the bed's and the effects' loudness here")
+    fx = [c for c in board["sound"] if c["kind"] != "stop"]
+    mixed = (f"the music mastered to {m['master_lufs']} LUFS; {len(fx)} effects over {len(board['beats'])} beats, laid under it on "
+             f"its grid and in its key as the film renders (sfx.py)" if "master_lufs" in m and board.get("seconds")
+             else "not yet; music.py master writes the music's loudness here")
     L = [f"# {board['name']}", "", f"The look: {board['look']} ({board['style']}). {board['sentence']}", "", board["idea"], "",
          f"Music: {m.get('origin') or 'none yet (music.py make)'}.", f"Mixed: {mixed}.", "",
          f"{len(board['beats'])} beats on {sum(b['bars'] for b in board['beats']):g} bars at {board['bpm']:g} bpm"
@@ -508,7 +509,7 @@ def tempo_of(board, music):
 
 def film_of(board, music, fmt):
     """The board at the music's tempo in one format: each span's frames from its bars, the cuts, the frames the stills
-    are taken at, and the board's sound cues for music.py."""
+    are taken at, and what the film sounds."""
     out = copy.deepcopy(board)
     out.pop("source", None)
     bpm, offset = tempo_of(board, music or {})
@@ -524,9 +525,9 @@ def film_of(board, music, fmt):
     out["timeline"] = timeline(out)
     out["cuts"] = [round(t["start_s"], 3) for t in out["timeline"][1:]]
     r = out["route"]
-    # the closer's held still is HOLD seconds at the tempo the film plays at, and its cues move with it
+    # the closer's held still is HOLD seconds at the tempo the film plays at, and its stop moves with it
     r["closer"] = board_trip.closer_of(r["closer"]["at"], bpm)
-    out["sound"] = board_trip.sound(r, out["beats"])
+    out["sound"] = board_trip.sound(out)
     rest = lambda beat: jround(beat * pulse)
     shots = [b for b in out["beats"] if b["form"] != "closer"]
     out["rests"] = dict({b["id"]: rest(b["end"] - 0.7) for b in shots},
@@ -546,16 +547,19 @@ def film_of(board, music, fmt):
 
 
 def monotony(film):
-    """The monotony read of a timed cut: a span that holds more than two bars with nothing sounding (a cue sounds where
-    something lands), and every shot within SPREAD of one length."""
+    """The monotony read of a timed cut: a span that holds more than two bars with nothing landing (a sound, the
+    picture landing, its words settling, the camera coming to rest on what the photograph looks at), and every shot
+    within SPREAD of one length."""
     out = [t for t in look_findings(film, film["beats"], {b["id"]: b["frames"] for b in film["beats"]}) if "no rhythm" in t]
     start = 0.0
     for b in film["beats"]:
         end = start + 4 * b["bars"]
-        ev = sorted({start, end} | {c["at"] for c in film["sound"] if start <= c["at"] <= end})
+        landed = start + (b.get("fly") or 0.0) * film["bpm"] / 60
+        lands = {landed, landed + 1.0, end - 1.0} if b["form"] != "closer" else set()
+        ev = sorted({start, end} | {x for x in lands if start <= x <= end} | {c["at"] for c in film["sound"] if start <= c["at"] <= end})
         gap = max((y - x for x, y in zip(ev, ev[1:])), default=0)
         if gap > 8:
-            out.append(f"{b['id']} holds {gap * 60 / film['bpm']:.1f} s ({gap:g} musical beats) with nothing sounding")
+            out.append(f"{b['id']} holds {gap * 60 / film['bpm']:.1f} s ({gap:g} musical beats) with nothing landing")
         start = end
     return out
 
@@ -597,7 +601,7 @@ def cmd_snap(a):
     studio.public()
     f = films["reel"]
     print(f"board {bid} ({board['style']}): {len(f['beats'])} spans on {sum(x['bars'] for x in f['beats']):g} bars at {f['bpm']:g} bpm, "
-          f"{len(f['sound'])} sound cues, the stop at {f['route']['closer']['still'] * 60 / f['bpm']:.2f} s; {f['seconds']:.1f} s "
+          f"{len(f['sound']) - 1} sounds, the stop at {f['route']['closer']['still'] * 60 / f['bpm']:.2f} s; {f['seconds']:.1f} s "
           f"-> film.json ({film_hash()}), film-landscape.json, film-square.json")
     return 0
 

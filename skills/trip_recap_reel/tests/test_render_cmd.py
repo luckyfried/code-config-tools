@@ -46,7 +46,7 @@ class RenderCommand(unittest.TestCase):
         for name in ("film.mp4", "story-1.png", "story-2.png", "story-3.png"):
             (self.d / "out" / name).write_text("earlier")
 
-    def mux(self, silent, out, seconds, run):
+    def mux(self, silent, out, seconds, film, run):
         os.replace(silent, out)
         return False
 
@@ -85,7 +85,7 @@ class RenderCommand(unittest.TestCase):
         Path("timeline.json").write_text("{}")
         before, seen, moved = self.earlier(), [], []
 
-        def mux(silent, out, seconds, run):
+        def mux(silent, out, seconds, film, run):
             seen.append(self.earlier())
             os.replace(silent, out)
             return False

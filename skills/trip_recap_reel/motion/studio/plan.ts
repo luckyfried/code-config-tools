@@ -8,9 +8,13 @@ import type {Timeline} from '../system/moves/layer';
 import type {Beat, Board, Stop, System} from '../system/types';
 
 /** The moves that set a beat's label or words themselves: the film's own words leave that part to them. A doodle on a
- * photograph draws round the print and sets no word, so the film sets the place's name under it. */
+ * photograph draws round the print and sets no word, so the film sets the place's name under it; slammed words are the
+ * beat's line, and the film still sets the place's name once the frame is back on the picture. */
 export const LABELS = new Set(['date-stamp', 'polaroid-drop', 'sticker-pop']);
-export const LINES = new Set(['long-fade-title']);
+export const LINES = new Set(['long-fade-title', 'slam-words']);
+
+/** Seconds after a flown-in photograph lands before its words come on, so they read on a picture that has settled. */
+export const SETTLE = 0.3;
 
 export type Shot = {
   beat: Beat;
@@ -23,6 +27,8 @@ export type Shot = {
   line: [number, number, number, number];
   /** the beats the picture holds still in its place: from when it has landed to when its words start to leave */
   held: [number, number];
+  /** the beats from the cut until the move that flies the photograph in has landed it (0 for every other move) */
+  fly: number;
   /** the card's print dress: rim (px), tilt (degrees), tape strips */
   rim: number;
   tilt: number;
@@ -93,20 +99,40 @@ export const planOf = (board: Board): Plan => {
     const [bx, by, bw, bh] = boxed ? lay.box : [0, 0, 1, 1];
     const box: [number, number, number, number] = [bx * W, by * H, (bx + bw) * W, (by + bh) * H];
     const full = !boxed || (bx === 0 && by === 0 && bw === 1 && bh === 1);
-    // a pasted print lands over its first beat and a half; a photograph over the whole frame is in place from its cut
-    const held: [number, number] = [full ? at : at + 1.4, leaveOf(board.beats, i, end) - 0.6];
-    const shot: Shot = {beat: {...b, at, end}, index: i, stop, box, full, line: within(area, lay.line), held,
-      rim: full ? 0 : pic.rim * W, tilt: full ? 0 : pic.tilt, tape: full ? 0 : pic.tape};
+    const fly = ((b.fly ?? 0) * fps) / pulse;
+    // a move that flies the photograph in holds it from its landing; otherwise a pasted print lands over its first
+    // beat and a half, and a photograph over the whole frame is in place from its cut
+    const held: [number, number] = [at + (fly ? fly : full ? 0 : 1.4), leaveOf(board.beats, i, end) - 0.6];
+    const shot: Shot = {beat: {...b, at, end}, index: i, stop, box, full, line: within(area, lay.line), held, fly,
+      rim: full ? 0 : pic.rim * W, tilt: full || fly ? 0 : pic.tilt, tape: full ? 0 : pic.tape};
     shots.push(shot);
-    // a stop's move is handed where its photograph stands, where its words stand, and the beats it holds still, so a
-    // mark drawn on the photograph sits on it and is gone before the cut out
-    return {id: b.id, form: b.form, at, end, move: b.move ?? undefined, transition: b.transition, words, label, peak: b.peak,
-      ...(title ? {} : {box, type: shot.line, held})};
+    // a stop's move is handed where its photograph stands, where its words stand, the beats it holds still, its
+    // photograph and the place's name, so a mark drawn on the photograph sits on it and is gone before the cut out and
+    // a photograph flown in lands where the camera holds it; their own clip plays where the photograph would have, so
+    // its move sees a photo beat
+    const form = b.form === 'clip' ? 'photo' : b.form;
+    const photo = staticFile(stop.photo);
+    return {id: b.id, form, at, end, move: b.move ?? undefined, transition: b.transition, words, label, peak: b.peak, photo,
+      ...(title ? {} : {box, type: shot.line, held, say: stop.name})};
   });
   const plan = {W, H, fps, pulse, system: sys, area, line: {beats, cuts: beats.map((b) => b.at)}, shots, title: r.title, kicker: r.kicker,
     closer: {name: sys.closer, at: r.closer.at, still: r.closer.still},
     move: bezier(sys.ease.move), enter: bezier(sys.ease.enter), exit: bezier(sys.ease.exit)};
+  // where each stop's photograph lies in the frame once the camera holds it, as the camera frames it at the landing
+  for (const shot of plan.shots) {
+    const on = beats[shot.index];
+    if (on) on.place = placeOf(plan as Plan, shot, shot.held[0]);
+  }
   return {...plan, look: lookOf(board, plan.shots)};
+};
+
+/** Where the whole photograph lies in the frame at `t` when the camera frames the shot's box the way `cropAt` does,
+ * [x, y, w, h] px. */
+const placeOf = (plan: Plan, shot: Shot, t: number): [number, number, number, number] => {
+  const c = cropAt(plan, shot, t, {});
+  const [x0, y0, x1] = shot.box;
+  const k = (x1 - x0) / c.cw;
+  return [x0 - (c.x - c.cw / 2) * k, y0 - (c.y - c.ch / 2) * k, k, c.A * k];
 };
 
 /** A card's color, a role or a hex, as a hex. */
@@ -143,7 +169,9 @@ const lookOf = (board: Board, shots: Shot[]): Look => {
       rim: pic.rim * W, tilt: pic.tilt, tape: pic.tape,
     },
     finished: f.words !== 'clean',
+    safe: sys.safe[board.format.name || 'reel'] ?? sys.safe.reel,
     photo: shots[0] ? staticFile(shots[0].stop.photo) : undefined,
+    photos: [...new Set(shots.map((s) => s.stop.photo))].map((f) => staticFile(f)),
   };
 };
 
@@ -155,6 +183,15 @@ export const shotAt = (plan: Plan, t: number): Shot | undefined => {
 };
 
 /** A point between two, by `u`. */
+/** The last stop under the closer: its box glides to the frame's middle over the closer's first CLOSING beats, so the
+ * picture fills the band the closer's bars leave open around its words at the middle of the frame. */
+export const CLOSING = 2;
+export const closingOf = (plan: Plan, shot: Shot, t: number): Shot => {
+  const u = clamp01((t - plan.closer.at) / CLOSING);
+  const dy = (plan.H / 2 - (shot.box[1] + shot.box[3]) / 2) * u * u * (3 - 2 * u);
+  return Math.abs(dy) < 0.5 ? shot : {...shot, box: [shot.box[0], shot.box[1] + dy, shot.box[2], shot.box[3] + dy]};
+};
+
 export const toward = (a: [number, number], b: [number, number], u: number): [number, number] => [SHARE(a[0], b[0], u), SHARE(a[1], b[1], u)];
 
 /**

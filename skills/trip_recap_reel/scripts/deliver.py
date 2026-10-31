@@ -22,6 +22,9 @@ the gate has passed it carries one saying so. deliver holds the run's render loc
 write, so a render running in the run refuses it, and no render changes out/ while it writes. On a green gate its
 last line is the reel's path from the project's root (build/<run>/out/film.mp4), the path the reply names first;
 on a failed gate it is "not ready: the gate failed on" and the failing checks, and no path.
+deliver delivers only the full-size films: when the newest render is the half-size proof (out/proof.mp4) it refuses
+before it writes anything and names the full-size render, qa.py check, film.py frames and vote.py cut to run first,
+where the critics read the type at full size.
 """
 import html
 import os
@@ -32,6 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import proof  # noqa: E402
 import qa  # noqa: E402
 import studio  # noqa: E402
 import vote  # noqa: E402
@@ -302,6 +306,10 @@ def main():
     _env.need("PIL")
     _env.ffmpeg(), _env.ffprobe()
     with studio.lock("deliver") as run:
+        if proof.scale(OUT / "film.mp4") != 1:
+            sys.exit(proof.refusal(OUT / "film.mp4", then=f"{qa.full_render()} for the full-size films, then qa.py check, "
+                                   "film.py frames and vote.py cut, where the critics read the type at full size, then "
+                                   "deliver.py again"))
         return deliver(run)
 
 

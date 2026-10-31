@@ -17,6 +17,16 @@ TRIO = ("cinematic-letterbox", "analog-home-movie", "scrapbook")
 AXES = ("family", "palette", "camera", "transition", "finish", "music")
 MOST_SHARED = 2  # two looks of one run may name the same word on at most this many axes
 SAFE = {k: v for k, v in json.loads((SKILL / "design" / "safe-areas.json").read_text()).items() if k != "about"}
+# The kit's reading of the shared cards' moves (styles/ is the shared layer's and changes only there). Each card carries
+# its look's frame-taking moves and marks a calm look's one `once`; MORE_MOVES are the trailer moves a trip adds beyond
+# its card, each with the beats it fits: the cinematic look also bursts a photograph into layers, and the kinetic look
+# also hangs the wall of prints.
+MORE_MOVES = {
+    "cinematic-letterbox": [{"id": "exploded-layers", "fits": ["photo", "peak", "place"]}],
+    "kinetic-type": [{"id": "tilted-wall", "fits": ["photo", "wall", "landscape"]}],
+}
+# LEFT_OUT are moves no trip look takes: the counter puts a number on screen, and nothing on a trip's screen is a count.
+LEFT_OUT = {"counter"}
 
 _CARDS = {}
 
@@ -39,7 +49,7 @@ def missing(c):
 
 
 def card(style):
-    """The style card `style`, or SystemExit naming the looks there are."""
+    """The style card `style` with the kit's reading of its moves, or SystemExit naming the looks there are."""
     if style not in _CARDS:
         f = STYLES / f"{style}.json"
         if not f.is_file():
@@ -48,6 +58,9 @@ def card(style):
         bad = missing(c)
         if bad:
             raise SystemExit(f"styles/{style}.json is not a whole style card: " + "; ".join(bad))
+        own = [m for m in c["moves"] if m["id"] not in LEFT_OUT]
+        have = {m["id"] for m in own}
+        c["moves"] = own + [m for m in MORE_MOVES.get(style, []) if m["id"] not in have]
         _CARDS[style] = c
     return _CARDS[style]
 
@@ -105,10 +118,16 @@ def tags_of(beat):
     return {t for t in beat.get("tags", []) if t} | {beat["form"]}
 
 
-def pick(options, tags, form, used, avoid):
+def pick(options, tags, form, used, avoid, held=()):
     """The move or transition for a beat: the option whose `fits` best matches the beat's form and content, the one used
-    least so far on a tie, never `avoid` (the previous beat's move) when another is allowed."""
-    pool = [o for o in options if o["id"] != avoid] or options
+    least so far on a tie, never `avoid` (the previous beat's move) when another is allowed, and never a `once` option
+    a second time. A `once` option wins the story's peak: on the peak beat the unplayed `once` options that fit its form
+    (a photograph, where `form` is empty) are the only ones picked from, and the ids in `held` (the `once` options a peak
+    still to come will take) are never picked before it."""
+    pool = [o for o in options if o["id"] != avoid and o["id"] not in held and not (o.get("once") and used.get(o["id"]))] or \
+        [o for o in options if o["id"] not in held and not (o.get("once") and used.get(o["id"]))] or options
+    if "peak" in tags:
+        pool = [o for o in pool if o.get("once") and (form or "photo") in o["fits"] and not used.get(o["id"])] or pool
     score = lambda o: 2 * (form in o["fits"]) + len((tags - {form}) & set(o["fits"]))
     best = max(pool, key=lambda o: (score(o), -used.get(o["id"], 0), -options.index(o)))
     used[best["id"]] = used.get(best["id"], 0) + 1

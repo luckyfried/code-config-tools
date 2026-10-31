@@ -3,22 +3,30 @@
 
 USAGE (from the workspace root; S = this skill's folder; the files named below are in the run's folder, build/<run>/):
     python3 S/scripts/film.py preview  # the reel at half size, measured: preview/film.mp4, preview/preview.json, strips
-    python3 S/scripts/film.py render   # out/film.mp4 (1080x1920), out/cover.png (1080x1920) and frames/
-    python3 S/scripts/film.py render --also landscape square stories
+    python3 S/scripts/film.py render --proof
+                                       # the proof, every round before deliver: the reel at half size as out/proof.mp4
+                                       # (540x960), with the cover, the story cards and frames/ as the full render makes them
+    python3 S/scripts/film.py render   # the deliver render, full size: out/film.mp4 (1080x1920), out/cover.png
+                                       # (1080x1920) and frames/
+    python3 S/scripts/film.py render --also landscape square stories [--proof]
                                        # and, naming only what the person asked for, out/film-16x9.mp4 (1920x1080),
-                                       # out/film-square.mp4 (1080x1080), out/story-1.png .. out/story-5.png (1080x1920)
+                                       # out/film-square.mp4 (1080x1080), out/story-1.png .. out/story-5.png (1080x1920);
+                                       # with --proof, out/proof-16x9.mp4 and out/proof-square.mp4 at half size
     python3 S/scripts/film.py frames   # frames/strip-<beat>.png (12 frames across each beat) and frames/film-strip.png
-                                       # (the film at 1 fps), from out/film.mp4; frames/frames.json names that film
+                                       # (the film at 1 fps), from the newest render (out/proof.mp4 while it is there,
+                                       # else out/film.mp4); frames/frames.json names that film
 
 The engine is the studio composition built into S/motion/dist, drawn frame by frame in a headless browser by
 scripts/render.py; with a graphics card it draws and encodes there (studio.py). film.json, film-landscape.json and film-square.json (storyboard.py snap) are one storyboard timed once
-and framed for three pictures: the same spans, cues and photographs, the camera framing each picture's own shape.
+and framed for three pictures: the same spans, sounds and photographs, the camera framing each picture's own shape.
 
 preview is what the critic's timed read looks at before the film renders: the cuts as planned and as the picture
 shows them, the luma line and its quiet seconds, and the 1 and 2 fps strips. render writes the silent reel, and the
-other formats --also names, to render/silent/, lays the mastered music under each (music/master.wav from music.py
-master, AAC 192 kbps, 48 kHz; a film whose encoded peak is over -1.6 dBTP is muxed again with its audio trimmed by the
-overshoot), and takes the stills from the films' rests: the cover (out/cover.png) is the reel at its closer's held
+other formats --also names, to render/silent/, lays the film's sound under each: the shared effects (sfx.py, made from
+the board: a whoosh on every cut, a shutter as every photograph lands, an impact as the trip's name lands and as the
+closer opens, a riser into it, the room under it all, on the film's beat grid and in the music's key) over the mastered
+music (music/master.wav from music.py master), music and effects mastered together by the shared mux to -14 LUFS
+under -1.5 dBTP in one encode, AAC 192 kbps, 48 kHz. Then it takes the stills from the films' rests: the cover (out/cover.png) is the reel at its closer's held
 still, the look's own closer, the picture the reel posts with; the story cards (--also stories) are the reel at the rests
 film.json names in `stories`, and frames/ holds every rest of every rendered format for the critics. An extra an
 earlier render left in out/ that this render was not asked for is taken away. render/film-report.json carries every
@@ -26,17 +34,23 @@ finding the composition logged and what the render made (`made`: its formats and
 reads the report. A render that changes out/ removes out/review.html first, so the page deliver.py writes never
 stands beside films it did not check. preview and render take the run's render lock before their first write into
 the run, so a second render in the same run is refused before it changes anything.
+--proof renders every film at half size (proof.py) beside the film in out/, never over it, and the stills as the full
+render makes them; a full render takes the proof's films out of out/, so out/proof.mp4 is there only while the newest
+render is the proof, which qa.py check, film.py frames and vote.py cut read and deliver.py refuses. The render report's
+`scale` says which render it was.
 """
 import argparse
 import hashlib
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import board_trip  # noqa: E402
+import proof  # noqa: E402
+import sfx  # noqa: E402
 import studio  # noqa: E402
 
 FPS = 30
@@ -77,36 +91,17 @@ def cmd_preview(a, run):
     return 0
 
 
-def peak_of(path, run):
-    r = run.spawn([_env.ffmpeg(), "-hide_banner", "-nostats", "-i", str(path), "-af", "ebur128=peak=true:framelog=quiet", "-f", "null", "-"],
-                  capture_output=True, text=True)
-    got = re.findall(r"Peak:\s+(-?[\d.]+) dBFS", r.stderr)
-    return float(got[-1]) if got else -99.0
-
-
-def mux(silent, out, seconds, run):
-    """The silent film with the master music.json names under it, made under a temporary name and moved to `out` whole;
-    the ffmpeg processes start through the command's lock (`run.spawn`)."""
-    named = (_env.read_json("music.json") or {}).get("master")
-    master = Path(named) if named and Path(named).exists() else None
+def mux(silent, out, seconds, film, run):
+    """The silent film with the shared sound effects (sfx.py: made from the board, on the film's beat grid and in the
+    music's key) and the master music.json names under them, music and effects mastered together by the shared mux to
+    -14 LUFS under -1.5 dBTP in one encode, made under a temporary name and moved to `out` whole; the ffmpeg processes
+    start through the command's lock (`run.spawn`). The film's tempo is the track's own, doubled or halved into the
+    board's octave, so the effects take the film's tempo as the music's grid."""
+    record = dict(_env.read_json("music.json") or {}, bpm=film["bpm"])
     part = _env.part(out)
-
-    def once(trim):
-        cmd = [_env.ffmpeg(), "-y", "-v", "error", "-i", str(silent)]
-        if master is not None:
-            cmd += ["-i", str(master), "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", f"volume={trim:.2f}dB",
-                    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-t", f"{seconds:.3f}"]
-        else:
-            cmd += ["-c:v", "copy"]
-        run.spawn(cmd + ["-movflags", "+faststart", str(part)], check=True)
-    once(0.0)
-    if master is not None:
-        # the AAC encode overshoots the master's peaks by up to about 1 dB on a soft bed
-        peak = peak_of(part, run)
-        if peak > -1.6:
-            once(-1.6 - peak)
+    music = sfx.mux(run.spawn, silent, part, seconds, board_trip.fx_board(film), record, _env.ffmpeg())
     os.replace(part, out)
-    return master is not None
+    return music
 
 
 def cmd_render(a, run):
@@ -118,13 +113,14 @@ def cmd_render(a, run):
     leaves out/ as it was."""
     fs = films()
     also = getattr(a, "also", None) or ()
+    scale = proof.SCALE if getattr(a, "proof", False) else 1
     silent, cards, staged = Path("render/silent"), Path("render/stories"), Path("render/out")
     jobs, made, stories = [], [], []
     names = [k for k in FILMS if (k == "reel" or k in also) and fs[k]]
     for k in names:
-        out = FILMS[k][1]
-        jobs.append(studio.video(fs[k], silent / Path(out).name))
-        made.append((silent / Path(out).name, out, fs[k]["seconds"]))
+        out = FILMS[k][1] if scale == 1 else str(proof.of(FILMS[k][1]))
+        jobs.append(studio.video(fs[k], silent / Path(out).name, scale=scale))
+        made.append((silent / Path(out).name, out, fs[k]["seconds"], fs[k]))
     reel = fs["reel"]
     # the cover is the closer's held still, the look's own closer: the picture the reel posts with
     jobs.append(studio.still(reel, reel["rests"]["closer"], cards / "cover.png"))
@@ -144,8 +140,8 @@ def cmd_render(a, run):
         return 1
     staged.mkdir(parents=True, exist_ok=True)
     music = False
-    for sil, out, secs in made:
-        music = mux(sil, staged / Path(out).name, secs, run)
+    for sil, out, secs, f in made:
+        music = mux(sil, staged / Path(out).name, secs, f, run)
     out_dir = Path("out")
     out_dir.mkdir(exist_ok=True)
     # the render report is qa.py's proof that out/ is this render's: it goes with the review page and comes back
@@ -157,18 +153,24 @@ def cmd_render(a, run):
     for f in out_dir.glob("story-*.png"):
         if f.name not in stories:
             f.unlink()
+    # a proof never touches a full-size film; the full-size films take the proof's place, so out/proof.mp4 stays only
+    # while the newest render is the proof
     for k, (_, out) in FILMS.items():
         if k not in names:
-            Path(out).unlink(missing_ok=True)
+            (Path(out) if scale == 1 else proof.of(out)).unlink(missing_ok=True)
+    for old in (proof.films(out_dir) if scale == 1 else []):
+        old.unlink()
     for name in stories + ["cover.png"]:
         os.replace(cards / name, out_dir / name)
-    for _, out, _ in reversed(made):
+    for _, out, _, _ in reversed(made):
         os.replace(staged / Path(out).name, out)
     _env.write_json("timeline.json", {"fps": FPS, "seconds": reel["seconds"], "beats": reel["timeline"]})
-    _env.write_json(report, dict(rep, made={"formats": names, "stories": bool(stories)}))
-    done = [out for _, out, _ in made] + [f"out/{n}" for n in stories + ["cover.png"]]
+    _env.write_json(report, dict(rep, made={"formats": names, "stories": bool(stories)}, scale=scale))
+    done = [out for _, out, _, _ in made] + [f"out/{n}" for n in stories + ["cover.png"]]
     tail = f"; {reel['seconds']:.1f} s{' with music' if music else ' (no music track)'} -> {', '.join(done)}" if done else ""
-    print(f"rendered {len(jobs)} of {len(jobs)} jobs in {rep.get('seconds', 0):.0f} s{tail}; run deliver.py for the review page")
+    print(f"rendered {len(jobs)} of {len(jobs)} jobs in {rep.get('seconds', 0):.0f} s{tail}"
+          + ("; the half-size proof: run qa.py check, film.py frames and vote.py cut" if scale != 1
+             else "; run deliver.py for the review page"))
     return 0
 
 
@@ -228,9 +230,11 @@ def strips(video, tl, out, per_beat=12):
 
 def cmd_frames(a):
     tl = _env.read_json("timeline.json")
-    film = Path(a.film)
+    film = Path(a.film) if a.film else proof.newest()
     if not tl or not film.exists():
-        sys.exit("out/film.mp4 and timeline.json are needed: run film.py render first")
+        sys.exit(f"{film} and timeline.json are needed: run film.py render --proof first")
+    if film == proof.of("out/film.mp4"):
+        print(proof.reading(film))
     n = strips(film, tl["beats"], a.out)
     # the frames name the film they were cut from, so a critic's round is read from this film's frames and no other
     _env.write_json(Path(a.out) / "frames.json", {"film": hashlib.sha256(film.read_bytes()).hexdigest()[:16]})
@@ -243,7 +247,9 @@ def main():
     ap.add_argument("cmd", choices=["preview", "render", "frames"])
     ap.add_argument("--also", nargs="*", choices=ALSO, default=[],
                     help="render: what the person asked for beyond the reel (the 16:9 film, the square film, the story cards)")
-    ap.add_argument("--film", default="out/film.mp4")
+    ap.add_argument("--proof", action="store_true",
+                    help="render: the films at half size as out/proof.mp4, for every round before deliver")
+    ap.add_argument("--film", help="frames: the film to cut (the newest render of the reel when it is not named)")
     ap.add_argument("--out", default="frames")
     a = ap.parse_args()
     _env.enter_run()

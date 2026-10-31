@@ -6,7 +6,7 @@ import React from 'react';
 import {cutOf} from '../system/moves';
 import {clamp01, span} from '../system/three/motion';
 import type {Face} from '../system/types';
-import {LABELS, LINES, shotAt, type Plan, type Shot} from './plan';
+import {LABELS, LINES, SETTLE, shotAt, type Plan, type Shot} from './plan';
 
 const faceOf = (plan: Plan, which: string): Face => (which === 'display' ? plan.system.display : plan.system.text);
 const colorOf = (plan: Plan, role: string) => (plan.system.colors as Record<string, any>)[role] ?? role;
@@ -44,11 +44,15 @@ const setLines = (face: Face, text: string, most: number, width: number, lines: 
   }
 };
 
-/** When the words of a beat may come on: once the cut into it has played its first half. */
+/** The beats after the cut a flown-in photograph has landed and settled; none for any other move. */
+const landedOf = (plan: Plan, shot: Shot) => (shot.fly ? shot.fly + (SETTLE * plan.fps) / plan.pulse : 0);
+
+/** When the words of a beat may come on: once the cut into it has played its first half, and once a photograph its
+ * move flies in has landed and settled. */
 const startOf = (plan: Plan, shot: Shot) => {
   const at = shot.beat.at ?? 0;
   const c = cutOf(shot.beat.transition);
-  return at + Math.max(0.25, c ? c.beats / 2 : 0);
+  return at + Math.max(0.25, c ? c.beats / 2 : 0, landedOf(plan, shot));
 };
 
 /** How far a line is in at `t`, the way the card enters a line: each line's opacity, lift (px) and scale, and how many of
@@ -122,8 +126,9 @@ export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
     const anchor = shot.beat.anchor ?? 'bottom';
     const top = anchor === 'top' ? area[1] + 0.06 * ah : anchor === 'middle' ? area[1] + (ah - tall) / 2 : box[3] - tall;
     const align = anchor === 'middle' || lay.line.align === 'center' ? 'center' : 'start';
-    // the title waits for the move's opening (the bars parting, the print landing) before it comes on
-    const start = at + 1;
+    // the title waits for the move's opening (the bars parting, the print landing, the photograph flown in) before it
+    // comes on
+    const start = at + Math.max(1, landedOf(plan, shot));
     const scrim = shade ? lay.line.scrim * out * plan.enter(span(t, start - 0.5, 1)) : 0;
     const fade = H / 5;
     return (
@@ -138,7 +143,7 @@ export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
     );
   }
   const labelFace = faceOf(plan, lay.label.face), lineFace = faceOf(plan, lay.line.face);
-  const showLabel = !(LABELS.has(move) && move !== 'date-stamp') && !LINES.has(move);
+  const showLabel = !(LABELS.has(move) && move !== 'date-stamp') && move !== 'long-fade-title';
   const showLine = !LINES.has(move) && Boolean(shot.beat.words);
   const ls = Math.round(lay.label.size * k);
   const drop = showLabel ? ls * labelFace.lineHeight + 0.45 * ls : 0;

@@ -1,7 +1,7 @@
 # 5. Clips: the photographs brought to life
 
 Goal: `clips.json` in the run's folder, accounting for every clip `film.json` lists. Run it after `storyboard.py
-snap` and before `film.py render`.
+snap` and before `film.py render --proof`.
 
 The film lists one clip per photograph, over the stretch the camera walks it: on the first photograph the hook's
 world, the place the trip opens on; on every other the photograph brought to life; or, where the stop is shown by a
@@ -22,7 +22,7 @@ If you have a video generation tool, generate every clip the list names from its
 prompt, at the photograph's own shape and the length it says, and save each one as `clips/NN.mp4` (`.mov`, `.webm`
 and `.m4v` are read too). A clip whose role is "their own clip" is cut from the footage they shot; do not generate
 it. A model that refuses one prompt can be asked once more with the prompt simplified. With no video generation
-tool, generate nothing and say so in the next command.
+tool, generate nothing and say so in the next command. A ComfyUI server with Wan 2.2's image-to-video models is such a model: `python3 S/scripts/i2v.py --requests <run>/clips/requests.json --server <its address>` makes every clip and saves it there, a minute or two a clip, and names any model file the server lacks.
 
 ## Conform
 

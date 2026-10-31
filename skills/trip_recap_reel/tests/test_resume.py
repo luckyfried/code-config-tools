@@ -128,7 +128,7 @@ class ChunkedResume(unittest.TestCase):
         _env.write_json(studio.RENDER / "film-report.json", {"jobs": 4, "failed": 0, "findings": []})
         real = os.replace
 
-        def mux(silent, dst, seconds, run):
+        def mux(silent, dst, seconds, film, run):
             real(silent, dst)
             return False
 
@@ -206,16 +206,21 @@ class UnderTheLock(unittest.TestCase):
         refuse.start()
         self.addCleanup(refuse.stop)
 
+    # a one-second film: the hook's beat, then the closer's, at 120 bpm
+    CUT = {"bpm": 120, "route": {"title": "lisbon week", "signoff": "lisbon week"},
+           "beats": [{"id": "hook", "form": "title", "bars": 0.25, "move": None, "transition": None},
+                     {"id": "closer", "form": "closer", "bars": 0.25, "move": None, "transition": "hard-cut"}]}
+
     def test_the_mux_and_the_measure_start_through_run_spawn(self):
-        self.assertTrue(self.film.mux(Path("silent.mp4"), Path("film.mp4"), 1, self.run_))
+        self.assertTrue(self.film.mux(Path("silent.mp4"), Path("film.mp4"), 1, self.CUT, self.run_))
         m = studio.measure(Path("film.mp4"), [], run=self.run_)
         self.assertEqual(m["frames"], 30)
-        # the mux and its peak read, then the duration, the scene cuts, the luma line and the two strips
-        self.assertEqual(len(self.started), 7)
+        # the mux's two loudness reads and its one encode, then the duration, the scene cuts, the luma line and the two strips
+        self.assertEqual(len(self.started), 8)
 
     def test_the_mux_lays_only_the_master_music_json_names(self):
         _env.write_json("music.json", {"file": "music/source.wav"})
-        self.assertFalse(self.film.mux(Path("silent.mp4"), Path("film.mp4"), 1, self.run_))
+        self.assertFalse(self.film.mux(Path("silent.mp4"), Path("film.mp4"), 1, self.CUT, self.run_))
 
 
 if __name__ == "__main__":

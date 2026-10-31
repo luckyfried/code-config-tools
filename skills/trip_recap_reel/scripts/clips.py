@@ -14,7 +14,9 @@ clip; the agent generates each clip from the named photograph with its video mod
 the run (.mov, .webm and .m4v are read too).
 
 normalize scales and crops each file to its photograph's own size, so the film maps it onto the card exactly where
-the photograph was, conforms it to 30 fps, trims it to its stretch (looping a short file) and writes its frames as
+the photograph was, conforms it to 30 fps, trims it to its stretch (their own clip from its strongest second, the
+second whose picture moves the most, as one shot; a file shorter than its stretch loops), leaves its sound out (the
+film's sound is the music and the shared effects) and writes its frames as
 public/clips/NN-<digest>/0001.jpg onward, graded and matched like the photograph it plays on. The film shows those frames on the
 photograph's card while the camera is on it. A clip that did not arrive stands in: the film walks the still photograph instead, the move
 the storyboard names for it. clips.json records every clip as generated, their_reel (cut from their own clip) or
@@ -95,22 +97,44 @@ def cmd_list(a):
     return 0
 
 
-def conform(cid, src, image, frames, filt):
-    """The clip at the photograph's size, 30 fps, `frames` long, graded, and matched the way its photograph was
-    (grade.py match), as one JPEG per frame in a folder of public/clips/ named by the clip and a digest of what its
-    frames are made from. The folder is made under a temporary
-    name and moved in whole, so a folder at its name is complete, and the same clip normalized again keeps it.
-    Returns the folder, its frame count and ffmpeg's error."""
+# the size the motion of a clip is read at: small enough to decode in a moment, large enough to see what moves
+LOOK = 48
+
+
+def strongest(src, frames):
+    """Where a recorded clip's shot of `frames` frames at 30 fps starts, in seconds: at the clip's strongest second (the
+    second whose frames change the most from one to the next, read small and gray), moved earlier when the clip ends
+    before the shot would, and 0 for a clip shorter than the shot, which plays from its start and loops."""
+    r = subprocess.run([_env.ffmpeg(), "-v", "error", "-i", str(src), "-an", "-vf", f"fps={FPS},scale={LOOK}:{LOOK},format=gray",
+                        "-f", "rawvideo", "-"], capture_output=True)
+    size = LOOK * LOOK
+    n = len(r.stdout) // size
+    if r.returncode or n <= frames:
+        return 0.0
+    rows = [r.stdout[i * size:(i + 1) * size] for i in range(n)]
+    change = [0] + [sum(abs(a - b) for a, b in zip(rows[i], rows[i - 1])) for i in range(1, n)]
+    per = [sum(change[k * FPS:(k + 1) * FPS]) for k in range((n + FPS - 1) // FPS)]
+    best = max(range(len(per)), key=lambda k: (per[k], -k))
+    return min(float(best), (n - frames) / FPS)
+
+
+def conform(cid, src, image, frames, filt, start=0.0):
+    """The clip at the photograph's size, 30 fps, `frames` long from `start` seconds into it (a clip that ends sooner
+    loops from its start), graded, and matched the way its photograph was (grade.py match), without its sound, as one
+    JPEG per frame in a folder of public/clips/ named by the clip and a digest of what its frames are made from. The
+    folder is made under a temporary name and moved in whole, so a folder at its name is complete, and the same clip
+    normalized again keeps it. Returns the folder, its frame count and ffmpeg's error."""
     w, h = size_of(image)
     vf = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},fps={FPS},{filt}"
     op = grade.match_of(image)
-    digest = hashlib.sha256(Path(src).read_bytes() + json.dumps([vf, frames, op]).encode()).hexdigest()[:12]
+    digest = hashlib.sha256(Path(src).read_bytes() + json.dumps([vf, frames, op, start]).encode()).hexdigest()[:12]
     dst = PUBLIC / "clips" / f"{cid}-{digest}"
     if not dst.exists():
         tmp = dst.with_name(f".{dst.name}.part")
         shutil.rmtree(tmp, ignore_errors=True)
         tmp.mkdir(parents=True)
-        r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", "-stream_loop", "-1", "-i", str(src), "-frames:v", str(frames),
+        cue = ["-ss", f"{start:.3f}"] if start > 0 else ["-stream_loop", "-1"]
+        r = subprocess.run([_env.ffmpeg(), "-y", "-v", "error", *cue, "-i", str(src), "-an", "-frames:v", str(frames),
                             "-vf", vf, "-q:v", "2", str(tmp / "%04d.jpg")], capture_output=True, text=True)
         if r.returncode or not any(tmp.glob("*.jpg")):
             shutil.rmtree(tmp, ignore_errors=True)
@@ -134,10 +158,13 @@ def cmd_normalize(a):
         rec = {"beat": c["beat"], "role": c["role"], "image": c["image"], "prompt": c.get("prompt"), "from_frame": at}
         src = arrived(c["id"])
         theirs = c.get("source") and Path(c["source"]).exists()
-        dst, got, err = (conform(c["id"], src or c["source"], c["image"], n, g["filter"]) if src or theirs else (None, 0, ""))
+        # their own clip plays as one shot the length of its beat, cut from its strongest second; a generated clip is
+        # made for its beat and plays from its start
+        start = strongest(c["source"], n) if theirs and not src else 0.0
+        dst, got, err = (conform(c["id"], src or c["source"], c["image"], n, g["filter"], start) if src or theirs else (None, 0, ""))
         if got:
             rec.update(status="generated" if src else "their_reel", source=str(src or c["source"]),
-                       dir=dst.relative_to(PUBLIC).as_posix(), frames=got)
+                       dir=dst.relative_to(PUBLIC).as_posix(), frames=got, **({"from_second": start} if theirs and not src else {}))
         else:
             rec.update(status="stand-in", stand_in=c.get("stand_in") or "the camera walks their still photograph",
                        why=f"could not read {Path(src or c['source']).name}: {err}" if src or theirs else (a.why or "the video model did not produce it"))

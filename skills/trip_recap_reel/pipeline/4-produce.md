@@ -28,26 +28,34 @@ python3 S/scripts/music.py analyze
 python3 S/scripts/storyboard.py snap
 # movement 5: clips.py list, generate, clips.py normalize
 python3 S/scripts/music.py master
-python3 S/scripts/film.py render
+python3 S/scripts/film.py render --proof
 python3 S/scripts/film.py frames
 ```
 
 - `snap` cuts the picked board (`winner.json`) and refuses with none picked. It times the board on the music,
   from the track's first downbeat: the track's tempo is doubled or halved into the octave around the board's own (the middle of
   its look's music recipe), and every span starts on a downbeat. It writes `film.json`, `film-landscape.json` and
-  `film-square.json` (one storyboard timed once: the same spans, sound cues and photographs, the camera framing each
+  `film-square.json` (one storyboard timed once: the same spans, sounds and photographs, the camera framing each
   picture's own shape) and the clips the film asks for. The film is as long as the trip needs: about half a minute
   for five stops, longer at a slower tempo. Before anything renders it reads the timed cut for monotony and exits 1
-  when every span is one length, or when a span holds more than two bars with nothing sounding; change the board's
+  when every span is one length, or when a span holds more than two bars with nothing landing; change the board's
   inputs and run `check` and `snap` again.
-- `master` trims the music to the film from its first downbeat, scores the board's sound cues under it (a hit where
-  the first photograph opens and where each stop lands, a riser into the closer's impact, the stop where
-  the bed cuts on the beat and the hit on it ends before it rings), writes the effects stem 8 LU under the bed's loudness, and brings the whole
-  to −14 LUFS integrated, true peak under −1.5 dB. It prints the bed's and the effects' loudness and the cue and beat
-  counts, and writes them to `music.json` and the storyboard's `Mixed:` line.
+- `master` trims the music to the film from its first downbeat, cuts it on the board's stop, where the held picture
+  goes silent, and brings it to −14 LUFS integrated by one gain, written in 32-bit float so its peaks are kept whole;
+  the film's mux limits the music and the effects together, once. It writes `music/master.wav`, its
+  loudness to `music.json` and the storyboard's `Mixed:` line, and `music/energy.json`, the music's energy a frame.
+- `render --proof` is the render of every round before deliver. It renders each film at half size, `out/proof.mp4`
+  (and `out/proof-16x9.mp4` and `out/proof-square.mp4` when they were asked for), with the cover, the story cards and
+  `frames/` as the full render makes them, and never writes over `out/film.mp4`. `qa.py check`, `film.py frames` and
+  `vote.py cut` read the proof while it is the newest render, and every size they report is in board units, the same
+  numbers the full-size film gives. Without `--proof`, `render` is the full-size render that goes to deliver
+  (movement 6), and it takes the proof's films out of `out/`.
 - `render` renders the reel and its cover; `render --also landscape square stories`, naming only what the person asked for (the
   words that ask for each are in `6-deliver.md`, "What they asked for"), renders the 16:9 film, the square film and
-  the five story cards beside it. It lays the mastered music under each picture, takes away any extra an earlier
+  the five story cards beside it. It lays the film's sound under each picture: the shared effects (`scripts/sfx.py`,
+  made from the board: a whoosh on every cut, a shutter as every photograph lands, an impact as the trip's name lands
+  and as the closer opens, a riser into it, the room under it all, on the music's grid and in its key) over the
+  mastered music. It takes away any extra an earlier
   render left in `out/` that this one was not asked for, and writes `render/film-report.json` (every finding the
   composition logged with its prefix, `FONT_ERROR`, `IMAGE_ERROR` or `RENDER_ERROR`, a job that failed, and `made`,
   what it rendered). The story cards are settled frames of the 9:16 film at the rests the board names in
@@ -65,8 +73,10 @@ python3 S/scripts/film.py frames
   after the first chunks land, their time times the chunks still to go is the estimate to tell the person. A render
   started while another runs in the same run exits at once and names the running one's log.
 - `frames` writes `frames/strip-<beat>.png` (twelve frames across each span) and `frames/film-strip.png` (the whole
-  film at one frame a second) from `out/film.mp4`; `film.py frames --film out/film-16x9.mp4 --out frames-16x9` and
-  `--film out/film-square.mp4 --out frames-square` do the same for the other two shapes when they were rendered.
+  film at one frame a second) from the newest render: `out/proof.mp4` while the proof is there, else `out/film.mp4`.
+  `film.py frames --film out/proof-16x9.mp4 --out frames-16x9` and `--film out/proof-square.mp4 --out frames-square`
+  do the same for the other two shapes when they were rendered (`film-16x9.mp4` and `film-square.mp4` once the
+  full-size films are in).
 
 `film.py preview` renders the reel at half size with its strips and measured figures before a full render, when you
 want to look first.

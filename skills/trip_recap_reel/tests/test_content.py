@@ -25,6 +25,7 @@ sys.path.insert(0, str(KIT / "scripts"))
 import board_trip  # noqa: E402
 import gather  # noqa: E402
 import research  # noqa: E402
+import sfx  # noqa: E402
 import storyboard  # noqa: E402
 import style  # noqa: E402
 
@@ -83,6 +84,29 @@ class Timing(unittest.TestCase):
         self.assertGreater(bars["stop-3"], bars["stop-2"], "a long line is held longer than a wordless photograph")
         self.assertTrue(b["beats"][3]["peak"], "the stop at the end of the longest leg is the peak")
         self.assertGreater(bars["stop-4"], bars["stop-5"], "the peak holds longer than a wordless stop after it")
+
+    def test_a_long_cut_never_follows_a_long_cut_and_no_stop_outholds_the_peak(self):
+        line = "walked the river all the way out to the tower"
+        src = roads(1, 5, 8, 30, captions=[line] * 5)
+        for s in src["stops"]:
+            s["aspect"] = 0.75
+        b = board(src)
+        cuts = [x["transition"] for x in b["beats"][1:-1]]
+        long = [board_trip.cut_beats(c) >= 2 for c in cuts]
+        self.assertFalse(any(x and y for x, y in zip(long, long[1:])), cuts)
+        peak = next(x for x in b["beats"] if x["peak"])
+        self.assertEqual(max(x["bars"] for x in b["beats"][1:-1]), peak["bars"], [(x["id"], x["bars"], x["transition"]) for x in b["beats"]])
+
+    def test_a_once_move_plays_once_and_wins_the_peak(self):
+        line = "walked the river all the way out to the tower"
+        for look in ("analog-home-movie", "kinetic-type", "scrapbook"):
+            card = style.card(look)
+            once = {m["id"] for m in card["moves"] if m.get("once")}
+            b = board_trip.board(roads(1, 5, 8, 30, 3, captions=[line] * 6), card)
+            peak = next(x for x in b["beats"] if x["peak"])
+            moves = [x["move"] for x in b["beats"][:-1]]
+            self.assertIn(peak["move"], once, (look, moves))
+            self.assertEqual(sum(m in once for m in moves), 1, (look, moves))
 
     def test_each_span_starts_where_the_last_ends_and_the_spans_are_not_one_length(self):
         b = board(roads(1, 5, 30, 4))
@@ -224,25 +248,31 @@ class FirstStop(unittest.TestCase):
         b = board(source(["alfama at seven, the lane to ourselves", "tram up to graça"]))
         self.assertEqual(b["beats"][0]["words"], "alfama at seven, the lane to ourselves")
         self.assertIn("alfama at seven, the lane to ourselves", b["beats"][0]["shows"])
-        self.assertEqual((b["sound"][0]["kind"], b["sound"][0]["at"], b["sound"][0]["beat"]), ("hit", 0.0, "hook"), "the hook's landing sounds")
+        self.assertEqual((b["sound"][0]["kind"], b["sound"][0]["at"], b["sound"][0]["beat"]), ("impact", board_trip.TITLE_AT, "hook"),
+                         "the trip's name lands on an impact")
 
 
 class Sound(unittest.TestCase):
-    def test_a_sound_lands_where_something_lands_and_nowhere_else(self):
-        """A hit as the hook opens and on every cut, soft notes as words settle and where the camera lands, the riser
-        into the closer, its impact, its last words' hit and the stop: no span runs eight beats with nothing sounding."""
+    def test_the_film_sounds_the_shared_effects_where_something_lands_and_nothing_twice(self):
+        """The shared effects (sfx.py) and nothing else: one whoosh on every cut but the closer's, one shutter or pop
+        as each stop's picture lands, an impact as the trip's name lands and as the closer opens, the riser into it,
+        then the stop; the one bright sweep at most once; and nothing the board laid before the shared layer."""
         for look in style.TRIO:
             b = board(source(["alfama at seven", "tram up to graça, standing room only", "walked the river out to belém", "fish at ramiro"]), look)
-            cues, st, C = b["sound"], b["route"]["stops"], b["route"]["closer"]
-            self.assertEqual({c["kind"] for c in cues}, {"hit", "riser", "impact", "stop"}, look)
-            cuts = {c["at"] for c in cues if c["kind"] == "hit" and c["what"].startswith("the cut to")}
-            self.assertEqual(cuts, {s["at"] for s in st[1:]}, look)
-            self.assertTrue(all(c["weight"] < 0.5 for c in cues if c["what"].startswith(("the words", "the camera"))), look)
-            self.assertEqual([c["kind"] for c in cues if c["beat"] == "closer"], ["impact", "hit", "stop"], look)
-            self.assertEqual([c["at"] for c in cues if c["kind"] == "impact"], [C["at"]], look)
-            self.assertEqual(cues, sorted(cues, key=lambda c: c["at"]))
-            at = [c["at"] for c in cues if c["at"] <= C["at"]] + [C["at"]]
-            self.assertLessEqual(max(b - a for a, b in zip(at, at[1:])), 8, at)
+            fx, st, C = b["sound"], b["route"]["stops"], b["route"]["closer"]
+            self.assertLessEqual({c["kind"] for c in fx}, {"air", "sweep", "bright", "shutter", "pop", "impact", "riser", "stop"}, look)
+            self.assertEqual([(c["at"], c["kind"]) for c in fx if c["kind"] != "stop"],
+                             [(round(t * b["bpm"] / 60, 3), k) for t, k in sfx.events(board_trip.fx_board(b))[0]], look)
+            whooshes = [c["at"] for c in fx if c["kind"] in ("air", "sweep", "bright")]
+            self.assertEqual(whooshes, [s["at"] for s in st[1:]], look)
+            self.assertLessEqual(sum(c["kind"] == "bright" for c in fx), 1, look)
+            for bt, s in zip(b["beats"][1:], st[1:]):
+                landed = round(4 * (s["at"] + bt["fly"] * b["bpm"] / 60)) / 4
+                self.assertEqual([c["at"] for c in fx if c["kind"] in ("shutter", "pop") and c["beat"] == bt["id"]], [landed], (look, bt["id"]))
+            self.assertEqual([(c["at"], c["beat"]) for c in fx if c["kind"] == "impact"], [(board_trip.TITLE_AT, "hook"), (C["at"], "closer")], look)
+            self.assertEqual([c["at"] for c in fx if c["kind"] == "riser"], [C["at"]], look)
+            self.assertEqual([c["at"] for c in fx if c["kind"] == "stop"], [C["still"]], look)
+            self.assertEqual(fx, sorted(fx, key=lambda c: c["at"]))
 
 
 class NoCount(unittest.TestCase):
