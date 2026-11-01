@@ -1,9 +1,13 @@
 // The film's own words, in the card's faces: the trip's name and its dates on the hook, placed at the hook's anchor; on
 // each stop its place and its line in the card's line box, broken to fit it, coming on the way the card enters a line
 // (rise, slam, type, fade or cut) once the cut into the beat has played, and leaving before the next cut. Over a
-// photograph the card's scrim shades the frame under the words; on paper the words stand on the paper.
+// photograph the card's scrim shades the frame under the words, or the beat's own deeper one where storyboard.py check
+// measured the card's too light for them, and a label takes the beat's label color where it has one; on paper the
+// words stand on the paper. Under the closer's words the closer beat's scrim veils the whole last still, under the
+// closer's own matte.
 import React from 'react';
 import {cutOf} from '../system/moves';
+import {SINE} from '../system/moves/kit';
 import {clamp01, span} from '../system/three/motion';
 import type {Face} from '../system/types';
 import {LABELS, LINES, SETTLE, shotAt, type Plan, type Shot} from './plan';
@@ -94,9 +98,17 @@ const Lines: React.FC<{plan: Plan; face: Face; size: number; lines: string[]; co
   </div>
 );
 
+/** The closer beat's veil over the whole frame, darkening in as the closer's matte does, by the closer's progress. */
+const Veil: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
+  const {at, still, veil} = plan.closer;
+  const v = veil * span(Math.min(1, (t - at) / Math.max(0.05, still - at)), 0, 0.45, SINE);
+  return v > 0 ? <div style={{position: 'absolute', inset: 0, pointerEvents: 'none', background: `rgba(0,0,0,${v})`}} /> : null;
+};
+
 export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
   const shot = shotAt(plan, t);
-  if (!shot || t >= plan.closer.at) return null;
+  if (!shot) return null;
+  if (t >= plan.closer.at) return <Veil plan={plan} t={t} />;
   const {W, H, area} = plan;
   const lay = plan.system.photo;
   const k = Math.min(W, H) / 1080;
@@ -129,7 +141,7 @@ export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
     // the title waits for the move's opening (the bars parting, the print landing, the photograph flown in) before it
     // comes on
     const start = at + Math.max(1, landedOf(plan, shot));
-    const scrim = shade ? lay.line.scrim * out * plan.enter(span(t, start - 0.5, 1)) : 0;
+    const scrim = shade ? (shot.beat.scrim ?? lay.line.scrim) * out * plan.enter(span(t, start - 0.5, 1)) : 0;
     const fade = H / 5;
     return (
       <div style={{position: 'absolute', inset: 0, pointerEvents: 'none'}}>
@@ -137,7 +149,7 @@ export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
           background: `linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,${0.7 * scrim}) 35%, rgba(0,0,0,${0.7 * scrim}) 65%, rgba(0,0,0,0))`}} /> : null}
         <Lines plan={plan} face={display} size={title.size} lines={title.lines} color={colorOf(plan, lay.line.color)} align={align} x={area[0]} y={top} w={aw}
           enter={lay.line.enter} t={t} from={start} out={out} shade={shade} />
-        <Lines plan={plan} face={text} size={kick.size} lines={kick.lines} color={colorOf(plan, lay.label.color)} align={align} x={area[0]}
+        <Lines plan={plan} face={text} size={kick.size} lines={kick.lines} color={colorOf(plan, shot.beat.labelColor ?? lay.label.color)} align={align} x={area[0]}
           y={top + title.lines.length * title.size * display.lineHeight + 0.5 * kick.size} w={aw} enter={lay.line.enter} t={t} from={start + 1} out={out} shade={shade} />
       </div>
     );
@@ -154,7 +166,8 @@ export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
   const tall = drop + (showLine ? line.lines.length * line.size * lineFace.lineHeight : 0);
   const top = !shot.full ? box[1] + Math.max(0, (box[3] - box[1] - tall) / 2)
     : up ? box[3] - Math.max(tall, (box[3] - box[1] + tall) / 2) : box[1] + Math.max(0, (box[3] - box[1] - tall) / 2);
-  const scrim = shade && lay.line.scrim > 0 ? lay.line.scrim * out * plan.enter(span(t, from - 0.25, 0.75)) : 0;
+  const deep = shot.beat.scrim ?? lay.line.scrim;
+  const scrim = shade && deep > 0 ? deep * out * plan.enter(span(t, from - 0.25, 0.75)) : 0;
   // the scrim shades from the words to the frame's edge they sit nearer, fading out a sixth of the frame past them
   const lid = up ? top - H / 6 : 0;
   const foot = up ? H : top + tall + H / 6;
@@ -164,7 +177,7 @@ export const Words: React.FC<{plan: Plan; t: number}> = ({plan, t}) => {
       {scrim > 0 ? <div style={{position: 'absolute', left: 0, right: 0, top: lid, height: foot - lid,
         background: up ? `linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,${scrim}) ${fadeAt}%, rgba(0,0,0,${scrim}))`
           : `linear-gradient(to top, rgba(0,0,0,0), rgba(0,0,0,${scrim}) ${fadeAt}%, rgba(0,0,0,${scrim}))`}} /> : null}
-      {showLabel ? <Lines plan={plan} face={labelFace} size={ls} lines={[cased(labelFace, shot.stop.name)]} color={colorOf(plan, lay.label.color)}
+      {showLabel ? <Lines plan={plan} face={labelFace} size={ls} lines={[cased(labelFace, shot.stop.name)]} color={colorOf(plan, shot.beat.labelColor ?? lay.label.color)}
         align={lay.line.align} x={box[0]} y={top} w={box[2] - box[0]} enter={lay.line.enter === 'type' ? 'type' : 'fade'} t={t} from={from} out={out}
         shade={shade} rotate={lay.line.rotate} /> : null}
       {showLine ? <Lines plan={plan} face={lineFace} size={line.size} lines={line.lines} color={colorOf(plan, lay.line.color)} align={lay.line.align}

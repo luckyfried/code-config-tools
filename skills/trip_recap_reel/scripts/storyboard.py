@@ -41,6 +41,10 @@ check re-solves each board from its source and its card (so an edit goes in the 
              did not make, the same move on two beats running, every shot within 10 % of one length, or the words in
              one place (top, middle or bottom) on more than 70 % of the beats that carry words
   looks      two of the three boards whose cards share more than 2 of the 6 axes
+  legible    a caption under the contrast its size needs over the photograph under it (where the beat's own deeper scrim,
+             at most legible.SCRIM_MOST under the words, or the line's color for a label cannot lift it), a line under
+             32 px, or words over a photograph public/ does not hold; check writes that remedy on the beats (`scrim`,
+             `labelColor`), which the film draws
 
 snap times the picked board at the music's tempo (doubled or halved into the octave around the board's, from the track's
 first downbeat) and reads the timed cut for monotony before anything renders: it refuses a span that holds more than
@@ -59,6 +63,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import board_trip  # noqa: E402
+import captions  # noqa: E402
 import film  # noqa: E402
 import grade  # noqa: E402
 import palette  # noqa: E402
@@ -340,7 +345,9 @@ def look_findings(board, beats, frames=None):
 def check_board(board):
     """The board re-solved from its source: the swap test (neighboring stops trade photographs, with their shape and
     points, and two beats whose moves, places for the words, lengths and camera come out the same are a template), a
-    span outside 1 to 4 bars, a first span with nothing sounding in its first 30 frames, and the look's findings."""
+    span outside 1 to 4 bars, a first span with nothing sounding in its first 30 frames, the look's findings, and every
+    caption measured over the photograph under it (captions.py): the re-solved beats carry the remedy (a deeper scrim,
+    the line's color for a label), and what the remedy cannot reach is a finding."""
     out = []
     src = board["source"]
     base = solve(board)
@@ -362,7 +369,9 @@ def check_board(board):
     pulse = FPS * 60 / base["bpm"]
     if not any(c["at"] * pulse <= 30 for c in base["sound"]):
         out.append("structure: the hook has nothing sounding in its first 30 frames")
-    return base["beats"], out + look_findings(board, base["beats"])
+    laid = dict(board, route=base["route"], bpm=base["bpm"], beats=base["beats"])
+    captions.remedy(laid)
+    return base["beats"], out + look_findings(board, base["beats"]) + captions.findings(laid)
 
 
 def across(boards):

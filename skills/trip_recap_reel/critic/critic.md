@@ -61,7 +61,14 @@ repeat the round before word for word. Look, actually look:
 - when the person asked for them, the `out/story-N.png` cards (a set that reads in order, each a finished picture);
 - the trip as the frames show it: every stop named once, its line their own caption, the trip's name and the dates
   on the closer;
-- for the music score only, `qa/check.json` (what the film sounds, the loudness and where the music stops).
+- for the music score only, `critic/sound.md`, the sound read `vote.py cut` writes, which hears the film: every cut
+  against the beat grid (on the beat within 40 ms, between on purpose, or off the beat), where the music falls quiet
+  against the stop and the last frame, and each effect's peak against the music under it (heard, or under the music);
+  and `qa/check.json` (the film's loudness and peak).
+
+Score `music` from the sound read: a cut off the beat, music that still sounds at the last frame, or an effect under
+the music is something a viewer hears, and a 5 needs none of them. Say in the round's `sound.cited` which rows the
+score rests on (a round is not complete without it).
 
 Every score but the music's is read from the frames and strips alone, and every paragraph cites them by file and
 time: what a frame shows moving, holding, reading or failing. A paragraph that cites the storyboard, a plan, the name of

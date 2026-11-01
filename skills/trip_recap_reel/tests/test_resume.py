@@ -215,8 +215,10 @@ class UnderTheLock(unittest.TestCase):
         self.assertTrue(self.film.mux(Path("silent.mp4"), Path("film.mp4"), 1, self.CUT, self.run_))
         m = studio.measure(Path("film.mp4"), [], run=self.run_)
         self.assertEqual(m["frames"], 30)
-        # the mux's two loudness reads and its one encode, then the duration, the scene cuts, the luma line and the two strips
-        self.assertEqual(len(self.started), 8)
+        # the music decoded once to find where it covers an effect, the mix's loudness read once and again through the
+        # limiter until it lands (one to five times), its one encode, then the duration, the scene cuts, the luma line and
+        # the two strips
+        self.assertTrue(9 <= len(self.started) <= 13, self.started)
 
     def test_the_mux_lays_only_the_master_music_json_names(self):
         _env.write_json("music.json", {"file": "music/source.wav"})

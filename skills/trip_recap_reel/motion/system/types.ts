@@ -119,6 +119,12 @@ export type Beat = {
   /** the stops the beat shows, by index */
   stops: number[];
   anchor?: string | null;
+  /** the scrim under the beat's words where the card's own leaves a caption under the contrast its size needs over the
+   * photograph under it; on the closer, the veil over the whole frame under its words. storyboard.py check measures it
+   * (captions.py) */
+  scrim?: number;
+  /** the color role the beat's label and kicker take where their own does not read over the photograph under them */
+  labelColor?: string;
 };
 
 export type Board = {

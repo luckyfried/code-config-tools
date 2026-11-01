@@ -38,7 +38,9 @@ class VoteGate(unittest.TestCase):
         (home / "build" / "RUN").write_text("r1\n")
         cwd = os.getcwd()
         self.addCleanup(os.chdir, cwd)
-        for patch in (mock.patch.object(_env, "HOME", home), mock.patch.dict(os.environ, {"TR_RUN": ""})):
+        import vote
+        for patch in (mock.patch.object(_env, "HOME", home), mock.patch.dict(os.environ, {"TR_RUN": ""}),
+                      mock.patch.object(vote, "sound_read", lambda film: {"table": "critic/sound.md", "findings": [], "cited": ""})):
             patch.start()
             self.addCleanup(patch.stop)
 

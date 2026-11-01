@@ -48,7 +48,8 @@ export type Plan = {
   shots: Shot[];
   title: string;
   kicker: string;
-  closer: {name: string; at: number; still: number};
+  /** veil: the closer beat's scrim, the darkness laid over the whole frame under the closer's words */
+  closer: {name: string; at: number; still: number; veil: number};
   move: (u: number) => number;
   enter: (u: number) => number;
   exit: (u: number) => number;
@@ -116,7 +117,7 @@ export const planOf = (board: Board): Plan => {
       ...(title ? {} : {box, type: shot.line, held, say: stop.name})};
   });
   const plan = {W, H, fps, pulse, system: sys, area, line: {beats, cuts: beats.map((b) => b.at)}, shots, title: r.title, kicker: r.kicker,
-    closer: {name: sys.closer, at: r.closer.at, still: r.closer.still},
+    closer: {name: sys.closer, at: r.closer.at, still: r.closer.still, veil: board.beats.find((b) => b.form === 'closer')?.scrim ?? 0},
     move: bezier(sys.ease.move), enter: bezier(sys.ease.enter), exit: bezier(sys.ease.exit)};
   // where each stop's photograph lies in the frame once the camera holds it, as the camera frames it at the landing
   for (const shot of plan.shots) {
