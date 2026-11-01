@@ -41,6 +41,8 @@ import re
 import statistics
 from pathlib import Path
 
+import captions
+import legible
 import look
 import maps
 import trip as trip_mod
@@ -48,6 +50,8 @@ from palette import contrast as _contrast, hex_rgb, lum as _lum
 
 KIT = Path(__file__).resolve().parent.parent
 SAFE = json.loads((KIT / "design" / "safe-areas.json").read_text())
+# the formats a board is laid out for, each in its own frame (design/safe-areas.json)
+FORMATS = tuple(k for k, v in SAFE.items() if isinstance(v, dict))
 LAND_FILE = KIT / "data" / "land.json"
 
 BPM = 90
@@ -79,8 +83,20 @@ FOLD = 0.75
 # opens out of its pin
 HOOK_DIVE, HOOK_SETTLE = 1.4, 2.6
 # beats from a stop's arrival to its words coming up: the photograph has the frame alone first, and a quick stop's
-# name and month come up almost at once, so they are read in the little time the stop has
+# name and month come up almost at once, so they are read in the little time the stop has; never so late that its
+# headline is not settled SETTLED seconds after its beat
 CUT = {"hook": HOOK_SETTLE - 0.3, "peak": 1.2, "new": 0.8, "quick": 0.25}
+# seconds after its beat by which a stop's headline (the first row of its line) is settled (motion/system/standards.md R3)
+SETTLED = 1.0
+# how a stop's words come and go (route/words.tsx): the label comes in at the cut, the line's first row WORDS_LEAD beats
+# after it and each row after that WORDS_STEP more, each row taking ENTER beats of the layout's entrance (a typed row
+# TYPED[0] beats a letter, from TYPED[1] to TYPED[2]) and never more than ENTER_SHARE of its time on screen; they begin
+# to leave WORDS_LEAVE beats before the camera does and fade out over WORDS_OUT
+WORDS_LEAD, WORDS_STEP = 0.15, 0.08
+ENTER = {"cut": 0.0, "fade": 0.6, "type": 0.9, "rise": 0.5, "slam": 0.4}
+TYPED = (0.035, 0.5, 1.4)
+ENTER_SHARE = 0.5
+WORDS_LEAVE, WORDS_OUT = 0.35, 0.3
 # beats from the hook's start that the first place's name and line come up, once the title has left
 HOOK_NAME = CUT["hook"] + 0.2
 # beats the hook's title takes to land (route/words.tsx TITLE_IN)
@@ -113,6 +129,10 @@ HAND = 0.25
 # there), and keeps them for its flights and its closer; a veil or a hard cut on the arrival would be lost under the
 # flight
 FLIGHT_CUT = "bars-close"
+# the beats that cut plays over at most (motion/system/moves/cut/bars-close.tsx): the words of the stop before a flight
+# are gone a quarter of the way through it (route/plan.ts wordsGoneBy)
+FLIGHT_CUT_BEATS = 2
+CUTS = Path(__file__).resolve().parent.parent / "motion" / "system" / "moves" / "cut"
 # a look takes a spectacle on a place stop (never the hook, never a quick stop) at least SPECTACLE_GAP stops after its
 # last one, as many as the film has room for (build()); a calm look (its card's camera one of CALM) takes one in the
 # film at most, on its peak (spectacle_stops())
@@ -496,6 +516,71 @@ def reading(words):
     return READ[0] + READ[1] * words if words else 0.0
 
 
+def entered(enter, text):
+    """The beats a row of words takes to come in by the layout's entrance `enter` (route/words.tsx entrance)."""
+    if enter == "type":
+        return min(TYPED[2], max(TYPED[1], len(text) * TYPED[0]))
+    return ENTER.get(enter, 0.5)
+
+
+def leads(lines):
+    """The beats after a stop's words come up that each of its lines starts to come in (route/words.tsx)."""
+    return [0.0 if ln.get("name") == "label" else WORDS_LEAD + WORDS_STEP * max(0, i - 1) for i, ln in enumerate(lines)]
+
+
+def head_of(lines):
+    """The index of a stop's headline among its lines: the first row of its line, else its first line."""
+    return next((i for i, ln in enumerate(lines) if ln.get("name") != "label"), 0)
+
+
+def settles(lines, enter, which=None):
+    """The beats from a stop's words coming up until line `which` (the last of them to settle, by default) has come in."""
+    ends = [d + entered(enter, ln["text"]) for ln, d in zip(lines, leads(lines))]
+    return (ends[which] if which is not None else max(ends)) if ends else 0.0
+
+
+def cut_beats(cut):
+    """The beats the cut `cut` plays over at most, as its move declares them (motion/system/moves/cut/<cut>.tsx); 0 for
+    no cut or one with no window. The words of the stop before a flight are gone a quarter of the way through the
+    window of the cut into it, whichever cut that is (route/plan.ts wordsGoneBy)."""
+    f = CUTS / f"{cut}.tsx"
+    m = re.search(r"\bbeats:\s*([\d.]+)", f.read_text()) if cut and f.is_file() else None
+    return float(m.group(1)) if m else 0.0
+
+
+def word_times(board):
+    """When each stop's words stand whole, as route/words.tsx plays them on the board's beats: [{id, words, n (their
+    words), need (the seconds they take to read), whole (the seconds every line stands settled together), head (the
+    headline), settled (the seconds after the stop's beat that its headline has come in; None on the hook, whose
+    headline is the film's title)}]."""
+    at, end = starts(board)
+    sec = 60 / board["bpm"]
+    beats, cards = board["beats"], board["route"]["cards"]
+    enter = board["system"]["photo"]["line"]["enter"]
+    ids = [b["id"] for b in beats]
+    out = []
+    for i, c in enumerate(cards):
+        lines = c["lines"]
+        if not lines:
+            continue
+        arrive, leave = at[ids[i]], at[ids[i + 1]]
+        start = HOOK_NAME if i == 0 else arrive + c["cut"]
+        until = leave - c["go"] - WORDS_LEAVE
+        nxt = beats[i + 1]
+        if nxt.get("early") and cut_beats(nxt.get("transition")):
+            after = at[ids[i + 2]] if i + 2 < len(ids) else end
+            w = min(cut_beats(nxt["transition"]), (leave - arrive) / 2, (after - leave) / 2)
+            until = min(until, leave - nxt["early"] / sec - w / 4 - WORDS_OUT)
+        done = [start + d + min(entered(enter, ln["text"]), max(0.0, until - start - d) * ENTER_SHARE)
+                for ln, d in zip(lines, leads(lines))]
+        n = sum(1 for ln in lines for w in ln["text"].split() if any(ch.isalnum() for ch in w))
+        h = head_of(lines)
+        out.append({"id": c["id"], "words": " ".join(ln["text"] for ln in lines), "n": n, "need": round(reading(n), 3),
+                    "whole": round((until - max(done)) * sec, 3), "head": lines[h]["text"],
+                    "settled": None if i == 0 else round((done[h] - arrive) * sec, 3)})
+    return out
+
+
 def carried(looks, words):
     """What each stop's photograph carries, as a multiple of its kind's pace: its words, its detail against the set's
     (a busy scene has more edges) and its change from the photograph before (a repeat of the same view changes least),
@@ -569,7 +654,7 @@ def first_clause(text):
 
 def peak_short(board):
     """Whether a stop holds more beats of its own than the peak (a leap's travel is the camera's, never a stop's)."""
-    own = [(b["bars"] * 4 - (LEAP if c["go"] == LEAP_GO else 0), c["kind"]) for c, b in zip(board["route"]["cards"], board["beats"])]
+    own = [(b["bars"] * 4 - (LEAP if c["travel"] == "leap" else 0), c["kind"]) for c, b in zip(board["route"]["cards"], board["beats"])]
     peak = [h for h, kind in own if kind == "peak"]
     return bool(peak) and peak[0] < max(h for h, _ in own)
 
@@ -688,14 +773,20 @@ def spectacle_stops(tr, stops, said_of, peak, calm, cap):
     return {can[int((k + 0.5) * len(can) / n)] for k in range(n)}
 
 
-def _build(source, fmt, bpm, style, cap):
+def frame_of(fmt):
+    """The frame a format's cards are laid out in: its size, and its type-safe area pushed in to HOLD_END of the card's
+    frame, since a card's type is laid where the camera holds it as it leaves, so a line that ends its hold on the
+    type-safe area's edge stands inside it the whole hold."""
     sa = SAFE[fmt]
     W, H = sa["width"], sa["height"]
-    # a card's type is laid where the camera holds it as it leaves, pushed in to HOLD_END of the card's frame, so a line
-    # that ends its hold on the type-safe area's edge stands inside it the whole hold
     held = lambda m, side: round(side / 2 - (side / 2 - m) * HOLD_END, 1)
-    fr = {"width": W, "height": H, "left": held(sa["left"], W), "right": held(sa["right"], W), "top": held(sa["top"], H),
-          "bottom": held(sa["bottom"], H)}
+    return {"width": W, "height": H, "left": held(sa["left"], W), "right": held(sa["right"], W), "top": held(sa["top"], H),
+            "bottom": held(sa["bottom"], H)}
+
+
+def _build(source, fmt, bpm, style, cap):
+    fr = frame_of(fmt)
+    W, H = fr["width"], fr["height"]
     short = min(W, H)
     tr = trip_mod.Trip(source["places"], source["photos"])
     if not tr.mapped:
@@ -807,20 +898,35 @@ def _build(source, fmt, bpm, style, cap):
              "o": [round(p[0] - s_card * W / 2, 2), round(p[1] - s_card * H / 2, 2)], "lines": words, "travel": travel, "entry": entry,
              "focus": [round(photo[0] + fu * photo[2], 1), round(photo[1] + fv * photo[3], 1)],
              "cut": CUT[kind], "go": LEAP_GO if leap else RISE_GO if travel == "rise" else GO, "said": said, "far": s["place"] in tr.far}
+        # the words read on the photograph or the ground under them (captions.lay: the label in the line's color, a
+        # deeper scrim), and the headline is settled SETTLED seconds after the beat: the photograph's moment alone
+        # before the words is cut short at a slow tempo
+        captions.lay(c, lay, roles, short)
+        # every format is cut on one grid, so a stop's words are timed as the format that takes longest to bring them in
+        # sets them
+        enter = lay["line"]["enter"]
+        alike = [words] + [photo_words(f, layout_of(lay0, ph, f["width"], f["height"]), spec, label, text, name="said" if said else "name",
+                                       keep=style in PHONE)[0] for f in map(frame_of, FORMATS) if f != fr]
+        head = max(settles(w, enter, head_of(w)) for w in alike)
+        if s["i"]:
+            c["cut"] = round(max(0.0, min(c["cut"], SETTLED / sec0 - head)), 3)
         early = {}
         if move in FLIGHT:
+            # the flight takes the frame early enough before the beat that its words have come in SETTLED seconds after
+            # it, and never so early that it lands before the camera has settled LAND beats after the beat: the camera
+            # leaves the stop before that much sooner, under the flight
+            want = min(math.ceil((FLIGHT[move] + HAND + head * sec0 - SETTLED) * 1000), math.floor((FLIGHT[move] - LAND * sec0) * 1000)) / 1000
+            if cards[-1]["go"] * sec0 < want - 1e-9:
+                cards[-1]["go"] = round(want / sec0, 6)
             early = {"early": round(cards[-1]["go"] * sec0, 3)}
             c["cut"] = max(c["cut"], round((FLIGHT[move] + HAND - early["early"]) / sec0, 3))
             flown.append(s["i"])
         cards.append(c)
         steps.append({"form": form, "move": move, "transition": cut, "words": "", "label": sub if sticker else "",
                       "peak": kind == "peak", "words_at": words_at, **early})
-        # the words come up at the cut (the hook's at HOOK_NAME, after the title has had the frame) and stand until the
-        # camera leaves; across a leap the camera's travel takes LEAP beats of its LEAP_GO, the rest is the stop's own
         n_words = len((said or "").split()) + len(s["name"].split()) + len((sub or "").split())
-        up = (HOOK_NAME if s["i"] == 0 else c["cut"]) + (LEAP_GO - LEAP if leap else c["go"])
-        timed.append({"kind": kind, "words": n_words, "look": ph.get("look"), "leap": leap, "up": up, "said": reading(n_words),
-                      "travel": c["go"] - GO if travel == "rise" else 0.0})
+        timed.append({"kind": kind, "words": n_words, "look": ph.get("look"), "leap": leap, "said": reading(n_words),
+                      "in": max(settles(w, enter) for w in alike)})
         if nxt is not None:
             pts = [maps.px(proj, la, lo) for la, lo in slerp_path((s["lat"], s["lon"]), (nxt["lat"], nxt["lon"]), nxt["leg"] or 1)]
             q = pin_of(nxt)
@@ -843,6 +949,7 @@ def _build(source, fmt, bpm, style, cap):
     title = str(taste.get("title") or source.get("title") or year)
     signoff = " · ".join(dict.fromkeys(c["name"] for c in cards))
     kicker = title_words(fr, spec, title, handle, style)
+    captions.lay_kicker(kicker, {**roles, **map_colors(roles)}, short)
     # the hook's words are its title and handle: where they stand is where the hook carries words
     k0, k1 = kicker[0], kicker[-1]
     k_face = lambda ln: spec["display"] if ln["name"] == "title" else spec["text"]
@@ -851,13 +958,30 @@ def _build(source, fmt, bpm, style, cap):
     bpm_ = bpm or BPM
     sec = 60 / bpm_
     route_beats, closer = closer_beats(bpm_, len(title.split()) + len(signoff.split()) + len((handle or "").split()))
-    for x in timed:
-        x["need"] = x["up"] * sec + x["said"]
-    try:
-        held, band = timing(timed + [{"closer": closer}], bpm_, source.get("seconds"))
-    except TooLong as e:
-        e.flown = len(flown)
-        raise
+    for c, x in zip(cards, timed):
+        # the words come up at the cut (the hook's at HOOK_NAME, after the title has had the frame) and the camera
+        # leaves `go` beats before the next beat; across a leap the camera's travel takes LEAP beats of its go, the
+        # rest is the stop's own, and the beats a camera leaving sooner takes past its GO (a rise, or a stop a flight
+        # leaves) are travel, which its pace and its most hold take on too. `need` reads the words in the whole time
+        # from their coming up to the camera leaving; `read` holds the stop until they have come in line by line and
+        # stood whole for their reading before they leave, WORDS_LEAVE before the camera does, or before a flight a
+        # quarter of the way into its cut and WORDS_OUT before that
+        up = (HOOK_NAME if c["i"] == 0 else c["cut"]) + c["go"] - (LEAP if x["leap"] else 0)
+        away = max(WORDS_LEAVE, FLIGHT_CUT_BEATS / 4 + WORDS_OUT) if c["i"] + 1 in flown else WORDS_LEAVE
+        x["need"] = up * sec + x["said"]
+        x["read"] = (up + x["in"] + away) * sec + x["said"]
+        x["travel"] = max(0.0, c["go"] - (LEAP_GO if x["leap"] else GO))
+    # cut to the music's tempo, every stop holds for `read`: while the longest film is too short for that the spectacles
+    # give way (build()), and with none left the stops hold for `need` and the check names each stop whose words are
+    # cut short; the kit's own tempo only lays the draft out before the music is known, at `need`
+    for key in ("read", "need") if bpm else ("need",):
+        try:
+            held, band = timing([{**x, "need": x[key]} for x in timed] + [{"closer": closer}], bpm_, source.get("seconds"))
+            break
+        except TooLong as e:
+            if key == "need" or flown:
+                e.flown = len(flown)
+                raise
     beats = [{"id": c["id"], "bars": (h + (LEAP if x["leap"] else 0)) / 4, "role": c["kind"], "layers": [], **st}
              for c, x, h, st in zip(cards, timed, held, steps)]
     tags = {"closer", "wall"}
@@ -868,13 +992,13 @@ def _build(source, fmt, bpm, style, cap):
 
     safe = {k: {e: v[e] for e in ("top", "bottom", "left", "right")} for k, v in SAFE.items() if isinstance(v, dict)}
     board = {"id": f"places-{style}", "style": style, "name": f"{year} in places · {card_['name']}", "handle": handle, "year": year,
-             "bpm": bpm_, "format": {"width": W, "height": H, "fps": FPS, "name": fmt},
+             "bpm": bpm_, "to_music": bool(bpm), "format": {"width": W, "height": H, "fps": FPS, "name": fmt},
              "system": look.system(card_, {**roles, "swatches": made["swatches"]}, safe), "length": band, "beats": beats,
              "route": {"W": W, "H": H, "pin": pin, "colors": {**roles, **map_colors(roles)}, "proj": proj, "box": window,
                        "land": land_rings(proj, (-W, -H, 2 * W, 2 * H)), "cards": cards, "legs": legs,
                        "hook": {"kicker": kicker, "name": HOOK_NAME, "dive": HOOK_DIVE, "settle": HOOK_SETTLE},
                        "closer": {"window": window, "title": title, "signoff": signoff, "route": route_beats,
-                                  "paper": PAPER}}}
+                                  "paper": PAPER, "least": round(legible.LEAST * short / 1080, 1)}}}
     board["sound"] = sound(board)
     board["clips"] = clips(board, {ph["file"]: ph for ph in source["photos"]})
     story(board)
@@ -914,11 +1038,12 @@ def sound(board):
 
 def fx_board(board):
     """The board as the shared sound effects read one (sfx.py): its tempo; the title first, its words landing TITLE_IN
-    beats in (route/words.tsx), where its impact falls; each stop a photograph from the cut into its beat, or from
-    where its spectacle takes the frame, its beat's `early` seconds before the cut (where a whoosh peaks; the hook's is
-    the camera's dive onto it), to the moment its photograph lands: as the camera settles on it, as the style's arrival
-    sets it down (card.tsx), or as its spectacle lands (FLIGHT); and the closer arriving as the map resolves into it,
-    where its riser ends and its impact lands."""
+    beats in (route/words.tsx), where its impact falls; each stop a photograph from its cut, on the beat, to the moment
+    its photograph lands: as the camera settles on it, as the style's arrival sets it down (card.tsx), or as its
+    spectacle lands (FLIGHT). A spectacle takes the frame its beat's `early` seconds before the cut, so its whoosh peaks
+    there, the beat's `lead`; the hook's cut is the middle of the camera's dive onto it, on the beat, where the camera
+    moves fastest and its whoosh peaks. The closer is cut on its beat, where its riser ends and its impact lands, and
+    arrives as the map resolves into it."""
     rt = board["route"]
     st, _ = starts(board)
     sec = 60 / board["bpm"]
@@ -926,18 +1051,18 @@ def fx_board(board):
     beats = [{"id": "title", "form": "title", "move": None, "transition": None, "start": 0.0,
               "layers": [{"kind": "Title", "at": {"arrive": 0.0}, "title": {"text": title}, "slam": [0.0, TITLE_IN]}]}]
     for c, b in zip(rt["cards"], board["beats"]):
-        a = st[c["id"]]
+        a, lead = st[c["id"]], 0.0
         if c["i"] == 0:
-            start, land, cut = rt["hook"]["dive"], rt["hook"]["settle"], "dive"
+            start, land, cut = (rt["hook"]["dive"] + rt["hook"]["settle"]) / 2, rt["hook"]["settle"], "dive"
         else:
-            start, cut = a - b.get("early", 0) / sec, b.get("transition")
-            land = start + FLIGHT[b["move"]] / sec if b.get("move") in FLIGHT else a + (c["cut"] if c.get("entry", "pin") != "pin" else LAND)
+            start, lead, cut = a, b.get("early", 0) / sec, b.get("transition")
+            land = a - lead + FLIGHT[b["move"]] / sec if b.get("move") in FLIGHT else a + (c["cut"] if c.get("entry", "pin") != "pin" else LAND)
         beats.append({"id": c["id"], "form": "photo", "move": b.get("move"), "transition": cut, "start": round(start, 4),
-                      "layers": [{"kind": "Photo", "at": {"arrive": round(land, 4)}, "label": c["name"]}]})
-    C = st["closer"] + CLOSER_LAND
+                      "lead": round(lead, 4), "layers": [{"kind": "Photo", "at": {"arrive": round(land, 4)}, "label": c["name"]}]})
     close = board["beats"][-1]
-    beats.append({"id": "closer", "form": "closer", "move": close.get("move"), "transition": close.get("transition"), "start": C,
-                  "layers": [{"kind": "Closer", "at": {"arrive": C}, "signoff": {"text": rt["closer"]["signoff"]}}]})
+    beats.append({"id": "closer", "form": "closer", "move": close.get("move"), "transition": close.get("transition"),
+                  "start": st["closer"], "layers": [{"kind": "Closer", "at": {"arrive": st["closer"] + CLOSER_LAND},
+                                                     "signoff": {"text": rt["closer"]["signoff"]}}]})
     return {"id": board["id"], "bpm": board["bpm"], "beats": beats}
 
 

@@ -13,7 +13,9 @@ USAGE (from the workspace root; S = this skill's folder; the files named below a
     python3 S/scripts/storyboard.py sheets   # storyboards/<style>/frames/{hook,stop,closer}.png and sheet.png, each at
                                              # rest, and out/boards.png: the three sheets, first, second and third look
     python3 S/scripts/storyboard.py snap     # the chosen look (winner.json) at the music's tempo -> film.json (exit 1 on
-                                             # a finding); its boards are solved again, so sheets runs again after it
+                                             # a finding); its boards are solved again, so sheets runs again after it;
+                                             # of the music's tempo at half, once and twice, the one at which every
+                                             # stop's words read, nearest the kit's own
 
 The three styles: the one taste.json `style` names and the two of the kit's three (look.TRIO: swiss-grid,
 cinematic-letterbox, scrapbook) that differ most from it, or the three when it names none, in that order. A board is
@@ -44,6 +46,10 @@ check refuses a board on any of these, in any format:
   length     the film outside its board's band (board_drive.timing()): 20 to 42 s, or from the longest film its stops'
              holds reach when that is under 20 s, to 42 s
   hook       the hook's first event after frame 30
+  captions   captions.py: a stop's label or line that does not read over the photograph or the ground under it after
+             the board's remedy (the label in the line's color, a deeper scrim), a hook line over the map, a closer
+             line under 32 px on a 1080 px frame, and on a board cut to the music, a stop whose words stand whole for
+             less time than they take to read or whose headline settles more than a second after its beat
   style      look.style_findings over the three reels: a move or cut the card does not allow, a hex the palette rule did
              not make, two boards in one style, or one board's layout the same as another's
 """
@@ -58,6 +64,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import board_drive  # noqa: E402
 import bounds  # noqa: E402
+import captions  # noqa: E402
 import look  # noqa: E402
 import sfx  # noqa: E402
 
@@ -70,10 +77,10 @@ HOOK_FRAMES = 30
 # beats before the camera leaves a place that its words start to leave (motion/studio/route/words.tsx LEAVE); a rest is
 # taken before them, so the sheet and the stills show the words whole
 WORDS_SINK = 0.35
-# beats the cut into a flight takes (board_drive.FLIGHT_CUT, motion/system/moves/cut/bars-close.tsx); the words of the
-# stop before it are gone a quarter of the way through its window and fade for WORDS_FADE beats before that
-# (motion/studio/route/plan.ts wordsGoneBy), so that stop rests before the cut's window opens and before its words fade
-FLIGHT_CUT_BEATS, WORDS_FADE = 2, 0.3
+# the words of the stop before a flight are gone a quarter of the way through the window of the cut into it
+# (board_drive.cut_beats) and fade for WORDS_FADE beats before that (motion/studio/route/plan.ts wordsGoneBy), so that
+# stop rests before the cut's window opens and before its words fade
+WORDS_FADE = 0.3
 # the files the source is built from, each recorded in source.json `inputs` by its digest
 INPUTS = ("taste.json", "cast.json", "places.json")
 # the board's sound marks: where the bed's sections turn, and where the picture and the music stop together
@@ -167,9 +174,9 @@ def plan(source, fmt, bpm=None, style=look.TRIO[0]):
         leave = beat_at[ids[i + 1]]
         at = leave - cards[i]["go"] - WORDS_SINK - 0.1
         nxt = b["beats"][i + 1]
-        if nxt.get("early") and nxt.get("transition") == board_drive.FLIGHT_CUT:
+        if nxt.get("early") and board_drive.cut_beats(nxt.get("transition")):
             end = beat_at[ids[i + 2]] if i + 2 < len(ids) else last
-            w = min(FLIGHT_CUT_BEATS, (leave - beat_at[ids[i]]) / 2, (end - leave) / 2)
+            w = min(board_drive.cut_beats(nxt["transition"]), (leave - beat_at[ids[i]]) / 2, (end - leave) / 2)
             switch = leave - nxt["early"] * b["bpm"] / 60
             at = min(at, switch - w / 2 - 0.1, switch - w / 4 - WORDS_FADE - 0.1)
         return round(at * pulse)
@@ -225,6 +232,7 @@ def findings(plans, rows):
     for fmt, p in plans.items():
         b = p["board"]
         out += [f"{fmt}: {x}" for x in bounds.check(b)]
+        out += [f"{fmt}: {x}" for x in captions.findings(b)]
         if shape(b) != shape(reel):
             out.append(f"{fmt}: formats: its beats are {shape(b)}, the reel's {shape(reel)}")
         if not in_band(p["seconds"], b["length"]):
@@ -451,15 +459,18 @@ def cmd_snap(a):
     base = board_drive.BPM
     bpm, why = base, f"the kit's tempo, {base} bpm (no music tempo)"
     if music.get("bpm"):
-        best = None
+        # the multiple of the music's tempo whose film is in its band, one at which every stop's words read first, then
+        # the one nearest the kit's own
+        fits = []
         for k in (0.5, 1, 2):
             cand = round(music["bpm"] * k, 2)
             try:
                 p = plan(src, "reel", cand, style)
             except ValueError:
                 continue
-            if in_band(p["seconds"], p["board"]["length"]) and (best is None or abs(cand - base) < abs(best - base)):
-                best = cand
+            if in_band(p["seconds"], p["board"]["length"]):
+                fits.append((bool(captions.timing(p["board"])), abs(cand - base), cand))
+        best = min(fits)[2] if fits else None
         if best:
             bpm, why = best, f"the music's {music['bpm']} bpm" + (f" at {best / music['bpm']:g}x" if best != music["bpm"] else "")
     plans = write_board(src, style, bpm)

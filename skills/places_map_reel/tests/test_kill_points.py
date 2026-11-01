@@ -282,6 +282,7 @@ class CriticRound(InARun):
     def test_the_same_reel_keeps_its_round_and_a_new_reel_opens_the_next(self):
         self.put("render/film-report.json", "{}")
         mock.patch.object(vote, "cut_frames", return_value=[]).start()
+        mock.patch.object(vote, "sound_read", return_value={"table": "critic/sound.md", "findings": [], "cited": ""}).start()
         self.addCleanup(mock.patch.stopall)
         self.put("out/film.mp4", "reel a")
         self.assertEqual(vote.cmd_cut(None), 0)

@@ -214,7 +214,9 @@ class TheGateReports(InADir):
         for c in vote.CUT_PANEL:
             e = data["critics"][c]["boards"]["film"]
             e.update(scores=dict(scores), unread={}, paragraph=" ".join(["the route holds and the type settles on the beat"] * 4))
-        data.update(round=1, film=qa.sha(Path("out/film.mp4")), frames=frames, seen=frames, lever=lever, fixed=None)
+        data.update(round=1, film=qa.sha(Path("out/film.mp4")), frames=frames, seen=frames, lever=lever, fixed=None,
+                    sound={"table": "critic/sound.md", "findings": [],
+                           "cited": "R5 rests on every cut row on the beat and every effect row heard over the bed"})
         Path("critic/cut-1.json").write_text(json.dumps(data))
 
     def test_a_round_under_the_bar_with_no_lever_left_is_delivered_under_the_bar_with_every_score(self):

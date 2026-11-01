@@ -105,8 +105,10 @@ class EarlyOnTheBeat(unittest.TestCase):
                 if beat.get("move") not in board_drive.FLIGHT:
                     continue
                 go = b["route"]["cards"][c["i"] - 1]["go"]
-                self.assertAlmostEqual(fx[c["id"]]["start"], at[c["id"]] - go, places=2, msg=f"{st} {c['id']}")
-                self.assertAlmostEqual(fx[c["id"]]["layers"][0]["at"]["arrive"] - fx[c["id"]]["start"],
+                # the beat is read at its cut; its whoosh peaks `lead` beats ahead, where the flight takes the frame
+                self.assertAlmostEqual(fx[c["id"]]["start"], at[c["id"]], places=3, msg=f"{st} {c['id']}")
+                self.assertAlmostEqual(fx[c["id"]]["start"] - fx[c["id"]]["lead"], at[c["id"]] - go, places=2, msg=f"{st} {c['id']}")
+                self.assertAlmostEqual(fx[c["id"]]["layers"][0]["at"]["arrive"] - (fx[c["id"]]["start"] - fx[c["id"]]["lead"]),
                                        board_drive.FLIGHT[beat["move"]] / sec, places=3)
 
 

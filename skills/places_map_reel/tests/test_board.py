@@ -117,9 +117,10 @@ class DriveBoard(unittest.TestCase):
                 self.assertEqual(found, [], (style, fmt))
 
     def test_the_words_stand_in_the_style_cards_faces_colors_and_line_box(self):
-        # the label in the card's label face and color, the line in its line face and color, from the top of the card's
-        # line box down, and each of the three looks in faces of its own; a look the route sets in heavier instances of
-        # its card's families (PHONE) keeps its line at the card's size and rises out of the box's top by what it needs
+        # the label in the card's label face and color (or the line's, where its own does not read), the line in its line
+        # face and color, from the top of the card's line box down, and each of the three looks in faces of its own; a
+        # look the route sets in heavier instances of its card's families (PHONE) keeps its line at the card's size and
+        # rises out of the box's top by what it needs
         files = set()
         for style in look.TRIO:
             card = look.card(style)
@@ -135,7 +136,9 @@ class DriveBoard(unittest.TestCase):
                         part = lay["label"] if ln["name"] == "label" else lay["line"]
                         face = phone[part["face"]][0] if phone else card["faces"][part["face"]]["file"]
                         self.assertEqual(ln["file"], face, (style, fmt, c["id"]))
-                        self.assertEqual(ln["color"], part["color"], (style, fmt, c["id"]))
+                        # a label that does not read in its own color stands in the line's (captions.lay)
+                        self.assertIn(ln["color"], {part["color"], lay["line"]["color"]} if ln["name"] == "label" else {part["color"]},
+                                      (style, fmt, c["id"]))
                         self.assertTrue((phone or y0 - 0.5 <= ln["y"]) and ln["y"] <= y1 + 0.5, (style, fmt, c["id"], ln["text"]))
                         if phone and ln["name"] != "label":
                             self.assertEqual(ln["size"], round(part["size"] * min(W, H) / 1080), (style, fmt, c["id"]))

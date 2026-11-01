@@ -83,6 +83,9 @@ type CardIn = {
   entry?: Entry;
   /** the photograph's focus in frame px, the point it pushes toward while its place holds */
   focus: Pt;
+  /** the scrim's depth at its foot under the words, as deep as the words need over this photograph
+   * (scripts/captions.py lay); absent, the layout's own scrim held at route/card.tsx SCRIM_DEPTH */
+  scrim?: number;
 };
 
 export type Card = CardIn & {
@@ -127,7 +130,8 @@ export type Plan = {
   cards: Card[];
   legs: Leg[];
   hook: {kicker: Line[]; name: number; dive: number; settle: number};
-  closer: {at: number; window: Box; title: string; signoff: string; route: number; still: number; paper: number};
+  /** the closer; `least` is the size in frame px no word of it is set under, a phone's least legible line */
+  closer: {at: number; window: Box; title: string; signoff: string; route: number; still: number; paper: number; least: number};
   end: number;
 };
 
@@ -222,7 +226,7 @@ export const planOf = (board: Board): Plan => {
     safe: sys.safe?.[board.format.name ?? 'reel'],
     land: route.land, cards, legs, hook: route.hook,
     closer: {at: C, window: route.closer.window, title: route.closer.title, signoff: route.closer.signoff,
-      route: route.closer.route, paper: route.closer.paper, still: board.sound?.find((c) => c.kind === 'stop')?.at ?? end},
+      route: route.closer.route, paper: route.closer.paper, least: route.closer.least ?? 0, still: board.sound?.find((c) => c.kind === 'stop')?.at ?? end},
     end,
   };
 };

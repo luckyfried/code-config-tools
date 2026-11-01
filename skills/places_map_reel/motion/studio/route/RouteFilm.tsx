@@ -128,7 +128,7 @@ export const RouteFilm: React.FC<{board: Board; clips: Clip[]}> = ({board, clips
   const flight = flightCutAt(full, look, t);
   const bg = plan.colors.sea;
   const over = (
-    <CloserFrame.Provider value={{window: plan.closer.window, top: Math.max(safe.top, sys.finish.bars * plan.H),
+    <CloserFrame.Provider value={{window: plan.closer.window, least: plan.closer.least, top: Math.max(safe.top, sys.finish.bars * plan.H),
       bottom: plan.H - Math.max(safe.bottom, sys.finish.bars * plan.H)}}>
       <MoveLayer line={line} look={look} t={t} now={frame / plan.pulse} closer={{name: KIT + sys.closer, at: plan.closer.at, still: plan.closer.still}} bars={sys.finish.bars}>
         {flight?.cut.Overlay ? <flight.cut.Overlay into={flight.into} look={look} u={flight.u} t={t} /> : null}

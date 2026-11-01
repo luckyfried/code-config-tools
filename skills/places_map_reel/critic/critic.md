@@ -33,7 +33,7 @@ changing a thing, and is what I would post plainly there?
 | `R2` | image treatment: depth, light, one grade | the photograph moves inside its box through every hold (a slow push toward its focus and a drift the way the dot came, under the beat's own move) while the map turns under the camera; a shadow under every print standing off the map; the style card's finish and its one grade over every photograph, the map and the closer; the stand-in for an absent clip is that layered move; the closer's still stays still | frames: two frames of one hold, three stops side by side | a photograph sitting flat for a whole hold, stops in different color worlds, a finish the card does not give, a closer whose window shows no map |
 | `R3` | type in motion, as a system | the card's two faces, its scale and its alignment, each word where the card's photo layout sets it; each line enters as the layout says (cut on, faded up, typed), settled within 1 s of its beat; every line inside the safe area; on the closer every name reads beside its pin and the route crosses none | frames: a stop's band, the closer | an entrance the card does not give, mixed alignment, a name under the route or over another |
 | `R4` | motion and rhythm | one continuous camera; a small pull back before each move and an overshoot where it lands; consecutive moves differ (one climbs over the map until every place and the route stand in frame, the next comes down onto the map as the photograph folds away and rides the dot along the leg), and the map and the route show in every move; holds vary with what each photograph carries; the peak holds longest; the closer rests, silent, under a slow push | the 12 fps strips; frames of consecutive moves | one move repeated stop after stop, nothing moving inside a hold |
-| `R5` | sound to picture | an effect only where the picture lands (a cut, a photograph, the title, the closer), on the music's grid and in its key; the music stops where the dot lands | `qa/check.json` (audio) and `storyboard.md`'s effects line; the placement is a person's read while watching, so it is `unread` when nobody in the session can watch with sound | an effect with nothing landing, an effect off the beat |
+| `R5` | sound to picture | an effect only where the picture lands (a cut, a photograph, the title, the closer), on the music's grid and in its key; the music stops where the dot lands | `critic/sound.md`, the sound read `vote.py cut` writes, which hears the film: every cut against the beat grid, where the music falls quiet against the stop and the last frame, and each effect's peak against the music under it; and `storyboard.md`'s effects line | a cut off the beat, music still sounding at the last frame, an effect under the music |
 | `R6` | generated shots are the spectacle | `clips/requests.json` holds one request per shot, each written as a cinematographer would (subject, camera move, lens feel, height, light, the beat's seconds, a seamless loop), for the hook's world, the texture between chapters, and each still brought to life; no two requests share a template | `clips/requests.json` | one prompt pasted for every stop, a request with no move or no light |
 | `R7` | the deliverable is unmistakable | `out/` holds the three films (9:16, 16:9, square), `post.png`, `story.png`, `caption.md`, `boards.png` and `review.html`, the page that opens on the film with the story card as its poster, the caption to copy, the two looks not picked with how to ask for one, and how it was made in plain words, with no score | the `out/` listing; `review.html` | process files beside the film, a page that shows a score or leads with a vote table |
 
@@ -49,8 +49,11 @@ changing a thing, and is what I would post plainly there?
 - R2 and R4 are read from rendered frames and strips only (`critic/cut-N/`, `frames/`, `qa/film-strip*`). A read
   that cites the storyboard, a plan, the name of a move, or the kit's own files instead of a frame is not a read:
   name the frame that shows it.
-- A rule nobody in the session can read is `null`, with a sentence in `unread` naming why (for example R5's cue
-  placement when nobody can watch with sound). It is stated as unread in `brief.md`, never passed.
+- R5 is scored from `critic/sound.md`: a cut off the beat, music that still sounds at the last frame, or an effect
+  under the music is something a viewer hears, and a 5 needs none of them. Say in the round's `sound.cited` which of
+  its rows the score rests on; a round is not complete without it.
+- A rule nobody in the session can read is `null`, with a sentence in `unread` naming why. It is stated as unread in
+  `brief.md`, never passed.
 - When a score is under 4, `lever` names the one change from the list below that fixes the worst rule (`name`, and
   `change` saying what to set) and the round runs again on the new film. `lever.name` is `none` when no lever below
   reaches it; the budget is spent and the film ships with its scores stated in `brief.md`.
@@ -84,9 +87,10 @@ deliver and R3 once more on the full-size film. Look, actually look:
 - every frame in `critic/cut-N/` full size with the Read tool, and `qa/film-strip2.png` and every
   `qa/film-strip12-NN.jpg`;
 - `out/` (the three films, `post.png`, `story.png`) and `frames/` (the hook, the stop and the closer of each format);
-- `clips/requests.json` for R6, `qa/check.json` for R5.
+- `clips/requests.json` for R6, and `critic/sound.md` for R5 with `qa/check.json` (the film's loudness and peak).
 
-Fill in `critic/cut-N.json` and run `vote.py verdict`.
+Fill in `critic/cut-N.json`, with `sound.cited` naming the rows of `critic/sound.md` the R5 scores rest on, and run
+`vote.py verdict`.
 
 ## The levers
 

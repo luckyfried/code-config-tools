@@ -251,8 +251,10 @@ export const CardView: React.FC<CardProps> = ({plan, card: c, index, t, texture,
   // the scrim: the photograph shaded from clear well above the words to the shade's depth a little above the words'
   // first line (the label's, where there is one), and at that depth from there to its foot, so every line of the words
   // stands on the whole of it; the shade is black under light words and the card's paper under dark ones, and never
-  // lighter than SCRIM_DEPTH, so the words read over the brightest part of any photograph
-  const scrim = (lay.line.scrim > 0 ? Math.max(lay.line.scrim, SCRIM_DEPTH) : 0) * k.whole * k.show;
+  // lighter than SCRIM_DEPTH, so the words read over the brightest part of any photograph; a card that carries its own
+  // depth (as deep as its words need over its photograph) stands at that
+  const depth = lay.line.scrim > 0 ? c.scrim ?? Math.max(lay.line.scrim, SCRIM_DEPTH) : 0;
+  const scrim = depth * k.whole * k.show;
   if (scrim > 0.002) {
     const first = c.lines.length ? Math.max(y0, Math.min(...c.lines.map((ln) => ln.y - ln.size * 1.1))) : y1;
     const words = Math.max(y0, first - SCRIM_HEAD * H);

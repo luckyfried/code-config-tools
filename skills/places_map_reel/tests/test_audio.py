@@ -88,19 +88,33 @@ class Effects(unittest.TestCase):
             self.assertAlmostEqual(t / step, round(t / step), places=4, msg=(t, k))
             self.assertLess(t, stop, (t, k))
 
-    def test_the_title_hits_as_it_lands_and_the_closer_as_the_map_resolves_into_it(self):
+    def test_the_title_hits_as_it_lands_and_the_closer_on_its_cut(self):
         sec = 60 / self.b["bpm"]
         hits = [t for t, k in self.ev if k == "impact"]
         st, _ = board_drive.starts(self.b)
         self.assertAlmostEqual(hits[0], round(board_drive.TITLE_IN * 4) / 4 * sec, places=4)
-        self.assertAlmostEqual(hits[1], round((st["closer"] + board_drive.CLOSER_LAND) * 4) / 4 * sec, places=4)
+        self.assertAlmostEqual(hits[1], round(st["closer"] * 4) / 4 * sec, places=4)
+        closer = self.fx["beats"][-1]
+        self.assertAlmostEqual(closer["layers"][0]["at"]["arrive"], st["closer"] + board_drive.CLOSER_LAND, places=4)
+
+    def test_the_read_reads_every_cut_at_its_hit_on_the_beat(self):
+        # the hook's dive, a spectacle's early switch and the closer's landing are lead-ins and arrivals: the read reads
+        # each cut where the picture cuts, on the film's beat
+        rows = sfx.read_cuts(self.fx)
+        self.assertTrue(rows)
+        self.assertEqual([r for r in rows if r["verdict"] != "on the beat"], [])
+        sec = 60 / self.b["bpm"]
+        hook = next(r for r in rows if r["into"] == self.b["route"]["cards"][0]["id"])
+        dive = self.b["route"]["hook"]
+        self.assertAlmostEqual(hook["at"], (dive["dive"] + dive["settle"]) / 2 * sec, places=3)
 
     def test_a_spectacles_photograph_lands_when_its_flight_does(self):
         b = json.loads(json.dumps(self.b))
         beat = next(x for x in b["beats"][1:-1])
         beat["move"] = "picture-tunnel"
         got = next(x for x in board_drive.fx_board(b)["beats"] if x["id"] == beat["id"])
-        self.assertAlmostEqual(got["layers"][0]["at"]["arrive"] - got["start"], board_drive.FLIGHT["picture-tunnel"] / (60 / b["bpm"]), places=3)
+        self.assertAlmostEqual(got["layers"][0]["at"]["arrive"] - (got["start"] - got["lead"]),
+                               board_drive.FLIGHT["picture-tunnel"] / (60 / b["bpm"]), places=3)
 
 
 class Master(InARun):

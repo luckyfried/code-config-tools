@@ -9,9 +9,10 @@ import {register, type CloserProps} from '../../system/moves';
 import {alpha, balance, fill, fitTo, inkOn, land, OUT, safeOf, SINE, SNAP, span, Words} from '../../system/moves/kit';
 import type {Box} from './plan';
 
-/** The window the closer leaves open on the map, [x, y, w, h] frame px, and the top and bottom of the type-safe area
- * inside any letterbox bar. */
-export const CloserFrame = createContext<{window: Box; top: number; bottom: number}>({window: [0, 0, 0, 0], top: 0, bottom: 0});
+/** The window the closer leaves open on the map, [x, y, w, h] frame px, the top and bottom of the type-safe area
+ * inside any letterbox bar, and the least size in frame px any of the closer's words is set at (a phone's least
+ * legible line; 0 sets every word at its shape's own size). */
+export const CloserFrame = createContext<{window: Box; top: number; bottom: number; least?: number}>({window: [0, 0, 0, 0], top: 0, bottom: 0});
 
 /** Frame px for `v` px of a 1080 px short side: the closers' words scale with the frame's short side, so a 16:9 frame
  * sets them at the size a vertical one does. */
@@ -38,7 +39,7 @@ const rowsOf = (text: string, family: string, width: number, size: number, weigh
  * card's accent filling the grid's last column on the right. */
 const Poster: React.FC<CloserProps> = ({look, local}) => {
   const u = short(look);
-  const {window: [x, y, w, h], top} = useContext(CloserFrame);
+  const {window: [x, y, w, h], top, least = 0} = useContext(CloserFrame);
   const m = look.grid.m;
   const measureW = look.W - 2 * m;
   const k = span(local, 0, 0.45, SNAP);
@@ -47,14 +48,15 @@ const Poster: React.FC<CloserProps> = ({look, local}) => {
   const title = look.title || look.signoff;
   const lines = balance(title, title.length > 12 ? 2 : 1);
   const ruleH = u(18), ruleY = y - u(30) - ruleH;
-  const said = look.title ? rowsOf(look.signoff, look.text, measureW, u(30)) : [];
-  const saidSize = said.length ? Math.min(u(30), fitTo(said, look.text, measureW)) : 0;
+  const said = look.title ? rowsOf(look.signoff, look.text, measureW, Math.max(u(30), least)) : [];
+  const saidSize = said.length ? Math.max(least, Math.min(u(30), fitTo(said, look.text, measureW))) : 0;
   const saidTall = said.length ? said.length * saidSize * 1.25 : 0;
   const foot = ruleY - u(30) - saidTall - (said.length ? u(18) : 0);
   const size = Math.min(fitTo(lines, look.display, measureW, {weight: 700, tracking: -0.035, most: u(250)}), (foot - top - u(10)) / (lines.length * 0.95));
   const col = (look.grid.cols[look.grid.cols.length - 1] - look.grid.cols[0]) / (look.grid.cols.length - 1);
   const low = y + h + u(40);
   const lowH = Math.min(u(220), look.H - low - m);
+  const hand = Math.max(least, lowH > u(40) ? u(32) : u(28));
   // the ground is one sheet with the window cut out of it, the cut closing from the frame's edges onto the window
   const [l, t, r, b] = [x * k, y * k, look.W - (look.W - x - w) * k, look.H - (look.H - y - h) * k];
   const hole = `${l}px ${t}px, ${l}px ${b}px, ${r}px ${b}px, ${r}px ${t}px, ${l}px ${t}px`;
@@ -68,12 +70,12 @@ const Poster: React.FC<CloserProps> = ({look, local}) => {
           whiteSpace: 'pre', clipPath: `inset(${(1 - span(local, 0.35, 0.35, SNAP)) * 100}% 0 0 0)`}} />
       {said.length ? <Words text={said.join('\n')} family={look.text} size={saidSize} color={ink}
         style={{position: 'absolute', left: m, right: m, top: ruleY - u(30) - saidTall, lineHeight: 1.25, whiteSpace: 'pre', opacity: span(local, 0.6, 0.3)}} /> : null}
-      {look.handle && lowH > u(40) ? <Words text={look.handle} family={look.text} size={u(32)} color={ink}
+      {look.handle && lowH > u(40) ? <Words text={look.handle} family={look.text} size={hand} color={ink}
         style={{position: 'absolute', left: m, top: low, opacity: span(local, 0.7, 0.3)}} /> : null}
       {lowH > u(40) ? <div style={{position: 'absolute', left: look.W - m - col, top: low, width: col, height: lowH,
         background: look.colors.accent, transform: `scaleY(${span(local, 0.55, 0.5, OUT)})`, transformOrigin: 'top'}} /> : null}
-      {look.handle && lowH <= u(40) ? <Words text={look.handle} family={look.text} size={u(28)} color={ink}
-        style={{position: 'absolute', right: m, top: ruleY - u(30) - u(28) * 1.25, opacity: span(local, 0.7, 0.3)}} /> : null}
+      {look.handle && lowH <= u(40) ? <Words text={look.handle} family={look.text} size={hand} color={ink}
+        style={{position: 'absolute', right: m, top: ruleY - u(30) - hand * 1.25, opacity: span(local, 0.7, 0.3)}} /> : null}
     </div>
   );
 };
@@ -91,7 +93,7 @@ const PUSH = 0.03;
  * leaves no room below the band; every word in the tone that reads on the matte, inside the profile's safe width to the
  * end of the push. */
 const TitleCard: React.FC<CloserProps> = ({look, local}) => {
-  const {window: [x, y, w, h], top, bottom} = useContext(CloserFrame);
+  const {window: [x, y, w, h], top, bottom, least = 0} = useContext(CloserFrame);
   const dark = span(local, 0, 1.1, SINE);
   const title = (look.title || look.signoff).toUpperCase();
   const u = short(look);
@@ -102,17 +104,20 @@ const TitleCard: React.FC<CloserProps> = ({look, local}) => {
   const mid = (l0 + r0) / 2, room = (r0 - l0) / (1 + PUSH), side = mid - room / 2, right = look.W - side - room;
   const ink = inkOn(look.tone.matte, [look.colors.paper, look.tone.light, look.colors.ink]);
   const lines = balance(title, title.length > 16 ? 2 : 1);
-  const said = look.title ? rowsOf(look.signoff, look.text, room * 0.9, u(36), TEXT_WEIGHT) : [];
+  const said = look.title ? rowsOf(look.signoff, look.text, room * 0.9, Math.max(u(36), least), TEXT_WEIGHT) : [];
   // the title, the places and the handle stand in one column between the safe top and the band, shrunk together when
-  // the frame is short (16:9 and square) so no line reaches the map
+  // the frame is short (16:9 and square) so no line reaches the map; the places and the handle never shrink under the
+  // least legible size, and the title gives up the height they keep
   const want = {title: Math.min(u(120), fitTo(lines, look.display, room, {weight: TITLE_WEIGHT, tracking: 0.14})),
-    said: said.length ? Math.min(u(40), fitTo(said, look.text, room * 0.9, {weight: TEXT_WEIGHT})) : 0, handle: u(30)};
+    said: said.length ? Math.max(least, Math.min(u(40), fitTo(said, look.text, room * 0.9, {weight: TEXT_WEIGHT}))) : 0, handle: Math.max(least, u(30))};
   const gaps = [u(30), u(26)];
   const credit = Boolean(look.handle) && bottom - (y + h) > want.handle * 1.2 + u(120);
   const tall = lines.length * want.title * 1.05 + (said.length ? said.length * want.said * 1.2 + gaps[0] : 0) + (look.handle && !credit ? want.handle * 1.1 + gaps[1] : 0);
   const space = y - top - u(40);
   const k = Math.min(1, space / tall);
-  const size = want.title * k, saidSize = want.said * k, hand = want.handle * k;
+  const saidSize = said.length ? Math.max(least, want.said * k) : 0, hand = Math.max(least, want.handle * k);
+  const kept = said.length * (saidSize - want.said * k) * 1.2 + (look.handle && !credit ? (hand - want.handle * k) * 1.1 : 0);
+  const size = Math.max(least, want.title * k - kept / (lines.length * 1.05));
   const t0 = top + Math.max(u(12), (space - tall * k) / 2);
   const t1 = t0 + lines.length * size * 1.05 + gaps[0] * k;
   const t2 = (said.length ? t1 + said.length * saidSize * 1.2 : t0 + lines.length * size * 1.05) + gaps[1] * k;
@@ -146,7 +151,7 @@ const TitleCard: React.FC<CloserProps> = ({look, local}) => {
  * is, and the places under the window in the text face. */
 const BookCover: React.FC<CloserProps> = ({look, local}) => {
   const u = short(look);
-  const {window: [x, y, w, h], top} = useContext(CloserFrame);
+  const {window: [x, y, w, h], top, least = 0} = useContext(CloserFrame);
   const page = look.tone.ground;
   const cover = inkOn(page, [look.colors.accent, look.colors.accent2]);
   const ink = inkOn(cover, [look.colors.paper, look.colors.ink, page]);
@@ -161,11 +166,11 @@ const BookCover: React.FC<CloserProps> = ({look, local}) => {
   const title = look.title || look.signoff;
   const lines = balance(title, title.length > 14 ? 2 : 1);
   const inner = panel[2] - 4 * inset;
-  const hand = u(32), handTop = inset + u(34);
+  const hand = Math.max(least, u(32)), handTop = inset + u(34);
   const roomUp = y - panel[1] - inset - u(40) - (look.handle ? hand * 1.2 + u(34) : 0);
   const size = Math.min(fitTo(lines, look.display, inner, {most: u(200)}), roomUp / (lines.length * 1.02));
-  const said = look.title ? rowsOf(look.signoff, look.text, inner, u(36)) : [];
-  const saidSize = said.length ? Math.min(u(36), fitTo(said, look.text, inner)) : 0;
+  const said = look.title ? rowsOf(look.signoff, look.text, inner, Math.max(u(36), least)) : [];
+  const saidSize = said.length ? Math.max(least, Math.min(u(36), fitTo(said, look.text, inner))) : 0;
   // the places stand in the middle of the cover between the window's rule and the inset's
   const below = panel[3] - inset - (y + h - panel[1] + u(20));
   const saidTop = y + h - panel[1] + u(20) + (below - said.length * saidSize * 1.25) / 2;

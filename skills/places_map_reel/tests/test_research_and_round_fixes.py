@@ -110,6 +110,7 @@ def fill(path, score, fixed=None):
         e["scores"] = {k: score for k in e["scores"]}
         e["paragraph"] = " ".join(["the cut holds its places and its music agrees with the moves it makes"] * 3)
     data["seen"] = data["frames"]
+    data["sound"]["cited"] = "R5 rests on every cut row on the beat and every effect row heard over the bed"
     if score < vote.BAR:
         data["lever"] = {"name": "closer.map", "change": "the closer opens on the whole year's map"}
     if fixed is not None:
@@ -130,6 +131,9 @@ class TheRoundGateFinishes(unittest.TestCase):
         cut = mock.patch.object(vote, "cut_frames", lambda film, into: [f"f{i + 1:02d}.jpg" for i in range(vote.CUT_FRAMES)])
         cut.start()
         self.addCleanup(cut.stop)
+        sound = mock.patch.object(vote, "sound_read", lambda film: {"table": "critic/sound.md", "findings": [], "cited": ""})
+        sound.start()
+        self.addCleanup(sound.stop)
 
     def test_a_scored_round_opens_round_two_only_on_a_new_film_and_round_two_finishes(self):
         with mock.patch("sys.stdout"):

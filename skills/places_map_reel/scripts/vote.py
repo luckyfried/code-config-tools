@@ -27,9 +27,14 @@ winner stands until a pick names another; the person's choice is the pick.
 Before the film renders, the editor reads the timed cut (preview/film.mp4 and every strip, listed in `seen`) for
 monotony; film.py render waits for that read to pass. The finished cut is scored by the motion designer and the person
 on the same rules, from the frames vote.py cut takes from this render (the first frame, sixteen at equal spacing, each
-beat as the camera leaves it, and each shape's closer at rest at full size, each listed in `seen`). A rule nobody in
-the session can read is null with a sentence in `unread`. A score under 4 names a `lever` (critic.md's levers, or
-"none" when no lever reaches it); round 2 opens only on a new film. The bar is a mean of 4.5 or more with no rule under
+beat as the camera leaves it, and each shape's closer at rest at full size, each listed in `seen`), and R5 from the
+sound read `cut` writes beside them (critic/sound.md: the cuts against the beat grid, the music's end against the last
+frame, each effect's peak against the music under it), naming in the round's `sound.cited` the rows the score rests
+on. A rule nobody in the session can read is null with a sentence in `unread`. A score under 4 names a `lever`
+(critic.md's levers, or "none" when no lever reaches it); round 2 opens only on a new film. A round records the film
+it scored (its bytes' hash) and its picture (`cut`: the boards' hash with the motion bundle that drew it, proof.picture),
+so a film drawn by another bundle opens its own round, and a verdict on a round that scored another film than the
+newest render is refused. The bar is a mean of 4.5 or more with no rule under
 4. The verdict never blocks the film: it ships at the bar, asks once for the fix its lever names, or delivers the best
 cut under the bar with every score in brief.md (verdict.json carries the verdict to deliver.py); scores never reach the
 review page.
@@ -41,7 +46,6 @@ empties each critic's R3 score: the critics read the type again on the full-size
 and the round is complete once they have scored it there.
 """
 import argparse
-import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -63,6 +67,8 @@ CRITERIA = {
 }
 # the rule the critics read again on the full-size film: the type, at the size a phone shows it
 TYPE = "R3"
+# the rule the critics score from the sound read vote.py cut writes (critic/sound.md)
+SOUND_RULE = "R5"
 # the frames at equal spacing a cut round is read from, how long before a landing the beat before it is read as the
 # camera leaves it, the lowest score a rule may take, and the mean the scores reach at the bar
 CUT_FRAMES, LEAVING, BAR, MEAN = 16, 0.5, 4, 4.5
@@ -300,17 +306,19 @@ def cmd_cut(a):
     # render/film-report.json is the index of out/: it comes back only once every film is in place
     if not Path("render/film-report.json").exists() or not film.exists():
         sys.exit("render/film-report.json or out/film.mp4 is missing: run film.py render --proof first")
-    digest = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
-    cut = (_env.read_json("film.json") or {}).get("hash")
-    # an unscored round is kept for the same film; a scored round under the bar with a lever opens round 2 once the
-    # lever's change has reached a new film; there are two rounds at most
+    digest = proof.digest(film)
+    cut = proof.picture((_env.read_json("film.json") or {}).get("hash"), film)
+    # a round scores one film: the same film keeps its round, the full-size film of the round's proof takes that round,
+    # and any other film opens the next; a scored round under the bar with a lever opens round 2 once the lever's change
+    # has reached a new film
     rs = rounds()
     last = (_env.read_json(rs[-1]) or {}) if rs else {}
     if scale == 1 and last.get("scale") == proof.SCALE and last.get("cut") == cut:
         # the full-size film of the cut the round scored on its proof: the same round, its frames cut again from the
         # full-size films, with the type read there
         n = len(rs)
-        last.update(film=digest, scale=1, proof_film=last["film"], frames=cut_frames(film, d / f"cut-{n}"), seen=[])
+        last.update(film=digest, scale=1, proof_film=last["film"], frames=cut_frames(film, d / f"cut-{n}"), seen=[],
+                    sound={**sound_read(film), "cited": (last.get("sound") or {}).get("cited", "")})
         for c in CUT_PANEL:
             e = last["critics"][c]["boards"]["film"]
             e["scores"][TYPE] = None
@@ -320,13 +328,17 @@ def cmd_cut(a):
               f"read the type on them at the size a phone shows it, and score {TYPE} in {rs[-1].resolve()}; the other scores stand")
         return 0
     scored = bool(rs) and not problems(last, CUT_PANEL, ["film"])
-    if rs and not scored and last.get("film") == digest:
-        print(f"round {len(rs)}: {rs[-1].resolve()} is the round of this {film}; view every frame in {Path('critic') / f'cut-{len(rs)}'}/ and fill it in")
+    if rs and last.get("film") == digest and "sound" not in last:
+        last["sound"] = sound_read(film)
+        _env.write_json(rs[-1], last)
+    if rs and last.get("film") == digest and not scored:
+        print(f"round {len(rs)}: {rs[-1].resolve()} is the round of this {film}; view every frame in {Path('critic') / f'cut-{len(rs)}'}/ "
+              f"and fill it in{SAID}")
         return 0
-    if scored and (len(rs) >= 2 or ending(last)):
+    if rs and last.get("film") == digest and (len(rs) >= 2 or ending(last)):
         print(f"round {len(rs)} is scored and no further round opens: run vote.py verdict")
         return 0
-    if scored and last.get("film") == digest:
+    if rs and last.get("film") == digest:
         lv = last.get("lever") or {}
         sys.exit(f"{film} is the film round {len(rs)} scored: the lever ({lv.get('name')}: {lv.get('change')}) has not "
                  "reached the film; make its change and run the steps after it through film.py render --proof, then vote.py cut")
@@ -336,11 +348,38 @@ def cmd_cut(a):
     data = blank(CUT_PANEL, ["film"])
     for c in CUT_PANEL:
         data["critics"][c]["boards"]["film"]["unread"] = {}
-    data.update(round=n, film=digest, scale=scale, cut=cut, frames=frames, seen=[], lever=None, fixed="" if n > 1 else None)
+    data.update(round=n, film=digest, scale=scale, cut=cut, frames=frames, seen=[], lever=None, fixed="" if n > 1 else None,
+                sound=sound_read(film))
     _env.write_json(f, data)
     print(f"round {n}: view every frame in {(d / f'cut-{n}').resolve()}/ ({len(frames)}), watch {film}, then fill in {f.resolve()}"
-          + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
+          + (" (say in 'fixed' what changed since the last round)" if n > 1 else "")
+          + f"{SAID}; the read has {len(data['sound']['findings'])} findings")
     return 0
+
+
+SOUND = Path("critic/sound.md")
+SAID = (f"; score {SOUND_RULE} from the sound read, {SOUND}, and say in sound.cited which of its rows the score rests on")
+
+
+def sound_read(film):
+    """The rendered film's sound read (sfx.py read: the cuts against the beat grid, the music's end against the last
+    frame, the effects' peaks against the bed), from the effects board the mux lays (board_drive.fx_board of the reel's
+    board) and music.json, written to critic/sound.md and critic/sound.json; its block in a round: the table, its
+    findings, and `cited`, the sentence the critics fill in naming the rows the R5 score rests on."""
+    import board_drive
+    import sfx
+    f = _env.read_json("film.json") or {}
+    board = _env.read_json(Path((f.get("boards") or {}).get("reel") or "board-reel.json"))
+    if not board:
+        sys.exit("film.json names no reel board: run storyboard.py snap first")
+    return sfx.critic_read(board_drive.fx_board(board), _env.read_json("music.json") or {}, str(film), f.get("seconds"),
+                           _env.ffmpeg(), SOUND)
+
+
+def sound_problems(data):
+    """What a round's sound block still needs: the read itself, and the sentence that cites its rows."""
+    import sfx
+    return sfx.uncited(data.get("sound"), SOUND)
 
 
 def cut_frames(film, into):
@@ -410,7 +449,12 @@ def cmd_verdict(a):
     if not rs:
         sys.exit("no cut scores: run vote.py cut and fill it in")
     data = _env.read_json(rs[-1])
-    bad = problems(data, CUT_PANEL, ["film"])
+    film = proof.newest()
+    stale = proof.stale(data, proof.digest(film), film) if film.exists() else f"{film} is missing: run film.py render --proof"
+    if stale:
+        print(f"{rs[-1]} is not a read of the newest render: {stale}")
+        return 1
+    bad = problems(data, CUT_PANEL, ["film"]) + sound_problems(data)
     if bad:
         print(f"{rs[-1]} is not complete:")
         for x in bad:
