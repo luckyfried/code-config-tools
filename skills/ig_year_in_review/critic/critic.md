@@ -23,7 +23,7 @@ colors, their voice, their pacing, nothing on the avoid list. Would I post this 
 
 Each criterion scores the rules of `S/design/standards.md` it names, and a 5 is that row's "how the kit meets it" as
 seen. R1 to R4 are scored from the frames and the strip and from no other evidence: not the storyboard's prose, not
-the plan, not a log. R5 is scored from the four reads and the film's sound. R6 and R7 are measured by the kit's checks
+the plan, not a log. R5 is scored from the four reads and the sound read `vote.py cut` writes, `critic/sound.md`. R6 and R7 are measured by the kit's checks
 and tests, never scored.
 
 | key | scores | a 5 | a 3 or lower |
@@ -87,7 +87,11 @@ makes. Look, actually look:
 - every `frames/<format>-<rest>.png` full size with the Read tool: the hook, a month and the closer;
 - the film's strip, `qa/film-strip2.png`;
 - the carousel's first and last cards and the three stories under `out/`;
-- `qa/check.json` (the measured checks) and `render/film-report.json`.
+- `qa/check.json` (the measured checks) and `render/film-report.json`;
+- the sound read, `critic/sound.md`, which `vote.py cut` writes from the film's own sound: each cut against the beat
+  grid, the music's end against the last frame, and each effect's peak at its hit against the music under it. Score
+  `music` from its rows and name the rows the score rests on in the round's `sound.cited`; `vote.py verdict` refuses a
+  round that cites none.
 
 Never score from memory of the storyboard; the cut is what ships. Run `vote.py cut`, fill in `critic/cut-N.json` and
 run `vote.py verdict`. Type is read last on the full-size reel: after `SHIP` on the proof, `film.py render` renders it

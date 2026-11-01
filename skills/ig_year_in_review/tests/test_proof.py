@@ -1,8 +1,9 @@
 """The proof: every round before deliver renders the reel at half size beside the film in out/ (out/proof.mp4), never
 over out/film.mp4, with the cards, the stories and the strip as the full render makes them; qa.py check and vote.py cut
 read the newest render and say so; a check that measures pixels measures in board units, so a proof and a full render
-of one cut read the same; the critics' round on a proof moves to the full-size film with its type read again there;
-deliver.py refuses a run whose newest render is the proof.
+of one cut read the same; the critics' round on a proof moves to the full-size film with its type read again there; a round carries the
+sound read of the reel it scores and its music score cites it; a reel drawn by another motion bundle opens its own
+round; deliver.py refuses a run whose newest render is the proof.
 
     python3 -I -m unittest discover -s S/tests -p test_proof.py
 """
@@ -31,6 +32,7 @@ import proof  # noqa: E402
 import qa  # noqa: E402
 import storyboard  # noqa: E402
 import studio  # noqa: E402
+import sfx  # noqa: E402
 import vote  # noqa: E402
 
 FFMPEG, FFPROBE = shutil.which("ffmpeg"), shutil.which("ffprobe")
@@ -172,9 +174,14 @@ class Proof(unittest.TestCase):
         self.assertIn("film.mp4 is missing", [r[2] for r in res if r[0] == "format"][0])
 
 
+# the round's sound block as vote.sound_read returns it, and a sentence that cites its rows
+HEARD = {"table": "critic/sound.md", "findings": [], "cited": ""}
+CITED = "R5 rests on every cut row on the beat, the end row and each effect row heard over the bed"
+
+
 class Rounds(unittest.TestCase):
     """A round on the proof reads the proof; once the full-size film of that cut is rendered, the round moves to it and
-    the critics read its type again at full size."""
+    the critics read its type again at full size. Each round carries the sound read of the reel it scores."""
 
     def setUp(self):
         self.dir = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR")))
@@ -186,6 +193,10 @@ class Rounds(unittest.TestCase):
         OUT.mkdir()
         _env.write_json("film.json", {"hash": "h"})
         _env.write_json("render/film-report.json", {"failed": 0, "hash": "h"})
+        self.heard = []
+        sound = mock.patch.object(vote, "sound_read", lambda film: self.heard.append(str(film)) or dict(HEARD))
+        sound.start()
+        self.addCleanup(sound.stop)
 
     def cut(self):
         with contextlib.redirect_stdout(io.StringIO()) as out:
@@ -198,6 +209,7 @@ class Rounds(unittest.TestCase):
             e = data["critics"][c]["boards"]["film"]
             e["scores"] = {k: score for k in vote.CRITERIA}
             e["paragraph"] = " ".join(["seen"] * 30)
+        data["sound"]["cited"] = CITED
         _env.write_json(path, data)
 
     def verdict(self):
@@ -210,7 +222,10 @@ class Rounds(unittest.TestCase):
         said = self.cut()
         self.assertTrue(said.startswith("reading the half-size proof out/proof.mp4"), said)
         first = _env.read_json("critic/cut-1.json")
-        self.assertEqual((first["film"], first["scale"], first["cut"]), (qa.sha(OUT / "proof.mp4"), proof.SCALE, "h"))
+        self.assertEqual((first["film"], first["scale"], first["cut"]),
+                         (qa.sha(OUT / "proof.mp4"), proof.SCALE, proof.picture("h", OUT / "proof.mp4")))
+        self.assertEqual((first["sound"], self.heard), (HEARD, ["../out/proof.mp4"]),
+                         "the round carries the proof's sound read")
         self.fill("critic/cut-1.json")
         rc, said = self.verdict()
         self.assertEqual(rc, 0)
@@ -223,6 +238,8 @@ class Rounds(unittest.TestCase):
         self.assertEqual([p.name for p in vote.rounds()], ["cut-1.json"], "the final read is the same round")
         moved = _env.read_json("critic/cut-1.json")
         self.assertEqual((moved["film"], moved["scale"]), (qa.sha(OUT / "film.mp4"), 1))
+        self.assertEqual(self.heard[-1], "../out/film.mp4", "the sound is read again on the full-size film")
+        self.assertEqual(moved["sound"]["cited"], CITED, "the citation stands for the same cut")
         for c in vote.CUT_PANEL:
             scores = moved["critics"][c]["boards"]["film"]["scores"]
             self.assertIsNone(scores["type"], "the type is read again on the full-size film")
@@ -255,6 +272,83 @@ class Rounds(unittest.TestCase):
         rc, said = self.verdict()
         self.assertEqual(rc, 2)
         self.assertIn("film.py render --proof", said)
+
+    def test_a_round_is_complete_only_once_its_music_score_cites_the_sound_read(self):
+        (OUT / "proof.mp4").write_bytes(b"the proof")
+        self.assertIn("sound.cited", self.cut())
+        self.fill("critic/cut-1.json")
+        data = _env.read_json("critic/cut-1.json")
+        data["sound"]["cited"] = "fine"
+        _env.write_json("critic/cut-1.json", data)
+        rc, said = self.verdict()
+        self.assertEqual(rc, 1)
+        self.assertIn("sound / cited", said)
+        del data["sound"]
+        _env.write_json("critic/cut-1.json", data)
+        rc, said = self.verdict()
+        self.assertEqual(rc, 1)
+        self.assertIn("no sound read", said)
+        self.cut()
+        self.assertEqual(_env.read_json("critic/cut-1.json")["sound"], HEARD, "cut reads the sound into the reel's round")
+
+    def test_a_new_render_of_a_scored_cut_opens_its_own_round_and_the_old_round_is_refused(self):
+        (OUT / "proof.mp4").write_bytes(b"the proof")
+        self.cut()
+        self.fill("critic/cut-1.json")
+        (OUT / "proof.mp4").write_bytes(b"the proof drawn again")
+        rc, said = self.verdict()
+        self.assertEqual(rc, 1)
+        self.assertIn("not a read of the newest render", said)
+        self.cut()
+        self.assertEqual([p.name for p in vote.rounds()], ["cut-1.json", "cut-2.json"])
+        self.assertEqual(_env.read_json("critic/cut-2.json")["film"], qa.sha(OUT / "proof.mp4"))
+
+    def test_a_reel_drawn_by_another_motion_bundle_opens_its_own_round(self):
+        dist = Path("dist")
+        dist.mkdir()
+        (dist / "bundle.js").write_text("one")
+        (OUT / "proof.mp4").write_bytes(b"the proof")
+        with mock.patch.object(proof, "DIST", dist):
+            self.cut()
+            self.assertEqual(_env.read_json("critic/cut-1.json")["cut"], proof.picture("h", OUT / "proof.mp4", dist))
+            self.fill("critic/cut-1.json")
+            (dist / "bundle.js").write_text("two")
+            with self.assertRaises(SystemExit) as e:
+                self.cut()
+            self.assertIn("rendered before the motion bundle changed", str(e.exception.code))
+            (OUT / "proof.mp4").unlink()
+            (OUT / "film.mp4").write_bytes(b"the full-size film of the new bundle")
+            self.cut()
+        self.assertEqual([p.name for p in vote.rounds()], ["cut-1.json", "cut-2.json"],
+                         "the full-size film of another bundle is not the proof's round")
+
+
+class SoundRead(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR")))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        here = os.getcwd()
+        self.addCleanup(os.chdir, here)
+        os.chdir(self.dir)
+
+    def test_the_sound_read_hears_the_reel_through_the_sound_board_the_mux_lays(self):
+        board = {"id": "reel", "bpm": 120, "year": {"months": []}}
+        _env.write_json("boards/reel.json", board)
+        _env.write_json("film.json", {"boards": {"reel": "boards/reel.json"}, "seconds": 21.5})
+        _env.write_json("music.json", {"master": "music/master.wav", "bpm": 120})
+        seen = {}
+
+        def read(*a):
+            seen["read"] = a
+            return dict(HEARD)
+        with mock.patch.object(film, "sound_board", lambda b: seen.setdefault("board", b) and {"fx": "the reel's"}), \
+                mock.patch.object(sfx, "critic_read", read):
+            self.assertEqual(vote.sound_read(OUT / "proof.mp4"), HEARD)
+        self.assertEqual(seen["board"], board, "film.py render lays film.sound_board of the reel's board")
+        fx, record, movie, seconds, _, path = seen["read"]
+        self.assertEqual((fx, record, movie, seconds, path),
+                         ({"fx": "the reel's"}, {"master": "music/master.wav", "bpm": 120}, "../out/proof.mp4", 21.5,
+                          vote.SOUND))
 
 
 class Deliver(unittest.TestCase):

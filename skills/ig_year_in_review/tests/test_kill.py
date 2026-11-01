@@ -548,6 +548,13 @@ class CriticRow(Base):
 
 
 class CutRound(Base):
+    def setUp(self):
+        super().setUp()
+        # the sound read of a reel is its own test (test_proof.SoundRead); here a round only needs its block
+        sound = mock.patch.object(vote, "sound_read", lambda film: {"table": "critic/sound.md", "findings": [], "cited": ""})
+        sound.start()
+        self.addCleanup(sound.stop)
+
     def test_the_cut_refuses_a_reel_the_render_report_does_not_name_for_the_current_cut(self):
         self.cut()
         Path("render/film-report.json").unlink()
