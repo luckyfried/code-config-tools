@@ -24,6 +24,11 @@ def run(ws, script, *args):
                           env=dict(os.environ, CSC_DISABLE_KEYCHAIN="1"))
 
 
+# a round's sound read, and the sentence that cites its rows
+HEARD = {"table": "critic/sound.md", "findings": [],
+         "cited": "R5 rests on every cut row on the beat, the end row and each effect row heard over the bed"}
+
+
 class Vote(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -143,7 +148,8 @@ class Vote(unittest.TestCase):
 
         def cut(n, scores):
             data = vote.blank(vote.CUT_PANEL, ["film"])
-            data.update(round=n, film="f", fixed="the shots rewritten from each photograph" if n > 1 else None)
+            data.update(round=n, film=vote.fingerprint(self.build), sound=dict(HEARD),
+                        fixed="the shots rewritten from each photograph" if n > 1 else None)
             for c, e in data["critics"].items():
                 e["boards"]["film"] = {"scores": dict(scores), "paragraph": f"{c} {words(n)}"}
             (d / f"cut-{n}.json").write_text(json.dumps(data))
@@ -178,7 +184,7 @@ class Vote(unittest.TestCase):
         d.mkdir(exist_ok=True)
         try:
             data = vote.blank(vote.CUT_PANEL, ["film"])
-            data.update(round=1, film="f", fixed=None)
+            data.update(round=1, film=vote.fingerprint(self.build), sound=dict(HEARD), fixed=None)
             para = " ".join(["the wall and the line read well but the photographs sit flat under a plain push"] * 2)
             for e in data["critics"].values():
                 e["boards"]["film"] = {"scores": dict({k: 5 for k in vote.CRITERIA}, R2=3, R7=vote.NOT_READ), "paragraph": para}

@@ -14,7 +14,9 @@ The board says where every effect goes, the way it says where the music's cues g
 seconds, each beat names its form, its move, and the cut into it, and its layers carry the moments the picture lands.
 - a whoosh on every cut but the closer's, peaking on the cut: soft air into a dissolve, a fade, or a burn, and a warm
   sweep into anything else (a slide, a wipe, a page turn, a hard cut); the film's first such cut takes the one bright
-  sweep;
+  sweep. A beat whose move takes the frame ahead of its cut names that lead-in in `lead` (musical beats), and its
+  whoosh peaks there, `lead` beats before the cut; the beat's `start` stays the cut itself, where the sound read reads
+  it;
 - an impact (a low thump under a short pitched knock, gone in about 0.4 s) on every slammed word (the title's slam, each
   word of slam-words and word-per-beat-slam) and on the closer's arrival;
 - a pop on every mark (sticker-pop, tape-slap, doodle-draw-on) as its beat arrives;
@@ -27,10 +29,12 @@ The effects and the music are one piece: every effect lands on the music's grid,
 frame 0 at the music's tempo, and every tonal effect (the impact, the pop, the shutter's tick, the riser) is pitched to
 the music's key, both read from music.json as the music engine wrote it. With no music, or a track that names no key,
 the board's tempo makes the grid and the key is one the board picks once for the film.
-Every effect peaks at -14 dBFS, 3 dB lower while a words beat is on screen. Under the music, the music comes down 2 dB
-for 0.25 s at each impact so the hit reads, and the mux masters the whole mix, music and effects together: it measures
+Every effect peaks at -14 dBFS, 3 dB lower while a words beat is on screen. Under the music, the mux ducks the music
+under every effect it would cover (ducks): over the effect's moment the music comes down by what the effect needs to
+stand over it, DUCK dB at most and IMPACT_DB at least under an impact, ramping down and back over DUCK_RAMP, and the
+mux masters the whole mix, music and effects together: it measures
 the mix, sets its gain so the film plays at -14 LUFS, and passes it through one limiter whose ceiling sits 4 dB under
-full scale; the AAC encode runs with its noise substitution off, so the encoded film's true peak stays under -1.5 dBTP
+full scale; the AAC encode runs with its noise substitution off, so the encoded film's true peak stays under -2 dBTP
 in one encode and nothing corrects the film after it.
 With no music the effects pass the same limiter at their own level. The same board and music give the same bytes.
 A sound that repeats (a whoosh, a shutter, a pop, an impact) is warm and short: it passes a low-pass that leaves little
@@ -58,8 +62,13 @@ END_FADE_DB = 60.0  # the fade falls this far, evenly in decibels, to silence by
 # 0.3 s quiet_from asks while it plays; every kit's film is mixed here, so the one value reads every kit's quiet
 QUIET = -30.0
 TARGET_LUFS = -14.0  # the film's integrated loudness with music: music and effects mastered together
-MUSIC_UNDER_IMPACT = 10 ** (-2 / 20)
-IMPACT_DIP = 0.25  # seconds the music sits lower from each impact
+LANDS = 0.1  # LU: the mix lands this close to TARGET_LUFS through the limiter, so the encoded film sits within half a LU
+IMPACT_DB = 2.0  # dB the music comes down under each impact, at least
+MUSIC_UNDER_IMPACT = 10 ** (-IMPACT_DB / 20)
+IMPACT_DIP = 0.25  # seconds the music sits lower from each impact, in a mix laid through mux_cmd's `impacts`
+DUCK = 9.0  # dB: the most the music comes down under one effect, for the effect's third of a second
+DUCK_RAMP = 0.03  # seconds the music takes to come down into a duck, and to come back up out of it
+DUCK_STEP = 240  # samples: the duck's gain is read every 5 ms
 RISER = 1.2  # seconds
 SOFT = {"dissolve", "long-dissolve", "long-fade", "roll-burn"}
 GRID = 4  # the effects land on quarters of a beat
@@ -68,7 +77,7 @@ NAMES = ("C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B")  # the
 MARKS = {"sticker-pop", "tape-slap", "doodle-draw-on"}
 # the film's limiter, oversampled, at a ceiling of -4 dBFS: the AAC encode, with its noise substitution off (which
 # swaps noisy bands for fresh noise and throws a limited peak up to 2.7 dB over the ceiling), still overshoots it by
-# about 2 dB on a dense mix of low hits under a full bed, so the film's true peak stays under -1.5 dBTP
+# about 1 dB on a dense mix of low hits under a full bed and noise bursts, so the film's true peak stays under -2 dBTP
 CEILING = 10 ** (-4.0 / 20)
 LIMIT = f"aresample=192000,alimiter=limit={CEILING:.4f}:attack=2:release=60:level=false,aresample=48000"
 
@@ -86,8 +95,8 @@ def _at(layer, key):
 
 
 def beats_of(board):
-    """Each beat as the effects read it: form, move, cut, start, arrival, end, the beats its words land until, and its
-    words, in musical beats from the film's start."""
+    """Each beat as the effects read it: form, move, cut, start (the cut), lead (how far ahead of the cut its whoosh
+    peaks), arrival, end, the beats its words land until, and its words, in musical beats from the film's start."""
     out = []
     for bt in board.get("beats") or []:
         ly = _layer(bt)
@@ -107,7 +116,8 @@ def beats_of(board):
             words = ly.get("text") or bt.get("words") or ""
         pull = _at(ly, "pull") if kind == "Photo" else None
         out.append({"id": bt.get("id"), "form": bt.get("form") or kind.lower(), "kind": kind, "move": bt.get("move"),
-                    "cut": bt.get("transition"), "start": float(start), "arrive": float(arrive if arrive is not None else start),
+                    "cut": bt.get("transition"), "start": float(start), "lead": float(bt.get("lead") or 0),
+                    "arrive": float(arrive if arrive is not None else start),
                     "end": None if end is None else float(end), "until": None if pull is None else float(pull),
                     "words": words, "layer": ly})
     for i, b in enumerate(out):
@@ -155,7 +165,7 @@ def events(board, bpm=None):
         if i > 0 and b["cut"] and b["kind"] != "Closer":
             kind = "air" if b["cut"] in SOFT else "sweep" if bright else "bright"
             bright = bright or kind == "bright"
-            ev.append((b["start"] * sec, kind))
+            ev.append(((b["start"] - b["lead"]) * sec, kind))
         # a photograph whose beat lays a mark arrives on the mark's pop alone, never a pop over a shutter
         if b["kind"] == "Photo" and b["move"] not in MARKS:
             ev.append((b["arrive"] * sec, "shutter"))
@@ -391,30 +401,53 @@ def write(path, chans):
         w.writeframes(pcm.tobytes())
 
 
-def mix_graph(impacts, music, tail):
+def duck_gain(t, spans):
+    """The music's gain at `t` seconds under the ducks `spans` ((from, to, dB), apart from one another): each span's
+    dB down across it, ramped over DUCK_RAMP on either side, and 1 outside every span."""
+    for a, b, db in spans:
+        if a - DUCK_RAMP < t < b + DUCK_RAMP:
+            return 10 ** (-db * min(1.0, (t - a + DUCK_RAMP) / DUCK_RAMP, (b + DUCK_RAMP - t) / DUCK_RAMP) / 20)
+    return 1.0
+
+
+def duck_chain(spans):
+    """The filter chain that ducks the music by `spans` as duck_gain reads it, its gain read every DUCK_STEP samples."""
+    r = DUCK_RAMP
+    terms = "*".join(f"if(between(t,{a - r:.4f},{b + r:.4f}),pow(10,-{db:.2f}*min(1,min((t-{a - r:.4f})/{r},({b + r:.4f}-t)/{r}))/20),1)"
+                     for a, b, db in spans)
+    return f"asetnsamples=n={DUCK_STEP}:p=0,volume='{terms}':eval=frame"
+
+
+def mix_graph(impacts, music, tail, spans=()):
     """The filter graph over the inputs film (0), effects (1) and music (2, when there is music): the music lowered at
-    each impact, the effects summed onto it, then `tail`, labelled [a]."""
+    each impact (`impacts`, seconds, IMPACT_DIP long) and ducked by `spans` (ducks), the effects summed onto it, then
+    `tail`, labelled [a]."""
     if not music:
         return f"[1:a]{tail}[a]"
-    dips = "+".join(f"between(t,{a:.3f},{a + IMPACT_DIP:.3f})" for a in impacts) or "0"
-    return (f"[2:a]volume='if({dips},{MUSIC_UNDER_IMPACT:.4f},1)':eval=frame[m];"
+    chain = []
+    if impacts:
+        dips = "+".join(f"between(t,{a:.3f},{a + IMPACT_DIP:.3f})" for a in impacts)
+        chain.append(f"volume='if({dips},{MUSIC_UNDER_IMPACT:.4f},1)':eval=frame")
+    if spans:
+        chain.append(duck_chain(spans))
+    return (f"[2:a]{','.join(chain) or 'anull'}[m];"
             f"[m][1:a]amix=inputs=2:normalize=0:duration=first,{tail}[a]")
 
 
-def mux_cmd(ffmpeg, film, fx, out, seconds, impacts, music=None, gain=0.0):
-    """The ffmpeg command that lays the effects (and the music, lowered at each impact) under the film's picture, the
-    whole raised by `gain` dB and passed through the limiter, encoded without noise substitution."""
+def mux_cmd(ffmpeg, film, fx, out, seconds, impacts, music=None, gain=0.0, spans=()):
+    """The ffmpeg command that lays the effects (and the music, lowered at each impact and ducked by `spans`) under the
+    film's picture, the whole raised by `gain` dB and passed through the limiter, encoded without noise substitution."""
     cmd = [ffmpeg, "-y", "-v", "error", "-i", str(film), "-i", str(fx)] + (["-i", str(music)] if music else [])
-    return cmd + ["-filter_complex", mix_graph(impacts, music, f"volume={gain:.2f}dB,{LIMIT}"), "-map", "0:v", "-map", "[a]",
-                  "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-aac_pns", "0", "-ar", "48000", "-t", f"{seconds:.3f}",
-                  "-movflags", "+faststart", str(out)]
+    return cmd + ["-filter_complex", mix_graph(impacts, music, f"volume={gain:.2f}dB,{LIMIT}", spans), "-map", "0:v",
+                  "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-aac_pns", "0", "-ar", "48000", "-t",
+                  f"{seconds:.3f}", "-movflags", "+faststart", str(out)]
 
 
-def loudness(spawn, ffmpeg, film, fx, music, seconds, impacts, chain):
+def loudness(spawn, ffmpeg, film, fx, music, seconds, impacts, chain, spans=()):
     """The integrated loudness, LUFS, of the mix mux_cmd lays, through `chain` (a filter chain, or "")."""
     tail = f"{chain + ',' if chain else ''}ebur128=framelog=quiet"
     said = spawn([ffmpeg, "-hide_banner", "-nostats", "-i", str(film), "-i", str(fx), "-i", str(music), "-filter_complex",
-                  mix_graph(impacts, music, tail), "-map", "[a]", "-t", f"{seconds:.3f}", "-f", "null", "-"],
+                  mix_graph(impacts, music, tail, spans), "-map", "[a]", "-t", f"{seconds:.3f}", "-f", "null", "-"],
                  capture_output=True, text=True).stderr
     found = re.findall(r"I:\s+(-?[\d.]+) LUFS", said)
     if not found:
@@ -424,26 +457,30 @@ def loudness(spawn, ffmpeg, film, fx, music, seconds, impacts, chain):
 
 def mux(spawn, film, out, seconds, board, record=None, ffmpeg="ffmpeg"):
     """The film at `out`: its picture, the board's effects, and the music under them when the music record (music.json)
-    names a master that exists. With music the mix is mastered here: measured, raised or lowered onto TARGET_LUFS, and
-    measured again through the limiter to take up what the limiter took off, until it lands within half a LU. The effects' file lives only while ffmpeg
-    reads it. Returns whether music is in it."""
+    names a master that exists, ducked under every effect it would cover (ducks). With music the mix is mastered here:
+    measured, raised or lowered onto TARGET_LUFS, and measured again through the limiter to take up what the limiter
+    took off, until it lands within LANDS. The effects' file lives only while ffmpeg reads it. Returns whether music is
+    in it."""
     master = (record or {}).get("master")
     music = master if master and Path(master).is_file() else None
     with tempfile.TemporaryDirectory(dir=Path(out).parent) as d:
         fx = Path(d) / "fx.wav"
-        chans, impacts = lay(board, seconds, record)
+        chans, _ = lay(board, seconds, record)
         write(fx, chans)
-        gain = 0.0
+        gain, spans = 0.0, ()
         if music:
-            gain = TARGET_LUFS - loudness(spawn, ffmpeg, film, fx, music, seconds, impacts, "")
+            # the music is decoded once, to find where it covers an effect, only when the board has effects
+            if events(board, music_of(board, record)[0])[0]:
+                spans = ducks(board, record, seconds, _pcm(ffmpeg, music, spawn), chans)
+            gain = TARGET_LUFS - loudness(spawn, ffmpeg, film, fx, music, seconds, [], "", spans)
             # the limiter takes off more the more the gain lifts a loud stretch, so the gain is measured through it again
-            # until the mix lands within half a LU of the target, three times at most
-            for _ in range(3):
-                off = TARGET_LUFS - loudness(spawn, ffmpeg, film, fx, music, seconds, impacts, f"volume={gain:.2f}dB,{LIMIT}")
-                if abs(off) <= 0.5:
+            # until the mix lands within LANDS of the target, five times at most
+            for _ in range(5):
+                off = TARGET_LUFS - loudness(spawn, ffmpeg, film, fx, music, seconds, [], f"volume={gain:.2f}dB,{LIMIT}", spans)
+                if abs(off) <= LANDS:
                     break
                 gain += off
-        spawn(mux_cmd(ffmpeg, film, fx, out, seconds, impacts, music, gain), check=True)
+        spawn(mux_cmd(ffmpeg, film, fx, out, seconds, [], music, gain, spans), check=True)
     return bool(music)
 
 
@@ -525,11 +562,11 @@ def read_cuts(board, record=None):
     return rows
 
 
-def _pcm(ffmpeg, path):
-    """A file's sound as mono 16-bit samples at SR."""
+def _pcm(ffmpeg, path, spawn=None):
+    """A file's sound as mono 16-bit samples at SR, decoded by an ffmpeg process started through `spawn`."""
     import subprocess
-    raw = subprocess.run([ffmpeg, "-v", "error", "-i", str(path), "-vn", "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"],
-                         capture_output=True, check=True).stdout
+    raw = (spawn or subprocess.run)([ffmpeg, "-v", "error", "-i", str(path), "-vn", "-ac", "1", "-ar", str(SR), "-f",
+                                     "s16le", "-"], capture_output=True, check=True).stdout or b""
     pcm = array.array("h", raw[: len(raw) // 2 * 2])
     if sys.byteorder == "big":
         pcm.byteswap()
@@ -578,36 +615,96 @@ def read_end(board, music_pcm, film_pcm, seconds):
             "pass": not bad, "findings": bad}
 
 
-def read_effects(board, record, seconds, music_pcm):
-    """Each effect's peak against the bed: its peak (dBFS) as the mux lays it, and the music's level (root mean square,
-    dBFS, before the mix's gain, which lifts both alike) over FX_SPAN about its moment. An effect is heard when its peak
-    stands OVER_BED dB or more over the bed, or when there is no music under it."""
-    chans, _ = lay(board, seconds, record)
+DUCK_OVER = OVER_BED + 0.5  # dB: a duck brings the bed this far under its effect's peak
+
+
+def _peak(chans, a, b):
+    return max([abs(v) for ch in chans for v in ch[max(0, a):max(0, b)]] or [0.0])
+
+
+def ducks(board, record, seconds, music_pcm, chans=None):
+    """Where the music comes down under the effects, as (from, to, dB) spans in seconds: over FX_SPAN about each
+    effect's moment, by what its peak needs to stand DUCK_OVER dB over the music there (the effects `chans` as lay
+    makes them, the music `music_pcm` before the mix's gain, which lifts both alike), DUCK at most, and IMPACT_DB at
+    least under an impact. Spans that meet join, the deeper duck held across both."""
+    if music_pcm is None:
+        return []
+    chans = chans if chans is not None else lay(board, seconds, record)[0]
+    spans = []
+    for at, kind in events(board, music_of(board, record)[0])[0]:
+        a, b = max(0.0, at + FX_SPAN[0]), at + FX_SPAN[1]
+        i, j = int(a * SR), int(b * SR)
+        need = DUCK_OVER - (_db(_peak(chans, i, j)) - _db(_rms(music_pcm, i, j)))
+        dip = min(DUCK, max(need, IMPACT_DB if kind == "impact" else 0.0))
+        if dip >= 0.05:
+            spans.append([a, b, round(dip, 2)])
+    out = []
+    for a, b, db in sorted(spans):
+        if out and a <= out[-1][1] + 2 * DUCK_RAMP:
+            out[-1][1], out[-1][2] = max(out[-1][1], b), max(out[-1][2], db)
+        else:
+            out.append([a, b, db])
+    return [(round(a, 4), round(b, 4), db) for a, b, db in out]
+
+
+def _ducked_rms(pcm, a, b, spans):
+    """The root mean square of `pcm` from sample `a` to `b` with the ducks `spans` on it, its gain read every DUCK_STEP
+    samples as the mux reads it."""
+    total, n = 0.0, 0
+    for k in range(max(0, a), max(0, b)):
+        if k % DUCK_STEP == 0 or k == max(0, a):
+            g = duck_gain(k // DUCK_STEP * DUCK_STEP / SR, spans)
+        total += (pcm[k] * g) ** 2 if k < len(pcm) else 0.0
+        n += 1
+    return math.sqrt(total / max(1, n)) / 32768
+
+
+def read_effects(board, record, seconds, music_pcm, chans=None, spans=()):
+    """Each effect's peak against the bed: its peak (dBFS) as the mix lays it (the effects `chans`, lay's when not
+    given), and the music's level (root mean square, dBFS, before the mix's gain, which lifts both alike) over FX_SPAN
+    about its moment, ducked by `spans` as the mix ducks it. An effect is heard when its peak stands OVER_BED dB or
+    more over the bed, or when there is no music under it."""
+    chans = chans if chans is not None else lay(board, seconds, record)[0]
     bpm, _, _ = music_of(board, record)
     rows = []
     for at, kind in events(board, bpm)[0]:
         a, b = int((at + FX_SPAN[0]) * SR), int((at + FX_SPAN[1]) * SR)
-        peak = max([abs(v) for ch in chans for v in ch[max(0, a):max(0, b)]] or [0.0])
-        bed = None if music_pcm is None else round(_db(_rms(music_pcm, a, b)), 1)
+        peak = _peak(chans, a, b)
+        bed = None if music_pcm is None else round(_db(_ducked_rms(music_pcm, a, b, spans)), 1)
         over = None if bed is None else round(_db(peak) - bed, 1)
+        duck = next((db for x, y, db in spans if x - DUCK_RAMP < at < y + DUCK_RAMP), 0.0)
         rows.append({"at": round(at, 3), "kind": kind, "peak_db": round(_db(peak), 1), "bed_db": bed, "over_db": over,
-                     "pass": over is None or over >= OVER_BED})
+                     "duck_db": duck, "pass": over is None or over >= OVER_BED})
     return rows
 
 
-def read(board, record=None, film=None, seconds=None, ffmpeg="ffmpeg", base="."):
+def _wav(path):
+    """A 16-bit WAV as sfx.write makes it, as its channels of float samples."""
+    with wave.open(str(path), "rb") as w:
+        k, raw = w.getnchannels(), w.readframes(w.getnframes())
+    pcm = array.array("h", raw[: len(raw) // 2 * 2])
+    if sys.byteorder == "big":
+        pcm.byteswap()
+    return [array.array("f", (v / 32767 for v in pcm[c::k])) for c in range(k)]
+
+
+def read(board, record=None, film=None, seconds=None, ffmpeg="ffmpeg", base=".", fx=None, ducked=True):
     """The film's sound read: its cuts against the beat grid, the music's end against the last frame, and each effect's
     peak against the bed, with every finding in words. `record` is music.json, its master a path from `base`; `film` the
-    rendered film, whose own sound the end is read in."""
+    rendered film, whose own sound the end is read in. The effects are lay's for the board, or the WAV `fx` a kit laid
+    and mixed itself; the bed is ducked as mux ducks it, unless `ducked` is False (a mix a kit lays through mux_cmd
+    with no ducks)."""
     record = record or {}
     seconds = float(seconds if seconds is not None else length_of(board))
     master = record.get("master")
     master = Path(base) / master if master else None
     music_pcm = _pcm(ffmpeg, master) if master and master.is_file() else None
     film_pcm = _pcm(ffmpeg, film) if film and Path(film).is_file() else None
+    chans = _wav(fx) if fx else lay(board, seconds, record)[0]
+    spans = ducks(board, record, seconds, music_pcm, chans) if ducked else []
     cuts = read_cuts(board, record)
     end = read_end(board, music_pcm, film_pcm, seconds)
-    fx = read_effects(board, record, seconds, music_pcm)
+    fx = read_effects(board, record, seconds, music_pcm, chans, spans)
     first, step = grid_of(board, record)
     found = [f"the cut into {c['into']} at {c['at']:.3f} s is {abs(c['off_ms'])} ms {'after' if c['off_ms'] > 0 else 'before'} "
              f"the beat at {c['beat']:.3f} s" for c in cuts if not c["pass"]]
@@ -615,7 +712,31 @@ def read(board, record=None, film=None, seconds=None, ffmpeg="ffmpeg", base=".")
     found += [f"the {e['kind']} at {e['at']:.2f} s peaks {e['over_db']:+.1f} dB against the bed ({e['bed_db']:.1f} dB): the "
               "music covers it" for e in fx if not e["pass"]]
     return {"grid": {"first": round(first, 3), "step": round(step, 4), "bpm": round(60.0 / step, 2)}, "cuts": cuts,
-            "end": end, "effects": fx, "findings": found}
+            "end": end, "effects": fx, "ducks": [list(x) for x in spans], "findings": found}
+
+
+CITED = 8  # words: the least the sentence takes that names the sound read's rows a round's sound score rests on
+
+
+def critic_read(board, record, film, seconds, ffmpeg, path="critic/sound.md", base=".", fx=None, ducked=True):
+    """The sound read a critic round cites: read() over the rendered `film` (its arguments as read takes them), its
+    table written to `path` and its numbers beside it (sound.json). Returns the round's sound block: the table's path,
+    its findings, and `cited`, the sentence the critics fill in naming the rows their sound score rests on."""
+    r = read(board, record, film, seconds, ffmpeg, base, fx, ducked)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(table(r))
+    path.with_suffix(".json").write_text(json.dumps(r, indent=1) + "\n")
+    return {"table": str(path.resolve()), "findings": r["findings"], "cited": ""}
+
+
+def uncited(block, path="critic/sound.md"):
+    """What a round's sound block still needs: the read itself, and the sentence that cites its rows."""
+    if not isinstance(block, dict):
+        return ["sound: the round has no sound read: run vote.py cut again"]
+    if len((block.get("cited") or "").split()) < CITED:
+        return [f"sound / cited: say in a sentence which rows of {path} the sound score rests on"]
+    return []
 
 
 def table(r):
@@ -632,11 +753,12 @@ def table(r):
           "the last frame (s) | read |", "|---|---|---|---|---|",
           f"| {f(e['stop'])} | {f(e['music_quiet'])} | {f(e['film_quiet'])} | {e['last_frame']:.2f} | "
           f"{'agrees' if e['pass'] else '; '.join(e['findings'])} |"]
-    L += ["", "## the effects against the bed", "", "| at (s) | effect | peak (dB) | bed (dB) | over the bed (dB) | read |",
-          "|---|---|---|---|---|---|"]
+    L += ["", "## the effects against the bed", "", "The bed is the music as the mix plays it, ducked under the effects it "
+          "would cover.", "", "| at (s) | effect | peak (dB) | bed (dB) | ducked (dB) | over the bed (dB) | read |",
+          "|---|---|---|---|---|---|---|"]
     L += [f"| {x['at']:.2f} | {x['kind']} | {x['peak_db']:.1f} | {'-' if x['bed_db'] is None else format(x['bed_db'], '.1f')} | "
-          f"{'-' if x['over_db'] is None else format(x['over_db'], '+.1f')} | {'heard' if x['pass'] else 'under the music'} |"
-          for x in r["effects"]]
+          f"{x.get('duck_db') or 0:.1f} | {'-' if x['over_db'] is None else format(x['over_db'], '+.1f')} | "
+          f"{'heard' if x['pass'] else 'under the music'} |" for x in r["effects"]]
     L += ["", "## findings", ""] + ([f"- {x}" for x in r["findings"]] or ["- none"])
     return "\n".join(L) + "\n"
 

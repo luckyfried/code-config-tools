@@ -62,6 +62,11 @@ closer's slow push; the palette module makes the colors from `taste.json` by the
 Two faces, the card's; a scale; hierarchy by size and weight. Every line is legible at the size it is shown: it stands
 on its ground at a contrast a person reads at a glance, it is on screen long enough to read, and the headline is
 settled within one second of its beat. Every line at rest is inside the safe area of the profile, and nothing collides.
+Measured before the film renders (`scripts/legible.py`, in every kit's storyboard check): a line is at least 32 px on
+a 1080 px frame, and stands at 4.5:1 against the brightest quarter of the photograph under it (the darkest quarter
+under dark type), after the scrim, or 3:1 once it is 24 points or more on a phone 390 points wide (66 px on a 1080 px
+frame). A caption that does not gets its kit's remedy: a deeper scrim, the line's color for its label, or its
+alternate place; never fewer words.
 
 The critic's read: the frames at about 0.1, 0.5, and 1.0 s after each headline's beat, and every beat at rest at full
 size. A pass: the card's two faces on one scale, the hierarchy by size and weight; every line readable against what is

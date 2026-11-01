@@ -81,7 +81,11 @@ files this render wrote:
   Read tool;
 - every still in `out/cards/NN-story.png` and `out/cover.png`;
 - `qa/check.json` (the measured checks, rerun after every render, and the two figures, cuts and still),
-  `render-report.json` and `clips/requests.json`.
+  `render-report.json` and `clips/requests.json`;
+- the sound read, `critic/sound.md`, which `vote.py cut` writes from the reel's own sound: each cut against the beat
+  grid, the music's end against the last frame, and each effect's peak at its hit against the music under it. Score R5
+  from its rows and name the rows the score rests on in the round's `sound.cited`; `vote.py verdict` refuses a round
+  that cites none.
 
 Score R2 and R4, like every rule, only from what these frames and strips show, never from memory of the cut before;
 the cut is what ships. Fill in `critic/cut-N.json`

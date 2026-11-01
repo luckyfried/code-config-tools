@@ -62,6 +62,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
+import chunks  # noqa: E402
 import music  # noqa: E402
 import proof  # noqa: E402
 import qa  # noqa: E402
@@ -143,10 +144,10 @@ def sound(silent, wav, seconds, out, fx, record, start=0.0, stop=None, energy=No
     os.replace(part, out)
 
 
-# a card is re-encoded the way the render encodes: NVENC at constant quality 14 with the NVIDIA device, x264 crf 17 without,
-# both under the renderer's ceiling of 12 Mbit/s over a 24 Mbit buffer
+# a card is re-encoded the way the render encodes: NVENC at constant quality 14 on the NVIDIA card, x264 crf 17 without it
+# (chunks.GPU, which VS_GPU=0 turns off), both under the renderer's ceiling of 12 Mbit/s over a 24 Mbit buffer
 ENCODE = (["-c:v", "h264_nvenc", "-preset", "p5", "-tune", "hq", "-rc", "vbr", "-cq", "14", "-b:v", "0", "-maxrate", "12M", "-bufsize", "24M"]
-          if Path("/dev/nvidia0").exists() else ["-c:v", "libx264", "-crf", "17", "-preset", "medium", "-maxrate", "12M", "-bufsize", "24M"])
+          if chunks.GPU else ["-c:v", "libx264", "-crf", "17", "-preset", "veryfast", "-maxrate", "12M", "-bufsize", "24M"])
 
 
 def cut(series, start, seconds, out, spawn=subprocess.run):

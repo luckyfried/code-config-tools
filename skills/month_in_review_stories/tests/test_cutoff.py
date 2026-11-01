@@ -218,11 +218,16 @@ class Cutoff(unittest.TestCase):
         (out / "cards").mkdir(parents=True, exist_ok=True)
         (self.build / "film.json").write_text(json.dumps(self.board))
         shutil.rmtree(self.build / "critic", ignore_errors=True)
-        (out / "film.mp4").write_text("cut one")
+
+        def cut(hz):
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=gray:s=32x32:r=30:d=1", "-f", "lavfi",
+                            "-i", f"sine=frequency={hz}:duration=1", "-shortest", "-pix_fmt", "yuv420p", str(out / "film.mp4")],
+                           check=True)
+        cut(330)
         for _ in range(2):
             fixture.run(self.ws, "vote.py", "cut")
         self.assertEqual(sorted(p.name for p in (self.build / "critic").glob("cut-*.json")), ["cut-1.json"])
-        (out / "film.mp4").write_text("cut two")
+        cut(440)
         fixture.run(self.ws, "vote.py", "cut")
         self.assertEqual(sorted(p.name for p in (self.build / "critic").glob("cut-*.json")), ["cut-1.json", "cut-2.json"])
 
