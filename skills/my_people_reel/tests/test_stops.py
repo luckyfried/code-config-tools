@@ -280,7 +280,8 @@ class Stops(unittest.TestCase):
             _env.write_json(path, data)
 
         cut(b"the first cut")
-        with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), \
+                mock.patch.object(vote, "sound_read", lambda film, cut: {"table": "critic/sound.md", "findings": [], "cited": ""}):
             vote.cmd_cut(None)
             vote.cmd_cut(None)
             self.assertEqual([p.name for p in vote.rounds()], ["cut-1.json"])

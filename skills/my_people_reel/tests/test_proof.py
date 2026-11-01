@@ -71,6 +71,9 @@ BEATS = [{"id": "a", "frames": 30, "layers": [{"kind": "Photo", "at": 0.0}]},
          {"id": "c", "frames": 30, "layers": [{"kind": "Photo", "at": 0.0}]}]
 BOARD = {"bpm": 120, "format": {"width": 1080, "height": 1920}, "beats": BEATS, "effects": {}}
 FILM = {"style": "drive", "bpm": 120, "storyboard": {"people": ["ana"], "beats": [{"person": "ana"}], "cards": {}}}
+# the round's sound block as vote.sound_read returns it, and a sentence that cites its rows
+HEARD = {"table": "critic/sound.md", "findings": [], "cited": ""}
+CITED = "R5 rests on every cut row on the beat, the end row and each effect row heard over the bed"
 
 
 def score(path, value=5):
@@ -78,6 +81,7 @@ def score(path, value=5):
     for critic in data["critics"].values():
         critic["boards"]["film"] = {"scores": {k: value for k in vote.CRITERIA},
                                     "paragraph": " ".join(["each beat lands on the cut and the type reads at a glance"] * 3)}
+    data["sound"]["cited"] = CITED
     _env.write_json(path, data)
 
 
@@ -112,6 +116,10 @@ class Proof(unittest.TestCase):
             self.addCleanup(patch.stop)
         os.environ.pop("MPR_RUN", None)
         _env.write_json("film.json", FILM)
+        self.heard = []
+        sound = mock.patch.object(vote, "sound_read", lambda film, cut: self.heard.append(Path(film).name) or dict(HEARD))
+        sound.start()
+        self.addCleanup(sound.stop)
 
     @staticmethod
     def mux(run, silent, out, seconds, board):
@@ -207,6 +215,8 @@ class Proof(unittest.TestCase):
         r1 = _env.read_json("critic/cut-1.json")
         self.assertEqual(r1["scale"], proof.SCALE)
         self.assertEqual(r1["film"], film.file_sha("render/proof-cut.mp4"))
+        self.assertEqual(r1["cut"], proof.picture(_env.read_json("render/cut.json")["cut"], Path("render/proof-cut.mp4")))
+        self.assertEqual((r1["sound"], self.heard), (HEARD, ["proof-cut.mp4"]), "the round carries the proof's sound read")
         score("critic/cut-1.json")
         rc, said = self.main(vote, "verdict")
         self.assertIn("film.py cut", said)
@@ -221,6 +231,8 @@ class Proof(unittest.TestCase):
         r1 = _env.read_json("critic/cut-1.json")
         self.assertEqual(r1["film"], film.file_sha("render/cut.mp4"))
         self.assertEqual(r1["scale"], 1)
+        self.assertEqual((self.heard[-1], r1["sound"]["cited"]), ("cut.mp4", CITED),
+                         "the sound is read again on the full-size cut, and the citation stands for the same board")
         for c in vote.CUT_PANEL:
             scores = r1["critics"][c]["boards"]["film"]["scores"]
             self.assertIsNone(scores["R3"], "the type is read again on the full-size cut")
@@ -231,6 +243,38 @@ class Proof(unittest.TestCase):
         rc, said = self.main(vote, "verdict")
         self.assertIn("AT THE BAR", said)
         self.assertNotIn("film.py cut", said)
+
+    def test_a_new_render_of_a_scored_cut_opens_its_own_round_and_the_old_round_is_refused(self):
+        self.cut("--proof")
+        self.main(vote, "cut")
+        score("critic/cut-1.json")
+        longer = dict(BOARD, beats=BEATS[:2] + [dict(BEATS[2], frames=36)])
+        with mock.patch.object(film, "board_for", lambda f, ctx, kind: _env.write_json(f"render/board-{kind}.json", longer) or longer):
+            self.cut("--proof")
+        rc, said = self.main(vote, "verdict")
+        self.assertEqual(rc, 1)
+        self.assertIn("not a read of the newest cut", said)
+        rc, said = self.main(vote, "cut")
+        self.assertEqual(rc, 0, said)
+        self.assertEqual([p.name for p in vote.rounds()], ["cut-1.json", "cut-2.json"])
+
+    def test_a_cut_drawn_by_another_motion_bundle_opens_its_own_round(self):
+        dist = self.root / "drawn"
+        dist.mkdir()
+        (dist / "bundle.js").write_text("one")
+        with mock.patch.object(proof, "DIST", dist):
+            self.cut("--proof")
+            self.main(vote, "cut")
+            score("critic/cut-1.json")
+            then = os.path.getmtime("render/proof-cut.mp4") - 10
+            os.utime("render/proof-cut.mp4", (then, then))
+            (dist / "bundle.js").write_text("two")
+            rc, said = self.main(vote, "cut")
+            self.assertIn("rendered before the motion bundle changed", str(rc))
+            self.cut("--proof", "--again")
+            rc, said = self.main(vote, "cut")
+            self.assertEqual(rc, 0, said)
+        self.assertEqual([p.name for p in vote.rounds()], ["cut-1.json", "cut-2.json"])
 
     def test_deliver_refuses_a_run_whose_newest_cut_is_the_proof(self):
         self.cut("--proof")

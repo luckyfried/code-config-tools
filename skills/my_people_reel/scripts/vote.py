@@ -33,9 +33,14 @@ Every round before deliver scores the half-size proof (film.py cut --proof, rend
 newest cut and its first line says when that is the proof. Once the full-size cut of the same board and music is made
 (film.py cut), `cut` moves the latest round to it and empties each critic's R3, the type: the critics read the type
 again on the full-size cut, at the size a phone shows it, and the round is complete once they have scored it there.
+
+A round's R5 rests on the sound read `cut` writes from the cut's own sound (critic/sound.md: each cut against the beat
+grid, the music's end against the last frame, each effect's peak at its hit against the music under it), naming in the
+round's `sound.cited` the rows it rests on. A round records the cut it scored (`film`, the file's hash) and its picture
+(`cut`: the board and music render/cut.json names, with the motion bundle that drew it, proof.picture), so a cut drawn
+by another bundle opens its own round, and a verdict on a round of another cut than the newest is refused.
 """
 import argparse
-import hashlib
 import sys
 from pathlib import Path
 
@@ -239,26 +244,32 @@ def cmd_cut(a):
     cut = _env.read_json("render/cut.json") or {}
     if not film.exists() or not cut:
         sys.exit(f"{film} is missing or unfinished: run film.py cut --proof first")
-    sha = hashlib.sha256(film.read_bytes()).hexdigest()[:16]
+    sha = proof.digest(film)
     if sha != cut.get("film"):
         sys.exit(f"{film} is not the cut render/cut.json measured: run film.py cut{' --proof' if scale != 1 else ''} again")
+    drawn = proof.picture(cut.get("cut"), film)
     rs = rounds()
     last = (_env.read_json(rs[-1]) or {}) if rs else None
     # a round belongs to one cut: the same cut keeps its round, a changed cut opens the next one, and a round left
     # unscored is taken over by the cut that replaced it, so no round is ever counted without its scores
-    if last is not None and last.get("film") == sha:
+    if last is not None and last.get("film") == sha and last.get("cut") == drawn:
         f, n = rs[-1], int(rs[-1].stem.split("-")[1])
-    elif scale == 1 and last is not None and last.get("scale") == proof.SCALE and last.get("cut") == cut.get("cut") \
+        if "sound" not in last:
+            last["sound"] = sound_read(film, cut)
+            _env.write_json(f, last)
+    elif scale == 1 and last is not None and last.get("scale") == proof.SCALE and last.get("cut") == drawn \
             and not problems(last, CUT_PANEL, ["film"]):
-        # the full-size cut of the board and music the round scored on its proof: the same round, the type read again
+        # the full-size cut of the board and music the round scored on its proof: the same round, the type read again,
+        # and the sound read again on the full-size cut's own sound
         f, n = rs[-1], int(rs[-1].stem.split("-")[1])
         last.update(film=sha, scale=1, proof_film=last["film"])
         for c in CUT_PANEL:
             last["critics"][c]["boards"]["film"]["scores"][TYPE] = None
+        last["sound"] = dict(sound_read(film, cut), cited=(last.get("sound") or {}).get("cited", ""))
         _env.write_json(f, last)
         print(f"round {n} moves to the full-size {film}: as each critic, read the type again on it, on "
               f"frames/film-strip.jpg and on the beats at rest in frames/, at the size a phone shows it, and score {TYPE} "
-              f"in {f}; the other scores stand")
+              f"in {f}; the other scores stand, and the sound read is taken again on it ({SOUND})")
         return 0
     else:
         n = len(rs) + 1 if last is None or not problems(last, CUT_PANEL, ["film"]) else len(rs)
@@ -267,13 +278,49 @@ def cmd_cut(a):
         data["round"] = n
         data["film"] = sha
         data["scale"] = scale
-        data["cut"] = cut.get("cut")
+        data["cut"] = drawn
         data["fixed"] = "" if n > 1 else None
+        data["sound"] = sound_read(film, cut)
         _env.write_json(f, data)
     print(f"round {n}: fill in {f} with R1 to R6, each read from its evidence (critic.md, the cut): frames/film-strip.jpg "
           "(12 fps), the beats at rest in frames/, the cue tiles in frames/cues/ with frames/cues.json, qa/check.json and "
-          "clips/requests.json" + (" (say in 'fixed' what changed since the last round)" if n > 1 else ""))
+          "clips/requests.json" + (" (say in 'fixed' what changed since the last round)" if n > 1 else "") + SAID)
     return 0
+
+
+SOUND = Path("critic/sound.md")
+SAID = f"; score R5 from the sound read, {SOUND}, and say in sound.cited which of its rows the score rests on"
+
+
+def sound_read(film, cut):
+    """The cut's own sound read (sfx.py read: the cuts against the beat grid, the music's end against the last frame,
+    the effects' peaks at their hits against the bed), from the effects board and music record film.py's mux laid
+    (render/board-reel.json's `effects`, music.json), written to critic/sound.md and critic/sound.json. The mux lowers
+    the music for each impact and lays no ducks, so the bed is read as it was laid. Its block in a round: the table,
+    its findings, and `cited`, the sentence the critics fill in naming the rows R5 rests on."""
+    import sfx
+    board = _env.read_json("render/board-reel.json") or {}
+    if "effects" not in board:
+        sys.exit("render/board-reel.json has no effects board: run film.py cut again")
+    return sfx.critic_read(board["effects"], _env.read_json("music.json") or {}, str(film), cut["seconds"], _env.ffmpeg(),
+                           SOUND, ducked=False)
+
+
+def sound_problems(data):
+    """What a round's sound block still needs: the read itself, and the sentence that cites its rows."""
+    import sfx
+    return sfx.uncited(data.get("sound"), SOUND)
+
+
+def newest(data):
+    """Why a verdict on round `data` cannot stand when it scored another cut than the newest (another file, or one
+    drawn by another motion bundle); None when it scored that cut."""
+    film = proof.newest(Path("render/cut.mp4"))
+    cut = _env.read_json("render/cut.json") or {}
+    if not film.exists() or data.get("film") != proof.digest(film) or data.get("cut") != proof.picture(cut.get("cut"), film):
+        return (f"round {data.get('round')} scored another cut than the newest, {film}: run vote.py cut, which opens "
+                "that cut's round, and fill it in")
+    return None
 
 
 def cmd_verdict(a):
@@ -281,7 +328,11 @@ def cmd_verdict(a):
     if not rs:
         sys.exit("no cut scores: run vote.py cut and fill it in")
     data = _env.read_json(rs[-1])
-    bad = problems(data, CUT_PANEL, ["film"])
+    stale = newest(data)
+    if stale:
+        print(f"{rs[-1]} is not a read of the newest cut: {stale}")
+        return 1
+    bad = problems(data, CUT_PANEL, ["film"]) + sound_problems(data)
     if bad:
         print(f"{rs[-1]} is not complete:")
         for x in bad:
