@@ -3,12 +3,13 @@
 // musical beats sets the words that have no beat of their own beside the word before, so every word lands and every
 // landing is on its own beat of the grid (the sound pass lays one impact on each). A word is set at the size it fills
 // the measure at, but never more than RANGE times the size the beat's longest word fills it at, so a short word after a
-// long one lands large without towering over it. A word starts from as far over its size as the frame holds, up to the
-// full slam, so no word ever leaves the frame. On a beat whose form has a picture of its own (a title, a photograph, a
-// clip), the field and the last word leave a musical beat after it lands, handing the frame back to the form; on any
-// other form they hold to the end of the beat.
+// long one lands large without towering over it. The measure is the profile's safe area, and each word comes to rest on
+// the safe area's middle, so a landed word sits where the profile's own buttons never cover it. A word starts from as
+// far over its size as the frame holds, up to the full slam, so no word ever leaves the frame. On a beat whose form has
+// a picture of its own (a title, a photograph, a clip), the field and the last word leave a musical beat after it
+// lands, handing the frame back to the form; on any other form they hold to the end of the beat.
 import React from 'react';
-import {fill, fitTo, land, measure, PICTURED, px, span, Words, wordsOf} from '../kit';
+import {fill, fitTo, land, measure, PICTURED, px, safeOf, span, Words, wordsOf} from '../kit';
 import type {BeatOn, Move, MoveProps} from '../types';
 
 /** How far over its size a word starts its slam, at most. */
@@ -44,11 +45,13 @@ const Overlay: React.FC<MoveProps> = ({look, beat, local}) => {
   const i = Math.min(slams.length - 1, Math.floor(local));
   const w = slams[i];
   const k = land(local - i);
-  const sizeOf = (ws: string[], most: number) => fitTo(ws, look.display, look.W - px(look, 120), {weight: WEIGHT, tracking: TRACKING, most});
+  const [sx0, , sx1] = safeOf(look);
+  const sizeOf = (ws: string[], most: number) => fitTo(ws, look.display, sx1 - sx0, {weight: WEIGHT, tracking: TRACKING, most});
   const size = sizeOf([w], Math.min(px(look, 330), RANGE * sizeOf(slams, Infinity)));
   const start = Math.max(1, Math.min(SLAM, (look.W - px(look, 40)) / measure(w, look.display, size, WEIGHT, TRACKING)));
   return (
-    <div style={{...fill, opacity: shown, background: look.colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+    <div style={{...fill, opacity: shown, background: look.colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      paddingLeft: sx0, paddingRight: look.W - sx1}}>
       <Words text={w} family={look.display} size={size} color={look.colors.accent}
         style={{transform: `scale(${start - (start - 1) * k})`, whiteSpace: 'pre', letterSpacing: `${TRACKING}em`, fontWeight: WEIGHT}} />
     </div>

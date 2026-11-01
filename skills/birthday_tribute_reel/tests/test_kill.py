@@ -465,7 +465,12 @@ class CutRound(Base):
         (self.B / "film.json").write_text('{"id": "1"}')
         report = self.B / "render" / "film-report.json"
         report.parent.mkdir()
-        with redirect_stdout(io.StringIO()), mock.patch.object(vote, "cut_frames", lambda src, folder, tag, seconds: []):
+        Path("out").mkdir()
+        Path("out/film.mp4").write_bytes(b"the reel the report certifies")
+        # the sound read of a reel is its own test (test_proof.SoundRead); here a round only needs its block
+        heard = {"table": "critic/sound.md", "findings": [], "cited": ""}
+        with redirect_stdout(io.StringIO()), mock.patch.object(vote, "cut_frames", lambda src, folder, tag, seconds: []), \
+                mock.patch.object(vote, "sound_read", lambda film: dict(heard)):
             with self.assertRaises(SystemExit):
                 vote.cmd_cut(argparse.Namespace())  # no report: out/ is not a whole render
             _env.write_json(report, {"failed": 0, "reel": "the reel"})

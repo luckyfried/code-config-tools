@@ -85,11 +85,14 @@ The motion designer and the person score the rendered film. Every round before d
   a second;
 - `out/post.png` and `out/story.png`, and when the person asked for stills, those in `out/stills/`;
 - `B/clips/requests.json`, the `out/` listing, `B/qa/check.json` (the measured checks) and
-  `B/render/film-report.json`.
+  `B/render/film-report.json`;
+- the sound read, `B/critic/sound.md`, which `vote.py cut` writes from the reel's own sound: each cut against the beat
+  grid, the music's end against the last frame, and each effect's peak at its hit against the music under it.
 
 Never score from memory of the storyboard; the cut is what ships. Fill in `B/critic/cut-N.json`: per critic the seven
 scores, a paragraph of at least 25 words naming the frames it read (`r1-f07`), and in `worst` the worst thing in the
-film in at least 8 words. Then run `vote.py verdict`. A round is at the bar when its scores average 4.5 or more and
+film in at least 8 words; score `sound` from the sound read's rows and name the rows the score rests on in the round's
+`sound.cited` (`vote.py verdict` refuses a round that cites none). Then run `vote.py verdict`. A round is at the bar when its scores average 4.5 or more and
 none is under 4: SHIP. Below the bar, the verdict quotes the worst thing the lowest-scoring critic found; fix that
 once with the levers below, render the proof again (`film.py render --proof`), and score round 2 from its own frames.
 The type is read last on the full-size reel: after `SHIP` on the proof, `film.py render` renders it full size and
