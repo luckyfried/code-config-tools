@@ -582,6 +582,10 @@ class Killed(Run):
         self.assertEqual(_env.read_json("music.json")["file"], "music/source.mp3")
 
     def test_a_cut_round_is_opened_once_for_each_film_that_film_json_names(self):
+        # the sound read of a film is its own test (test_proof.SoundRead); here a round only needs its block
+        sound = mock.patch.object(vote, "sound_read", lambda film: {"table": "critic/sound.md", "findings": [], "cited": ""})
+        sound.start()
+        self.addCleanup(sound.stop)
         self.write("board.json", BOARD)
         Path("out").mkdir()
         Path("out/film.mp4").write_bytes(b"a reel no finished render names")

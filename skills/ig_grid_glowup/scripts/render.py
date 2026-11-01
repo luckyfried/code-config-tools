@@ -23,9 +23,20 @@ card, with h264_videotoolbox on a Mac whose ffmpeg has it, and with libx264 othe
 process on one frame at each film's size, a size the card or driver refuses (one smaller than the card's smallest
 frame) encodes with libx264, and a film the card's encoder fails partway renders again on the next attempt with
 libx264.
-With the NVIDIA device the browser draws on the card through ANGLE on Vulkan, otherwise on the CPU through ANGLE on
-SwiftShader. A browser draws and captures its pages one at a time, so a film runs one page in each of several
-browsers (half the cores, up to 8), all taking the next frame from one queue.
+With the NVIDIA device the browser draws on the card through ANGLE on Vulkan. Without it the browser draws on the
+CPU: through ANGLE on Vulkan on Mesa's lavapipe (the mesa-vulkan-drivers package) when the machine has it, otherwise
+through ANGLE on SwiftShader, Chromium's own. lavapipe draws a frame for about a quarter of SwiftShader's CPU time,
+and its frames are as near the card's or nearer; a render on SwiftShader says so once. A browser draws and captures
+its pages one at a time, so a film runs one page in each of several browsers, all taking the next frame from one
+queue: PER_BROWSER gives the cores each browser keeps busy, and the pool is that share of the cores this process may
+use (its CPU affinity, lowered to its cgroup's CPU quota), up to 8, and no larger than the memory left holds
+(MemAvailable, lowered to what its cgroup has left under memory.max) at BROWSER_BYTES each, with one share kept for
+ffmpeg and this process. lavapipe and SwiftShader draw each frame on a thread for each of those cores already. Every
+browser is started from the thread that renders the jobs and serves every job of the process.
+
+VS_GPU=0 renders as a machine without the card does (the browser draws on the CPU, libx264 encodes), on a machine
+that has one. VS_TIMING=1 writes <film>.timing.json beside each film: the seconds each frame spent in each stage and
+the film's marks (Timing).
 
 A frame that is not ready in 30 s stops the render, naming the frame and what it still waited for. Any other failure
 (a browser that stops answering, a lost graphics context, a render that comes out one flat color) costs one attempt,
@@ -82,7 +93,18 @@ DIST = KIT / "motion" / "dist"
 # a frame that is not ready this long after it was asked for stops the render; the composition's own delayRender
 # timeout is 2 s shorter, so its message, naming what it waited for, usually arrives first
 READY_MS = 30_000
-GPU = os.path.exists("/dev/nvidia0")
+# VS_GPU=0 renders as a machine without the NVIDIA card does
+GPU = os.path.exists("/dev/nvidia0") and os.environ.get("VS_GPU") != "0"
+TIMING = os.environ.get("VS_TIMING") == "1"
+# a film's memory share for each of its browsers and one more for ffmpeg and this process, at the peak of 1080 by 1920
+# on the CPU: the tree measured about 500 MB and 440 MB a browser on SwiftShader, and about 530 MB and 600 to 710 MB a
+# browser on lavapipe, the lit three.js kits the most (about 300 MB a browser on the card)
+BROWSER_BYTES = 768 << 20
+# the usable cores one browser keeps busy with each graphics backend, measured on 1080 by 1920 films
+PER_BROWSER = {"vulkan": 2, "lavapipe": 2, "swiftshader": 4}
+CGROUP, SELF_CGROUP, MEMINFO = Path("/sys/fs/cgroup"), Path("/proc/self/cgroup"), Path("/proc/meminfo")
+# where the Vulkan loader finds drivers; lavapipe's is lvp_icd*.json
+VULKAN_DRIVERS = (Path("/usr/share/vulkan/icd.d"), Path("/etc/vulkan/icd.d"), Path("/usr/local/share/vulkan/icd.d"))
 GL_LOST = re.compile(r"Context Lost|context could not be created|Error creating WebGL context|Shader Error", re.I)
 FINDING = re.compile(r"^(FONT_ERROR|IMAGE_ERROR)")
 MAC_APPS = ("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -110,7 +132,8 @@ ENCODERS = {
     "h264_nvenc": ["-c:v", "h264_nvenc", "-preset", "p5", "-tune", "hq", "-rc", "vbr", "-cq", "18", "-b:v", "0", *CEILING,
                    "-spatial-aq", "1", "-profile:v", "high"],
     "h264_videotoolbox": ["-c:v", "h264_videotoolbox", "-q:v", "65", "-allow_sw", "0", *CEILING, "-profile:v", "high"],
-    "libx264": ["-c:v", "libx264", "-preset", "medium", "-crf", "18", *CEILING],
+    # veryfast holds SSIM against the frames within 0.001 of medium at this crf and ceiling, for half the CPU
+    "libx264": ["-c:v", "libx264", "-preset", "veryfast", "-crf", "18", *CEILING],
 }
 
 
@@ -297,9 +320,14 @@ def headless(exe):
     return "--headless" if "headless" in Path(exe).name else "--headless=new"
 
 
-def browser_env(runtime):
-    """The browser's environment: its own runtime folder, and no accessibility bridge to the desktop's bus."""
-    return dict(os.environ, XDG_RUNTIME_DIR=str(runtime), NO_AT_BRIDGE="1")
+def browser_env(runtime, gl=None):
+    """The browser's environment: its own runtime folder, and no accessibility bridge to the desktop's bus. On lavapipe
+    the Vulkan loader sees lavapipe's driver alone (VK_DRIVER_FILES, and VK_ICD_FILENAMES for a loader older than
+    1.3.234), and lavapipe draws on a thread for each usable core."""
+    env = dict(os.environ, XDG_RUNTIME_DIR=str(runtime), NO_AT_BRIDGE="1")
+    if gl == "lavapipe":
+        env.update(VK_DRIVER_FILES=lavapipe(), VK_ICD_FILENAMES=lavapipe(), LP_NUM_THREADS=str(usable_cores()))
+    return env
 
 
 # ---------------------------------------------------------------------------------------------------------- WebSocket
@@ -393,13 +421,18 @@ class Cdp:
     it, and every event goes to `on_event` as it arrives."""
 
     def __init__(self, ws, on_event):
-        self.ws, self.on_event, self.next, self.replies, self.ignored = ws, on_event, 0, {}, set()
+        self.ws, self.on_event, self.next, self.replies, self.ignored, self.asked = ws, on_event, 0, {}, set(), {}
 
     def send(self, method, params=None, session=None):
         self.next += 1
         msg = {"id": self.next, "method": method, "params": params or {}}
         if session:
             msg["sessionId"] = session
+        if TIMING:
+            stage = ("shot" if method == "Page.captureScreenshot" else
+                     "seek" if str((params or {}).get("expression", "")).startswith("window.__vs_seek(") else None)
+            if stage:
+                self.asked[self.next] = (stage, time.monotonic())
         self.ws.send(json.dumps(msg))
         return self.next
 
@@ -414,6 +447,9 @@ class Cdp:
         except socket.timeout:
             raise TimeoutError from None
         if "id" in msg:
+            asked, clock = self.asked.pop(msg["id"], None), Timing.now
+            if asked and clock:
+                clock.stages[asked[0]].append(time.monotonic() - asked[1])
             if msg["id"] in self.ignored:
                 self.ignored.discard(msg["id"])
             else:
@@ -516,18 +552,91 @@ def memory():
         return 4 << 30
 
 
+def _cgroups():
+    """This process's cgroup v2 folder and every folder above it, nearest first; none off Linux."""
+    try:
+        rel = next(ln[3:].strip() for ln in SELF_CGROUP.read_text().splitlines() if ln.startswith("0::"))
+    except (OSError, StopIteration):
+        return []
+    d = CGROUP / rel.lstrip("/")
+    return [d, *d.parents[:len(d.relative_to(CGROUP).parts)]]
+
+
+def usable_cores():
+    """The cores this process may use: its CPU affinity, lowered to the CPU quota (cpu.max, rounded up) of its cgroup
+    or of any cgroup above it."""
+    try:
+        n = len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        n = os.cpu_count() or 1
+    for d in _cgroups():
+        try:
+            quota, period = (d / "cpu.max").read_text().split()[:2]
+            if quota != "max":
+                n = min(n, max(1, -(-int(quota) // int(period))))
+        except (OSError, ValueError):
+            continue
+    return n
+
+
+def usable_memory():
+    """The bytes this process can still take: the machine's MemAvailable, lowered to what its cgroup or any cgroup
+    above it has left under memory.max."""
+    try:
+        left = next(int(ln.split()[1]) << 10 for ln in MEMINFO.read_text().splitlines()
+                    if ln.startswith("MemAvailable:"))
+    except (OSError, StopIteration, ValueError, IndexError):
+        left = memory()
+    for d in _cgroups():
+        try:
+            limit = (d / "memory.max").read_text().strip()
+            if limit != "max":
+                left = min(left, int(limit) - int((d / "memory.current").read_text()))
+        except (OSError, ValueError):
+            continue
+    return max(0, left)
+
+
+def pool_size(gl):
+    """The browsers a film renders in side by side with `gl`, at least one: one for every PER_BROWSER[gl] usable cores,
+    up to 8, and no more than the usable memory holds at BROWSER_BYTES each after one share for ffmpeg and this process."""
+    return max(1, min(8, usable_cores() // PER_BROWSER[gl], usable_memory() // BROWSER_BYTES - 1))
+
+
+def lavapipe():
+    """This machine's lavapipe driver files (Mesa's Vulkan on the CPU), joined as the Vulkan loader reads a list, or
+    an empty string."""
+    return os.pathsep.join(str(p) for d in VULKAN_DRIVERS if d.is_dir() for p in sorted(d.glob("lvp_icd*.json")))
+
+
+def backend(gl):
+    """The graphics backend a render draws with for `gl`: auto is Vulkan on the NVIDIA card, otherwise lavapipe when
+    the machine has it and SwiftShader when not. lavapipe on a machine without it is refused, and SwiftShader on Linux
+    says once that lavapipe would draw faster."""
+    gl = ("vulkan" if GPU else "lavapipe" if lavapipe() else "swiftshader") if gl == "auto" else gl
+    if gl == "lavapipe" and not lavapipe():
+        raise SystemExit("lavapipe is not on this machine: install Mesa's Vulkan drivers (mesa-vulkan-drivers), or "
+                         "leave --gl at auto")
+    if gl == "swiftshader" and sys.platform.startswith("linux") and not lavapipe():
+        print("drawing on the CPU with SwiftShader: with Mesa's lavapipe installed (mesa-vulkan-drivers) each frame "
+              "takes about a quarter of the CPU time", file=sys.stderr, flush=True)
+    return gl
+
+
 class Browser:
     """One headless Chromium with its own profile and runtime folder, and its DevTools connection."""
 
-    def __init__(self, exe, gl):
+    def __init__(self, exe, gl, wait=True):
+        """Starts the browser; with `wait=False` the wait for its DevTools is left to `ready`."""
         self.root = private_dir(cache() / "browser", "chromium-")
         (self.root / "run").mkdir(mode=0o700)
         self.log_path = self.root / "stderr.log"
         self.findings, self.lost, self.errors, self.crashed = collections.defaultdict(list), {}, {}, None
-        # @remotion/renderer's open-browser.js: its flags, and its two graphics backends this renderer uses
+        # @remotion/renderer's open-browser.js: its flags, and its two graphics backends: Vulkan (the card's, or
+        # lavapipe's on the CPU) and SwiftShader
         angle = (["--use-angle=vulkan", "--use-vulkan=native", "--disable-vulkan-fallback-to-gl-for-testing",
                   "--disable-vulkan-surface", "--enable-gpu", "--enable-features=Vulkan,UseSkiaRenderer"]
-                 if gl == "vulkan" else ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
+                 if gl in ("vulkan", "lavapipe") else ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
         args = [exe, headless(exe), "--remote-debugging-port=0", f"--user-data-dir={self.root / 'profile'}", "about:blank",
                 "--no-sandbox", "--disable-setuid-sandbox", "--no-first-run", "--no-default-browser-check", "--no-zygote",
                 "--disable-background-networking", "--disable-background-timer-throttling",
@@ -540,22 +649,29 @@ class Browser:
                 "--use-mock-keychain", "--no-proxy-server", "--metrics-recording-only", *angle]
         with open(self.log_path, "wb") as log:
             self.proc = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=log,
-                                         env=browser_env(self.root / "run"), start_new_session=True,
+                                         env=browser_env(self.root / "run", gl), start_new_session=True,
                                          preexec_fn=_die_with_parent)
         LIVE.add(self)
-        url, until = None, time.monotonic() + 30
-        while not url:
+        self.exe, self.until, self.cdp, self.sessions = exe, time.monotonic() + 30, None, {}
+        if wait:
+            self.ready()
+
+    def ready(self):
+        """Waits for the browser's DevTools, up to 30 s from its start, and connects to it; a browser already
+        connected returns at once."""
+        url = None
+        while self.cdp is None and not url:
             m = re.search(r"DevTools listening on (ws://\S+)", self.log_path.read_text(errors="replace"))
             if m:
                 url = m.group(1)
-            elif self.proc.poll() is not None or time.monotonic() > until:
+            elif self.proc.poll() is not None or time.monotonic() > self.until:
                 tail = self.log_path.read_text(errors="replace")[-800:]
                 self.close()
-                raise Failed(f"the browser did not start ({exe}): {tail.strip() or 'no output'}")
+                raise Failed(f"the browser did not start ({self.exe}): {tail.strip() or 'no output'}")
             else:
                 time.sleep(0.05)
-        self.cdp = Cdp(WebSocket(url, 30), self.event)
-        self.sessions = {}
+        if url:
+            self.cdp = Cdp(WebSocket(url, 30), self.event)
 
     def event(self, msg):
         method, p = msg.get("method"), msg.get("params") or {}
@@ -653,8 +769,8 @@ atexit.register(lambda: [b.close() for b in list(LIVE)])
 
 
 def _die_with_parent():
-    """In the browser's process before it starts, on Linux: the kernel kills it when this process dies, even by a
-    signal that runs no handler."""
+    """In the browser's process before it starts, on Linux: the kernel kills it when the thread that started it ends,
+    and so when this process dies, even by a signal that runs no handler."""
     if sys.platform.startswith("linux"):
         import ctypes
         ctypes.CDLL(None).prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG
@@ -763,6 +879,7 @@ class Encoding:
         self.proc = subprocess.Popen([ffmpeg, "-hide_banner", "-v", "error", "-y", "-f", "image2pipe", "-framerate", str(fps),
                                       "-c:v", "png", "-i", "-", "-frames:v", str(total),
                                       "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", *ENCODERS[codec],
+                                      *(["-threads", str(usable_cores())] if codec == "libx264" else []),
                                       "-pix_fmt", "yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709",
                                       "-color_trc", "bt709", "-color_range", "tv", "-movflags", "+faststart", str(out)],
                                      stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=self.err)
@@ -815,6 +932,47 @@ class Encoding:
     def kill(self):
         self.proc.kill()
         self.close()
+
+
+# ------------------------------------------------------------------------------------------------------------ timing
+
+class Timing:
+    """A film's stage times under VS_TIMING=1, written to <film>.timing.json beside it once it passes its checks. The
+    stages, in seconds a frame: seek (the frame asked for until the composition is ready: its draw, three.js included),
+    shot (Page.captureScreenshot until its reply is in: the browser composites the frame, reads it back and compresses
+    it to PNG) and write (the PNG into ffmpeg's input and the frames folder). The marks, in seconds since the attempt
+    began: first and frames (the first and the last frame in), encoded (ffmpeg done) and checked (the film's checks
+    done). Every browser's connection adds its replies to the attempt being timed, Timing.now."""
+
+    now = None
+
+    def __init__(self, out, codec, gl):
+        self.out, self.codec, self.gl, self.t0 = Path(out), codec, gl, time.monotonic()
+        self.stages, self.marks, self.sizes = {"seek": [], "shot": [], "write": []}, {}, []
+        Timing.now = self
+
+    def wrap(self, write):
+        def timed(f, png):
+            t = time.monotonic()
+            write(f, png)
+            self.stages["write"].append(time.monotonic() - t)
+            self.sizes.append(len(png))
+            self.marks.setdefault("first", round(t - self.t0, 3))
+        return timed
+
+    def mark(self, name):
+        self.marks[name] = round(time.monotonic() - self.t0, 3)
+
+    def save(self, browsers):
+        def summary(xs):
+            xs = sorted(xs)
+            return {"n": len(xs), "mean_ms": round(1000 * sum(xs) / len(xs), 2), "p50_ms": round(1000 * xs[len(xs) // 2], 2),
+                    "p90_ms": round(1000 * xs[int(len(xs) * 0.9)], 2), "sum_s": round(sum(xs), 3)} if xs else {"n": 0}
+        Timing.now = None
+        self.out.with_suffix(".timing.json").write_text(json.dumps({
+            "out": str(self.out), "frames": len(self.sizes), "browsers": browsers, "gl": self.gl, "encoder": self.codec,
+            "cores": usable_cores(), "seconds": self.marks, "stages": {k: summary(v) for k, v in self.stages.items()},
+            "png_mean_bytes": round(sum(self.sizes) / len(self.sizes)) if self.sizes else 0}, indent=1))
 
 
 # ------------------------------------------------------------------------------------------------------------ render
@@ -952,11 +1110,20 @@ class Renderer:
             self.crew.append(Renderer(self.url, self.exe, self.ffmpeg, self.gl, self.tabs))
         members = [self] + self.crew[:max(0, min(self.browsers, total) - 1)]
         queue, errors = collections.deque(todo), []
+        # a browser ends with the thread that started it (_die_with_parent): the crew's start here, in the thread that
+        # renders every job, so they serve the jobs after this one; each waits for its DevTools in its own thread, while
+        # the others render
+        for m in members:
+            if m.browser is None:
+                m.browser = Browser(m.exe, m.gl, wait=False)
 
         def work(m, k):
             try:
-                if m.browser is None:
-                    m.browser = Browser(m.exe, m.gl)
+                try:
+                    m.browser.ready()
+                except Failed:
+                    m.browser = None
+                    raise
                 m.browser.findings.pop(job["out"], None)
                 m.browser.lost.pop(job["out"], None)
                 mine = comp if m is self else m.select(job)
@@ -986,7 +1153,7 @@ class Renderer:
         b.lost.pop(job["out"], None)
         b.errors.pop(job["out"], None)
         comp = self.select(job)
-        members, folder, hold = [self], None, None
+        members, folder, hold, clock = [self], None, None, None
         out = Path(job["out"])
         out.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -1015,6 +1182,7 @@ class Renderer:
                     print(f"render {out.name}: {len(kept)} of {total} frames from the frames cache, {painted} to paint",
                           file=sys.stderr, flush=True)
                 pipe = Encoding(self.ffmpeg, codec, comp["fps"], a, total, folder, out, kept)
+                clock = Timing(out, codec, self.gl) if TIMING else None
                 done, last, counting = [0], [-1], threading.Lock()
 
                 def progress():
@@ -1029,12 +1197,16 @@ class Renderer:
                 try:
                     pipe.flush()
                     if todo:
-                        members = self.film(job, comp, todo, pipe.write, progress)
+                        members = self.film(job, comp, todo, clock.wrap(pipe.write) if clock else pipe.write, progress)
                 except BaseException:
                     pipe.kill()
                     out.unlink(missing_ok=True)
                     raise
+                if clock:
+                    clock.mark("frames")
                 rc, err = pipe.close()
+                if clock:
+                    clock.mark("encoded")
                 if rc != 0:
                     out.unlink(missing_ok=True)
                     if codec != "libx264":
@@ -1051,6 +1223,9 @@ class Renderer:
                 if job["out"] in m.browser.errors:
                     raise Failed(f"{out.name}: the page threw an error: {m.browser.errors[job['out']]}")
             refuse_blank(self.ffmpeg, out, job["type"] == "video")
+            if clock:
+                clock.mark("checked")
+                clock.save(len(members))
             own = [{"job": job["out"], "text": t}
                    for t in dict.fromkeys(t for m in members for t in m.browser.findings.get(job["out"], []))]
             if job["out"].endswith(".part.mp4"):
@@ -1078,11 +1253,11 @@ def render_jobs(jobs, public, dist=DIST, ffmpeg=None, chromium=None, gl="auto", 
         raise SystemExit("no Chromium was found: set CHROME_PATH to one, or install Chromium or Google Chrome")
     if not (Path(dist) / "index.html").is_file():
         raise SystemExit(f"the composition bundle is missing ({dist}): this kit ships motion/dist, so restore the kit folder")
-    gl = ("vulkan" if GPU else "swiftshader") if gl == "auto" else gl
+    gl = backend(gl)
     # a browser draws and captures its pages one at a time, on the card and on the CPU alike, so a film runs one page
-    # in each of several browsers, each kept busy by about two cores
+    # in each of several browsers (pool_size)
     tabs = tabs or 1
-    browsers = browsers or max(1, min(8, (os.cpu_count() or 1) // 2))
+    browsers = browsers or pool_size(gl)
     server, url = serve(dist, public)
     r = Renderer(url, exe, ffmpeg, gl, tabs, browsers)
     r.inputs = frame_inputs(dist, public, exe, gl)
@@ -1149,10 +1324,12 @@ def main():
     ap.add_argument("--out", help="the film (.mp4) or, with --still, the frame (.png)")
     ap.add_argument("--scale", type=float, default=1.0, help="the size against the board's (0.5 is half)")
     ap.add_argument("--still", type=int, help="render this frame alone, as a PNG")
-    ap.add_argument("--gl", choices=["auto", "vulkan", "swiftshader"], default="auto",
-                    help="the browser's graphics backend (auto: Vulkan on an NVIDIA card, SwiftShader on the CPU otherwise)")
+    ap.add_argument("--gl", choices=["auto", "vulkan", "lavapipe", "swiftshader"], default="auto",
+                    help="the browser's graphics backend (auto: Vulkan on an NVIDIA card; otherwise on the CPU, lavapipe "
+                    "when the machine has it, SwiftShader when not)")
     ap.add_argument("--tabs", type=int, help="pages in each browser (default 1)")
-    ap.add_argument("--browsers", type=int, help="browsers a film renders in side by side (default half the cores, up to 8)")
+    ap.add_argument("--browsers", type=int, help="browsers a film renders in side by side (default: one for "
+                    "every PER_BROWSER usable cores of the graphics backend, up to 8, as many as the memory holds)")
     a = ap.parse_args()
     # a stop from the machine or a person ends the render at once; the browser is closed on the way out
     for s in (signal.SIGINT, signal.SIGTERM):
