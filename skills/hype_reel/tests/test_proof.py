@@ -87,7 +87,7 @@ class Run(unittest.TestCase):
                       mock.patch.dict(os.environ, FAKE_FFMPEG=FFMPEG, LH_ROOT=str(self.dir), LH_RUN=str(self.run_dir))):
             patch.start()
             self.addCleanup(patch.stop)
-        _env.write_json("film.json", {"timeline": TIMELINE, "seconds": 2.0, "beats": [], "system": {"finish": {}}})
+        _env.write_json("film.json", {"timeline": TIMELINE, "seconds": 2.0, "bpm": 120, "beats": [], "system": {"finish": {}}})
 
     def cmd(self, mod, *argv):
         with mock.patch.object(sys, "argv", [f"{mod.__name__}.py", *argv]), \
@@ -111,6 +111,9 @@ class Run(unittest.TestCase):
             e["scores"] = {k: score if v is None else v for k, v in e["scores"].items()}
             e["paragraph"] = " ".join(["word"] * 30)
         data["reads"] = {k: {"pass": True, "why": WHY} for k in vote.READS}
+        if not data["sound"]["cited"]:
+            data["sound"]["cited"] = ("The bed reads at its level, the drop lands on its cut, and the hits stand over the "
+                                      "bed as the sound read's table says.")
         _env.write_json(round_file, data)
 
 

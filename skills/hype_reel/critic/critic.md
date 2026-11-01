@@ -73,7 +73,7 @@ make the reads: each is a `pass` and a `why` of at least eight words naming its 
 - `carry`: every cut is one the look's card makes and lands on a beat of the music, and the cuts read the way the look
   promises (a cinematic look that never dissolves reads chopped, and fails).
 - `sound`: a sound only where a beat lands (the hook's arrival, the build into the reveal and its impact, the last hit
-  and the stop), every one under the music; read `sound` in `film.json` against the strips.
+  and the stop), every one under the music; read `sound` from `critic/sound.md` against the strips.
 - `swap`: every move belongs to its photograph. Put another photograph under the move: a move made for this
   photograph's subject stops making sense, a slow push on any picture does not, and fails.
 - `held`: one held thing per beat (the moment's photograph and their line on it), and the beat moves on once its
@@ -104,7 +104,15 @@ move or an arrival placed in the stretch that stands still. A finding here is fi
   screen is word for word the subject's or theirs, true, and readable in its time;
 - the stills to come: the frames `film.json` `cards` names are frames of this cut, so a beat that is wrong at rest
   is a story or a card that is wrong;
-- `qa/cut.json` (the measured checks) and `render/cut-report.json`.
+- `qa/cut.json` (the measured checks) and `render/cut-report.json`;
+- `critic/sound.md`, the sound read `vote.py cut` writes, which hears the sound `film.py render` lays under this cut:
+  every cut against the beat grid (on the beat within 40 ms, between on purpose, or off the beat), where the music
+  falls quiet against the stop and the last frame, and each effect's peak against the music under it (heard, or under
+  the music).
+
+Score `music` and read `sound` from the sound read: a cut off the beat, music that still sounds at the last frame, or
+an effect under the music is something a viewer hears, and a 5 needs none of them. Say in the round's `sound.cited`
+which rows they rest on (a round is not complete without it).
 
 Never score from memory of the storyboard; the cut is what ships. Fill in `critic/cut-N.json` and run
 `vote.py verdict`. Type is read last on the full-size cut: after `SHIP` on the proof, `film.py cut` renders it full size

@@ -21,6 +21,9 @@ from unittest import mock
 KIT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(KIT / "scripts"))
 import _env  # noqa: E402
+import vote as _vote  # noqa: E402
+
+SOUND_READ = _vote.sound_read
 
 REAL_RUN = subprocess.run
 
@@ -239,17 +242,94 @@ class Index(Run):
             self.assertEqual(made(self.run / "public" / r["dir"]), ["0001.jpg"])
 
 
+# the round's sound block as vote.sound_read returns it, and a sentence that cites its rows
+HEARD = {"table": "critic/sound.md", "findings": [], "cited": ""}
+CITED = "music rests on every cut row on the beat, the end row and each effect row heard over the bed"
+
+
 class Vote(Run):
-    def test_asking_for_the_critics_again_on_the_same_cut_reopens_its_round(self):
+    def setUp(self):
+        super().setUp()
+        import vote
+        sound = mock.patch.object(vote, "sound_read", lambda: dict(HEARD))
+        sound.start()
+        self.addCleanup(sound.stop)
+
+    def cut(self):
         import film
         import vote
-        self.put("film.json", {"board": "1"})
-        self.put("film.silent.mp4", "cut")
         self.put("cut.json", {"film": film.film_hash()})
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(vote.cmd_cut(None), 0)
-            self.assertEqual(vote.cmd_cut(None), 0)
-        self.assertEqual(made(self.run / "critic"), ["cut-1.json"])
+        return made(self.run / "critic")
+
+    def fill(self, name, cited=CITED):
+        import vote
+        data = json.loads((self.run / "critic" / name).read_text())
+        for c in vote.CUT_PANEL:
+            data["critics"][c]["boards"]["film"].update(scores={k: 5 for k in vote.CRITERIA}, paragraph=" ".join(["seen"] * 30))
+        data["reads"] = {k: {"pass": True, "why": "the strips show it at every beat of the cut"} for k in vote.READS}
+        data["sound"]["cited"] = cited
+        self.put(f"critic/{name}", data)
+
+    def verdict(self):
+        import vote
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            rc = vote.cmd_verdict(None)
+        return rc, out.getvalue()
+
+    def test_asking_for_the_critics_again_on_the_same_cut_reopens_its_round(self):
+        self.put("film.json", {"board": "1"})
+        self.put("film.silent.mp4", "cut")
+        self.assertEqual(self.cut(), ["cut-1.json"])
+        self.assertEqual(self.cut(), ["cut-1.json"])
+        self.assertEqual(json.loads((self.run / "critic" / "cut-1.json").read_text())["sound"], HEARD)
+
+    def test_a_round_is_complete_only_once_its_music_score_cites_the_sound_read(self):
+        self.put("film.json", {"board": "1"})
+        self.put("film.silent.mp4", "cut")
+        self.cut()
+        self.fill("cut-1.json", cited="fine")
+        rc, said = self.verdict()
+        self.assertEqual(rc, 1)
+        self.assertIn("sound / cited", said)
+        self.fill("cut-1.json")
+        self.assertEqual(self.verdict()[0], 0)
+
+    def test_a_cut_drawn_by_another_motion_bundle_opens_its_own_round_and_the_old_round_is_refused(self):
+        import proof
+        dist = self.run / "dist"
+        self.put("dist/bundle.js", "one")
+        self.put("film.json", {"board": "1"})
+        self.put("film.silent.mp4", "cut")
+        with mock.patch.object(proof, "DIST", dist):
+            self.cut()
+            self.fill("cut-1.json")
+            self.put("dist/bundle.js", "two")
+            self.put("film.silent.mp4", "the cut drawn again")
+            rc, said = self.verdict()
+            self.assertEqual(rc, 1)
+            self.assertIn("not a read of the newest cut", said)
+            self.assertEqual(self.cut(), ["cut-1.json", "cut-2.json"])
+
+    def test_the_sound_read_hears_the_effects_board_and_master_the_render_lays(self):
+        import film
+        import sfx
+        import vote
+        self.put("film.json", {"board": "1", "timeline": {}, "seconds": 12.5, "beats": []})
+        self.put("music.json", {"master": "music/master.wav", "bpm": 120})
+        seen = {}
+
+        def read(*a):
+            seen["read"] = a
+            return dict(HEARD)
+        with mock.patch.object(vote, "sound_read", SOUND_READ), mock.patch.object(sfx, "critic_read", read), \
+                mock.patch.object(film, "fx_board", lambda f: seen.setdefault("film", f) and {"fx": "the cut's"}):
+            self.assertEqual(vote.sound_read(), HEARD)
+        self.assertEqual(seen["film"]["seconds"], 12.5, "film.py render lays fx_board of film.json")
+        fx, record, movie, seconds, _, path = seen["read"]
+        self.assertEqual((fx, record, movie, seconds, path),
+                         ({"fx": "the cut's"}, {"master": "music/master.wav", "bpm": 120}, None, 12.5, vote.SOUND))
 
     def test_snap_cuts_the_board_the_vote_judged_never_an_edit_since(self):
         import storyboard
