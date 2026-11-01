@@ -314,7 +314,9 @@ class W_AVerdictIsTheBallotAsItReadsNow(InRun):
         Path("cut.mp4").write_bytes(b"the cut")
         film_ = {"scores": dict.fromkeys(vote.CRITERIA, 5), "paragraph": " ".join(["the film holds"] * 10)}
         data = {"round": 1, "film": qa.sha(Path("cut.mp4")),
-                "critics": {c: {"boards": {"film": dict(film_)}} for c in vote.CUT_PANEL}}
+                "critics": {c: {"boards": {"film": dict(film_)}} for c in vote.CUT_PANEL},
+                "sound": {"table": "critic/sound.md", "findings": [],
+                          "cited": "the sound score rests on every cut row on the beat and each effect row heard"}}
         _env.write_json("critic/cut-1.json", data)
         Path("film.json").write_text(json.dumps({"boards": dict.fromkeys(qa.FILMS, "none.json"), "findings": []}))
         with contextlib.redirect_stdout(io.StringIO()):
@@ -434,6 +436,10 @@ class D_AnInputMovesInWhole(InRun):
 class E_ARoundBelongsToItsCut(InRun):
     def setUp(self):
         super().setUp()
+        # the sound read of a cut is its own test (test_proof.SoundRead); here a round only needs its block
+        sound = mock.patch.object(vote, "sound_read", lambda film: {"table": "critic/sound.md", "findings": [], "cited": ""})
+        sound.start()
+        self.addCleanup(sound.stop)
         Path("cut.mp4").write_bytes(b"cut one")
         Path("cut.json").write_text("{}")
         self.check()

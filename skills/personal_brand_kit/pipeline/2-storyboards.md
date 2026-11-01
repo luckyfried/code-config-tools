@@ -63,9 +63,13 @@ python3 S/scripts/storyboard.py sheets
 ```
 
 `check` holds every board in every format to its card and the frame: a line outside the type area or the card's line
-box, a line too long for the box, a length outside 12 to 30 s, a hook after frame 30, a face, move, cut or color the
-card did not make, the same move twice in a row, or two looks sharing more than two axes. It prints each finding and
-exits 1 on any. A finding is fixed at its source (the words or the moments in `taste.json`, or the cast), then
+box, a line too long for the box, words the slam would leave resting past the type area, a line set under the 32 px a
+phone shows legibly, a label or line that does not read against the photograph or panel under it at the contrast its
+size needs on a phone (`scripts/legible.py`, under the beat's scrim), a length outside 12 to 30 s, a hook after frame
+30, a face, move, cut or color the card did not make, the same move twice in a row, or two looks sharing more than two
+axes. It prints each finding and exits 1 on any. `draft` lays every board so its words read: a label that does not
+read in its own color takes the line's, light words the photograph outshines lie under a deeper scrim (up to 0.9), and
+a hook the slam would set past the type area is set by the kit in the card's line box. A finding is fixed at its source (the words or the moments in `taste.json`, or the cast), then
 `draft` and `check` again; a board is never edited by hand.
 
 `sheets` renders the hook, a middle beat and the closer of each look's reel at rest onto `storyboards/<letter>/sheet.png`,

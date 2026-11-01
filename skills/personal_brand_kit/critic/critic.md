@@ -28,7 +28,7 @@ colors, their voice, their pacing, nothing on the avoid list. Would I post this 
 | `picture` | R2: one finish, the look's; every color a photograph's own or the look's palette's; the closer settles and keeps only its slow push | their photographs fill the frames the card gives them, in one finish, the colors their feed's | a photograph lost under a field, colors from nowhere, a closer that keeps flying, or one frozen to a still frame |
 | `type` | R3: the card's two faces at a clear scale; lines that enter and settle; every line reads on its ground; nothing colliding | every line readable at a glance on a phone, settled within a second, inside the safe area | a line too small to read, a line touching another or the edge, type lost on a busy picture |
 | `motion` | R4: every move anticipates and settles, no two beats in a row alike, the last moment held longest, cuts on the beat | a rhythm you can feel, beats of different lengths, the peak held | the same move twice, uniform beats, linear slides |
-| `sound` | R5, the cut only, from `qa/check.json`'s audio row: the bed belongs to the look, each effect on the music's grid and on what it marks (a cut, a photograph, a title, the closer), effects 8 LU or more under the music, quiet from the stop | the bed fits the look and their words, the hits land with the picture | a bed at odds with the look, an effect off the beat or on nothing, effects too loud, sound running on past the stop |
+| `sound` | R5, the cut only, from the sound read (`critic/sound.md`) and `qa/check.json`'s audio row: the bed belongs to the look, each effect on the music's grid and on what it marks (a cut, a photograph, a title, the closer), effects 8 LU or more under the music, quiet from the stop | the bed fits the look and their words, the hits land with the picture | a bed at odds with the look, an effect off the beat or on nothing, effects too loud, sound running on past the stop |
 | `own` | its own film: the hook and the closer read as this look and no other | the three looks are three different films | two looks that read as one |
 
 ## The looks (movement 3)
@@ -48,10 +48,13 @@ Look, actually look:
 - that cut with its sound (the master `music.json` names; the full-size `cut.mp4` is the reel delivered), and its
   strips with the Read tool: `cut-strip.png` (a frame a second) and `cut-strip12.jpg` (every frame at 12 a second, a
   row a second), read row by row, and any frame you cut from it to look closer;
-- `qa/check.json`: the measured checks and the figures, and its `audio` row, the film's sound measured.
+- `qa/check.json`: the measured checks and the figures, and its `audio` row, the film's sound measured;
+- the sound read, `critic/sound.md`, which `vote.py cut` writes from the cut's own sound: each cut against the beat
+  grid, the music's end against the last frame, and each effect's peak at its hit against the music under it.
 
-`idea`, `picture`, `type`, `motion` and `own` are scored from the frames and strips alone; `sound` from the `audio`
-row alone. A read that cites a storyboard or a move name instead of a frame is not a read. Fill in
+`idea`, `picture`, `type`, `motion` and `own` are scored from the frames and strips alone; `sound` from the sound read
+and the `audio` row alone, naming the rows the score rests on in the round's `sound.cited` (`vote.py verdict` refuses
+a round that cites none). A read that cites a storyboard or a move name instead of a frame is not a read. Fill in
 `critic/cut-N.json` as `vote.py cut` wrote it and run `vote.py verdict`:
 
 - a mean of 4.5 or more and no score under 4: SHIP. On the proof, `film.py cut` makes the full-size cut and `vote.py

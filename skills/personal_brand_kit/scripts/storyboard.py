@@ -7,7 +7,8 @@ USAGE (from the workspace root; S = this skill's folder; every script works in t
                                              # plan.json and storyboard.md; a new draft starts a new pick (winner.json,
                                              # vote/scores.json and the cut go)
     python3 S/scripts/storyboard.py check    # every board: type inside the safe area and inside the card's line box,
-                                             # the length, the hook, and each board against its style card (faces, moves,
+                                             # every caption legible on a phone over what is behind it, the length,
+                                             # the hook, and each board against its style card (faces, moves,
                                              # transitions, colors) and the three looks against each other
     python3 S/scripts/storyboard.py sheets   # storyboards/<n>/sheet.png (the hook, a middle beat and the closer at rest)
                                              # and out/boards.png, the three looks side by side, to show the person
@@ -22,7 +23,9 @@ and the sign-off. Each look takes its faces, colors, easing, finish, closer, pho
 The words are the person's own. The opening line is taste.json `hook`, else the first phrase of the bio, else the first
 moment's line; the question is taste.json `question`, else the question from the best-liked caption that asks one; the
 sign-off is taste.json `signoff`, else the name, else the handle. A moment shows its pillar as its label and its own
-caption line, set in the card's line box in the card's faces, sizes and colors.
+caption line, set in the card's line box in the card's faces, sizes and colors. Words laid over a photograph read on a
+phone (legible.py): a label that does not read in its own color takes the line's, and light words the photograph
+under them outshines lie under a scrim as deep as they need, up to legible.SCRIM_MOST.
 
 Each beat's move, and the cut into it, is chosen from what the beat shows (its form, words or none, portrait or
 landscape, the peak, people, a place) among the card's allowlists, never the previous beat's move. Each beat lasts the
@@ -30,9 +33,10 @@ card's pace in musical beats at the card's tempo (the middle of its music recipe
 uses the music's), and the moments the story cannot fit in 28 seconds are left out, the least liked first, the peak
 always kept.
 
-check fails a board on: a line outside the type area or outside the card's line box, a length outside 12 to 30 s, a
-hook event after frame 30, a face, move, transition or color the card does not name, the same move twice in a row, or
-two looks sharing more than two axes.
+check fails a board on: a line outside the type area or outside the card's line box, a line set under the size a
+phone shows legibly, a label or line that does not read against the photograph or panel under it at the contrast its
+size needs on a phone, a length outside 12 to 30 s, a hook event after frame 30, a face, move, transition or color the
+card does not name, the same move twice in a row, or two looks sharing more than two axes.
 """
 import argparse
 import hashlib
@@ -47,6 +51,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _env  # noqa: E402
 import compose  # noqa: E402
+import legible  # noqa: E402
 
 BOARDS = Path("storyboards")
 FPS = compose.FPS
@@ -68,7 +73,11 @@ WIDTH_SIZED = {"rule-draw"}
 # the moves that cut one word out of a field over a photo beat's photograph; the field lifts over the beat's last
 # quarter onto the photograph and the card's line
 MASKS = {"type-mask-reveal"}
-LABEL_LEAST = 32  # px on a 1080 frame: the smallest label that still reads on a phone held at arm's length
+LABEL_LEAST = legible.LEAST  # px on a 1080 frame: the smallest label that still reads on a phone held at arm's length
+# how much closer the film's slow push under every photograph has come by a beat's last frame (Film.tsx)
+PUSH = 1.05
+# the scrim a hook's words lie under where the card's colors do not read on the photograph under them, at least
+TITLE_SCRIM = 0.62
 # the moves that draw the frame's grid in hairlines over the picture (motion/system/moves/move/grid-snap.tsx): the
 # opening line stands on a panel whose edges are grid lines, so no hairline runs through a letter
 HAIRLINES = {"grid-snap"}
@@ -174,35 +183,6 @@ class Run:
 
 
 # ------------------------------------------------------------------ layout
-def light_under(file, box, picture):
-    """The light (0 to 1) of the photograph under `box` (px) where the photograph covers `picture` (px): its mean and
-    how far it spreads round the mean, so a busy picture counts with its darks and its lights."""
-    from PIL import Image, ImageStat
-    with Image.open(Path("public") / file) as im:
-        g = im.convert("L")
-        W, H = g.size
-        pw, ph = picture[2] - picture[0], picture[3] - picture[1]
-        s = max(pw / W, ph / H)
-        ox, oy = picture[0] + (pw - W * s) / 2, picture[1] + (ph - H * s) / 2
-        x0, y0 = max(0, (box[0] - ox) / s), max(0, (box[1] - oy) / s)
-        x1, y1 = min(W, (box[2] - ox) / s), min(H, (box[3] - oy) / s)
-        if x1 - x0 < 2 or y1 - y0 < 2:
-            return 0.5, 0.0
-        st = ImageStat.Stat(g.crop((int(x0), int(y0), int(x1), int(y1))))
-        return st.mean[0] / 255, st.stddev[0] / 255
-
-
-def lum(h):
-    r, g, b = (int(h.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
-    f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
-
-
-def contrast(a, b):
-    la, lb = sorted((a, b))
-    return (lb + 0.05) / (la + 0.05)
-
-
 def role(colors, c):
     return colors.get(c, c)
 
@@ -241,12 +221,14 @@ def line_box(fr, box):
             round(a[0] + (x + w) * (a[2] - a[0]), 1), round(a[1] + (y + h) * (a[3] - a[1]), 1)]
 
 
-def set_text(fr, words, box, face, size, align, label=None, lab=None, bottom=False, most=3):
-    """`words` set in `box` in `face`, from `size` down to half of it, in at most `most` lines that fit under the label:
-    {lines [{text, x, y}], size, face, tracking, label, box}. y is each line's baseline; `bottom` sets the lines on the
-    box's foot rather than under its top."""
+def set_text(fr, words, box, face, size, align, label=None, lab=None, bottom=False, most=3, least=None):
+    """`words` set in `box` in `face`, from `size` down to `least` (half of `size` when None) and never under the size a
+    phone shows legibly (legible.LEAST), in at most `most` lines that fit under the label: {lines [{text, x, y}], size,
+    face, tracking, label, box}. Sizes are px at 1080. y is each line's baseline; `bottom` sets the lines on the box's
+    foot rather than under its top."""
     k = min(fr.W, fr.H) / 1080
     size = round(size * k)
+    floor = max(round(least * k) if least else size // 2, min(size, round(legible.LEAST * k)))
     f = compose.face_of(face)
     lead = f.get("lineHeight", 1.1)
     out_label = None
@@ -270,9 +252,9 @@ def set_text(fr, words, box, face, size, align, label=None, lab=None, bottom=Fal
         # every line holds two words or more
         alone = len(lines) > 1 and any(len(x.split()) < 2 for x in lines)
         if (len(lines) <= most and need <= tall and not alone
-                and all(compose.measure(x, s, face)[0] <= width - 0.03 * s for x in lines)) or s <= size // 2:
+                and all(compose.measure(x, s, face)[0] <= width - 0.03 * s for x in lines)) or s <= floor:
             break
-        s = max(size // 2, int(s * 0.94))
+        s = max(floor, int(s * 0.94))
     cap = compose.measure("H", s, face)[1]
     y0 = top + cap if not bottom else box[3] - 0.28 * s - (len(lines) - 1) * lead * s
     out = []
@@ -321,10 +303,11 @@ def on_panel(fr, g, b, t, box, ln, lab, colors, italic):
     head = max([r for r in rows if r <= top] or [rows[0]])
     right = max(compose.box_of(dict(x, size=t["size"], face=t["face"]))[2] for x in t["lines"]) + pad
     edge = min([c for c in cols if c >= right] or [cols[-1]])
-    dark, light = sorted(("ink", "paper"), key=lambda r: lum(role(colors, r)))
+    dark, light = sorted(("ink", "paper"), key=lambda r: legible.lum(role(colors, r)))
     if t["label"]:
         t["label"]["y"] = round(head + pad + t["label"]["size"], 1)
-        keep = contrast(lum(role(colors, lab["color"])), lum(role(colors, dark))) >= 3
+        keep = (legible.ratio(legible.lum(role(colors, lab["color"])), legible.lum(role(colors, dark)))
+                >= legible.need(t["label"]["size"], min(fr.W, fr.H)))
         t["label"]["color"] = lab["color"] if keep else light
     return dict(t, color=light, italic=italic, enter=ln["enter"], at=0.5,
                 panel={"box": [round(m, 1), round(head, 1), round(edge, 1), round(foot, 1)], "color": dark})
@@ -339,6 +322,131 @@ def text_boxes(t):
         lns.append({"text": t["label"]["text"], "x": t["label"]["x"], "y": t["label"]["y"], "size": t["label"]["size"],
                     "face": t["label"]["face"]})
     return [compose.box_of(ln) for ln in lns]
+
+
+# ------------------------------------------------------------------ captions a phone shows legibly
+def around(boxes):
+    return [min(b[0] for b in boxes), min(b[1] for b in boxes), max(b[2] for b in boxes), max(b[3] for b in boxes)]
+
+
+def place_of(pic, push=1.0):
+    """Where a beat's photograph lies in the frame, [x, y, w, h] px, as the film lays it (Film.tsx cropOf and
+    placeOf): the photograph covering its box, `zoom` times closer and `push` times closer again, around its subject."""
+    x0, y0, x1, y1 = pic["box"]
+    rb = (y1 - y0) / (x1 - x0)
+    su, sv = (1.0, rb / pic["aspect"]) if pic["aspect"] > rb else (pic["aspect"] / rb, 1.0)
+    z = pic["zoom"] * push
+    su, sv = su / z, sv / z
+    s = pic.get("subject") or []
+    cx, cy = s[:2] if len(s) >= 2 else (0.5, 0.45)
+    u0, t0 = min(1 - su, max(0, cx - su / 2)), min(1 - sv, max(0, cy - sv / 2))
+    w, h = (x1 - x0) / su, (y1 - y0) / sv
+    return [x0 - u0 * w, y0 - t0 * h, w, h]
+
+
+def quarters_under(fr, pic, boxes):
+    """The quarters (legible.quarters) of the photograph `pic` under words whose boxes are `boxes`, where they cover it
+    inside the frame, as it lies on the beat's first frame and on its last, the film's slow push between; [] where the
+    words stand off it."""
+    a, b = around(boxes), pic["box"]
+    box = [max(a[0], b[0], 0), max(a[1], b[1], 0), min(a[2], b[2], fr.W), min(a[3], b[3], fr.H)]
+    if box[2] - box[0] < 2 or box[3] - box[1] < 2:
+        return []
+    return [q for q in (legible.under(pic["file"], place_of(pic, push), box) for push in (1.0, PUSH)) if q]
+
+
+def shade_at(scrim, y, H):
+    """How deep the beat's scrim is at height `y` px: from nothing at its top to its depth over a sixth of the frame,
+    nothing outside it (Film.tsx Shade)."""
+    if not scrim or not scrim["from"] <= y <= scrim["to"]:
+        return 0.0
+    return scrim["dark"] * min(1.0, (y - scrim["from"]) / min(H / 6, max(1, scrim["to"] - scrim["from"])))
+
+
+def under_words(fr, pic, t, line, label):
+    """A beat's label in `label` and its lines in `line` over the photograph `pic`: [(which, text, color role, size px,
+    top px, quarters)], the label first; words that stand off the photograph are left out."""
+    sets = [("label", t["label"]["text"], label, t["label"]["size"], [compose.box_of(t["label"])])] if t.get("label") else []
+    if t["lines"]:
+        sets.append(("line", " ".join(x["text"] for x in t["lines"]), line, t["size"],
+                     [compose.box_of(dict(x, size=t["size"], face=t["face"])) for x in t["lines"]]))
+    out = []
+    for which, text, color, size, boxes in sets:
+        q = quarters_under(fr, pic, boxes)
+        if q:
+            out.append((which, text, color, size, around(boxes)[1], q))
+    return out
+
+
+def reading(color, q, scrim):
+    """The contrast words of `color` read at over every one of quarters `q` under a black scrim of depth `scrim`,
+    the worst: the scrim is drawn over the photograph in the page's encoded color, so it blends in sRGB."""
+    return min(legible.contrast(color, x, scrim, linear=False) for x in q)
+
+
+def deepest(color, q, want, least):
+    """The shallowest scrim, `least` or deeper, under which words of `color` read at `want` over every one of
+    quarters `q`; None when legible.SCRIM_MOST does not."""
+    s = [legible.scrim_for(color, x, want, least, linear=False) for x in q]
+    return None if None in s else max(s)
+
+
+def on_black(color, want):
+    """Whether words of `color` read at `want` on black: the only words a black scrim helps."""
+    return legible.ratio(legible.lum(color), 0.0) >= want
+
+
+def shade_words(fr, pic, t, dark, line, label, colors):
+    """The scrim depth a beat's words lie under over the photograph `pic` and its label's color role, so its label and
+    its line each read on the photograph under them at the contrast their size needs on a phone (legible.py): the
+    card's depth `dark` and colors where they read; a label that does not read in its own color takes the line's; light
+    words that still do not read deepen the scrim, up to legible.SCRIM_MOST. A black scrim never helps dark words, so the
+    check names those, and anything past the deepest scrim."""
+    wide = min(fr.W, fr.H)
+    for which, _, color, size, _, q in under_words(fr, pic, t, line, label):
+        want = legible.need(size, wide)
+        if which == "label" and reading(role(colors, color), q, dark) < want:
+            label = color = line
+        if on_black(role(colors, color), want) and reading(role(colors, color), q, dark) < want:
+            dark = deepest(role(colors, color), q, want, dark) or legible.SCRIM_MOST
+    return round(dark, 2), label
+
+
+def legibility(fr, x, colors):
+    """What of beat `x`'s words a phone does not show legibly: a line set under legible.LEAST, and a label or line
+    that does not read at the contrast its size needs against what stands behind it: its panel, else the photograph
+    under it at the beat's scrim, on the beat's first frame and on its last."""
+    t = x.get("text")
+    if not t:
+        return []
+    wide = min(fr.W, fr.H)
+    lab = t.get("label")
+    out = [f'{x["id"]}: "{text}" is set at {size:g} px, under the {legible.LEAST} px a phone shows legibly'
+           for text, size in ([(lab["text"], lab["size"])] if lab else []) + [(ln["text"], t["size"]) for ln in t["lines"]]
+           if size < round(legible.LEAST * wide / 1080)]
+    if t.get("panel"):
+        back = legible.lum(role(colors, t["panel"]["color"]))
+        for text, color, size in ([(lab["text"], lab["color"], lab["size"])] if lab else []) + [
+                (" ".join(ln["text"] for ln in t["lines"]), t["color"], t["size"])]:
+            r, want = legible.ratio(legible.lum(role(colors, color)), back), legible.need(size, wide)
+            if r < want:
+                out.append(f'{x["id"]}: "{text}" reads {r:.1f}:1 on its panel, under the {want:g}:1 a {size:g} px line needs on '
+                           "a phone: set it in the card's other ink")
+        return out
+    if not x.get("picture"):
+        return out
+    for _, text, color, size, top, q in under_words(fr, x["picture"], t, t["color"], lab and lab["color"]):
+        s, want, hexc = round(shade_at(x.get("scrim"), top, fr.H), 2), legible.need(size, wide), role(colors, color)
+        r = reading(hexc, q, s)
+        if r >= want:
+            continue
+        deeper = deepest(hexc, q, want, s)
+        why = ("a black scrim never helps dark words: set them in the card's light color" if not on_black(hexc, want)
+               else "even the deepest scrim does not make them read: give the beat a photograph that is darker under its words"
+               if deeper is None else f"under a scrim of {deeper:g} they read: draft the board again")
+        out.append(f'{x["id"]}: "{text}" reads {r:.1f}:1 over the photograph under it (scrim {s:g}), under the {want:g}:1 '
+                   f"a {size:g} px line needs on a phone: {why}")
+    return out
 
 
 # ------------------------------------------------------------------ the story as beats
@@ -523,30 +631,31 @@ def lay(run, c, colors, fr, b):
         if not pic["show"] and b.get("turn", 0) % 2:
             # type alone: every other moment turns the ground and the line round, so the beats read as a sequence
             ground, line = line, ground
-            label = line if contrast(lum(role(colors, label)), lum(role(colors, ground))) < 3 else label
+            label = line if legible.ratio(legible.lum(role(colors, label)), legible.lum(role(colors, ground))) < 3 else label
             out["ground"] = role(colors, ground)
         # a line the card sets at display size keeps its size over more lines: a poster's words, not a caption's; a
         # moment's line starts from the film's caption size when one is given (board_for)
         t = set_text(fr, b["say"], lb, ln["face"], b.get("caption") or ln["size"], ln["align"], b["label"] or None, lab,
                      most=BIG_LINES if ln["size"] >= 100 else 3)
-        if pic["show"] and ln["scrim"] > 0 and lum(role(colors, label)) < lum(role(colors, line)):
-            # the label sits on the photograph under the scrim, which darkens it: a label darker than the line takes
-            # the line's color
-            label = line
+        if b["move"] in OWN_LINE:
+            return out
+        dark = ln["scrim"]
+        if pic["show"] and t["lines"]:
+            # the words read on the photograph under them: the card's scrim and colors where they do, else the label
+            # in the line's color and the scrim as deep as the words need
+            dark, label = shade_words(fr, out["picture"], t, dark, line, label, colors)
         if t["label"]:
             t["label"]["color"] = label
         out["text"] = dict(t, color=line, enter=ln["enter"], at=0.25)
-        if b["move"] in OWN_LINE:
-            out["text"] = None
-            return out
-        if pic["show"] and ln["scrim"] > 0 and t["lines"]:
-            top = (t["label"] or t["lines"][0])["y"] - fr.H / 6
-            out["scrim"] = {"from": round(top, 1), "to": round(min(fr.H, box[3]), 1), "dark": ln["scrim"]}
+        if pic["show"] and dark > 0 and t["lines"]:
+            # the scrim reaches its depth at the words' top
+            top = min(bx[1] for bx in text_boxes(t)) - fr.H / 6
+            out["scrim"] = {"from": round(top, 1), "to": round(min(fr.H, box[3]), 1), "dark": dark}
         return out
     if b["form"] == "title":
         full = [-0.06 * fr.W, -0.06 * fr.H, 1.06 * fr.W, 1.06 * fr.H]
         out["picture"] = dict(photo, box=[round(v, 1) for v in full], zoom=ZOOM)
-        if b["move"] in SETS_WORDS:
+        if sets_words(b, fr):
             return out
         a = fr.area
         lb = line_box(fr, ln["box"])
@@ -556,25 +665,27 @@ def lay(run, c, colors, fr, b):
             lb = [lb[0], max(lb[1], top * fr.H + pad), lb[2], min(lb[3], (1 - foot) * fr.H - pad)]
         box = [a[0], max(min(lb[1], lb[3] - 0.32 * (a[3] - a[1])), a[1]), a[2], lb[3]]
         italic = bool(compose.face_of("display").get("italic")) and ln["face"] == "display"
+        # a hook too long for its box at half its size comes down as far as half the card's line, so no word of it
+        # stands alone on a line
         t = set_text(fr, b["say"], box, ln["face"], ln["size"] * TITLE_K * (1.0 if ln["size"] >= 100 else 1.4),
-                     ln["align"], b["label"] or None, lab, bottom=True)
-        mean, spread = light_under(photo["file"], [box[0], (t["label"] or t["lines"][0])["y"] - t["size"], box[2], box[3]], full)
-        want = role(colors, ln["color"])
-        # the line in the card's color where it reads on the photograph at both its darker and its lighter parts,
-        # else paper over a shade of the photograph
-        lights = [0.04 + 0.92 * min(1, max(0, mean + k * spread)) ** 2.2 for k in (-1, 1)]
-        if min(contrast(lum(want), light) for light in lights) >= 4.5:
-            color, label_color = ln["color"], lab["color"]
-        else:
-            color = label_color = "paper" if lum(role(colors, "paper")) > 0.5 else "ink"
-            top = (t["label"] or t["lines"][0])["y"] - t["size"] - fr.H / 8
-            out["scrim"] = {"from": round(top, 1), "to": round(fr.H * 1.06, 1), "dark": 0.62}
+                     ln["align"], b["label"] or None, lab, bottom=True, least=ln["size"] / 2)
+        if b["move"] in HAIRLINES:
+            out["text"] = on_panel(fr, lay["grid"], b, t, box, ln, lab, colors, italic)
+            return out
+        color, label_color = ln["color"], lab["color"]
+        wide = min(fr.W, fr.H)
+        if any(reading(role(colors, c), q, 0.0) < legible.need(size, wide)
+               for _, _, c, size, _, q in under_words(fr, out["picture"], t, color, label_color)):
+            # the card's colors do not read on the photograph under the words: the lightest of its line color, paper
+            # and ink, over a scrim as deep as the words need, from TITLE_SCRIM; the scrim reaches its depth at the
+            # words' top
+            color = label_color = max((ln["color"], "paper", "ink"), key=lambda r: legible.lum(role(colors, r)))
+            dark, label_color = shade_words(fr, out["picture"], t, TITLE_SCRIM, color, label_color, colors)
+            top = min(bx[1] for bx in text_boxes(t)) - fr.H / 6
+            out["scrim"] = {"from": round(top, 1), "to": round(fr.H * 1.06, 1), "dark": dark}
         if t["label"]:
             t["label"]["color"] = label_color
         out["text"] = dict(t, color=color, italic=italic, enter=ln["enter"], at=0.5)
-        if b["move"] in HAIRLINES:
-            out["scrim"] = None
-            out["text"] = on_panel(fr, lay["grid"], b, t, box, ln, lab, colors, italic)
         return out
     if b["form"] == "words":
         if b["move"] in MASKS:
@@ -598,7 +709,8 @@ def lay(run, c, colors, fr, b):
 
 
 def sets_words(b, fr):
-    """Whether beat `b`'s move sets its words itself on frame `fr`."""
+    """Whether beat `b`'s move sets its words itself on frame `fr`: every move in SETS_WORDS does but one that sizes them
+    by the measure's width alone on a frame wider than it is tall; there the kit sets them and the move draws none."""
     return b["move"] in SETS_WORDS and not (b["move"] in WIDTH_SIZED and fr.W > fr.H)
 
 
@@ -655,7 +767,7 @@ def board_for(run, letter, style, fmt, bpm=None):
         clear = b["beats"] - 0.2 - (cut_beats(out[i + 1]["transition"]) / 2 if i + 1 < len(out) else 0)
         if b["form"] == "title":
             words = len(b["say"].split())
-            settle = (words + 0.6) if b["move"] in SETS_WORDS else (b["text"] or {}).get("at", 0) + 1.2
+            settle = (words + 0.6) if b["words"] else (b["text"] or {}).get("at", 0) + 1.2
         elif b["form"] == "closer":
             settle = still - b["start"] + 0.5
         else:
@@ -674,7 +786,7 @@ def board_for(run, letter, style, fmt, bpm=None):
     compose.set_lines(board["beats"])
     starts = [round(b["start"] * pulse) for b in out]
     first = out[0]
-    hook_at = 0.15 if first["move"] in SETS_WORDS else (first.get("text") or {}).get("at", 0.5)
+    hook_at = 0.15 if first["words"] else (first.get("text") or {}).get("at", 0.5)
     rests = {"hook": starts[0] + first["rest"], "closer": starts[-1] + closer["rest"]}
     mids = [i for i, b in enumerate(out) if b["form"] == "photo"]
     if mids:
@@ -698,7 +810,7 @@ def effects_board(board):
         ly = {"kind": kind, "at": {"arrive": round(s + lands_at(b["move"], b["beats"] * sec) / sec, 4), "start": s, "end": e}}
         if kind == "Title":
             ly["title"] = {"text": b["say"]}
-            ly["slam"] = [s, 0.25 if b["move"] in SETS_WORDS or not b.get("text") else b["text"]["at"]]
+            ly["slam"] = [s, 0.25 if b.get("words") or not b.get("text") else b["text"]["at"]]
         elif kind == "Photo":
             ly["label"] = b["say"]
         elif kind == "Words":
@@ -792,6 +904,7 @@ def findings(run, plans):
         fr = compose.Frame(fmt)
         a = fr.area
         made = set(__import__("palette").palette_of(c["palette"], run.swatches)["made"])
+        colors = b["system"]["colors"]
         if not lo <= p["seconds"] <= hi:
             out.append(f"{fmt}: {p['seconds']} s is outside {lo}-{hi} s")
         if p["hook_frame"] > HOOK_FRAMES:
@@ -811,6 +924,7 @@ def findings(run, plans):
             if x["move"] == prev:
                 out.append(f"{fmt} {x['id']}: the same move as the beat before ({prev})")
             prev = x["move"]
+            out += [f"{fmt} {f}" for f in legibility(fr, x, colors)]
             for bx in text_boxes(x.get("text")):
                 if bx[0] < a[0] - 1 or bx[2] > a[2] + 1 or bx[1] < a[1] - 1 or bx[3] > a[3] + 1:
                     out.append(f"{fmt} {x['id']}: a line runs outside the type area ({', '.join(f'{v:.0f}' for v in bx)})")

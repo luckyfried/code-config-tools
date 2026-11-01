@@ -3,8 +3,8 @@
     with chunks.lock(render_dir, name) as run:      # before the command's first write into the run
         report = chunks.render(run, jobs, public_dir, sources, ffmpeg, ffprobe, invoke)
 
-A video job (`"type": "video"`, `frames`, an optional `frameRange` [first, last], `out`) is planned as chunks: one
-over its whole range with the NVIDIA device (GPU), CHUNK_FRAMES frames each without. The chunks live in
+A video job (`"type": "video"`, `frames`, an optional `frameRange` [first, last], `out`) is planned as chunks: one over
+its whole range with the NVIDIA device (GPU, unless VS_GPU=0), CHUNK_FRAMES frames each without. The chunks live in
 render_dir/chunks/<name>/<key>/, where the key is the job without its `out`, the files of `public_dir` and the files of
 every folder in `sources`, each by relative path and content digest. A chunk that probes whole (ffprobe counts its
 frames) is kept; the others are pending. Every other job is pending as it is.
@@ -36,7 +36,7 @@ import time
 from pathlib import Path
 
 CHUNK_FRAMES = 60
-GPU = os.path.exists("/dev/nvidia0")
+GPU = os.path.exists("/dev/nvidia0") and os.environ.get("VS_GPU") != "0"
 # the Windows CreateFile flags the lock uses, which _winapi does not export; sharing is checked before CREATE_ALWAYS
 # truncates, so a refused open never empties the holder's note
 FILE_SHARE_READ, CREATE_ALWAYS = 1, 2

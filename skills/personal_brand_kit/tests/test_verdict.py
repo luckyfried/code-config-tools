@@ -3,6 +3,7 @@ one fix; round 2 under it is the spent budget, so film.py render makes the cut a
 the look; with taste.json `ask` false the agent picks and must say why in one line; picking another look after a cut
 starts the film again from the pick (its music, its cut and its rounds)."""
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -18,11 +19,17 @@ import _env  # noqa: E402
 import vote  # noqa: E402
 
 
+CITED = "the sound score rests on every cut row on the beat, the end row and each effect row heard over the bed"
+
+
 def round_(n, low=4, rest=5):
+    """Round `n` of the cut whose bytes are b"cut<n>", its sound read cited."""
     s = dict.fromkeys(vote.CRITERIA, rest)
     s["picture"] = low
     film = {"scores": s, "paragraph": " ".join(["the film holds"] * 10)}
-    return {"round": n, "film": f"cut{n}", "critics": {c: {"boards": {"film": film}} for c in vote.CUT_PANEL}}
+    return {"round": n, "film": hashlib.sha256(f"cut{n}".encode()).hexdigest()[:16],
+            "critics": {c: {"boards": {"film": film}} for c in vote.CUT_PANEL},
+            "sound": {"table": "critic/sound.md", "findings": [], "cited": CITED}}
 
 
 class Here(unittest.TestCase):
@@ -40,6 +47,7 @@ class TheVerdict(Here):
     def verdict(self, *rounds):
         for r in rounds:
             _env.write_json(f"critic/cut-{r['round']}.json", r)
+        Path("cut.mp4").write_bytes(f"cut{rounds[-1]['round']}".encode())
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             rc = vote.cmd_verdict(None)
