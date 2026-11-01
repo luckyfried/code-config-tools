@@ -34,9 +34,10 @@ scores.
 | `shots` | R6 the generated shots are the spectacle | six requests a cinematographer would write, each naming subject, move, lens, light, length and a seamless loop; the clips that arrived play on their cards | one template prompt per card, or requests nothing ever plays |
 | `deliverable` | R7 the deliverable is unmistakable | `out/` holds the films, the then/now pair, the caption, the brief and a review page that opens on the film, with the caption, the other two looks and how it was made in plain words; nothing else | a page that opens on a warning, a then/now that is one picture, an empty table, stray files |
 
-A rule you cannot read in this session is never scored as read. When nobody in the session can hear the film, put
-`sound` in that critic's `not_read` and leave its score empty; the verdict and the brief say it was
-not read. Never score sound from the cue table alone.
+A rule you cannot read in this session is never scored as read. On the storyboard, when nobody in the session can hear
+the film, put `sound` in that critic's `not_read` and leave its score empty; the verdict and the brief say it was not
+read. Never score sound from the cue table alone. On the cut, `sound` is always scored, from the sound read
+`vote.py cut` writes from the render's own sound (below).
 
 ## The storyboard (movement 3)
 
@@ -88,7 +89,11 @@ render makes. Look, actually look, at this cut, never the last one:
   `RUN/cut/stories/*.png` when they were asked for;
 - `RUN/subject.json` (the first post, the latest, the milestones) against the dates on screen;
 - `RUN/qa/check.json` (the measured checks), `RUN/render/report.json` and `RUN/clips/requests.json` (the shot
-  requests).
+  requests);
+- the sound read, `RUN/critic/sound.md`, which `vote.py cut` writes from the render's own sound: each cut against the
+  beat grid, the music's end against the last frame, and each effect's peak at its hit against the music under it.
+  Score `sound` from its rows and name the rows the score rests on in the round's `sound.cited`; `vote.py verdict`
+  refuses a round that cites none or leaves `sound` unread.
 
 Score `image` and `motion` from these frames and strips alone, never from a description of the film or an earlier
 cut; the cut is what ships. Fill in

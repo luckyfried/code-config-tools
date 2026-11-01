@@ -1031,6 +1031,8 @@ class Vote(unittest.TestCase):
         _env.cut("film.mp4").write_bytes(b"the first reel")
         checked = lambda: _env.write_json(_env.b("qa", "check.json"), {"film": vote.digest(_env.cut("film.mp4"))})
         checked()
+        self.addCleanup(setattr, vote, "sound_read", vote.sound_read)
+        vote.sound_read = lambda reel: {"table": "critic/sound.md", "findings": [], "cited": ""}
         self.assertEqual(vote.cmd_cut(argparse.Namespace()), 0)
         filled = _env.read_json(_env.b("critic", f"cut-{STYLE}-1.json")) | {"fixed": "half a score"}
         _env.write_json(_env.b("critic", f"cut-{STYLE}-1.json"), filled)

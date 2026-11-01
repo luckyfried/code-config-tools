@@ -66,11 +66,17 @@ def size(video):
     return s["width"], s["height"]
 
 
+# the round's sound block as vote.sound_read returns it, and a sentence that cites its rows
+HEARD = {"table": "critic/sound.md", "findings": [], "cited": ""}
+CITED = "sound rests on every cut row on the beat, the end row and each effect row heard over the bed"
+
+
 def scored(data, score=5):
     for c in data["critics"].values():
         e = c["boards"]["film"]
         e["scores"] = {k: score for k in e["scores"]}
         e["paragraph"] = " ".join(["the cut holds its one idea from day one to the latest and every move lands"] * 3)
+    data["sound"]["cited"] = CITED
     return data
 
 
@@ -81,6 +87,7 @@ class Proof(unittest.TestCase):
     def setUp(self):
         import clips
         import storyboard
+        import vote
         self.d = Path(tempfile.mkdtemp(dir=os.environ.get("TMPDIR"))).resolve()
         self.addCleanup(shutil.rmtree, self.d, ignore_errors=True)
         here = os.getcwd()
@@ -95,7 +102,8 @@ class Proof(unittest.TestCase):
                  "ffprobe": shutil.which("ffprobe")}
         names = [(film, "chosen"), (film, "props"), (film, "timeline"), (film, "board_sha"), (film, "then_now"), (film, "RENDERER"),
                  (clips, "write_requests"), (clips, "normalize"), (qa, "cards_check"), (qa, "order_check"), (_env, "B"), (_env, "tools"),
-                 (chunks, "GPU"), (storyboard, "lay_out"), (storyboard, "starts"), (storyboard, "measured"), (storyboard, "check_board")]
+                 (chunks, "GPU"), (storyboard, "lay_out"), (storyboard, "starts"), (storyboard, "measured"), (storyboard, "check_board"),
+                 (vote, "sound_read")]
         saved = {(m, k): getattr(m, k) for m, k in names}
         self.addCleanup(lambda: [setattr(m, k, v) for (m, k), v in saved.items()])
         _env.B, _env.tools, chunks.GPU, film.RENDERER = run, (lambda: tools), False, self.d / "render.py"
@@ -116,6 +124,8 @@ class Proof(unittest.TestCase):
         clips.normalize = lambda b, why=None: 0
         qa.cards_check = lambda: (True, "the cards")
         qa.order_check = lambda b, rows: (True, "the order")
+        self.heard, self.saved_sound = [], vote.sound_read
+        vote.sound_read = lambda reel: self.heard.append(Path(reel).name) or dict(HEARD)
         _env.write_json(run / "film.json", {"board": STYLE})
         _env.write_json(run / "critic" / "timing.json", {"pass": True, "board_sha": "sha"})
         self.run_dir = run
@@ -218,6 +228,8 @@ class Proof(unittest.TestCase):
         [first] = vote.rounds()
         data = _env.read_json(first)
         self.assertEqual((data["film"], data["scale"]), (vote.digest(_env.cut("proof.mp4")), proof.SCALE))
+        self.assertEqual(data["cut"], proof.picture(_env.read_json(_env.b("render", "report.json"))["cut"], _env.cut("proof.mp4")))
+        self.assertEqual((data["sound"], self.heard), (HEARD, ["proof.mp4"]), "the round carries the proof's sound read")
         data = scored(data)
         data["critics"]["motion_designer"]["boards"]["film"]["scores"]["concept"] = 3
         _env.write_json(first, data)
@@ -236,6 +248,8 @@ class Proof(unittest.TestCase):
         moved = _env.read_json(first)
         self.assertEqual((moved["film"], moved["scale"], moved["proof_film"]),
                          (vote.digest(_env.cut("film.mp4")), 1, data["film"]))
+        self.assertEqual((self.heard[-1], moved["sound"]["cited"]), ("film.mp4", CITED),
+                         "the sound is read again on the full-size film, and the citation stands for the same cut")
         for c in vote.CUT_PANEL:
             scores = moved["critics"][c]["boards"]["film"]["scores"]
             self.assertIsNone(scores["type"], "the type is read again at full size")
@@ -248,6 +262,73 @@ class Proof(unittest.TestCase):
         self.assertIn("SHIP", said)
         self.assertNotIn("Render the full-size film", said)
         self.assertIn("Next: deliver.py", said)
+
+    def ready(self, *args):
+        import vote
+        self.assertEqual(self.main(film, "render", *args)[0], 0)
+        reel = proof.newest(_env.cut("film.mp4"))
+        _env.write_json(_env.b("qa", "check.json"), {"film": vote.digest(reel)})
+        return reel
+
+    def test_a_cut_round_scores_sound_from_the_sound_read_and_cites_its_rows(self):
+        import vote
+        self.ready("--proof")
+        self.assertEqual(self.main(vote, "cut")[0], 0)
+        [first] = vote.rounds()
+        data = scored(_env.read_json(first))
+        e = data["critics"]["person"]["boards"]["film"]
+        e["scores"]["sound"], e["not_read"] = None, ["sound"]
+        _env.write_json(first, data)
+        rc, said = self.main(vote, "verdict")
+        self.assertEqual(rc, 1, said)
+        self.assertIn("the sound read is there to read", said)
+        e["scores"]["sound"], e["not_read"] = 5, []
+        data["sound"]["cited"] = "fine"
+        _env.write_json(first, data)
+        rc, said = self.main(vote, "verdict")
+        self.assertEqual(rc, 1, said)
+        self.assertIn("sound / cited", said)
+        del data["sound"]
+        _env.write_json(first, data)
+        self.assertIn("no sound read", self.main(vote, "verdict")[1])
+        self.main(vote, "cut")
+        self.assertEqual(_env.read_json(first)["sound"], HEARD, "cut reads the sound into the render's round")
+
+    def test_a_render_drawn_by_another_motion_bundle_opens_its_own_round_and_the_old_round_is_refused(self):
+        import vote
+        dist = self.d / "drawn"
+        dist.mkdir()
+        (dist / "bundle.js").write_text("one")
+        saved = proof.DIST
+        self.addCleanup(setattr, proof, "DIST", saved)
+        proof.DIST = dist
+        reel = self.ready("--proof")
+        self.main(vote, "cut")
+        [first] = vote.rounds()
+        _env.write_json(first, scored(_env.read_json(first)))
+        then = os.path.getmtime(reel) - 10
+        os.utime(reel, (then, then))
+        (dist / "bundle.js").write_text("two")
+        with self.assertRaises(SystemExit) as e:
+            self.main(vote, "verdict")
+        self.assertIn("rendered before the motion bundle changed", str(e.exception.code))
+        self.ready("--proof")
+        with self.assertRaises(SystemExit) as e:
+            self.main(vote, "verdict")
+        self.assertIn("is not for the current cut", str(e.exception.code))
+        self.assertEqual(self.main(vote, "cut")[0], 0)
+        self.assertEqual([p.name for p in vote.rounds()], [first.name, first.name.replace("-1.json", "-2.json")])
+
+    def test_the_sound_read_hears_the_render_through_what_the_mux_laid(self):
+        import vote
+        vote.sound_read = self.saved_sound
+        reel = self.ready("--proof")
+        block = vote.sound_read(reel)
+        self.assertEqual(block["cited"], "")
+        table = Path(block["table"])
+        self.assertEqual(table, _env.b("critic", "sound.md").resolve())
+        self.assertIn("|", table.read_text())
+        self.assertTrue(table.with_suffix(".json").exists())
 
 
 if __name__ == "__main__":
