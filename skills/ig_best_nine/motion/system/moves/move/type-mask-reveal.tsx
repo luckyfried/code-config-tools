@@ -1,12 +1,12 @@
-// type-mask-reveal: the beat's words in the display face, set as large as the measure allows about two words a line, cut
-// out of the card's ground with the photograph showing through the letters from the first frame, in its own color. Each
-// line rises up through its own slot, the first already half up as the beat begins and each after it on the next
-// musical beat, while the photograph inside the letters drifts slowly in. Each letter is drawn round its edge in a solid
-// rim of the card's pen, or of its accent where the pen would vanish into the ground, which sets it heavier and keeps its
-// shape whole over a pale part of the picture. On a photo beat the ground lifts off over the beat's last quarter and
-// leaves the photograph whole. A film with no photograph sets the letters in the card's accent.
+// type-mask-reveal: the beat's words in the display face, set as large as the safe area's measure allows about two
+// words a line, cut out of the card's ground with the photograph showing through the letters from the first frame, in
+// its own color. Each line rises up through its own slot, the first already half up as the beat begins and each after
+// it on the next musical beat, while the photograph inside the letters drifts slowly in. Each letter is drawn round its
+// edge in a solid rim of the card's pen, or of its accent where the pen would vanish into the ground, which sets it
+// heavier and keeps its shape whole over a pale part of the picture. On a photo beat the ground lifts off over the
+// beat's last quarter and leaves the photograph whole. A film with no photograph sets the letters in the card's accent.
 import React, {useId} from 'react';
-import {fill, fitTo, land, lumOf, OPTICAL, px, setLines, span, SINE, usePhoto} from '../kit';
+import {fill, fitTo, land, lumOf, OPTICAL, px, safeOf, setLines, span, SINE, usePhoto} from '../kit';
 import type {Move, MoveProps} from '../types';
 
 /** The photograph's region inside the letters: this much larger than the frame's cover, about the frame's middle. */
@@ -21,7 +21,8 @@ const Overlay: React.FC<MoveProps> = ({look, beat, local, u}) => {
   const ready = usePhoto(look.photo);
   const text = beat.words || beat.label;
   if (!text) return null;
-  const left = px(look, 50), width = look.W - 2 * left;
+  const [sx0, , sx1] = safeOf(look);
+  const left = sx0, width = sx1 - sx0;
   const edge = px(look, 10);
   const {lines, size} = setLines(text, 2, (ls) => Math.min(fitTo(ls, look.display, width - edge, {weight: 800, tracking: TRACK}), (look.H * 0.62) / (ls.length * 0.98)));
   const lh = size * 0.98;

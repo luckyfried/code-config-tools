@@ -339,8 +339,9 @@ class UnderTheLock(unittest.TestCase):
         m = studio.measure(Path("film.mp4"), [], run=self.run_)
         self.assertEqual(m["frames"], 30)
         self.assertEqual(self.started[:2], ["ffmpeg", "ffmpeg"], "the effects' loudness, then the mux")
-        # the effects' loudness, the shared mux's two loudness reads and its encode, then the measure's five
-        self.assertEqual(len(self.started), 9)
+        # the effects' loudness, the music decoded once to find where it covers an effect, the shared mux's two loudness
+        # reads and its encode, then the measure's five
+        self.assertEqual(len(self.started), 10)
 
     def test_every_process_the_gates_film_checks_start_goes_through_run_spawn(self):
         self.assertTrue(film.mux(self.run_, Path("silent.mp4"), Path("film.mp4"), 1, ONE_BEAT))
@@ -724,6 +725,10 @@ class CutRound(unittest.TestCase):
         here = os.getcwd()
         self.addCleanup(os.chdir, here)
         os.chdir(self.dir)
+        # the sound read of a reel is its own test (test_proof.SoundRead); here a round only needs its block
+        sound = mock.patch.object(vote, "sound_read", lambda film: {"table": "critic/sound.md", "findings": [], "cited": ""})
+        sound.start()
+        self.addCleanup(sound.stop)
 
     def test_the_same_reel_keeps_its_round_and_a_new_one_opens_the_next(self):
         Path("out").mkdir()

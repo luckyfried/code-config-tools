@@ -33,7 +33,7 @@ row a low score misses.
 | `pacing` | the pacing holds attention to the end | R4 | a rhythm with variation; the first holds longest; quiet beats earn the loud ones; the closer holds still | uniform beats, a slow middle, a long card with one word |
 | `type` | type is a system, not a default | R3 | the look's two faces at a scale, one placement logic per layout, every line landed within a second and read in full | a stray size, a line that wraps badly, words on a ground they do not read on, a line outside the safe area |
 | `transitions` | every move between beats is intentional | R1, R4 | each cut and move is the look's own; anticipation before a big move and a settle after it; no two beats in a row move the same way | the same crossfade everywhere, the same push on every beat, flashy wipes with no reason |
-| `music` | the music and the cuts agree | R5 | the bed belongs to the look, cuts land on its beat, the music stops as the grid settles | cuts that ignore the beat, a track at odds with the look |
+| `music` | the music and the cuts agree, from the sound read | R5 | the bed belongs to the look, cuts land on its beat, each effect heard over the bed, the music stops as the grid settles | cuts that ignore the beat, a track at odds with the look |
 | `ending` | the ending makes them want to post it | R1, R7 | the countdown lands on their first, the grid of all nine holds still, the closer signs off in the look's own type | an ending that just stops, a layout that never resolves, a generic sign-off |
 
 ## The swap test (movement 3, the motion designer)
@@ -77,7 +77,11 @@ render makes. Watch the film `vote.py cut` names, once through, the way a paying
 - every `frames/<format>-<rest>.png` full size with the Read tool;
 - the film's strip, `qa/film-strip2.png`;
 - `out/best-nine.png` (all nine shown, nothing cropped badly, the order reads);
-- `qa/check.json` and `render/film-report.json`.
+- `qa/check.json` and `render/film-report.json`;
+- the sound read, `critic/sound.md`, which `vote.py cut` writes from the film's own sound: each cut against the beat
+  grid, the music's end against the last frame, and each effect's peak at its hit against the music under it. Score
+  `music` from its rows and name the rows the score rests on in the round's `sound.cited`; `vote.py verdict` refuses a
+  round that cites none.
 
 Never score from memory of the storyboard; the cut is what ships, and a score is never rounded up. Fill in
 `critic/cut-N.json` and run `vote.py verdict`. Type is read last on the full-size film: after `SHIP` on the proof,
